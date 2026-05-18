@@ -13,6 +13,15 @@ export type { OpenSpaceToolSet } from './tools/index.js';
 export { reviewScript } from './security-review.js';
 export { BUILTIN_TEMPLATES, matchTemplate, fillTemplate } from './script-templates.js';
 
+export { OpenSpaceScriptGenerator } from './script-generator.js';
+export type { GenerationResult, LLMClient, TemplateParamExtractor } from './script-generator.js';
+
+export { OpenSpaceProfileManager } from './profile-manager.js';
+export type { IFileSystem as IProfileFileSystem } from './profile-manager.js';
+
+export { OpenSpaceDatasetBrowser } from './dataset-browser.js';
+export type { IFileSystem as IDatasetFileSystem } from './dataset-browser.js';
+
 export type {
   ProcessRunState,
   InstallationDetection,

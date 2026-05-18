@@ -6,7 +6,7 @@ import type {
   ScriptLanguage,
   SceneContext,
 } from './types.js';
-import type { IEventBus } from '../event-bus/types.js';
+import type { IEventBus, EventTopic } from '../event-bus/types.js';
 import { CircuitBreaker, CircuitState } from '../circuit-breaker.js';
 import { logger } from '../../utils/logger.js';
 
@@ -18,7 +18,7 @@ export interface IWebSocket {
 }
 
 export interface IWebSocketFactory {
-  new(url: string): IWebSocket;
+  (url: string): IWebSocket;
 }
 
 const WS_OPEN = 1;
@@ -81,18 +81,19 @@ export class OpenSpaceBridge {
       logger.info(`[OpenSpaceBridge] connecting to ${url}`);
 
       try {
-        this.ws = this.wsFactory!.new(url);
+        this.ws = this.wsFactory!(url);
       } catch (err) {
         reject(new Error(`WebSocket creation failed: ${(err as Error).message}`));
         return;
       }
 
+      const ws = this.ws;
       const connectTimer = setTimeout(() => {
         this.cleanup();
         reject(new Error(`Connection timeout after ${this.config.connectTimeout}ms`));
       }, this.config.connectTimeout);
 
-      this.ws.on('open', () => {
+      ws.on('open', () => {
         clearTimeout(connectTimer);
         this.connected = true;
         this.retryCount = 0;
@@ -100,16 +101,16 @@ export class OpenSpaceBridge {
         resolve();
       });
 
-      this.ws.on('message', (data: unknown) => {
+      ws.on('message', (data: unknown) => {
         this.handleMessage(data);
       });
 
-      this.ws.on('close', () => {
+      ws.on('close', () => {
         clearTimeout(connectTimer);
         this.handleDisconnect();
       });
 
-      this.ws.on('error', (err: unknown) => {
+      ws.on('error', (err: unknown) => {
         clearTimeout(connectTimer);
         logger.error(`[OpenSpaceBridge] ws error: ${(err as Error).message}`);
         this.handleDisconnect();
@@ -142,7 +143,7 @@ export class OpenSpaceBridge {
     this.retryCount++;
 
     if (this.eventBus) {
-      this.eventBus.publish('openspace:sync_disconnected', { retryCount: this.retryCount }, 'openspace-bridge');
+      this.eventBus.publish('openspace:sync_disconnected' as EventTopic, { retryCount: this.retryCount }, 'openspace-bridge');
     }
 
     if (this.retryCount <= this.config.maxRetries) {
@@ -223,7 +224,7 @@ export class OpenSpaceBridge {
       const duration = Date.now() - start;
 
       if (this.eventBus) {
-        this.eventBus.publish('openspace:script_executed', {
+        this.eventBus.publish('openspace:script_executed' as EventTopic, {
           script: request.script,
           language: request.language,
           duration,
@@ -237,7 +238,7 @@ export class OpenSpaceBridge {
       const errorMsg = (err as Error).message;
 
       if (this.eventBus) {
-        this.eventBus.publish('openspace:script_failed', {
+        this.eventBus.publish('openspace:script_failed' as EventTopic, {
           script: request.script,
           language: request.language,
           duration,
@@ -301,14 +302,14 @@ export class OpenSpaceBridge {
         }
       }
       if (this.eventBus) {
-        this.eventBus.publish('openspace:property_changed', params, 'openspace-bridge');
+        this.eventBus.publish('openspace:property_changed' as EventTopic, params, 'openspace-bridge');
       }
       return;
     }
 
     if (method === 'openspace.event.sceneChanged') {
       if (this.eventBus) {
-        this.eventBus.publish('openspace:scene_changed', params, 'openspace-bridge');
+        this.eventBus.publish('openspace:scene_changed' as EventTopic, params, 'openspace-bridge');
       }
       return;
     }

@@ -5,7 +5,7 @@ import type {
   ProcessHealthStatus,
   HealthCheckResult,
 } from './types.js';
-import type { IEventBus } from '../event-bus/types.js';
+import type { IEventBus, EventTopic } from '../event-bus/types.js';
 import { logger } from '../../utils/logger.js';
 
 export interface IChildProcess {
@@ -237,7 +237,7 @@ export class OpenSpaceProcessManager {
       this.startHealthCheck();
 
       if (this.eventBus) {
-        this.eventBus.publish('openspace:started', { pid: this.processHandle.pid, wsPort: this.wsPort }, 'openspace-process-manager');
+        this.eventBus.publish('openspace:started' as EventTopic, { pid: this.processHandle.pid, wsPort: this.wsPort }, 'openspace-process-manager');
       }
     } catch (err) {
       this.setState('error');
@@ -283,7 +283,7 @@ export class OpenSpaceProcessManager {
     this.setState('stopped');
 
     if (this.eventBus) {
-      this.eventBus.publish('openspace:stopped', {}, 'openspace-process-manager');
+      this.eventBus.publish('openspace:stopped' as EventTopic, {}, 'openspace-process-manager');
     }
   }
 
@@ -331,7 +331,7 @@ export class OpenSpaceProcessManager {
     this.lastHealth = result;
 
     if (prevHealthy !== result.healthy && this.eventBus) {
-      this.eventBus.publish('openspace:health_changed', result, 'openspace-process-manager');
+      this.eventBus.publish('openspace:health_changed' as EventTopic, result, 'openspace-process-manager');
     }
 
     return result;

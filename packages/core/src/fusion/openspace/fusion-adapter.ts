@@ -1,8 +1,12 @@
-import type { IEventBus } from '../event-bus/types.js';
+import type { IEventBus, EventTopic } from '../event-bus/types.js';
 import type { IHookRegistry, HookPoint, HookContext } from '../hook-registry/types.js';
 import { OpenSpaceBridge } from './bridge.js';
 import { OpenSpaceProcessManager } from './process-manager.js';
-import type { OpenSpaceFusionConfig, ProcessRunState, HealthCheckResult } from './types.js';
+import { OpenSpaceScriptGenerator } from './script-generator.js';
+import type { GenerationResult, LLMClient } from './script-generator.js';
+import { OpenSpaceProfileManager } from './profile-manager.js';
+import { OpenSpaceDatasetBrowser } from './dataset-browser.js';
+import type { OpenSpaceFusionConfig, ProcessRunState, HealthCheckResult, OpenSpaceProfile } from './types.js';
 import { createOpenSpaceToolSet } from './tools/index.js';
 import type { OpenSpaceToolSet } from './tools/index.js';
 import { reviewScript } from './security-review.js';
@@ -34,6 +38,8 @@ export interface OpenSpaceFusionStatus {
   compatible: boolean;
   health: HealthCheckResult | null;
   wsPort: number | null;
+  profileLoaded: boolean;
+  datasetsLoaded: number;
 }
 
 export class OpenSpaceFusionAdapter {
@@ -42,17 +48,23 @@ export class OpenSpaceFusionAdapter {
   private hookRegistry: IHookRegistry | null;
   private processManager: OpenSpaceProcessManager;
   private bridge: OpenSpaceBridge;
+  private scriptGenerator: OpenSpaceScriptGenerator;
+  private profileManager: OpenSpaceProfileManager;
+  private datasetBrowser: OpenSpaceDatasetBrowser;
   private tools: OpenSpaceToolSet | null = null;
   private initialized = false;
   private unregisterStateChange: (() => void) | null = null;
   private hookIds: string[] = [];
 
-  constructor(eventBus?: IEventBus, hookRegistry?: IHookRegistry) {
+  constructor(eventBus?: IEventBus, hookRegistry?: IHookRegistry, llmClient?: LLMClient) {
     this.config = { ...DEFAULT_FUSION_CONFIG };
     this.eventBus = eventBus ?? null;
     this.hookRegistry = hookRegistry ?? null;
     this.processManager = new OpenSpaceProcessManager(this.eventBus ?? undefined);
     this.bridge = new OpenSpaceBridge(this.config.bridgeConfig, this.eventBus ?? undefined);
+    this.scriptGenerator = new OpenSpaceScriptGenerator(llmClient);
+    this.profileManager = new OpenSpaceProfileManager(undefined, this.bridge, this.eventBus ?? undefined);
+    this.datasetBrowser = new OpenSpaceDatasetBrowser(undefined, this.bridge, this.eventBus ?? undefined);
   }
 
   get processManagerInstance(): OpenSpaceProcessManager {
@@ -61,6 +73,18 @@ export class OpenSpaceFusionAdapter {
 
   get bridgeInstance(): OpenSpaceBridge {
     return this.bridge;
+  }
+
+  get scriptGeneratorInstance(): OpenSpaceScriptGenerator {
+    return this.scriptGenerator;
+  }
+
+  get profileManagerInstance(): OpenSpaceProfileManager {
+    return this.profileManager;
+  }
+
+  get datasetBrowserInstance(): OpenSpaceDatasetBrowser {
+    return this.datasetBrowser;
   }
 
   getToolSet(): OpenSpaceToolSet | null {
@@ -89,7 +113,7 @@ export class OpenSpaceFusionAdapter {
 
     this.unregisterStateChange = this.processManager.onStateChange((state) => {
       if (this.eventBus) {
-        this.eventBus.publish('openspace:health_changed', {
+        this.eventBus.publish('openspace:health_changed' as EventTopic, {
           state,
           timestamp: Date.now(),
         }, 'openspace-fusion-adapter');
@@ -116,8 +140,9 @@ export class OpenSpaceFusionAdapter {
     const beforeHookId = this.hookRegistry.register(
       'before_tool_execute' as HookPoint,
       (context: HookContext) => {
-        if (context.data?.name !== 'openspace_execute') return context;
-        const params = context.data.params as Record<string, unknown>;
+        const data = context.data as any;
+        if (data?.name !== 'openspace_execute') return context;
+        const params = data.params as Record<string, unknown>;
         if (!params) return context;
 
         const script = params.script as string;
@@ -127,7 +152,7 @@ export class OpenSpaceFusionAdapter {
           const result = reviewScript(script, language as 'lua' | 'javascript' | 'python');
           if (!result.passed) {
             context.data = {
-              ...context.data,
+              ...(context.data as any),
               _blocked: true,
               _securityReview: result,
             };
@@ -143,13 +168,14 @@ export class OpenSpaceFusionAdapter {
     const afterHookId = this.hookRegistry.register(
       'after_tool_execute' as HookPoint,
       (context: HookContext) => {
-        if (context.data?.name !== 'openspace_execute') return context;
+        const data = context.data as any;
+        if (data?.name !== 'openspace_execute') return context;
 
         if (this.eventBus) {
-          this.eventBus.publish('openspace:script_executed', {
-            script: context.data.params?.script,
-            language: context.data.params?.language,
-            result: context.data.result,
+          this.eventBus.publish('openspace:script_executed' as EventTopic, {
+            script: data.params?.script,
+            language: data.params?.language,
+            result: data.result,
             timestamp: Date.now(),
           }, 'openspace-fusion-adapter');
         }
@@ -206,6 +232,8 @@ export class OpenSpaceFusionAdapter {
       compatible: this.processManager.installation.compatible,
       health: this.processManager.health,
       wsPort: this.processManager.getWebSocketPort(),
+      profileLoaded: this.profileManager.presetProfiles.length > 0,
+      datasetsLoaded: this.datasetBrowser['datasetsCache'].size,
     };
   }
 

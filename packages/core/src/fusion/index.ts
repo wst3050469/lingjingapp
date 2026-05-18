@@ -143,3 +143,5 @@ export type { UnifiedMessage, IPlatformConnector, IMessageGateway } from './gate
 
 export { FusionInitializer } from './fusion-initializer.js';
 export type { FusionInitResult } from './fusion-initializer.js';
+ 
+export * as openspace from './openspace/index.js';

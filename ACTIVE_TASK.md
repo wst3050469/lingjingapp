@@ -40,8 +40,25 @@
 ### Git
 | Commit | 说明 |
 |:-------|:------|
+| `3e5cc8a2` | docs: update log for 404 fix |
+| `553087ac` | chore: add lib ES2022 + downlevelIteration to electron tsconfig |
+| `b5a32c32` | fix: auto-init OpenSpace adapter + fix TypeScript config |
+| `80bbd76c` | test: add OpenSpace process-manager unit tests (24 cases) |
+| `c6a62955` | test: add OpenSpace unit tests + fix security-review passed logic |
 | `e9811408` | docs: add OpenSpace integration specs and design docs |
 | `5bfaac77` | chore: comprehensive .gitignore for local-only files |
 | `1256e521` | chore: update .gitignore for release dirs and temp scripts |
 | `70745b3b` | docs: update ACTIVE_TASK.md and log for v1.42.8 deployment |
 | `2050d980` | feat: add 3 OpenSpace skills (navigate, scene, record) |
+
+### 测试覆盖
+- ✅ **security-review**: 10 tests (safe/dangerous/multi-language/line numbers/edge cases)
+- ✅ **script-templates**: 20 tests (builtin/matching/fillTemplate/Chinese input)
+- ✅ **process-manager**: 24 tests (state/start/stop/health/installation/edge cases)
+- ✅ **tools**: 14 tests (execute/query/toolset - connect/disconnect/failure/exception)
+- ✅ **总计: 68 测试, 4 文件, 全部通过**
+
+### 生产部署修复 (Phase 81: 2026-05-19)
+- ✅ **问题**: nginx root `/var/www/downloads` vs 部署到 `/var/www/html/downloads/` 目录不一致 → 安装包 404
+- ✅ **修复**: 复制 Linux 文件到 `/var/www/downloads/`，创建符号链接防再次不一致
+- ✅ **验证**: 所有 4 个安装包 HTTPS 200 OK，API v1.42.8 published

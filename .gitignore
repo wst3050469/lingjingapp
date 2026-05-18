@@ -23,11 +23,77 @@ packages/electron/dist_release/
 packages/electron/renderer/
 packages/electron/prompts/
 
+# Local-only Electron source (synced from production, not in git)
+packages/electron/src/admin/
+packages/electron/src/auth/
+packages/electron/src/config/
+packages/electron/src/db/
+packages/electron/src/monitoring/
+packages/electron/src/pipeline/
+packages/electron/src/pm/
+packages/electron/src/review/
+packages/electron/src/security/
+packages/electron/src/services/
+packages/electron/src/ssh/
+packages/electron/src/tools/
+packages/electron/src/voice/
+packages/electron/src/frp-client.ts
+packages/electron/src/main.ts
+packages/electron/src/preload.ts
+packages/electron/src/web-server.ts
+packages/electron/src/ipc/admin-ipc.ts
+packages/electron/src/ipc/agent-ipc.ts
+packages/electron/src/ipc/auth-ipc.ts
+packages/electron/src/ipc/batch-ipc.ts
+packages/electron/src/ipc/browser-ipc.ts
+packages/electron/src/ipc/checkpoint-ipc.ts
+packages/electron/src/ipc/cloud-ipc.ts
+packages/electron/src/ipc/cloud-management/
+packages/electron/src/ipc/cloud-sync-ipc.ts
+packages/electron/src/ipc/compact-ipc.ts
+packages/electron/src/ipc/completion-ipc.ts
+packages/electron/src/ipc/connector-ipc.ts
+packages/electron/src/ipc/context-ipc.ts
+packages/electron/src/ipc/diagnostics-ipc.ts
+packages/electron/src/ipc/docker-manager.ts
+packages/electron/src/ipc/fs-ipc.ts
+packages/electron/src/ipc/git-ipc.ts
+packages/electron/src/ipc/github-ipc.ts
+packages/electron/src/ipc/indexing-ipc.ts
+packages/electron/src/ipc/init-script-executor.ts
+packages/electron/src/ipc/inline-chat-ipc.ts
+packages/electron/src/ipc/integrations-ipc.ts
+packages/electron/src/ipc/memory-ipc.ts
+packages/electron/src/ipc/network-ipc.ts
+packages/electron/src/ipc/ollama-ipc.ts
+packages/electron/src/ipc/plan-ipc.ts
+packages/electron/src/ipc/prompt-ipc.ts
+packages/electron/src/ipc/quest-ipc.ts
+packages/electron/src/ipc/quest-state-ipc.ts
+packages/electron/src/ipc/register-new-features.ts
+packages/electron/src/ipc/schedule-ipc.ts
+packages/electron/src/ipc/skills-ipc.ts
+packages/electron/src/ipc/terminal-ipc.ts
+packages/electron/src/ipc/trigger-ipc.ts
+packages/electron/src/ipc/update-ipc.ts
+packages/electron/src/ipc/voice-ipc.ts
+packages/electron/src/ipc/wiki-ipc.ts
+packages/electron/src/ipc/workflow-ipc.ts
+packages/electron/src/ipc/worktree-manager.ts
+
 # Temp scripts
 scripts/_*.cjs
+scripts/*.cjs
 
 # OS artifacts
 *.bat
 *.py
 *.sh
 0)
+
+# Other
+.git_push.bundle
+_patches.patch
+packages/electron/_fix_json.cjs
+packages/electron/assets/icon-256x256.png
+packages/electron/assets/icon.ico

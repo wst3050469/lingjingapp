@@ -1,11 +1,14 @@
 {
   "name": "@codepilot/core",
-  "version": "1.42.7",
+  "version": "1.42.8",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
     ".": "./dist/index.js",
-    "./*": ["./dist/*/index.js", "./dist/*.js"]
+    "./*": [
+      "./dist/*/index.js",
+      "./dist/*.js"
+    ]
   },
   "scripts": {
     "build": "tsc",

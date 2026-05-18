@@ -1,8 +1,20 @@
 import { ipcMain } from 'electron';
-import type { OpenSpaceFusionAdapter } from '../../../core/src/fusion/openspace/fusion-adapter.js';
+import { OpenSpaceFusionAdapter } from '../../../core/src/fusion/openspace/fusion-adapter.js';
 import type { OpenSpaceBridge } from '../../../core/src/fusion/openspace/bridge.js';
+import type { OpenSpaceFusionConfig } from '../../../core/src/fusion/openspace/types.js';
 
 let _adapter: OpenSpaceFusionAdapter | null = null;
+
+/**
+ * Initialize the OpenSpace adapter with optional config.
+ * Creates the adapter if not already created and calls initialize().
+ * Safe to call multiple times - only initializes once.
+ */
+export function initOpenSpace(config?: Partial<OpenSpaceFusionConfig>): void {
+  if (_adapter) return;
+  _adapter = new OpenSpaceFusionAdapter();
+  _adapter.initialize({ enabled: false, ...config });
+}
 
 export function setOpenSpaceAdapter(adapter: OpenSpaceFusionAdapter): void {
   _adapter = adapter;
@@ -16,6 +28,13 @@ function getAdapter(): OpenSpaceFusionAdapter {
 }
 
 export function registerOpenSpaceIpc(): void {
+  try {
+    // Auto-initialize with default (disabled) config
+    initOpenSpace();
+  } catch (err: any) {
+    console.warn('[OpenSpace] initOpenSpace failed:', err.message);
+  }
+
   // === Detection ===
   ipcMain.handle('openspace:detect', async () => {
     try {
@@ -27,6 +46,7 @@ export function registerOpenSpaceIpc(): void {
         compatible: status.compatible,
         processState: status.processState,
         bridgeConnected: status.bridgeConnected,
+        initialized: status.initialized,
       };
     } catch (err: any) {
       return { success: false, error: err.message };
@@ -61,9 +81,9 @@ export function registerOpenSpaceIpc(): void {
     try {
       const adapter = getAdapter();
       const status = adapter.getStatus();
-      return { success: true, status };
+      return { success: true, status, adapterReady: true };
     } catch (err: any) {
-      return { success: false, error: err.message };
+      return { success: false, error: err.message, adapterReady: false };
     }
   });
 

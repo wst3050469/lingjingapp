@@ -131,7 +131,7 @@ describe('OpenSpace script-templates', () => {
         resolutionX: 1920,
         resolutionY: 1080,
       });
-      expect(result).toContain('FrameExport.Framerate', 30);
+      expect(result).toContain('FrameExport.Framerate", 30');
       expect(result).toContain('FrameExport.Resolution.X", 1920');
       expect(result).toContain('FrameExport.Resolution.Y", 1080');
     });

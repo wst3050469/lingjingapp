@@ -121,3 +121,13 @@ mobile-src.tar.gz
 # Other
 0)d.versions[idx]
 .codeartsdoer/specs/ui-scifi/
+
+# Additional ignore patterns
+0)
+SPEC-v1.33.*
+SPEC-v1.34.*
+check_*.py
+packages/electron/preload-workflow.ts
+packages/renderer/src/types/lucide-override.d.ts
+scripts/versions-*.json
+_*.js

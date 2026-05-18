@@ -2,6 +2,16 @@ import { useUIStore, type SidebarPanel } from '../../stores/ui-store';
 
 const sidebarIcons: { id: SidebarPanel; title: string; icon: JSX.Element }[] = [
   {
+    id: 'openspace',
+    title: 'OpenSpace 天文可视化 (Ctrl+Shift+O)',
+    icon: (
+      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.115 5.19l.319 1.913A6 6 0 008.11 10.36L9.75 12l-.387.775c-.217.433-.132.956.21 1.298l1.348 1.348c.21.21.329.497.329.795v1.089c0 .426.24.815.622 1.006l.153.076c.433.217.956.132 1.298-.21l.723-.723a.75.75 0 011.06 0l.61.61a.75.75 0 001.06 0l.88-.88a.75.75 0 001.06 0l.7-.7a2.25 2.25 0 00.53-2.439l-.388-1.164a2.25 2.25 0 00-.922-1.135l-2.296-1.53a8.25 8.25 0 00-4.41-1.476L8.917 5.19a.75.75 0 00-1.408-.082L6.115 5.19z" />
+        <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     id: 'explorer',
     title: '资源管理器 (Ctrl+Shift+E)',
     icon: (

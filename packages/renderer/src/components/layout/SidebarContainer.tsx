@@ -13,6 +13,7 @@ import { PipelineEditor } from '../pipeline/PipelineEditor';
 import { ReviewPanel } from '../review/ReviewPanel';
 import { PMPanel } from '../pm/PMPanel';
 import { SecurityPanel } from '../security/SecurityPanel';
+import { OpenSpacePanel } from '../openspace/OpenSpacePanel';
 
 function WorkflowPanel() {
   const [activeTab, setActiveTab] = useState<'list' | 'editor' | 'monitor'>('list');
@@ -76,6 +77,7 @@ export function SidebarContainer() {
       {activeSidebarPanel === 'review' && <ReviewPanel projectPath={window.__codepilot_project_path__ || ''} />}
       {activeSidebarPanel === 'pm' && <PMPanel projectPath={window.__codepilot_project_path__ || ''} />}
       {activeSidebarPanel === 'security' && <SecurityPanel projectPath={window.__codepilot_project_path__ || ''} />}
+      {activeSidebarPanel === 'openspace' && <OpenSpacePanel />}
     </div>
   );
 }

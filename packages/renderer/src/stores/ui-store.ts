@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 type ViewMode = 'editor' | 'quest';
-export type SidebarPanel = 'explorer' | 'search' | 'chat' | 'git' | 'run-debug' | 'extension' | 'remote' | 'workflow' | 'admin' | 'pipeline' | 'review' | 'pm' | 'security';
+export type SidebarPanel = 'explorer' | 'search' | 'chat' | 'git' | 'run-debug' | 'extension' | 'remote' | 'workflow' | 'admin' | 'pipeline' | 'review' | 'pm' | 'security' | 'openspace';
 export type BottomTab = 'terminal' | 'problems' | 'chat' | 'ssh-terminal';
 export type TopTab = 'Spec' | 'Changed Files' | 'Preview';
 export type ThemeMode = 'dark' | 'light';

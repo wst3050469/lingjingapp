@@ -119,7 +119,7 @@ docs/SPEC-*.md
 mobile-src.tar.gz
 
 # Other
-0)d.versions[idx]
+0)d.versions\[idx\]
 .codeartsdoer/specs/ui-scifi/
 
 # Additional ignore patterns

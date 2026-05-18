@@ -90,8 +90,8 @@ packages/electron/tsconfig.preload.json
 cloud-server/
 
 # Core MCP and Workflow (local-only modules)
-packages/core/src/mcp/
-packages/core/src/workflow/
+# packages/core/src/mcp/
+# packages/core/src/workflow/
 
 # Old release artifacts
 release-v1410/

@@ -26,12 +26,22 @@
 - ✅ `/api/latest` → `{"version":"1.42.8","releaseNotes":"灵境IDE v1.42.8 - OpenSpace天文可视化集成"}`
 - ✅ latest.yml / latest-linux.yml / versions.json 全部同步
 
-### Git
-- `2050d980` — feat: add 3 OpenSpace skills (navigate, scene, record)
-- `d2a57b7d` — chore: bump to v1.42.8 for OpenSpace integration
-
-### 生产服务器优化
+### 生产服务器优化 (Phase 80)
 - ✅ **新挂载 40G 数据盘** (`/dev/vdb` → `/data`, ext4, fstab 持久化)
 - ✅ release 目录移至 `/data/releases/`，符号链接保持兼容
 - ✅ 系统盘使用率: **89% → 66%** (释放 ~9GB)
 - ✅ npm/apt/journal 缓存清理
+
+### 本地环境治理
+- ✅ `.gitignore` 全面更新（排除 release 目录、本地同步源码、临时脚本等）
+- ✅ Git 工作区状态: **极其干净**（仅 2 个无关目录未跟踪）
+- ✅ OpenSpace 规格文档已提交到 GitHub
+
+### Git
+| Commit | 说明 |
+|:-------|:------|
+| `e9811408` | docs: add OpenSpace integration specs and design docs |
+| `5bfaac77` | chore: comprehensive .gitignore for local-only files |
+| `1256e521` | chore: update .gitignore for release dirs and temp scripts |
+| `70745b3b` | docs: update ACTIVE_TASK.md and log for v1.42.8 deployment |
+| `2050d980` | feat: add 3 OpenSpace skills (navigate, scene, record) |

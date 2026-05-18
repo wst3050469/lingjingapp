@@ -16,5 +16,5 @@
     "allowImportingTsExtensions": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "**/__tests__/**", "src/mcp/**", "src/workflow/**"]
+  "exclude": ["node_modules", "dist"]
 }

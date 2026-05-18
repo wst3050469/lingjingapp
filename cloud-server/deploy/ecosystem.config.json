@@ -1,0 +1,59 @@
+{
+  "apps": [
+    {
+      "name": "lingjing-cloud",
+      "script": "server.js",
+      "cwd": "/opt/lingjing/cloud-server",
+      "instances": 2,
+      "exec_mode": "cluster",
+      "max_memory_restart": "512M",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 8000
+      },
+      "env_file": ".env",
+      "watch": false,
+      "autorestart": true,
+      "max_restarts": 10,
+      "restart_delay": 5000,
+      "min_uptime": "10s",
+      "listen_timeout": 10000,
+      "kill_timeout": 5000,
+      "merge_logs": true,
+      "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
+      "error_file": "/var/log/lingjing/cloud-error.log",
+      "out_file": "/var/log/lingjing/cloud-out.log",
+      "pid_file": "/var/run/lingjing/cloud.pid"
+    },
+    {
+      "name": "lingjing-update",
+      "script": "index.js",
+      "cwd": "/opt/lingjing/update-server",
+      "instances": 1,
+      "exec_mode": "fork",
+      "max_memory_restart": "256M",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3000
+      },
+      "watch": false,
+      "autorestart": true,
+      "max_restarts": 5,
+      "restart_delay": 5000,
+      "error_file": "/var/log/lingjing/update-error.log",
+      "out_file": "/var/log/lingjing/update-out.log"
+    }
+  ],
+  "deploy": {
+    "production": {
+      "user": "root",
+      "host": "120.55.5.220",
+      "ref": "origin/main",
+      "repo": "git@github.com:zhejiangjinmo/lingjing.git",
+      "path": "/opt/lingjing",
+      "pre-deploy-local": "echo 'Deploying to production...'",
+      "post-deploy": "npm install && pm2 reload ecosystem.config.json --env production",
+      "pre-setup": "mkdir -p /var/log/lingjing /var/run/lingjing"
+    }
+  }
+}

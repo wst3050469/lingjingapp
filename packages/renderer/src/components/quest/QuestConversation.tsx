@@ -1,0 +1,707 @@
+// Quest Conversation - middle column chat interface
+
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useChatStore, type ChatMode } from '../../stores/chat-store';
+import { useQuestStore, generateQuestMessageId, type QuestMessage } from '../../stores/quest-store';
+import { useModelStore } from '../../stores/model-store';
+import { useTodoStore } from '../../stores/todo-store';
+import { useEditTrackerStore } from '../../stores/edit-tracker-store';
+import { useImageAttachments } from '../../hooks/useImageAttachments';
+import { useFileMentions } from '../../hooks/useFileMentions';
+import { useContextSelector } from '../../hooks/useContextSelector';
+import { useDragDropFiles } from '../../hooks/useDragDropFiles';
+import { usePromptPolish } from '../../hooks/usePromptPolish';
+import { useVoiceInput } from '../../hooks/useVoiceInput';
+import { ContextSelector } from '../context/ContextSelector';
+import { ContextChips } from '../context/ContextChips';
+import { ChatMessageView } from '../chat/ChatMessage';
+import { TodoTracker } from '../chat/TodoTracker';
+import { FileEditTracker } from '../chat/FileEditTracker';
+import { FileChangeSummary } from '../chat/FileChangeSummary';
+import { ChatModeSelector } from '../chat/ChatModeSelector';
+import { ModelSelector } from '../chat/ModelSelector';
+import { InputToolbar } from '../chat/InputToolbar';
+import { ContextMeter } from '../chat/ContextMeter';
+import { useQuestDiffStore } from '../../stores/quest-diff-store';
+
+const MODES: { value: ChatMode; label: string; tooltip: string }[] = [
+  { value: 'ask', label: 'Ask', tooltip: '智能问答 - 回答问题、解释代码、审查优化' },
+  { value: 'agent', label: 'Agent', tooltip: '智能体 - 自主执行代码修改和文件操作' },
+  { value: 'experts', label: 'Experts', tooltip: '专家团模式 - 多专家协作完成复杂任务' },
+];
+
+export function QuestConversation() {
+  const [text, setText] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    activeTaskId,
+    messages,
+    isStreaming,
+    currentStreamText,
+    askUserRequest,
+    confirmRequest,
+    cumulativeTokens,
+    maxContextTokens,
+    isCompacting,
+    compactQuest,
+  } = useQuestStore();
+
+  const { currentModel } = useModelStore();
+  const { chatMode, setChatMode } = useChatStore();
+
+  // 添加附件相关的 hooks
+  const { images, addImages, removeImage, triggerFileInput } = useImageAttachments();
+  const { mentionedFiles, addMention, removeMention } = useFileMentions();
+  const {
+    showSelector,
+    selectorType,
+    searchQuery: mentionQuery,
+    searchResults,
+    recommendedFiles,
+    selectedContexts,
+    detectMention,
+    handleTextChange,
+    handleSelect,
+    openViaButton,
+    dismissSelector,
+    setSelectorType,
+    setSearchQuery,
+    removeContext,
+    clearContexts,
+  } = useContextSelector('quest');
+
+  const { isDragging, dragHandlers, pasteHandler } = useDragDropFiles('quest', {
+    onImageAdd: (file: File) => {
+      // Convert file to image attachment flow
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const fakeEvent = { target: { files: dt.files } } as unknown as React.ChangeEvent<HTMLInputElement>;
+      addImages(fakeEvent);
+    },
+  });
+  const { isPolishing, polish } = usePromptPolish();
+
+  // Get active task info
+  const activeTask = useQuestStore((s) => s.tasks.find((t) => t.id === s.activeTaskId));
+
+  // 语音输入处理
+  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setText(newText), []));
+
+  // Defensive reset: if the store still thinks we're streaming after mount
+  // (e.g. returning from editor mode), clear it so send is not blocked.
+  useEffect(() => {
+    const store = useQuestStore.getState();
+    if (store.isStreaming) {
+      console.log('[QuestConversation] Mount: resetting stale isStreaming');
+      store.resetStreamText();
+      store.setStreaming(false);
+      store.setActiveRunId(null);
+    }
+  }, []);
+
+  // Auto-scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, currentStreamText]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
+    }
+  }, [text]);
+
+  const handleSend = useCallback(async () => {
+    const hasText = !!text.trim();
+    const hasImages = images.length > 0;
+    if ((!hasText && !hasImages) || isStreaming || !activeTaskId) return;
+
+    // Capture values before clearing
+    const messageText = text;
+    const contexts = selectedContexts;
+    const currentImages = [...images];
+
+    // Clear input immediately - before any store operations
+    setText('');
+    if (textareaRef.current) {
+      textareaRef.current.value = '';
+      textareaRef.current.style.height = 'auto';
+    }
+    clearContexts();
+    dismissSelector();
+    // Clear attached images after capture
+    currentImages.forEach((_, i) => removeImage(i));
+
+    const store = useQuestStore.getState();
+
+    // Build display content (text + image indicator)
+    const displayContent = hasImages && !hasText
+      ? `[Image${currentImages.length > 1 ? 's' : ''}]`
+      : messageText;
+
+    // Add user message
+    store.addMessage({
+      id: generateQuestMessageId(),
+      role: 'user',
+      content: displayContent,
+      timestamp: Date.now(),
+    });
+    store.setStreaming(true);
+    store.resetStreamText();
+    store.addRunningTask(activeTaskId);
+
+    // Generate run epoch ID to discriminate events from this run vs stale events
+    const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    store.setActiveRunId(runId);
+
+    const scenario = activeTask?.scenario || 'spec';
+    const runMode = activeTask?.runMode || 'local';
+    const autoMode = activeTask?.autoMode || 'auto';
+
+    // Prepare images for IPC (base64 payload)
+    const imagePayload = hasImages
+      ? currentImages.map(img => {
+          const m = img.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+          return m ? { data: m[2], mediaType: m[1] } : null;
+        }).filter(Boolean) as Array<{ data: string; mediaType: string }>
+      : undefined;
+
+    try {
+      await window.electronAPI.quest.run({
+        taskId: activeTaskId,
+        message: messageText || 'Please analyze this image.',
+        scenario,
+        runMode,
+        autoMode,
+        chatMode,
+        runId,
+        images: imagePayload,
+        contexts: contexts.map(ctx => ({
+          id: ctx.id,
+          type: ctx.type,
+          label: ctx.label,
+          path: ctx.path,
+        })),
+      } as any);
+    } catch (err) {
+      store.addMessage({
+        id: generateQuestMessageId(),
+        role: 'assistant',
+        content: `Error: ${err instanceof Error ? err.message : 'Quest run failed'}`,
+        timestamp: Date.now(),
+      });
+      store.setStreaming(false);
+      store.setActiveRunId(null);
+      if (activeTaskId) store.removeRunningTask(activeTaskId);
+    }
+  }, [text, images, isStreaming, activeTaskId, activeTask, selectedContexts, clearContexts, dismissSelector, removeImage]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    // If context selector is showing, let it handle keyboard events
+    if (showSelector) return;
+    
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleStop = async () => {
+    if (activeTaskId) {
+      try {
+        await window.electronAPI.quest.abort(activeTaskId);
+      } catch { /* ignore */ }
+    }
+  };
+
+  const handlePause = async () => {
+    if (activeTaskId) {
+      try {
+        await window.electronAPI.quest.pause(activeTaskId);
+      } catch { /* ignore */ }
+    }
+  };
+
+  const handleResume = async () => {
+    if (activeTaskId) {
+      try {
+        const store = useQuestStore.getState();
+        store.setStreaming(true);
+        store.resetStreamText();
+        store.addRunningTask(activeTaskId);
+        const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        store.setActiveRunId(runId);
+        await window.electronAPI.quest.resume(activeTaskId, undefined, runId);
+      } catch { /* ignore */ }
+    }
+  };
+
+  // Handle ask-user reply
+  const handleAskReply = async (answer: string) => {
+    if (!askUserRequest) return;
+    try {
+      await window.electronAPI.quest.replyAskUser(askUserRequest.requestId, answer);
+    } catch { /* ignore */ }
+    useQuestStore.getState().setAskUserRequest(null);
+  };
+
+  // Handle confirmation reply
+  const handleConfirmReply = async (approved: boolean, feedback?: string) => {
+    if (!confirmRequest) return;
+    try {
+      await window.electronAPI.quest.confirmReply(confirmRequest.requestId, approved, feedback);
+    } catch { /* ignore */ }
+    useQuestStore.getState().setConfirmRequest(null);
+  };
+
+  // Map QuestMessage to ChatMessage format for ChatMessageView
+  const mapToViewMessage = (msg: QuestMessage) => ({
+    id: msg.id,
+    role: msg.role as 'user' | 'assistant' | 'tool',
+    content: msg.content,
+    toolCalls: msg.toolCalls,
+    timestamp: msg.timestamp,
+  });
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2 border-b border-cp-border/30">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-white/80">
+            {activeTask?.title || 'Quest'}
+          </span>
+          {activeTask?.status === 'running' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400">
+              running
+            </span>
+          )}
+          {activeTask?.status === 'paused' && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">
+              paused
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {isStreaming && (
+            <button
+              onClick={handlePause}
+              className="text-[10px] px-2 py-0.5 rounded-md bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-colors"
+            >
+              Pause
+            </button>
+          )}
+          {activeTask?.status === 'paused' && !isStreaming && (
+            <button
+              onClick={handleResume}
+              className="text-[10px] px-2 py-0.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors"
+            >
+              Resume
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Model selector (compact) */}
+      <div className="shrink-0 border-b border-cp-border/30 px-2 py-1">
+        <ModelSelector />
+      </div>
+
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+          {/* Task progress and file changes - shown at top */}
+          <div className="space-y-2 sticky top-0 z-10 bg-cp-bg pb-4">
+            {/* Todo tracker - shows when there are todo items */}
+            <TodoTracker />
+            
+            {/* File change summary - shows after files have been changed */}
+            <QuestFileChangeSummary />
+          </div>
+
+          {messages.map((msg) => (
+            <ChatMessageView key={msg.id} message={mapToViewMessage(msg)} />
+          ))}
+
+          {/* Streaming response */}
+          {isStreaming && currentStreamText && (
+            <ChatMessageView
+              message={{
+                id: 'quest-streaming',
+                role: 'assistant',
+                content: currentStreamText,
+                timestamp: Date.now(),
+              }}
+            />
+          )}
+
+          {/* Thinking indicator */}
+          {isStreaming && !currentStreamText && (
+            <div className="flex items-center gap-2 text-white/80 text-sm py-2">
+              <div className="flex gap-1">
+                <span className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              <span>Thinking...</span>
+            </div>
+          )}
+
+          {/* Ask user inline prompt */}
+          {askUserRequest && (
+            <AskUserPrompt
+              question={askUserRequest.question}
+              onReply={handleAskReply}
+            />
+          )}
+
+          {/* Confirmation banner */}
+          {confirmRequest && (
+            <ConfirmBanner
+              request={confirmRequest}
+              onReply={handleConfirmReply}
+            />
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Context meter + compact */}
+      <div className="max-w-3xl mx-auto px-2 w-full">
+        <ContextMeter
+          cumulativeTokens={cumulativeTokens}
+          maxContextTokens={maxContextTokens}
+          isCompacting={isCompacting}
+          canCompact={messages.length >= 4 && cumulativeTokens >= 2000 && !isStreaming && !isCompacting}
+          onCompact={compactQuest}
+        />
+      </div>
+
+      {/* Bottom input */}
+      <div className="border-t border-cp-border/30 bg-cp-bg px-2 py-2">
+        <div className="max-w-3xl mx-auto">
+          <div
+            className={`bg-cp-panel border rounded-xl focus-within:border-white/30 transition-colors overflow-hidden relative ${
+              isDragging ? 'border-blue-500/60 bg-blue-500/5' : 'border-cp-border/60'
+            }`}
+            {...dragHandlers}
+          >
+            {/* Drag overlay */}
+            {isDragging && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-blue-500/10 rounded-xl pointer-events-none">
+                <span className="text-sm text-blue-400">Drop files here</span>
+              </div>
+            )}
+
+            {/* Context chips - 显示已添加的图片和文件 */}
+            {(images.length > 0 || mentionedFiles.length > 0 || selectedContexts.length > 0) && (
+              <div className="pt-1.5">
+                <ContextChips
+                  images={images}
+                  files={mentionedFiles}
+                  contexts={selectedContexts}
+                  onRemoveImage={removeImage}
+                  onRemoveFile={removeMention}
+                  onRemoveContext={removeContext}
+                />
+              </div>
+            )}
+
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => {
+                setText(e.target.value);
+                // Detect @ mention via new context selector
+                const cursorPos = e.target.selectionStart;
+                handleTextChange(e.target.value, cursorPos);
+              }}
+              onKeyDown={handleKeyDown}
+              onPaste={pasteHandler}
+              onClick={() => {
+                // Detect @ mention on click
+                if (textareaRef.current) {
+                  const cursorPos = textareaRef.current.selectionStart;
+                  handleTextChange(text, cursorPos);
+                }
+              }}
+              placeholder={chatMode === 'ask' ? '提问或粘贴代码... (@ 添加上下文, Enter 发送)' : '发送消息... (@ 添加上下文, Enter 发送)'}
+              rows={1}
+              className="w-full bg-transparent px-3 pt-2 pb-1 text-sm text-cp-text outline-none resize-none min-h-[40px] placeholder:text-cp-text-dim/40 leading-relaxed"
+            />
+
+            {/* Context Selector */}
+            {showSelector && (
+              <ContextSelector
+                show={showSelector}
+                scope="quest"
+                onDismiss={dismissSelector}
+                onSelect={(item) => handleSelect(item, text, setText)}
+                searchQuery={mentionQuery}
+                onQueryChange={setSearchQuery}
+              />
+            )}
+
+            {/* Bottom control bar */}
+            <div className="px-2 pb-1.5 flex items-center gap-1.5">
+              {/* Mode selector */}
+              <ChatModeSelector />
+              
+              {/* Spacer */}
+              <div className="flex-1" />
+              
+              {/* Input toolbar */}
+              <InputToolbar
+                onMention={() => openViaButton('file')}
+                onImage={triggerFileInput}
+                onVoice={() => toggleRecording(text)}
+                onPolish={async () => {
+                  if (text.trim()) {
+                    const polished = await polish(text);
+                    setText(polished);
+                  }
+                }}
+                onSend={() => { if (text.trim() || images.length > 0) handleSend(); }}
+                onStop={handleStop}
+                isStreaming={isStreaming}
+                isRecording={isRecording}
+                isPolishing={isPolishing}
+                canSend={!!text.trim() || images.length > 0}
+              />
+            </div>
+          </div>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={addImages}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Inline Sub-Components ---
+
+function AskUserPrompt({ question, onReply }: { question: string; onReply: (answer: string) => void }) {
+  const [answer, setAnswer] = useState('');
+
+  return (
+    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+      <p className="text-sm text-blue-300 mb-2">{question}</p>
+      <div className="flex gap-2">
+        <input
+          value={answer}
+          onChange={(e) => setAnswer(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && answer.trim()) { onReply(answer); setAnswer(''); } }}
+          placeholder="Type your answer..."
+          className="flex-1 bg-cp-panel border border-cp-border/40 rounded-md px-3 py-1.5 text-sm text-cp-text outline-none focus:border-blue-500/50 placeholder:text-cp-text-dim/50"
+          autoFocus
+        />
+        <button
+          onClick={() => { if (answer.trim()) { onReply(answer); setAnswer(''); } }}
+          className="px-3 py-1.5 rounded-md bg-blue-500/20 text-blue-300 text-xs hover:bg-blue-500/30 transition-colors"
+        >
+          Reply
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmBanner({
+  request,
+  onReply,
+}: {
+  request: NonNullable<ReturnType<typeof useQuestStore.getState>['confirmRequest']>;
+  onReply: (approved: boolean, feedback?: string) => void;
+}) {
+  return (
+    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex-1">
+          <p className="text-xs text-yellow-300 font-medium mb-1">
+            {request.type === 'bash' ? 'Command execution' : request.type === 'plan' ? 'Plan approval' : 'Tool execution'}
+          </p>
+          <p className="text-sm text-cp-text font-mono bg-black/20 rounded px-2 py-1 mb-2">
+            {request.command || request.toolName}
+          </p>
+        </div>
+      </div>
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={() => onReply(true)}
+          className="px-3 py-1 rounded-md bg-green-500/20 text-green-300 text-xs hover:bg-green-500/30 transition-colors"
+        >
+          Approve
+        </button>
+        <button
+          onClick={() => onReply(false)}
+          className="px-3 py-1 rounded-md bg-red-500/20 text-red-300 text-xs hover:bg-red-500/30 transition-colors"
+        >
+          Reject
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Quest-specific file change summary using useQuestDiffStore
+function QuestFileChangeSummary() {
+  const { fileChanges, acceptFile, rejectFile, acceptAll, rejectAll } = useQuestDiffStore();
+  const files = Object.values(fileChanges);
+  const [collapsed, setCollapsed] = useState(true);
+  const [countOnAppear, setCountOnAppear] = useState(0);
+  const [fileChangeBehavior, setFileChangeBehavior] = useState<string>('ask');
+
+  // Load file change behavior config on mount
+  useEffect(() => {
+    window.electronAPI.config.get().then((c: any) => {
+      const behavior = c?.quest?.fileChangeBehavior ?? 'ask';
+      setFileChangeBehavior(behavior);
+    }).catch(() => {});
+  }, []);
+
+  // Auto-collapse when new files appear, and auto-process if configured
+  useEffect(() => {
+    if (files.length > 0 && files.length !== countOnAppear) {
+      setCollapsed(true);
+      setCountOnAppear(files.length);
+
+      // Auto-process pending files based on config
+      const hasPending = files.some((f) => f.status === 'pending');
+      if (hasPending) {
+        if (fileChangeBehavior === 'auto-accept') {
+          acceptAll();
+        } else if (fileChangeBehavior === 'auto-reject') {
+          rejectAll();
+        }
+      }
+    }
+  }, [files.length, countOnAppear, fileChangeBehavior, acceptAll, rejectAll]);
+
+  if (files.length === 0) return null;
+
+  const pendingCount = files.filter((f) => f.status === 'pending').length;
+
+  return (
+    <div className="bg-white/[0.02] border border-cp-border/40 rounded-lg overflow-hidden">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-3 py-2">
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="flex items-center gap-1.5 text-xs text-white/80 font-medium hover:text-white transition-colors"
+        >
+          <svg
+            className={`w-3 h-3 transition-transform ${collapsed ? '' : 'rotate-90'}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+          {collapsed
+            ? <span>已折叠，{files.length} 项变更文件</span>
+            : <span>{files.length} 变更文件 {pendingCount > 0 && <span className="text-yellow-400 ml-1">({pendingCount} 待审查)</span>}</span>
+          }
+        </button>
+        {collapsed ? (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); acceptAll(); }}
+              className="text-[10px] px-2 py-0.5 rounded-md bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors"
+              title="全部接受"
+            >
+              全部接受
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); rejectAll(); }}
+              className="text-[10px] px-2 py-0.5 rounded-md bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors"
+              title="全部驳回"
+            >
+              全部驳回
+            </button>
+            <button
+              onClick={() => setCollapsed(false)}
+              className="text-[11px] text-white/70 hover:text-white transition-colors flex items-center gap-1"
+              title="展开查看"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+              展开
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={acceptAll}
+              className="text-[10px] px-2 py-0.5 rounded-md bg-green-500/15 text-green-400 hover:bg-green-500/25 transition-colors"
+            >
+              全部接受
+            </button>
+            <button
+              onClick={rejectAll}
+              className="text-[10px] px-2 py-0.5 rounded-md bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors"
+            >
+              全部驳回
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* File list (collapsible) */}
+      {!collapsed && (
+        <div className="border-t border-cp-border/30 divide-y divide-cp-border/20">
+          {files.map((file) => {
+            const fileName = file.filePath.split(/[\\\/]/).pop() || file.filePath;
+            const statusColor = file.status === 'pending' ? 'text-yellow-400' :
+                               file.status === 'accepted' ? 'text-green-400' : 'text-red-400';
+            return (
+              <div
+                key={file.filePath}
+                className="group flex items-center gap-2 px-3 py-1.5 hover:bg-white/[0.02] text-xs"
+              >
+                <span className="text-[10px] font-mono text-white/60 w-4 shrink-0">{file.isNewFile ? 'A' : 'M'}</span>
+                <span className="text-white/80 font-mono truncate flex-1" title={file.filePath}>
+                  {fileName}
+                </span>
+                <span className={`text-[10px] font-medium ${statusColor} shrink-0`}>+{file.addedLines || 0} -{file.removedLines || 0}</span>
+                {file.status === 'pending' ? (
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); acceptFile(file.filePath); }}
+                      className="w-5 h-5 flex items-center justify-center rounded text-green-400 hover:bg-green-500/15 text-[10px]"
+                      title="接受"
+                    >
+                      &#10003;
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); rejectFile(file.filePath); }}
+                      className="w-5 h-5 flex items-center justify-center rounded text-red-400 hover:bg-red-500/15 text-[10px]"
+                      title="驳回"
+                    >
+                      &#10005;
+                    </button>
+                  </div>
+                ) : (
+                  <span className={`text-[9px] ${statusColor} capitalize shrink-0`}>{file.status === 'accepted' ? '已接受' : '已驳回'}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+

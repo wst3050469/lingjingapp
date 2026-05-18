@@ -1,0 +1,118 @@
+name: Build Mobile APK
+
+on:
+  push:
+    tags:
+      - 'mobile-v*'
+  workflow_dispatch:
+    inputs:
+      buildType:
+        description: 'Build type'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  GRADLE_OPTS: -Xmx4096m
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Pre-install essential Android SDK components
+        run: |
+          set -e
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "SDK Manager:"
+          ls -la $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager || echo "No sdkmanager"
+          # Update SDK
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update 2>&1 | tail -3 || true
+          # Install SDK platforms (35 + 34) and build tools
+          for pkg in "platforms;android-35" "build-tools;35.0.0" "platforms;android-34" "build-tools;34.0.0"; do
+            echo "Installing $pkg..."
+            yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "$pkg" 2>&1 | tail -3 || echo "FAILED: $pkg"
+          done
+          echo "=== Installed SDK platforms ==="
+          ls -la $ANDROID_HOME/platforms/ 2>/dev/null
+          echo "=== Installed build tools ==="
+          ls -la $ANDROID_HOME/build-tools/ 2>/dev/null
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prebuild (generate android project)
+        run: npx expo prebuild --platform android --no-install
+
+
+      - name: Generate keystore and sign APK
+        run: |
+          cd android
+          keytool -genkey -v -keystore release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000 -storepass lingjing123 -keypass lingjing123 -dname "CN=LingJing, OU=Dev, O=LingJing, L=Hangzhou, ST=Zhejiang, C=CN"
+          ls -lh release.keystore
+          cat > patch_build.py << 'PYEOF'
+import re
+with open('app/build.gradle') as f:
+    c = f.read()
+c = c.replace('signingConfigs {', 'signingConfigs {\n        release {\n            storeFile file("release.keystore")\n            storePassword "lingjing123"\n            keyAlias "release"\n            keyPassword "lingjing123"\n        }')
+c = c.replace('buildTypes {\n        release {', 'buildTypes {\n        release {\n            signingConfig signingConfigs.release')
+with open('app/build.gradle', 'w') as f:
+    f.write(c)
+print("build.gradle patched")
+PYEOF
+          python3 patch_build.py
+          grep -A5 "signingConfigs" app/build.gradle | head -10
+
+      - name: Build APK
+        run: |
+          cd android
+          BUILD_TYPE="${{ github.event.inputs.buildType || 'release' }}"
+          echo "Building $BUILD_TYPE APK..."
+          if [ "$BUILD_TYPE" = "release" ]; then
+            ./gradlew assembleRelease 2>&1
+          else
+            ./gradlew assembleDebug 2>&1
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: lingjing-mobile-apk
+          path: android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: warn
+
+      - name: Show APK info
+        if: always()
+        run: find . -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No APK files found"

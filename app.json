@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "灵境IDE",
+    "slug": "lingjing-mobile",
+    "version": "1.40.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0d1117"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zhejiangjinmo.lingjing.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0d1117"
+      },
+      "package": "com.zhejiangjinmo.lingjing.mobile"
+    },
+    "plugins": [],
+    "extra": {
+      "eas": {
+        "projectId": "2c8f346b-10e0-4b26-b893-124eb212602f"
+      }
+    },
+    "owner": "wst3050469"
+  }
+}

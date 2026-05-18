@@ -90,6 +90,10 @@ export default {
       boxShadow: {
         'glow': '0 0 15px rgba(0, 122, 204, 0.5)',
         'glow-lg': '0 0 30px rgba(0, 122, 204, 0.5)',
+        'neon-sm': '0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2)',
+        'neon-md': '0 0 16px rgba(0, 212, 255, 0.5), 0 0 4px rgba(0, 212, 255, 0.3)',
+        'neon-purple': '0 0 8px rgba(168, 85, 247, 0.5), 0 0 2px rgba(168, 85, 247, 0.3)',
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
       },
       transitionDuration: {
         '400': '400ms',
@@ -103,11 +107,26 @@ export default {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
         'animate-in': 'fadeIn 0.3s ease-out',
+        'pulse-neon': 'pulseNeon 2s ease-in-out infinite',
+        'breathe': 'breathe 3s ease-in-out infinite',
+        'scan-line': 'scanLine 4s linear infinite',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0', transform: 'translateY(4px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        pulseNeon: {
+          '0%, 100%': { opacity: '1', filter: 'brightness(1)' },
+          '50%': { opacity: '0.85', filter: 'brightness(1.3)' },
+        },
+        breathe: {
+          '0%, 100%': { opacity: '0.4', transform: 'scale(1)' },
+          '50%': { opacity: '1', transform: 'scale(1.15)' },
+        },
+        scanLine: {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(100%)' },
         },
       },
     },

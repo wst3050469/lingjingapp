@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMultiFileEditStore } from '../../stores/multi-file-edit-store';
-import type { FileDiff, HunkDecision } from '@codepilot/core/multi-file-edit';
+import type { FileDiff } from '@codepilot/core/multi-file-edit';
 
 export const MultiFileDiffView: React.FC = () => {
   const { session, acceptFile, rejectFile } = useMultiFileEditStore();
@@ -27,7 +27,7 @@ export const MultiFileDiffView: React.FC = () => {
 };
 
 const FileDiffCard: React.FC<{ diff: FileDiff; onAccept: () => void; onReject: () => void }> = ({ diff, onAccept, onReject }) => {
-  const allDecided = diff.hunks.every(h => h.decision !== ('pending' as HunkDecision));
+  const allDecided = diff.hunks.every(h => h.decision !== 'pending');
 
   return (
     <div className="mb-4 border border-gray-200 dark:border-gray-700 rounded">
@@ -42,7 +42,7 @@ const FileDiffCard: React.FC<{ diff: FileDiff; onAccept: () => void; onReject: (
       </div>
       <pre className="p-3 text-xs overflow-x-auto font-mono">
         {diff.hunks.map(hunk => (
-          <div key={hunk.id} className={hunk.decision === ('accepted' as HunkDecision) ? 'bg-green-50 dark:bg-green-900/20' : hunk.decision === ('rejected' as HunkDecision) ? 'bg-red-50 dark:bg-red-900/20' : ''}>
+          <div key={hunk.id} className={hunk.decision === 'accepted' ? 'bg-green-50 dark:bg-green-900/20' : hunk.decision === 'rejected' ? 'bg-red-50 dark:bg-red-900/20' : ''}>
             {hunk.content.split('\n').map((line, i) => (
               <div key={i} className={line.startsWith('+') ? 'text-green-600' : line.startsWith('-') ? 'text-red-600' : ''}>
                 {line}

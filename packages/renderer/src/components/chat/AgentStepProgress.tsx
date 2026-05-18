@@ -21,7 +21,7 @@ export const AgentStepProgress: React.FC = () => {
                 <span className="flex-1 truncate">{step.description}</span>
                 {step.completedAt && step.startedAt && (
                   <span className="text-gray-400">
-                    {Math.round((step.completedAt.getTime() - step.startedAt.getTime()) / 1000)}s
+                    {Math.round((new Date(step.completedAt).getTime() - new Date(step.startedAt).getTime()) / 1000)}s
                   </span>
                 )}
               </div>

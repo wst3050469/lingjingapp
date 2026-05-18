@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Subscription, Plan } from '@lingjing/core';
+import type { Subscription, Plan } from '@codepilot/core';
 import { Button, Card, Badge, LoadingSpinner, EmptyState, SectionHeader, Progress } from '../common/components';
 
 export function SubscriptionPanel() {

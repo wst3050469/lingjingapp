@@ -27,7 +27,7 @@ export const TerminalSuggestionCard: React.FC<TerminalSuggestionCardProps> = ({ 
     <div className="border border-gray-200 dark:border-gray-700 rounded p-3 space-y-2">
       <div className="flex items-center justify-between">
         <code className="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{suggestion.command}</code>
-        <span className={`text-xs px-1.5 py-0.5 rounded ${riskColors[suggestion.riskLevel]}`}>{suggestion.riskLevel}</span>
+        <span className={`text-xs px-1.5 py-0.5 rounded ${riskColors[suggestion.riskLevel ?? '']}`}>{suggestion.riskLevel}</span>
       </div>
       <p className="text-xs text-gray-600 dark:text-gray-400">{suggestion.description}</p>
       {suggestion.estimatedTime && <p className="text-xs text-gray-500">预估时间: {suggestion.estimatedTime}</p>}

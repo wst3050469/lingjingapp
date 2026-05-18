@@ -26,7 +26,7 @@ export const AgentPlanView: React.FC = () => {
   );
 };
 
-const StepStatusBadge: React.FC<{ status: string }> = ({ status }) => {
+const StepStatusBadge: React.FC<{ status?: string }> = ({ status }) => {
   const colors: Record<string, string> = {
     pending: 'bg-gray-200 text-gray-600',
     running: 'bg-blue-200 text-blue-700',
@@ -34,5 +34,5 @@ const StepStatusBadge: React.FC<{ status: string }> = ({ status }) => {
     failed: 'bg-red-200 text-red-700',
     skipped: 'bg-gray-100 text-gray-400',
   };
-  return <span className={`px-1.5 py-0.5 rounded text-[10px] ${colors[status] ?? ''}`}>{status}</span>;
+  return <span className={`px-1.5 py-0.5 rounded text-[10px] ${colors[status ?? ''] ?? ''}`}>{status}</span>;
 };

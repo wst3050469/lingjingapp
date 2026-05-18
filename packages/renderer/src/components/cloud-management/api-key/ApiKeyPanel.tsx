@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { ApiKey, ApiKeyStats } from '@lingjing/core';
+import type { ApiKey, ApiKeyStats } from '@codepilot/core';
 import { Button, Card, Badge, LoadingSpinner, EmptyState, Input, SectionHeader, StatCard } from '../common/components';
 
 export function ApiKeyPanel() {

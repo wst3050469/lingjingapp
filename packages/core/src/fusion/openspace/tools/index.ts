@@ -31,6 +31,9 @@ const querySceneParams: JSONSchema = {
   },
 };
 
+/**
+ * Create the openspace_execute tool — sends a script to the connected OpenSpace instance.
+ */
 export function createOpenSpaceExecuteTool(bridge: OpenSpaceBridge): Tool {
   return {
     name: 'openspace_execute',
@@ -66,6 +69,9 @@ export function createOpenSpaceExecuteTool(bridge: OpenSpaceBridge): Tool {
   };
 }
 
+/**
+ * Create the openspace_query tool — queries OpenSpace scene context or process health.
+ */
 export function createOpenSpaceQueryTool(
   bridge: OpenSpaceBridge,
   processManager: OpenSpaceProcessManager,
@@ -94,6 +100,7 @@ export function createOpenSpaceQueryTool(
           };
         }
 
+        // Default: scene context
         if (!bridge.isConnected) {
           return { content: 'OpenSpace is not connected.', isError: true };
         }
@@ -114,6 +121,9 @@ export interface OpenSpaceToolSet {
   openspace_query: Tool;
 }
 
+/**
+ * Create the full OpenSpace tool set.
+ */
 export function createOpenSpaceToolSet(
   bridge: OpenSpaceBridge,
   processManager: OpenSpaceProcessManager,

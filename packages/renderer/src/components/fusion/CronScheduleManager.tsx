@@ -9,14 +9,6 @@ interface CronSchedule {
   enabled: boolean;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-    };
-  }
-}
-
 export const CronScheduleManager: React.FC = () => {
   const [schedules, setSchedules] = useState<CronSchedule[]>([]);
   const [nlInput, setNlInput] = useState('');

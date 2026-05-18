@@ -67,7 +67,7 @@ export class NextDisplayManager {
     const lineHeight = this.editor.getOption(66 /* EditorOption.lineHeight */);
 
     // Create a ViewZone below the current line
-    this.editor.changeViewZones((accessor) => {
+    this.editor.changeViewZones((accessor: any) => {
       const domNode = document.createElement('div');
       domNode.className = 'next-sidebyside-zone';
       domNode.style.cssText = `
@@ -121,7 +121,7 @@ export class NextDisplayManager {
    */
   clear(): void {
     if (this.currentViewZoneId !== null) {
-      this.editor.changeViewZones((accessor) => {
+      this.editor.changeViewZones((accessor: any) => {
         if (this.currentViewZoneId !== null) {
           accessor.removeZone(this.currentViewZoneId);
           this.currentViewZoneId = null;

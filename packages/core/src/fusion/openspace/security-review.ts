@@ -79,7 +79,7 @@ export function reviewScript(script: string, language: ScriptLanguage): Security
   }
 
   return {
-    passed: riskLevel === 'none' || riskLevel === 'low' || riskLevel === 'medium',
+    passed: violations.length === 0 || riskLevel === 'none' || riskLevel === 'low',
     riskLevel,
     violations,
   };

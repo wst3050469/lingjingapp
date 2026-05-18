@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { StorageStats, StorageFile } from '@lingjing/core';
+import type { StorageStats, StorageFile } from '@codepilot/core';
 import { Card, LoadingSpinner, EmptyState, SectionHeader, Progress } from '../common/components';
 
 function formatBytes(bytes: number): string {

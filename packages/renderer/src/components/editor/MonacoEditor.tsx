@@ -119,7 +119,7 @@ export function MonacoEditor({ path, language, value, onChange }: MonacoEditorPr
       contextMenuGroupId: '9_cutcopypaste',
       contextMenuOrder: 10,
       precondition: 'editorHasSelection',
-      run: (ed) => handleSendToChat(ed as any),
+      run: (ed: any) => handleSendToChat(ed as any),
     });
 
     // Context menu: Send entire file to Chat
@@ -128,7 +128,7 @@ export function MonacoEditor({ path, language, value, onChange }: MonacoEditorPr
       label: '发送整个文件到聊天',
       contextMenuGroupId: '9_cutcopypaste',
       contextMenuOrder: 11,
-      run: (ed) => handleSendFileToChat(ed as any),
+      run: (ed: any) => handleSendFileToChat(ed as any),
     });
 
     // --- Inline Chat: Ctrl+I to open ---
@@ -158,7 +158,7 @@ export function MonacoEditor({ path, language, value, onChange }: MonacoEditorPr
     }
 
     // --- NEXT: Track content changes for context-aware predictions ---
-    const changeDisposable = editor.onDidChangeModelContent((e) => {
+    const changeDisposable = editor.onDidChangeModelContent((e: any) => {
       for (const change of e.changes) {
         if (change.text || change.rangeLength > 0) {
           const oldText = change.rangeLength > 0
@@ -177,7 +177,7 @@ export function MonacoEditor({ path, language, value, onChange }: MonacoEditorPr
     // --- NEXT: Alt key preview (show full diff) ---
     let altPreviewActive = false;
 
-    const keyDownDisposable = editor.onKeyDown((e) => {
+    const keyDownDisposable = editor.onKeyDown((e: any) => {
       if (e.keyCode === monaco.KeyCode.Alt && !altPreviewActive) {
         altPreviewActive = true;
         // When Alt is pressed, show a subtle visual indicator
@@ -206,7 +206,7 @@ export function MonacoEditor({ path, language, value, onChange }: MonacoEditorPr
       }
     });
 
-    const keyUpDisposable = editor.onKeyUp((e) => {
+    const keyUpDisposable = editor.onKeyUp((e: any) => {
       if (e.keyCode === monaco.KeyCode.Alt && altPreviewActive) {
         altPreviewActive = false;
         decorationsRef.current = editor.deltaDecorations(decorationsRef.current, []);

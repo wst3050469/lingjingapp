@@ -9,14 +9,6 @@ interface UserProfile {
   lastUpdated: number;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-    };
-  }
-}
-
 const TAG_COLORS = [
   'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',

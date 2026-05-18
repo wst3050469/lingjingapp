@@ -17,7 +17,7 @@ on:
 
 env:
   ANDROID_HOME: /usr/local/lib/android/sdk
-  GRADLE_OPTS: -Xmx4096m
+  GRADLE_OPTS: -Xmx2048m -Dorg.gradle.daemon=false
 
 jobs:
   build:
@@ -54,21 +54,13 @@ jobs:
 
       - name: Pre-install essential Android SDK components
         run: |
-          set -e
           echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "SDK Manager:"
-          ls -la $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager || echo "No sdkmanager"
-          # Update SDK
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --update 2>&1 | tail -3 || true
-          # Install SDK platforms (35 + 34) and build tools
-          for pkg in "platforms;android-35" "build-tools;35.0.0" "platforms;android-34" "build-tools;34.0.0"; do
-            echo "Installing $pkg..."
-            yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "$pkg" 2>&1 | tail -3 || echo "FAILED: $pkg"
-          done
-          echo "=== Installed SDK platforms ==="
-          ls -la $ANDROID_HOME/platforms/ 2>/dev/null
-          echo "=== Installed build tools ==="
-          ls -la $ANDROID_HOME/build-tools/ 2>/dev/null
+          ls -la $ANDROID_HOME/ || true
+          ls -la $ANDROID_HOME/platforms/ 2>/dev/null || echo "No platforms yet"
+          ls -la $ANDROID_HOME/build-tools/ 2>/dev/null || echo "No build-tools yet"
+          # Install commonly needed SDK versions
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" 2>&1 | tail -5 || true
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0" 2>&1 | tail -5 || true
 
       - name: Install dependencies
         run: npm ci
@@ -76,24 +68,76 @@ jobs:
       - name: Prebuild (generate android project)
         run: npx expo prebuild --platform android --no-install
 
-
-      - name: Generate keystore and sign APK
+      - name: Setup release keystore
         run: |
-          cd android
-          keytool -genkey -v -keystore release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000 -storepass lingjing123 -keypass lingjing123 -dname "CN=LingJing, OU=Dev, O=LingJing, L=Hangzhou, ST=Zhejiang, C=CN"
-          ls -lh release.keystore
-          cat > patch_build.py << 'PYEOF'
-import re
-with open('app/build.gradle') as f:
-    c = f.read()
-c = c.replace('signingConfigs {', 'signingConfigs {\n        release {\n            storeFile file("release.keystore")\n            storePassword "lingjing123"\n            keyAlias "release"\n            keyPassword "lingjing123"\n        }')
-c = c.replace('buildTypes {\n        release {', 'buildTypes {\n        release {\n            signingConfig signingConfigs.release')
-with open('app/build.gradle', 'w') as f:
-    f.write(c)
-print("build.gradle patched")
-PYEOF
-          python3 patch_build.py
-          grep -A5 "signingConfigs" app/build.gradle | head -10
+          # Generate a keystore for signing the release APK
+          # This ensures the APK is properly signed (fixes install stuck at 85%)
+          KEYSTORE_DIR="android/app"
+          KEYSTORE_FILE="$KEYSTORE_DIR/release.keystore"
+          mkdir -p "$KEYSTORE_DIR"
+          
+          # Generate keystore with keytool
+          keytool -genkey -v \
+            -keystore "$KEYSTORE_FILE" \
+            -alias release \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass lingjing123 \
+            -keypass lingjing123 \
+            -dname "CN=LingJing, OU=Development, O=Zhejiang Jinmo, L=Hangzhou, ST=Zhejiang, C=CN" \
+            -noprompt
+          
+          echo "Keystore generated at $KEYSTORE_FILE"
+          ls -lh "$KEYSTORE_FILE"
+          
+          # Create keystore.properties for Gradle
+          cat > "$KEYSTORE_DIR/keystore.properties" << EOF
+          storeFile=release.keystore
+          storePassword=lingjing123
+          keyAlias=release
+          keyPassword=lingjing123
+          EOF
+          
+          echo "keystore.properties created"
+
+      - name: Patch build.gradle for release signing
+        run: |
+          BUILD_GRADLE="android/app/build.gradle"
+          if [ -f "$BUILD_GRADLE" ]; then
+            # Add keystore properties loading and release signing config
+            # Insert after android { block
+            cat >> "$BUILD_GRADLE" << 'PATCH'
+            
+// [CI] Load keystore for release signing
+def keystorePropertiesFile = rootProject.file("app/keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+}
+PATCH
+            echo "build.gradle patched with release signing config"
+          else
+            echo "WARNING: build.gradle not found at $BUILD_GRADLE"
+          fi
 
       - name: Build APK
         run: |
@@ -101,9 +145,28 @@ PYEOF
           BUILD_TYPE="${{ github.event.inputs.buildType || 'release' }}"
           echo "Building $BUILD_TYPE APK..."
           if [ "$BUILD_TYPE" = "release" ]; then
-            ./gradlew assembleRelease 2>&1
+            ./gradlew assembleRelease --no-daemon 2>&1
           else
-            ./gradlew assembleDebug 2>&1
+            ./gradlew assembleDebug --no-daemon 2>&1
+          fi
+
+      - name: Verify APK signing
+        run: |
+          APK_FILE=$(find android -name "*-release.apk" -o -name "*-debug.apk" | head -1)
+          if [ -n "$APK_FILE" ]; then
+            echo "Verifying signing for: $APK_FILE"
+            # Check if apksigner is available
+            APKSIGNER="$ANDROID_HOME/build-tools/*/apksigner"
+            for f in $APKSIGNER; do
+              if [ -f "$f" ]; then
+                $f verify --print-certs "$APK_FILE" 2>&1 || echo "WARNING: apksigner verify failed"
+                break
+              fi
+            done
+            # Alternative: use jarsigner to check
+            jarsigner -verify -verbose "$APK_FILE" 2>&1 | head -20 || echo "WARNING: jarsigner check failed"
+          else
+            echo "No APK file found for verification"
           fi
 
       - name: Upload APK
@@ -111,7 +174,7 @@ PYEOF
         with:
           name: lingjing-mobile-apk
           path: android/app/build/outputs/apk/**/*.apk
-          if-no-files-found: warn
+          if-no-files-found: error
 
       - name: Show APK info
         if: always()

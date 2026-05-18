@@ -32,7 +32,7 @@ export function DiffEditorView() {
   const clearViewZones = useCallback(() => {
     if (editorRef.current && viewZoneIds.current.length > 0) {
       const modifiedEditor = editorRef.current.getModifiedEditor();
-      modifiedEditor.changeViewZones((accessor) => {
+      modifiedEditor.changeViewZones((accessor: any) => {
         for (const id of viewZoneIds.current) {
           accessor.removeZone(id);
         }
@@ -49,7 +49,7 @@ export function DiffEditorView() {
     const lineChanges = editorRef.current.getLineChanges();
     if (!lineChanges || lineChanges.length === 0) return;
 
-    modifiedEditor.changeViewZones((accessor) => {
+    modifiedEditor.changeViewZones((accessor: any) => {
       // Map line changes to hunks by position
       for (let i = 0; i < fc.hunks.length && i < lineChanges.length; i++) {
         const hunk = fc.hunks[i];

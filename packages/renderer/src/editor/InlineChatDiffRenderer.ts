@@ -140,7 +140,7 @@ export class InlineChatDiffRenderer {
     // Add ViewZones for added lines
     if (addedBlocks.length > 0) {
       const lineHeight = this.editor.getOption(66 /* EditorOption.lineHeight */);
-      this.editor.changeViewZones((accessor) => {
+      this.editor.changeViewZones((accessor: any) => {
         for (const block of addedBlocks) {
           const domNode = document.createElement('div');
           domNode.style.cssText = `
@@ -179,7 +179,7 @@ export class InlineChatDiffRenderer {
     const lines = text.split('\n');
     const lineHeight = this.editor.getOption(66 /* EditorOption.lineHeight */);
 
-    this.editor.changeViewZones((accessor) => {
+    this.editor.changeViewZones((accessor: any) => {
       const domNode = document.createElement('div');
       domNode.style.cssText = `
         background: rgba(46, 160, 67, 0.1);
@@ -212,7 +212,7 @@ export class InlineChatDiffRenderer {
   showActionBar(afterLine: number, callbacks: ActionBarCallbacks): void {
     const lineHeight = this.editor.getOption(66 /* EditorOption.lineHeight */);
 
-    this.editor.changeViewZones((accessor) => {
+    this.editor.changeViewZones((accessor: any) => {
       const domNode = document.createElement('div');
       domNode.style.cssText = `
         display: flex;
@@ -293,7 +293,7 @@ export class InlineChatDiffRenderer {
     }
 
     if (this.viewZoneIds.length > 0) {
-      this.editor.changeViewZones((accessor) => {
+      this.editor.changeViewZones((accessor: any) => {
         for (const id of this.viewZoneIds) {
           accessor.removeZone(id);
         }

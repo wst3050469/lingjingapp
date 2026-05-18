@@ -156,7 +156,7 @@ export function useQuestEvents(): void {
           break;
 
         // File snapshot for diff review
-        case 'file_snapshot':
+                case 'file_snapshot':
           if (event.filePath && event.afterContent !== undefined) {
             useQuestDiffStore.getState().addFileChange(
               event.filePath,
@@ -165,10 +165,17 @@ export function useQuestEvents(): void {
               event.toolName || '',
               event.isNewFile ?? false
             );
+
+            // Auto-accept file changes when task is in auto mode
+            if (event.taskId) {
+              const currentTask = useQuestStore.getState().tasks.find((t) => t.id === event.taskId);
+              if (currentTask?.autoMode === 'auto') {
+                useQuestDiffStore.getState().acceptFile(event.filePath);
+              }
+            }
           }
           break;
-
-        // Todo state sync
+// Todo state sync
         case 'todo_update':
           if (event.items) {
             useTodoStore.getState().setItems(event.items);

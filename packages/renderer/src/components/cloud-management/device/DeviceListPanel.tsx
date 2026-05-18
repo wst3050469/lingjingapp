@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Device } from '@lingjing/core';
+import type { Device } from '@codepilot/core';
 import { Button, Card, Badge, EmptyState, LoadingSpinner, Input, SectionHeader } from '../common/components';
 
 function SyncStatusIcon({ status }: { status: Device['syncStatus'] }) {

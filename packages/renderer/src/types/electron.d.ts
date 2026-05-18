@@ -482,6 +482,34 @@ declare interface Window {
 }
 
 // Module declarations for @codepilot/core subpath exports
+
+declare module '@codepilot/core/checkpoint' {
+  export interface Checkpoint { id: string; description: string; createdAt: string; files: string[]; timestamp?: string }
+  export function create(files: string[], description: string): Promise<Checkpoint>;
+  export function list(): Promise<Checkpoint[]>;
+  export function get(id: string): Promise<Checkpoint>;
+  export function rollback(id: string, strategy?: 'force' | 'preserve-manual-edits'): Promise<any>;
+  export interface RollbackResult { success: boolean; restoredFiles: string[]; errors?: string[]; conflicts?: string[]; message?: string }
+}
+
+declare module '@codepilot/core/context' {
+  export interface ContextFile { id: string; type: string; label: string; path: string; content?: string }
+  export function searchFiles(query: string, type: 'file' | 'folder'): Promise<ContextFile[]>;
+  export function parseDocument(filePath: string): Promise<any>;
+  export interface ContextUsage { used: number; total: number; percentage: number; utilizationPercent?: number; usedTokens?: number; maxTokens?: number }
+}
+
+declare module '@codepilot/core/completion' {
+  export interface CompletionResult { text: string; score: number }
+  export function generate(params: any): Promise<CompletionResult>;
+  export type CompletionSessionState = "inactive" | "active" | "loading" | "error" | "completed" | "streaming" | "idle";
+}
+
+declare module '@codepilot/core/intent' {
+  export type IntentType = 'chat' | 'edit' | 'command' | 'search' | 'agent';
+  export function detectIntent(input: string): Promise<{ intent: IntentType; confidence: number }>;
+  export type IntentMode = 'ask' | 'agent' | 'experts' | 'coding' | 'browsing' | 'debugging';
+}
 declare module '@codepilot/core/terminal-suggester' {
   export interface TerminalSuggestion { command: string; description: string; confidence: number; riskLevel?: string; estimatedTime?: string }
   export function suggest(input: string, context?: any): Promise<TerminalSuggestion[]>;
@@ -495,7 +523,7 @@ declare module '@codepilot/core/auto-fix' {
 
 declare module '@codepilot/core/multi-file-edit' {
   export interface MultiFileEdit { files: Array<{ path: string; edits: Array<{ range: [number, number, number, number]; text: string }> }> }
-  export interface FileDiff { filePath: string; path: string; hasConflict?: boolean; hunks: Array<{ id?: string; oldStart: number; oldLines: number; newStart: number; newLines: number; lines: Array<{ type: string; content: string }>; decision?: string; content?: string }> }
+  export interface FileDiff { filePath: string; path: string; hasConflict?: boolean; hunks: Array<{ id?: string; oldStart: number; oldLines: number; newStart: number; newLines: number; lines: Array<{ type: string; content: string }>; decision?: string; content: string }> }
   export interface HunkDecision { hunkIndex: number; decision: "accept" | "reject" | "edit"; editedContent?: string }
   export interface MultiFileEditSession { files: FileDiff[]; decisions?: HunkDecision[] }
   export interface ApplyResult { success: boolean; errors?: Array<{ file: string; error: string }> }
@@ -504,7 +532,7 @@ declare module '@codepilot/core/multi-file-edit' {
 
 declare module '@codepilot/core/agent-mode' {
   export type AgentMode = 'auto' | 'spec' | 'plan' | 'implement' | 'review';
-  export interface ExecutionPlan { steps: Array<{ id: string; action: string; params: any; description?: string; status?: string; isHighRisk?: boolean }>; completedSteps?: number; totalSteps?: number }
+  export interface ExecutionPlan { steps: Array<{ id: string; action: string; params: any; description?: string; status?: string; isHighRisk?: boolean; completedAt?: string; startedAt?: string }>; completedSteps?: number; totalSteps?: number }
   export type AgentExecutionState = string;
   export interface StepProgressEvent { stepId: string; status: string; result?: any; output?: any }
   export function detectMode(input: string): AgentMode;
@@ -513,8 +541,8 @@ declare module '@codepilot/core/agent-mode' {
 declare module '@codepilot/core/voice' {
   export type VoiceSessionState = 'idle' | 'recording' | 'recognizing' | 'processing' | 'broadcasting' | 'confirming';
   export type InteractionMode = 'text' | 'voice' | 'hybrid';
-  export type ASREngineType = 'local' | 'cloud';
-  export type TTSEngineType = 'local' | 'cloud';
+  export type ASREngineType = 'local' | 'cloud' | 'web-speech';
+  export type TTSEngineType = 'local' | 'cloud' | 'web-speech';
   export type VoiceSessionEvent = string;
   export interface VoiceEngineConfig { engine: string; language?: string }
   export interface ASRResult { transcript: string; confidence: number; isFinal: boolean }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { LoginRecord } from '@lingjing/core';
+import type { LoginRecord } from '@codepilot/core';
 
 function SectionHeader({ title }: { title: string }) {
   return (

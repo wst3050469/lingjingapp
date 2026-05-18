@@ -11,9 +11,7 @@
     "resolveJsonModule": true,
     "declaration": false,
     "sourceMap": false,
-    "noImplicitAny": false,
-    "lib": ["ES2022"],
-    "downlevelIteration": true
+    "noImplicitAny": false
   },
   "include": ["src/**/*.ts", "types/**/*.d.ts"],
   "exclude": ["node_modules", "dist", "../core"]

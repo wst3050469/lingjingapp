@@ -123,7 +123,7 @@ export class InlineChatController {
     this.renderWidget(scenario, false, getOpenFiles());
 
     // Add ViewZone
-    this.editor.changeViewZones((accessor) => {
+    this.editor.changeViewZones((accessor: any) => {
       const id = accessor.addZone({
         afterLineNumber: afterLine,
         heightInLines: 3,
@@ -413,7 +413,7 @@ export class InlineChatController {
 
   private removeWidgetViewZone(): void {
     if (this.widgetZoneId !== null) {
-      this.editor.changeViewZones((accessor) => {
+      this.editor.changeViewZones((accessor: any) => {
         if (this.widgetZoneId !== null) {
           accessor.removeZone(this.widgetZoneId);
           this.widgetZoneId = null;

@@ -90,7 +90,7 @@ export class NextDiffWidget {
     const lines = text.split('\n');
     const lineHeight = this.editor.getOption(66 /* EditorOption.lineHeight */);
 
-    this.editor.changeViewZones((accessor) => {
+    this.editor.changeViewZones((accessor: any) => {
       const domNode = document.createElement('div');
       domNode.className = 'next-diff-added-zone';
       domNode.style.cssText = `
@@ -127,7 +127,7 @@ export class NextDiffWidget {
     }
 
     if (this.viewZoneIds.length > 0) {
-      this.editor.changeViewZones((accessor) => {
+      this.editor.changeViewZones((accessor: any) => {
         for (const id of this.viewZoneIds) {
           accessor.removeZone(id);
         }

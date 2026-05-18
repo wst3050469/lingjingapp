@@ -1,0 +1,15 @@
+{
+  "version": "1.42.0",
+  "releaseDate": "2026-05-18T07:59:00.000Z",
+  "description": "Hermes Fusion 集成增强",
+  "files": {
+    "win-x64": {
+      "Setup": "灵境 Setup 1.42.0.exe",
+      "Portable": "LingJing-Portable-1.42.0-win-x64.exe"
+    },
+    "linux-x64": {
+      "AppImage": "LingJing-1.42.0-linux-x86_64.AppImage",
+      "deb": "LingJing-1.42.0-linux-x86_64.deb"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { SecuritySettings } from '@lingjing/core';
+import type { SecuritySettings } from '@codepilot/core';
 
 function SectionHeader({ title }: { title: string }) {
   return (

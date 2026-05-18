@@ -12,14 +12,6 @@ interface DAGEdgeView {
   to: string;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-    };
-  }
-}
-
 const STATUS_COLORS: Record<string, string> = {
   pending: 'fill-gray-300',
   running: 'fill-yellow-400',

@@ -55,7 +55,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   const inputClasses = clsx(
     'w-full',
     'rounded-md border',
-    'text-neutral-100 placeholder-neutral-500',
+    'text-cp-text placeholder-neutral-500',
     'transition-all duration-200',
     'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
     variantStyles[variant],

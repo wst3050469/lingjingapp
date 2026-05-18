@@ -1,0 +1,76 @@
+{
+  "latest": "1.26.0",
+  "versions": [
+    {
+      "version": "1.26.0",
+      "releaseDate": "2026-05-14T03:08:49.873Z",
+      "releaseNotes": "商业订阅收费体系 + 全平台发布: 订阅系统、支付网关、配额管理、Windows/Linux 安装包",
+      "files": {
+        "installer": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.26.0-win-x64.exe",
+        "portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.26.0-win-x64-portable.exe",
+        "linux-x86_64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.26.0-linux-x86_64.AppImage",
+        "linux-amd64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.26.0-linux-amd64.deb",
+        "mobile": "https://ide.zhejiangjinmo.com/download#mobile"
+      },
+      "sha512": "25O41vCe7jbs3DBEZFn9GeJt9y6xSglQs9GLNzWjG8HcmUYfMKdVbRVYaCbXm3/7zKdImFbwHBWL7v70ymx99g==",
+      "size": 93845274,
+      "features": [
+        "商业订阅收费体系",
+        "支付网关（支付宝/微信/对公打款）",
+        "配额管理（API/存储/会话/记忆体/密钥）",
+        "全平台分发（Windows/Linux）",
+        "自动更新机制"
+      ]
+    },
+    {
+      "version": "1.4.1",
+    {
+      "version": "1.4.0",
+      "releaseDate": "2026-05-07T18:00:00.000Z",
+      "releaseNotes": "工作流引擎集成版 - 工作流引擎 + Connector + 触发器 + 批量处理 + 可视化编辑器 + 移动端App",
+      "files": {
+        "installer": "https://zhejiangjinmo.oss-cn-shenzhen.aliyuncs.com/releases/1.4.0/LingJing-Setup-1.4.0-win-x64.exe",
+        "portable": "https://zhejiangjinmo.oss-cn-shenzhen.aliyuncs.com/releases/1.4.0/LingJing-1.4.0-win-x64-portable.exe",
+        "mobile_url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-1.0.0.apk"
+      },
+      "sha512": "TBD",
+      "size": 93327132,
+      "features": [
+        "工作流引擎",
+        "Connector系统",
+        "触发器系统",
+        "批量处理",
+        "可视化编辑器",
+        "移动端App"
+      ]
+    },
+    {
+      "version": "1.2.6",
+      "releaseDate": "2026-05-06T20:10:00.000Z",
+      "releaseNotes": "修复版本检测、MCP安装、Quest生命周期和管理页面问题",
+      "files": {
+        "installer": "https://zhejiangjinmo.oss-cn-shenzhen.aliyuncs.com/releases/1.2.6/LingJing-Setup-1.2.6-win-x64.exe"
+      },
+      "sha512": "TBD",
+      "size": 0
+    },
+    {
+      "version": "1.0.0-mobile",
+      "releaseDate": "2026-05-07T16:41:00.000Z",
+      "releaseNotes": "灵境IDE Mobile v1.0.0 - 首个移动端正式版",
+      "files": {
+        "apk": "https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-1.0.0.apk",
+        "platform": "android"
+      },
+      "sha512": "TBD",
+      "size": 69431589,
+      "features": [
+        "AI 对话",
+        "任务管理",
+        "计划追踪",
+        "代码编辑",
+        "云端同步"
+      ]
+    }
+  ]
+}

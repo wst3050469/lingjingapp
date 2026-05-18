@@ -8,6 +8,7 @@ const variantStyles = {
   outline: 'border border-neutral-600 hover:bg-neutral-800 text-neutral-200',
   ghost: 'hover:bg-neutral-800 text-neutral-200',
   danger: 'bg-error-dark hover:bg-opacity-90 active:bg-opacity-80 text-white',
+  neon: 'bg-transparent border border-[#00d4ff] text-[#00d4ff] shadow-neon-sm hover:bg-[#00d4ff]/10',
 };
 
 const sizeStyles = {

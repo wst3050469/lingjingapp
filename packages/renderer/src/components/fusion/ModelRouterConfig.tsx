@@ -11,14 +11,6 @@ interface RouteRule {
   enabled: boolean;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-    };
-  }
-}
-
 export const ModelRouterConfig: React.FC = () => {
   const [rules, setRules] = useState<RouteRule[]>([]);
   const [auditLogs, setAuditLogs] = useState<unknown[]>([]);

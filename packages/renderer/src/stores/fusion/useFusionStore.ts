@@ -13,14 +13,6 @@ interface FusionState {
   toggleModule: (moduleName: string, enabled: boolean) => Promise<void>;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-    };
-  }
-}
-
 async function ipcInvoke(channel: string, ...args: unknown[]): Promise<unknown> {
   if (!window.electronAPI?.invoke) {
     throw new Error('electronAPI not available');

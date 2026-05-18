@@ -341,3 +341,289 @@ html.light .hljs {
 .next-diff-modify {
   background: rgba(210, 153, 34, 0.12) !important;
 }
+
+/* ======================================================================
+   SCIFI-DARK THEME — 科技感暗色主题覆盖
+   通过 [data-theme="scifi-dark"] 属性选择器作用
+   ====================================================================== */
+
+/* --- SCIFI-DARK 主题变量 --- */
+[data-theme="scifi-dark"] {
+  --cp-bg: #0a0e1a;
+  --cp-sidebar: #0d1220;
+  --cp-editor: #0a0e1a;
+  --cp-panel: #0d1220;
+  --cp-statusbar: #00d4ff;
+  --cp-activitybar: #070b14;
+  --cp-tab-active: #0a0e1a;
+  --cp-tab-inactive: #0d1220;
+  --cp-border: rgba(0, 212, 255, 0.08);
+  --cp-text: #e2e8f0;
+  --cp-text-dim: #94a3b8;
+  --cp-accent: #00d4ff;
+  --cp-success: #22d3ee;
+  --cp-error: #f43f5e;
+  --cp-warning: #fbbf24;
+  --cp-info: #38bdf8;
+  --cp-surface: rgba(0, 212, 255, 0.05);
+}
+
+/* --- T-UI07: ChatModeSelector 美化 --- */
+[data-theme="scifi-dark"] .flex.items-center.gap-0\.5.bg-white\/\[0\.04\] {
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  border-radius: 0.5rem;
+}
+
+[data-theme="scifi-dark"] .flex.items-center.gap-0\.5.bg-white\/\[0\.04\] button.bg-cp-accent {
+  background: rgba(0, 212, 255, 0.1) !important;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+  color: #00d4ff !important;
+}
+
+[data-theme="scifi-dark"] .flex.items-center.gap-0\.5.bg-white\/\[0\.04\] button:not(.bg-cp-accent):not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* --- T-UI08: ModelSelector 美化 --- */
+/* 下拉面板 glass-panel */
+[data-theme="scifi-dark"] .absolute.top-full.left-0.mt-1.w-80.bg-cp-panel {
+  background: rgba(13, 18, 32, 0.85) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Provider分组头 - purple neon */
+[data-theme="scifi-dark"] .px-3.py-1\.5.text-\[10px\].text-cp-text-dim.uppercase.tracking-wide {
+  color: #a855f7 !important;
+  text-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+/* 选中模型项 */
+[data-theme="scifi-dark"] button.text-cp-accent.w-full {
+  border-left: 2px solid #00d4ff;
+  background: rgba(0, 212, 255, 0.05) !important;
+}
+
+/* 模型项 hover */
+[data-theme="scifi-dark"] button.w-full.text-left.px-3.py-1\.5:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  transition: all 150ms ease;
+}
+
+/* --- T-UI09: ContextSelector 美化 --- */
+/* 弹出面板 glass-panel */
+[data-theme="scifi-dark"] .absolute.bottom-full.bg-cp-panel {
+  background: rgba(13, 18, 32, 0.85) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 搜索框 glass-input + focus neon */
+[data-theme="scifi-dark"] .absolute.bottom-full .bg-transparent.outline-none {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.375rem;
+}
+
+[data-theme="scifi-dark"] .absolute.bottom-full .bg-transparent.outline-none:focus {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* Tab栏选中 */
+[data-theme="scifi-dark"] .flex.gap-1.p-2 button.bg-cp-accent\/20 {
+  border-bottom: 2px solid #00d4ff !important;
+  color: #00d4ff !important;
+}
+
+/* Tab栏未选中 hover */
+[data-theme="scifi-dark"] .flex.gap-1.p-2 button:not(.bg-cp-accent\/20):hover {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* --- T-UI10: ActivityBar 美化 --- */
+[data-theme="scifi-dark"] .w-12.bg-cp-activitybar {
+  background: #070b14 !important;
+  border-right-color: rgba(0, 212, 255, 0.05) !important;
+}
+
+/* 选中图标 */
+[data-theme="scifi-dark"] .w-12.bg-cp-activitybar button.text-cp-text {
+  color: #00d4ff !important;
+  animation: pulseNeon 2s ease-in-out infinite;
+}
+
+/* 未选中图标 hover */
+[data-theme="scifi-dark"] .w-12.bg-cp-activitybar button:not(.text-cp-text):hover {
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: all 150ms ease;
+}
+
+/* Active indicator bar - cyan */
+[data-theme="scifi-dark"] .absolute.left-0.bg-white.rounded-r {
+  background: #00d4ff !important;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* 图标 badge (purple neon) - 通用 badge 样式 */
+[data-theme="scifi-dark"] .bg-cp-accent\/30 {
+  background: rgba(168, 85, 247, 0.3) !important;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.5), 0 0 2px rgba(168, 85, 247, 0.3);
+}
+
+/* --- T-UI11: SettingsPanel 美化 --- */
+/* 左侧导航选中项 */
+[data-theme="scifi-dark"] nav button.bg-cp-surface {
+  border-left: 2px solid #00d4ff !important;
+  background: rgba(0, 212, 255, 0.05) !important;
+  color: #00d4ff !important;
+}
+
+/* 导航项 hover */
+[data-theme="scifi-dark"] nav button:not(.bg-cp-surface):hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* 内容卡片 glass-card (applied to section containers within settings) */
+[data-theme="scifi-dark"] .flex-1.overflow-y-auto.p-6 > div {
+  background: rgba(13, 18, 32, 0.6);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Section 标题 - accent with opacity */
+[data-theme="scifi-dark"] h3.text-lg.text-cp-text.font-semibold {
+  color: rgba(0, 212, 255, 0.8) !important;
+}
+
+[data-theme="scifi-dark"] .text-sm.font-medium.text-cp-text {
+  color: rgba(0, 212, 255, 0.8) !important;
+}
+
+/* --- T-UI12: 通用交互增强 --- */
+/* button/hover 通用 transition */
+[data-theme="scifi-dark"] button {
+  transition: all 150ms ease;
+}
+
+/* 选中态 pulse neon */
+[data-theme="scifi-dark"] [aria-selected="true"],
+[data-theme="scifi-dark"] [data-active="true"] {
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* 焦点发光环 */
+[data-theme="scifi-dark"] :focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.5), 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* 链接 hover neon */
+[data-theme="scifi-dark"] a:hover {
+  color: #00d4ff;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+
+/* --- T-UI13: 基础UI组件升级 --- */
+/* Card elevated variant → glass-card in scifi-dark */
+[data-theme="scifi-dark"] .bg-neutral-900.shadow-lg {
+  background: rgba(13, 18, 32, 0.6) !important;
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Input focus neon */
+[data-theme="scifi-dark"] input:focus:not(:focus-visible) {
+  /* handled by focus-visible above */
+}
+
+[data-theme="scifi-dark"] input.rounded-md.border:focus {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* --- T-UI14: 视觉元素丰富化 --- */
+
+/* .scifi-grid-overlay — 背景网格线效果 */
+.scifi-grid-overlay {
+  position: relative;
+}
+
+.scifi-grid-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* .scifi-glow-divider — 渐变发光分割线 */
+.scifi-glow-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+  border: none;
+  opacity: 0.6;
+}
+
+/* .scifi-status-dot — 状态指示灯呼吸动画 */
+.scifi-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* .scifi-scan-line — 扫描线效果 */
+.scifi-scan-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.scifi-scan-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 212, 255, 0.06) 48%,
+    rgba(0, 212, 255, 0.12) 50%,
+    rgba(0, 212, 255, 0.06) 52%,
+    transparent 100%
+  );
+  animation: scanLine 4s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* --- SCIFI-DARK 滚动条增强 --- */
+[data-theme="scifi-dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.15);
+}
+
+[data-theme="scifi-dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.25);
+}
+
+/* --- SCIFI-DARK Selection --- */
+[data-theme="scifi-dark"] ::selection {
+  background-color: rgba(0, 212, 255, 0.2);
+  color: #e2e8f0;
+}

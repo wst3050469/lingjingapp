@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { CloudSyncStatus, CloudSyncRecord } from '@lingjing/core';
+import type { CloudSyncStatus, CloudSyncRecord } from '@codepilot/core';
 import { Button, Card, LoadingSpinner, Progress, EmptyState, SectionHeader, Badge } from '../common/components';
 
 export function SyncPanel() {

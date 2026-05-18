@@ -1,15 +1,9 @@
-import type { IEventBus, EventTopic } from '../event-bus/types.js';
-import type { IHookRegistry, HookPoint, HookContext } from '../hook-registry/types.js';
+import type { IEventBus } from '../event-bus/types.js';
 import { OpenSpaceBridge } from './bridge.js';
 import { OpenSpaceProcessManager } from './process-manager.js';
-import { OpenSpaceScriptGenerator } from './script-generator.js';
-import type { GenerationResult, LLMClient } from './script-generator.js';
-import { OpenSpaceProfileManager } from './profile-manager.js';
-import { OpenSpaceDatasetBrowser } from './dataset-browser.js';
-import type { OpenSpaceFusionConfig, ProcessRunState, HealthCheckResult, OpenSpaceProfile } from './types.js';
+import type { OpenSpaceFusionConfig, ProcessRunState, HealthCheckResult } from './types.js';
 import { createOpenSpaceToolSet } from './tools/index.js';
 import type { OpenSpaceToolSet } from './tools/index.js';
-import { reviewScript } from './security-review.js';
 import { logger } from '../../utils/logger.js';
 
 const DEFAULT_FUSION_CONFIG: OpenSpaceFusionConfig = {
@@ -38,33 +32,31 @@ export interface OpenSpaceFusionStatus {
   compatible: boolean;
   health: HealthCheckResult | null;
   wsPort: number | null;
-  profileLoaded: boolean;
-  datasetsLoaded: number;
 }
 
+/**
+ * OpenSpaceFusionAdapter — wires OpenSpaceProcessManager and OpenSpaceBridge together.
+ *
+ * Responsibilities:
+ * 1. Initialize ProcessManager and Bridge with shared config
+ * 2. Expose unified start/stop/status API
+ * 3. Register EventBus event handlers for openspace:* events
+ * 4. Provide Agent tool set for AI-driven OpenSpace control
+ */
 export class OpenSpaceFusionAdapter {
   private config: OpenSpaceFusionConfig;
   private eventBus: IEventBus | null;
-  private hookRegistry: IHookRegistry | null;
   private processManager: OpenSpaceProcessManager;
   private bridge: OpenSpaceBridge;
-  private scriptGenerator: OpenSpaceScriptGenerator;
-  private profileManager: OpenSpaceProfileManager;
-  private datasetBrowser: OpenSpaceDatasetBrowser;
   private tools: OpenSpaceToolSet | null = null;
   private initialized = false;
   private unregisterStateChange: (() => void) | null = null;
-  private hookIds: string[] = [];
 
-  constructor(eventBus?: IEventBus, hookRegistry?: IHookRegistry, llmClient?: LLMClient) {
+  constructor(eventBus?: IEventBus) {
     this.config = { ...DEFAULT_FUSION_CONFIG };
     this.eventBus = eventBus ?? null;
-    this.hookRegistry = hookRegistry ?? null;
     this.processManager = new OpenSpaceProcessManager(this.eventBus ?? undefined);
     this.bridge = new OpenSpaceBridge(this.config.bridgeConfig, this.eventBus ?? undefined);
-    this.scriptGenerator = new OpenSpaceScriptGenerator(llmClient);
-    this.profileManager = new OpenSpaceProfileManager(undefined, this.bridge, this.eventBus ?? undefined);
-    this.datasetBrowser = new OpenSpaceDatasetBrowser(undefined, this.bridge, this.eventBus ?? undefined);
   }
 
   get processManagerInstance(): OpenSpaceProcessManager {
@@ -75,22 +67,14 @@ export class OpenSpaceFusionAdapter {
     return this.bridge;
   }
 
-  get scriptGeneratorInstance(): OpenSpaceScriptGenerator {
-    return this.scriptGenerator;
-  }
-
-  get profileManagerInstance(): OpenSpaceProfileManager {
-    return this.profileManager;
-  }
-
-  get datasetBrowserInstance(): OpenSpaceDatasetBrowser {
-    return this.datasetBrowser;
-  }
-
   getToolSet(): OpenSpaceToolSet | null {
     return this.tools;
   }
 
+  /**
+   * Initialize the OpenSpace fusion module.
+   * Detects installation and prepares tools.
+   */
   initialize(config?: Partial<OpenSpaceFusionConfig>): void {
     if (this.initialized) return;
 
@@ -103,21 +87,14 @@ export class OpenSpaceFusionAdapter {
       };
     }
 
-    if (!this.config.enabled) {
-      logger.info('[OpenSpaceFusionAdapter] module disabled');
-      return;
-    }
-
+    // Bridge config sync
     this.bridge.updateConfig(this.config.bridgeConfig);
+
+    // Detect installation
     this.processManager.detectInstallation();
 
-    this.unregisterStateChange = this.processManager.onStateChange((state) => {
-      if (this.eventBus) {
-        this.eventBus.publish('openspace:health_changed' as EventTopic, {
-          state,
-          timestamp: Date.now(),
-        }, 'openspace-fusion-adapter');
-      }
+    // Register state change handler
+    this.unregisterStateChange = this.processManager.onStateChange((state, _prev) => {
       if (state === 'running' && this.config.autoStart) {
         this.connectBridge().catch((err) => {
           logger.warn(`[OpenSpaceFusionAdapter] auto bridge connect failed: ${err.message}`);
@@ -128,70 +105,22 @@ export class OpenSpaceFusionAdapter {
       }
     });
 
-    this.registerHooks();
+    // Create tool set
     this.tools = createOpenSpaceToolSet(this.bridge, this.processManager);
+
     this.initialized = true;
     logger.info('[OpenSpaceFusionAdapter] initialized');
   }
 
-  private registerHooks(): void {
-    if (!this.hookRegistry) return;
-
-    const beforeHookId = this.hookRegistry.register(
-      'before_tool_execute' as HookPoint,
-      (context: HookContext) => {
-        const data = context.data as any;
-        if (data?.name !== 'openspace_execute') return context;
-        const params = data.params as Record<string, unknown>;
-        if (!params) return context;
-
-        const script = params.script as string;
-        const language = params.language as string;
-
-        if (typeof script === 'string' && typeof language === 'string') {
-          const result = reviewScript(script, language as 'lua' | 'javascript' | 'python');
-          if (!result.passed) {
-            context.data = {
-              ...(context.data as any),
-              _blocked: true,
-              _securityReview: result,
-            };
-          }
-        }
-
-        return context;
-      },
-      { priority: 10 },
-    );
-    this.hookIds.push(beforeHookId);
-
-    const afterHookId = this.hookRegistry.register(
-      'after_tool_execute' as HookPoint,
-      (context: HookContext) => {
-        const data = context.data as any;
-        if (data?.name !== 'openspace_execute') return context;
-
-        if (this.eventBus) {
-          this.eventBus.publish('openspace:script_executed' as EventTopic, {
-            script: data.params?.script,
-            language: data.params?.language,
-            result: data.result,
-            timestamp: Date.now(),
-          }, 'openspace-fusion-adapter');
-        }
-
-        return context;
-      },
-      { priority: 10 },
-    );
-    this.hookIds.push(afterHookId);
-  }
-
+  /**
+   * Start OpenSpace process.
+   */
   async start(): Promise<void> {
     if (!this.initialized) {
       this.initialize();
     }
 
+    // Auto-detect if not detected yet
     if (!this.processManager.installation.found) {
       this.processManager.detectInstallation();
     }
@@ -203,14 +132,21 @@ export class OpenSpaceFusionAdapter {
       this.bridge.updateConfig({ wsPort });
     }
 
+    // Connect bridge if process started successfully
     await this.connectBridge();
   }
 
+  /**
+   * Stop OpenSpace process and disconnect bridge.
+   */
   async stop(): Promise<void> {
     this.bridge.disconnect();
     await this.processManager.stop();
   }
 
+  /**
+   * Connect the WebSocket bridge to the running OpenSpace instance.
+   */
   async connectBridge(): Promise<void> {
     if (this.bridge.isConnected) return;
 
@@ -222,6 +158,9 @@ export class OpenSpaceFusionAdapter {
     await this.bridge.connect();
   }
 
+  /**
+   * Get comprehensive fusion status.
+   */
   getStatus(): OpenSpaceFusionStatus {
     return {
       initialized: this.initialized,
@@ -232,17 +171,13 @@ export class OpenSpaceFusionAdapter {
       compatible: this.processManager.installation.compatible,
       health: this.processManager.health,
       wsPort: this.processManager.getWebSocketPort(),
-      profileLoaded: this.profileManager.presetProfiles.length > 0,
-      datasetsLoaded: this.datasetBrowser['datasetsCache'].size,
     };
   }
 
+  /**
+   * Clean up all resources.
+   */
   dispose(): void {
-    for (const id of this.hookIds) {
-      this.hookRegistry?.unregister(id);
-    }
-    this.hookIds = [];
-
     this.bridge.disconnect();
     this.processManager.stop().catch(() => { /* ignore */ });
 

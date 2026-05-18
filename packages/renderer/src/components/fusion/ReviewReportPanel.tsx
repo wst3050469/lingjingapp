@@ -9,14 +9,6 @@ interface ReviewReport {
   reviewedAt: Date;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-    };
-  }
-}
-
 export const ReviewReportPanel: React.FC = () => {
   const [reports, setReports] = useState<ReviewReport[]>([]);
   const [selected, setSelected] = useState<ReviewReport | null>(null);

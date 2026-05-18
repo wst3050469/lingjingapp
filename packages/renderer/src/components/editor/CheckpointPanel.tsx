@@ -22,7 +22,7 @@ export const CheckpointPanel: React.FC = () => {
           >
             <div className="font-medium truncate">{cp.description}</div>
             <div className="text-gray-500 mt-1">
-              {new Date(cp.timestamp).toLocaleString()} · {cp.files.length} 文件
+              {new Date(cp.timestamp ?? cp.createdAt).toLocaleString()} · {cp.files.length} 文件
             </div>
           </div>
         ))}

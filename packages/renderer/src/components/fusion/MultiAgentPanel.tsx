@@ -7,14 +7,6 @@ interface AgentStatus {
   duration: number;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-    };
-  }
-}
-
 const STATUS_BADGE: Record<string, string> = {
   pending: 'bg-gray-100 text-gray-600',
   running: 'bg-yellow-100 text-yellow-700',

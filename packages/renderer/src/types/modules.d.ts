@@ -2,7 +2,7 @@
 // Module declarations for external dependencies
 
 // @lingjing/core is a shared types package
-declare module '@lingjing/core' {
+declare module '@codepilot/core' {
   // ── Plan ──
   export interface Plan {
     id: string;

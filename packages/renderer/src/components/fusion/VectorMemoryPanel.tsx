@@ -7,14 +7,6 @@ interface VectorItem {
   metadata: Record<string, unknown>;
 }
 
-declare global {
-  interface Window {
-    electronAPI?: {
-      invoke: (channel: string, ...args: unknown[]) => Promise<unknown>;
-    };
-  }
-}
-
 export const VectorMemoryPanel: React.FC = () => {
   const [items, setItems] = useState<VectorItem[]>([]);
   const [query, setQuery] = useState('');

@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v1426"
+    "output": "release-v1427"
   },
   "files": [
     "dist/**/*",
@@ -50,13 +50,7 @@
     "icon": "assets",
     "category": "Development",
     "executableName": "lingjing",
-    "artifactName": "LingJing-${version}-linux-x86_64.${ext}",
-    "deb": {
-      "packageName": "lingjing",
-      "conflicts": ["lingjing", "lingjing-ide", "lingjing1.39.0"],
-      "replaces": ["lingjing", "lingjing-ide", "lingjing1.39.0"],
-      "provides": ["lingjing"]
-    }
+    "artifactName": "LingJing-${version}-linux-x86_64.${ext}"
   },
 
   "extraResources": [

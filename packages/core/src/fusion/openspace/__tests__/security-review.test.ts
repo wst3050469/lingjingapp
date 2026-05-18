@@ -77,11 +77,13 @@ describe('OpenSpace security-review', () => {
       expect(result.violations[0].line).toBeGreaterThan(0);
     });
 
-    it('should allow low-risk patterns to pass', () => {
+    it('should detect medium-risk os.exit in Lua', () => {
       const luaScript = 'os.exit(0)';
       const result = reviewScript(luaScript, 'lua');
-      expect(result.passed).toBe(true);
+      expect(result.passed).toBe(false);
       expect(result.riskLevel).toBe('medium');
+      expect(result.violations).toHaveLength(1);
+      expect(result.violations[0].description).toContain('Process termination');
     });
 
     it('should handle empty script', () => {

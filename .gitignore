@@ -16,84 +16,108 @@ android/
 keystore.properties
 *.keystore
 
-# Electron build artifacts (release dirs)
-packages/electron/release*/
-packages/electron/release_v*/
-packages/electron/dist_release/
-packages/electron/renderer/
-packages/electron/prompts/
+# electron-builder release output
+packages/electron/release-*/
 
-# Local-only Electron source (synced from production, not in git)
-packages/electron/src/admin/
-packages/electron/src/auth/
-packages/electron/src/config/
-packages/electron/src/db/
+# Local fix scripts
+packages/electron/_*.cjs
+packages/electron/release*/
+
+# pnpm symlinks
+packages/electron/node_modules/@codepilot/
+packages/electron/node_modules/@codepilot/*
+
+# Renderer build output (copy to electron/renderer during pre-package)
+packages/electron/renderer/assets/
+packages/electron/renderer/index.html
+
+# Temporary push artifacts
+_git_push.bundle
+_patches.patch
+_push_tmp/
+
+# Temporary helper scripts
+scripts/_*.cjs
+
+# Local dev/deploy utility scripts (underscore-prefixed)
+_*.bat
+_*.py
+_*.sh
+
+# ===== Local-only files (not in git) =====
+
+# Electron source files (local dev only, not distributed via git)
+packages/electron/src/main.ts
+packages/electron/src/preload.ts
+packages/electron/src/preload-workflow.ts
+packages/electron/src/web-server.ts
+packages/electron/src/services/
+packages/electron/src/pm/
 packages/electron/src/monitoring/
 packages/electron/src/pipeline/
-packages/electron/src/pm/
-packages/electron/src/review/
 packages/electron/src/security/
-packages/electron/src/services/
+packages/electron/src/review/
 packages/electron/src/ssh/
 packages/electron/src/tools/
 packages/electron/src/voice/
+packages/electron/src/auth/
+packages/electron/src/admin/
+packages/electron/src/config/
+packages/electron/src/db/
 packages/electron/src/frp-client.ts
-packages/electron/src/main.ts
-packages/electron/src/preload.ts
-packages/electron/src/web-server.ts
-packages/electron/src/ipc/admin-ipc.ts
-packages/electron/src/ipc/agent-ipc.ts
-packages/electron/src/ipc/auth-ipc.ts
-packages/electron/src/ipc/batch-ipc.ts
-packages/electron/src/ipc/browser-ipc.ts
-packages/electron/src/ipc/checkpoint-ipc.ts
-packages/electron/src/ipc/cloud-ipc.ts
+packages/electron/src/ipc/*.ts
 packages/electron/src/ipc/cloud-management/
-packages/electron/src/ipc/cloud-sync-ipc.ts
-packages/electron/src/ipc/compact-ipc.ts
-packages/electron/src/ipc/completion-ipc.ts
-packages/electron/src/ipc/connector-ipc.ts
-packages/electron/src/ipc/context-ipc.ts
-packages/electron/src/ipc/diagnostics-ipc.ts
-packages/electron/src/ipc/docker-manager.ts
-packages/electron/src/ipc/fs-ipc.ts
-packages/electron/src/ipc/git-ipc.ts
-packages/electron/src/ipc/github-ipc.ts
-packages/electron/src/ipc/indexing-ipc.ts
-packages/electron/src/ipc/init-script-executor.ts
-packages/electron/src/ipc/inline-chat-ipc.ts
-packages/electron/src/ipc/integrations-ipc.ts
-packages/electron/src/ipc/memory-ipc.ts
-packages/electron/src/ipc/network-ipc.ts
-packages/electron/src/ipc/ollama-ipc.ts
-packages/electron/src/ipc/plan-ipc.ts
-packages/electron/src/ipc/prompt-ipc.ts
-packages/electron/src/ipc/quest-ipc.ts
-packages/electron/src/ipc/quest-state-ipc.ts
-packages/electron/src/ipc/register-new-features.ts
-packages/electron/src/ipc/schedule-ipc.ts
-packages/electron/src/ipc/skills-ipc.ts
-packages/electron/src/ipc/terminal-ipc.ts
-packages/electron/src/ipc/trigger-ipc.ts
-packages/electron/src/ipc/update-ipc.ts
-packages/electron/src/ipc/voice-ipc.ts
-packages/electron/src/ipc/wiki-ipc.ts
-packages/electron/src/ipc/workflow-ipc.ts
-packages/electron/src/ipc/worktree-manager.ts
+packages/electron/database/
+packages/electron/ipc/
+packages/electron/types/
+packages/electron/assets/
+packages/electron/prompts/
+packages/electron/skills/
+packages/electron/scripts/pre-package.mjs
+packages/electron/scripts/build-main.cjs
+packages/electron/scripts/notarize.js
+packages/electron/scripts/rename-with-timestamp.js
+packages/electron/scripts/repack.mjs
+packages/electron/.env.*
+packages/electron/build_err.txt
+packages/electron/package-lock.json
+packages/electron/node_modules_local/
+packages/electron/dist_release/
+packages/electron/sql-wasm.wasm
+packages/electron/tsconfig.preload.json
 
-# Temp scripts
-scripts/_*.cjs
+# Cloud server (copied from production, not in git)
+cloud-server/
+
+# Core MCP and Workflow (local-only modules)
+packages/core/src/mcp/
+packages/core/src/workflow/
+
+# Old release artifacts
+release-v1410/
+release-*/
+
+# Deploy scripts (utility, not part of source)
+deploy/
 scripts/*.cjs
 
-# OS artifacts
-*.bat
-*.py
-*.sh
-0)
+# Temp files
+_*.ps1
+_*.mjs
+_*.txt
+*.txt
+api_resp.txt
+resp2.txt
+files.txt
+pwd.txt
+vite_versions.txt
+
+# Spec docs (local-only)
+docs/SPEC-*.md
+
+# Mobile source archive
+mobile-src.tar.gz
 
 # Other
-.git_push.bundle
-_patches.patch
-packages/electron/_fix_json.cjs
-packages/electron/assets/icon-256x256.png
-packages/electron/assets/icon.ico
+0)d.versions[idx]
+.codeartsdoer/specs/ui-scifi/

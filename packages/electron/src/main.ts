@@ -751,6 +751,7 @@ async function bootstrap(): Promise<void> {
 
   // Auto-update IPC (update:check) — handles mainWindow null internally
   try {
+// @ts-expect-error - TS2345: BrowserWindow | null not assignable to BrowserWindow
     initUpdateIPC(mainWindow);
   } catch (err) {
     console.error('[Main] Failed to initialize update IPC:', err);

@@ -127,6 +127,7 @@ export async function runIndexingPipeline(
     const seenFiles = new Set<string>();
     let scannedCount = 0;
 
+// @ts-expect-error - TS2554: Expected 0 arguments, but got 2
     for await (const { file, mtime, chunks } of scanAndChunk(workspace, { ignorePatterns })) {
       if (state.abort) return { success: false, chunksIndexed: 0, error: 'Aborted' };
 

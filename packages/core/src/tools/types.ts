@@ -62,3 +62,19 @@ export interface Tool {
     mcpSource?: string;
     execute(params: Record<string, unknown>, context: ToolContext): Promise<ToolResult>;
 }
+
+/**
+ * Convert a Tool to an MCP-compatible tool schema.
+ * Maps parameters to inputSchema as required by the MCP protocol.
+ */
+export function toolToSchema(tool: Tool): {
+    name: string;
+    description: string;
+    inputSchema: JSONSchema;
+} {
+    return {
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.parameters,
+    };
+}

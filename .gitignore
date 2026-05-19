@@ -43,4 +43,8 @@ scripts/_*.cjs
 _*.bat
 _*.py
 _*.sh
-0)
+# electron-builder dist_release output
+packages/electron/dist_release/
+
+# Mobile submodule (stale gitlink - suppressed)
+lingjing-mobile/

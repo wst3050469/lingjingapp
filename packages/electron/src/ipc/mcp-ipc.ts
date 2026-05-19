@@ -2,8 +2,8 @@
 // Supports both built-in (offline) and npx-based MCP servers
 
 import { ipcMain, app } from 'electron';
-import { McpManager, type McpServerConfig } from '@codepilot/core';
-import { logger } from '@codepilot/core';
+import { McpManager, type McpServerConfig } from '@codepilot/core/mcp';
+import { logger } from '@codepilot/core/utils/logger';
 import { homedir } from 'os';
 import { join, dirname } from 'path';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';

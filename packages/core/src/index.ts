@@ -56,3 +56,7 @@ export { createLogger } from './utils/logger.js';
 
 // Errors
 export * from './errors/index.js';
+
+// Cloud sync
+export { CloudSyncClient } from './cloud/sync-client.js';
+export { OfflineQueue, MergeStrategy } from './cloud/offline-queue.js';

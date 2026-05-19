@@ -24,4 +24,8 @@ export * as fusion from './fusion/index.js';
 export { IntentDetector } from './intent/intent-detector.js';
 export * from './security/index.js';
 export { logger } from './utils/logger.js';
+
+// Cloud sync
+export { CloudSyncClient } from './cloud/sync-client.js';
+export { OfflineQueue, MergeStrategy } from './cloud/offline-queue.js';
 //# sourceMappingURL=index.js.map

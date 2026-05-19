@@ -44,6 +44,7 @@ import { registerFusionIPC } from './ipc/fusion/index.js';
 import { registerCheckpointIPC } from './ipc/checkpoint-ipc.js';
 import { generateDeviceFingerprint } from './services/secure-storage.js';
 import { registerWorkflowIPCWithDb } from './ipc/workflow-ipc.js';
+import { verifyIpcRegistrations } from './ipc/ipc-verifier.js';
 
 const IS_DEV = !app.isPackaged;
 
@@ -942,6 +943,16 @@ async function bootstrap(): Promise<void> {
       registerShortcuts(mainWindow);
     } catch (err) {
       console.error('[Main] Failed to register shortcuts:', err);
+    }
+
+    // Verify all critical IPC handlers are registered
+    try {
+      const missing = verifyIpcRegistrations();
+      if (missing.length > 0) {
+        console.warn(`[Main] ${missing.length} IPC handlers missing (see ~/.lingjing/startup-error.log)`);
+      }
+    } catch (err) {
+      console.error('[Main] IPC verification failed:', err);
     }
   }
 

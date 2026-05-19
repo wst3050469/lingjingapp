@@ -23,6 +23,11 @@ import { createDiscordBot } from './bots/discord-bot.js';
 import { registerAdminAPI } from './admin-api.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Version cache - 30s TTL
+let _verCache = null;
+let _verCacheTime = 0;
+const _verTTL = 30000;
 const PORT = process.env.PORT || 8000;
 
 // Security: Require environment variables in production
@@ -423,6 +428,8 @@ app.get('/api/health', (req, res) => {
 // ── Version Info (for electron-updater) ──
 // Reads from versions.json (supports both download-list and update-server formats)
 function readVersionInfo() {
+  const _now = Date.now();
+  if (_verCache && _now - _verCacheTime < _verTTL) { console.log('[Version] CACHE HIT'); return _verCache; }
   try {
     // Try multiple paths to find versions.json
     const searchPaths = [
@@ -445,7 +452,9 @@ function readVersionInfo() {
     }
     if (!data) {
       console.warn('[Version] versions.json not found in any path, using default');
-      return { hasUpdate: false, version: '0.0.0' };
+      _verCache = { hasUpdate: false, version: '0.0.0' };
+        _verCacheTime = _now;
+        return _verCache;
     }
 
     // ── Format detection ──
@@ -476,7 +485,7 @@ function readVersionInfo() {
       const latestEntry = data.versions.find(v => v.version === data.latest && v.status !== 'draft');
       const latest = latestEntry || nonDraftVersions[0];
       if (latest) {
-        return {
+        _verCache = {
           hasUpdate: true,
           version: latest.version || '1.4.0',
           status: latest.status || 'published',
@@ -484,9 +493,13 @@ function readVersionInfo() {
           releaseNotes: latest.releaseNotes || ('灵境IDE v' + (latest.version || '1.4.0')),
           files: latest.files || {},
         };
+        _verCacheTime = _now;
+        return _verCache;
       }
       // All versions are drafts — no public update available
-      return { hasUpdate: false, version: '0.0.0', releaseNotes: '暂无已发布的更新' };
+      _verCache = { hasUpdate: false, version: '0.0.0', releaseNotes: '暂无已发布的更新' };
+        _verCacheTime = _now;
+        return _verCache;
     }
 
     console.warn('[Version] Unrecognized versions.json format in:', sourcePath);

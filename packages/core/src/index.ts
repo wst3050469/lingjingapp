@@ -26,7 +26,7 @@ export { ContextManager } from './context/context-manager.js';
 export { CompletionEngine } from './completion/completion-engine.js';
 
 // Memory
-export { Reflector } from './memory/reflector.js';
+export { MemoryReflector as Reflector } from './memory/reflector.js';
 
 // MCP
 export { McpManager } from './mcp/manager.js';

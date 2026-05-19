@@ -403,8 +403,6 @@ function createWindow(): void {
 }
 
 function registerAppIpc(): void {
-  if (!mainWindow) return;
-
   // Config IPC
   ipcMain.handle('config:get', async () => {
     const { loadConfig, getModelContextWindow } = await import('@codepilot/core');
@@ -723,62 +721,148 @@ async function bootstrap(): Promise<void> {
     });
   }
 
-  // Load saved workspace path from config (enhanced validation)
-  const loadedWorkspace = await loadWorkspaceFromConfig();
+    // ── Phase A: Register IPC handlers that DON'T need mainWindow ──
+  // These critical handlers (config:set, update:check, web-server) MUST be registered
+  // even if window creation fails. The renderer may start making IPC calls immediately
+  // after loading, and window-independent handlers must be ready.
+  //
+  // CRITICAL: This MUST come BEFORE await loadWorkspaceFromConfig() below.
+  // If the renderer loads during the async file I/O and makes IPC calls
+  // to unregistered handlers (config:set, update:check, etc.), the calls
+  // fail with "No handler registered" errors.
 
-  if (loadedWorkspace !== homedir()) {
-    // Successfully restored workspace from config
-    workspacePath = loadedWorkspace;
-    setWorkingDirectory(workspacePath);
-
-    // Notify renderer process that workspace has been restored
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('workspace:restored', {
-        path: workspacePath,
-        timestamp: Date.now(),
-        source: 'config'
-      });
-    }
-  } else {
-    // Using default directory
-    workspacePath = loadedWorkspace;
-    setWorkingDirectory(workspacePath);
-    console.log('[Main] Using default workspace:', workspacePath);
+  // Config IPC (config:get, config:set) — no window dependency
+  try {
+    registerAppIpc();
+  } catch (err) {
+    console.error('[Main] registerAppIpc failed:', err);
   }
 
-  // ── Register ALL IPC handlers BEFORE initAgent() ──
-  // The renderer starts making IPC calls as soon as it loads (~300ms after mount).
-  // If handlers aren't registered yet, calls like conversation:list/load fail silently,
-  // breaking session auto-restore. IPC registration is synchronous and fast — no reason
-  // to delay it behind the 15s initAgent() timeout.
+  // Initialize web server function references (avoid circular dependency)
+  try {
+    initWebServerFunctions(
+      () => mainWindow,
+      () => { return getDatabase(); },
+      async () => { await saveDatabase(); }
+    );
+  } catch (err) {
+    console.error('[Main] initWebServerFunctions failed:', err);
+  }
 
+  // Auto-update IPC (update:check) — handles mainWindow null internally
+  try {
+    initUpdateIPC(mainWindow);
+  } catch (err) {
+    console.error('[Main] Failed to initialize update IPC:', err);
+    try {
+      ipcMain.handle('update:check', async () => {
+        console.log('[update] Using emergency fallback handler');
+        try {
+          const res = await fetch('https://ide.zhejiangjinmo.com/api/latest', { signal: AbortSignal.timeout(5000) });
+          if (res.ok) {
+            const data = await res.json();
+            const current = app.getVersion();
+            return { ok: true, version: data.version, currentVersion: current };
+          }
+        } catch { /* ignore */ }
+        return { notActive: true, currentVersion: app.getVersion() };
+      });
+      console.log('[Main] Registered emergency update:check fallback handler');
+    } catch { /* best effort */ }
+  }
+
+  // Other window-independent handlers
+  try { registerMcpIpc(); } catch (err) { console.error('[Main] registerMcpIpc failed:', err); }
+  autoConnectMcpServers().catch(err => { console.error('[Main] autoConnectMcpServers failed:', err); });
+  try { registerAuthIpc(); } catch (err) { console.error('[Main] registerAuthIpc failed:', err); }
+  try { registerOllamaIpc(); } catch (err) { console.error('[Main] registerOllamaIpc failed:', err); }
+  try { registerMemoryIpc(); } catch (err) { console.error('[Main] registerMemoryIpc failed:', err); }
+  try { registerIntegrationsIpc(); } catch (err) { console.error('[Main] registerIntegrationsIpc failed:', err); }
+  try { registerNetworkIpc(); } catch (err) { console.error('[Main] registerNetworkIpc failed:', err); }
+  try { registerCompletionIpc(); } catch (err) { console.error('[Main] registerCompletionIpc failed:', err); }
+  try { registerInlineChatIpc(); } catch (err) { console.error('[Main] registerInlineChatIpc failed:', err); }
+  try { registerCompactIpc(); } catch (err) { console.error('[Main] registerCompactIpc failed:', err); }
+  try { registerPromptIpc(); } catch (err) { console.error('[Main] registerPromptIpc failed:', err); }
+  try { registerQuestStateIpc(); console.log('[Main] registerQuestStateIpc completed successfully');
+  } catch (err) { console.error('[Main] registerQuestStateIpc failed:', err); }
+
+  // Cloud management (user, device, subscription, sync, storage, apiKey)
+  try {
+    registerAllCloudManagementIpc();
+    registerCheckpointIPC(app.getPath('userData'));
+    console.log('[Main] Cloud management IPC registered successfully');
+  } catch (err) {
+    console.error('[Main] registerAllCloudManagementIpc failed:', err);
+  }
+
+  // Workflow engine IPC
+  try {
+    registerWorkflowIPCWithDb(ipcMain, getDatabase());
+    console.log('[Main] registerWorkflowIPCWithDb completed successfully');
+  } catch (err) {
+    console.error('[Main] registerWorkflowIPCWithDb failed:', err);
+  }
+
+  // Admin dashboard (auth, version, mcp, quest, config, log)
+  try {
+    registerAdminIpc();
+    console.log('[Main] registerAdminIpc completed successfully');
+  } catch (err) {
+    console.error('[Main] registerAdminIpc failed:', err);
+  }
+
+  // Initialize cloud sync and GitHub integration
+  try {
+    const deviceId = generateDeviceFingerprint().fingerprint;
+    initCloudSyncIpc(deviceId);
+    initGitHubIpc();
+    console.log('[Main] Cloud sync and GitHub integration initialized with device ID:', deviceId);
+  } catch (err) {
+    console.error('[Main] Cloud sync/GitHub init failed:', err);
+  }
+
+  // Auto-register IDE device on startup (fire-and-forget)
+  try {
+    const deviceFingerprint = generateDeviceFingerprint();
+    const deviceId = deviceFingerprint.fingerprint;
+    const platform = process.platform;
+    const osRelease = require('node:os').release();
+    const appVersion = app.getVersion();
+
+    fetch('https://ide.zhejiangjinmo.com/api/user/devices/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047' },
+      body: JSON.stringify({
+        deviceId, name: 'IDE-' + platform + '-' + deviceId.slice(0, 8),
+        type: 'desktop', os: platform + ' ' + osRelease, version: appVersion
+      })
+    }).then(res => {
+      if (res.ok) console.log('[Main] Device auto-registered:', deviceId.slice(0, 12) + '...');
+      else console.warn('[Main] Device auto-registration failed:', res.status);
+    }).catch(err => { console.warn('[Main] Device auto-registration error:', err.message); });
+
+    setInterval(() => {
+      fetch('https://ide.zhejiangjinmo.com/api/user/devices/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047' },
+        body: JSON.stringify({ deviceId })
+      }).catch(() => {});
+    }, 300000);
+    console.log('[Main] Device heartbeat scheduler started');
+  } catch (err) {
+    console.warn('[Main] Device auto-registration setup failed:', err);
+  }
+
+  // ── Phase B: Register handlers that NEED mainWindow ──
+  // These handlers require a valid BrowserWindow instance and will be
+  // skipped if the window failed to create.
   if (mainWindow) {
     registerAgentIpc(mainWindow);
     registerFsIpc(mainWindow, () => workspacePath);
     registerTerminalIpc(mainWindow);
-    try {
-      registerMcpIpc();
-    } catch (err) {
-      console.error('[Main] registerMcpIpc failed:', err);
-    }
-    // Fire-and-forget: don't block IPC registration chain
-    // Awaiting here delays registerAppIpc() (config:set) registration,
-    // causing "No handler registered for 'config:set'" when renderer starts.
-    autoConnectMcpServers().catch(err => {
-      console.error('[Main] autoConnectMcpServers failed:', err);
-    });
-    registerAuthIpc();
-    registerOllamaIpc();
     registerGitIpc(() => workspacePath);
-    registerMemoryIpc();
     registerSkillsIpc(() => workspacePath);
     registerIndexingIpc(() => workspacePath, mainWindow);
-    registerIntegrationsIpc();
-    registerNetworkIpc();
-    registerCompletionIpc();
-    registerInlineChatIpc();
-    registerCompactIpc();
-    registerPromptIpc();
     registerDiagnosticsIpc(mainWindow, () => workspacePath);
     console.log('[Main] About to call registerQuestIpc...');
     try {
@@ -786,13 +870,6 @@ async function bootstrap(): Promise<void> {
       console.log('[Main] registerQuestIpc completed successfully');
     } catch (err) {
       console.error('[Main] registerQuestIpc failed:', err);
-    }
-    // Quest State persistence (checkpoint + resume)
-    try {
-      registerQuestStateIpc();
-      console.log('[Main] registerQuestStateIpc completed successfully');
-    } catch (err) {
-      console.error('[Main] registerQuestStateIpc failed:', err);
     }
     registerWikiIpc(mainWindow, () => workspacePath);
     registerBrowserIpc(mainWindow);
@@ -803,28 +880,13 @@ async function bootstrap(): Promise<void> {
       setQuestSshTerminalId(sshTerminalId);
     });
     registerSshIpc(mainWindow);
-    try {
-      registerAppIpc();
-    } catch (err) {
-      console.error('[Main] registerAppIpc failed:', err);
-    }
 
-    // Cloud sync - auto-connect to lingjing cloud server
+    // Cloud sync
     try {
       registerCloudIpc(mainWindow);
       autoConnectCloud();
     } catch (err) {
       console.error('[Main] Cloud IPC registration failed:', err);
-    }
-
-    // Initialize cloud sync and GitHub integration
-    try {
-      const deviceId = generateDeviceFingerprint().fingerprint;
-      initCloudSyncIpc(deviceId);
-      initGitHubIpc();
-      console.log('[Main] Cloud sync and GitHub integration initialized with device ID:', deviceId);
-    } catch (err) {
-      console.error('[Main] Cloud sync/GitHub init failed:', err);
     }
 
     // Schedule management
@@ -834,93 +896,14 @@ async function bootstrap(): Promise<void> {
       console.error('[Main] registerScheduleIpc failed:', err);
     }
 
-    // Cloud management (user, device, subscription, sync, storage, apiKey)
+    // Fusion IPC
     try {
-      registerAllCloudManagementIpc();
       registerFusionIPC(mainWindow);
-		  registerCheckpointIPC(app.getPath('userData'));
-      console.log('[Main] Cloud management IPC registered successfully');
     } catch (err) {
-      console.error('[Main] registerAllCloudManagementIpc failed:', err);
+      console.error('[Main] registerFusionIPC failed:', err);
     }
 
-    // Auto-register IDE device on startup (fire-and-forget)
-    try {
-      const deviceFingerprint = generateDeviceFingerprint();
-      const deviceId = deviceFingerprint.fingerprint;
-      const platform = process.platform;
-      const osRelease = require('node:os').release();
-      const appVersion = app.getVersion();
-
-      fetch('https://ide.zhejiangjinmo.com/api/user/devices/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047'
-        },
-        body: JSON.stringify({
-          deviceId,
-          name: 'IDE-' + platform + '-' + deviceId.slice(0, 8),
-          type: 'desktop',
-          os: platform + ' ' + osRelease,
-          version: appVersion
-        })
-      }).then(res => {
-        if (res.ok) console.log('[Main] Device auto-registered:', deviceId.slice(0, 12) + '...');
-        else console.warn('[Main] Device auto-registration failed:', res.status);
-      }).catch(err => {
-        console.warn('[Main] Device auto-registration error:', err.message);
-      });
-
-      // Periodic heartbeat every 5 minutes
-      setInterval(() => {
-        fetch('https://ide.zhejiangjinmo.com/api/user/devices/heartbeat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047'
-          },
-          body: JSON.stringify({ deviceId })
-        }).catch(() => {});
-      }, 300000);
-
-      console.log('[Main] Device heartbeat scheduler started');
-    } catch (err) {
-      console.warn('[Main] Device auto-registration setup failed:', err);
-    }
-
-    // Workflow engine IPC (status polling, start/pause/resume/stop)
-    try {
-      registerWorkflowIPCWithDb(ipcMain, getDatabase());
-      console.log('[Main] registerWorkflowIPCWithDb completed successfully');
-    } catch (err) {
-      console.error('[Main] registerWorkflowIPCWithDb failed:', err);
-    }
-
-    // Admin dashboard (auth, version, mcp, quest, config, log)
-    try {
-      registerAdminIpc();
-      console.log('[Main] registerAdminIpc completed successfully');
-    } catch (err) {
-      console.error('[Main] registerAdminIpc failed:', err);
-    }
-
-    // Initialize web server function references (avoid circular dependency)
-    try {
-      initWebServerFunctions(
-        () => mainWindow,
-        () => {
-          return getDatabase();
-        },
-        async () => {
-          await saveDatabase();
-        }
-      );
-    } catch (err) {
-      console.error('[Main] initWebServerFunctions failed:', err);
-    }
-
-    // Auto-copy frpc.exe to userData/frp/ for FRP tunnel
+    // Auto-copy frpc binary
     try {
       ensureFrpcBinary();
     } catch (err) {
@@ -931,8 +914,6 @@ async function bootstrap(): Promise<void> {
     try {
       const webServerConfig = loadWebServerConfig();
       if (webServerConfig.enabled) {
-        // Persist token: if empty, generate one and save to config
-        // so mobile clients don't lose auth on restart
         if (!webServerConfig.token) {
           webServerConfig.token = generateToken();
           saveWebServerConfig(webServerConfig);
@@ -955,36 +936,37 @@ async function bootstrap(): Promise<void> {
       console.error('[Main] Failed to start web server:', err);
     }
 
-    // Register global shortcuts (protected: failures must not block initUpdateIPC)
+    // Register global shortcuts
     try {
       registerShortcuts(mainWindow);
     } catch (err) {
       console.error('[Main] Failed to register shortcuts:', err);
     }
+  }
 
-    // Auto-update (always enabled)
-    try {
-      initUpdateIPC(mainWindow);
-    } catch (err) {
-      console.error('[Main] Failed to initialize update IPC:', err);
-      // Last resort: register a basic HTTP-based fallback for update:check
-      // so the renderer always gets a response even if electron-updater fails
-      try {
-        ipcMain.handle('update:check', async () => {
-          console.log('[update] Using emergency fallback handler');
-          try {
-            const res = await fetch('https://ide.zhejiangjinmo.com/api/latest', { signal: AbortSignal.timeout(5000) });
-            if (res.ok) {
-              const data = await res.json();
-              const current = app.getVersion();
-              return { ok: true, version: data.version, currentVersion: current };
-            }
-          } catch { /* ignore */ }
-          return { notActive: true, currentVersion: app.getVersion() };
-        });
-        console.log('[Main] Registered emergency update:check fallback handler');
-      } catch { /* best effort */ }
+  // Load saved workspace path from config (enhanced validation)
+  // NOTE: This runs AFTER IPC registration so the renderer can safely call
+  // IPC methods (config:set, update:check, etc.) during the async file I/O below.
+  const loadedWorkspace = await loadWorkspaceFromConfig();
+
+  if (loadedWorkspace !== homedir()) {
+    // Successfully restored workspace from config
+    workspacePath = loadedWorkspace;
+    setWorkingDirectory(workspacePath);
+
+    // Notify renderer process that workspace has been restored
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('workspace:restored', {
+        path: workspacePath,
+        timestamp: Date.now(),
+        source: 'config'
+      });
     }
+  } else {
+    // Using default directory
+    workspacePath = loadedWorkspace;
+    setWorkingDirectory(workspacePath);
+    console.log('[Main] Using default workspace:', workspacePath);
   }
 
   // Initialize the agent core with 15s timeout (load prompts, config, provider)

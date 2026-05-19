@@ -1,6 +1,6 @@
 {
   "name": "@codepilot/core",
-  "version": "1.43.9",
+  "version": "1.44.0",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {

@@ -2,7 +2,8 @@
 // WARNING: This file is generated. Edit packages/core/scripts/build-index.mjs instead.
 
 // Core config
-export { loadConfig, DEFAULT_CONFIG } from './config/loader.js';
+export { loadConfig } from './config/loader.js';
+export { DEFAULT_CONFIG } from './config/defaults.js';
 
 // LLM
 export { getModelContextWindow, createProvider } from './llm/provider-factory.js';

@@ -1,6 +1,6 @@
 {
   "name": "lingjing-ide",
-  "version": "1.43.0",
+  "version": "1.43.1",
   "description": "CodePilot Electron main process (Hermes Fusion 增强集成)",
   "homepage": "https://lingjing.ai",
   "author": {

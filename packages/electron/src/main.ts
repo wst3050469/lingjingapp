@@ -838,7 +838,7 @@ async function bootstrap(): Promise<void> {
     try {
       registerAllCloudManagementIpc();
       registerFusionIPC(mainWindow);
-  registerCheckpointIPC(app.getPath('userData'));
+		  registerCheckpointIPC(app.getPath('userData'));
       console.log('[Main] Cloud management IPC registered successfully');
     } catch (err) {
       console.error('[Main] registerAllCloudManagementIpc failed:', err);

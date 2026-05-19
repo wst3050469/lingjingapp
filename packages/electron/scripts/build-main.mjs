@@ -362,15 +362,31 @@ try {
   }
 
   // Copy sql-wasm.wasm to dist (needed by sql.js at runtime)
-  const wasmSrc = join(root, 'sql-wasm.wasm');
-  const wasmDst1 = join(root, 'dist', 'sql-wasm.wasm');
-  const wasmDstDir = join(root, 'dist', 'node_modules', 'sql.js', 'dist');
-  const wasmDst2 = join(wasmDstDir, 'sql-wasm.wasm');
-  
-  mkdirSync(wasmDstDir, { recursive: true });
-  copyFileSync(wasmSrc, wasmDst1);
-  copyFileSync(wasmSrc, wasmDst2);
-  console.log('[build-main] sql-wasm.wasm copied');
+  // Try multiple source locations: project root, node_modules (pnpm store), dist from previous builds
+  const WASM_CANDIDATES = [
+    join(root, 'sql-wasm.wasm'),
+    join(root, 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+    join(root, '..', '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
+    join(root, 'dist', 'sql-wasm.wasm'),
+  ];
+  let wasmSrc = null;
+  for (const candidate of WASM_CANDIDATES) {
+    if (existsSync(candidate)) { wasmSrc = candidate; break; }
+  }
+  if (wasmSrc) {
+    try {
+      const wasmDst1 = join(root, 'dist', 'sql-wasm.wasm');
+      const wasmDstDir = join(root, 'dist', 'node_modules', 'sql.js', 'dist');
+      mkdirSync(wasmDstDir, { recursive: true });
+      copyFileSync(wasmSrc, wasmDst1);
+      copyFileSync(wasmSrc, join(wasmDstDir, 'sql-wasm.wasm'));
+      console.log('[build-main] ✅ sql-wasm.wasm copied from', wasmSrc);
+    } catch (err) {
+      console.warn('[build-main] ⚠️ Failed to copy sql-wasm.wasm (non-fatal):', err.message);
+    }
+  } else {
+    console.warn('[build-main] ⚠️ sql-wasm.wasm not found in any candidate path (non-fatal)');
+  }
 
   // Phase 1: Resolve pnpm symlinks so release/build/node_modules/ has real files
   resolveNodeModules();

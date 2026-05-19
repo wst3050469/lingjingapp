@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v1430"
+    "output": "release-v1431"
   },
   "files": [
     "dist/**/*",
@@ -80,5 +80,6 @@
   "publish": {
     "provider": "generic",
     "url": "https://ide.zhejiangjinmo.com/downloads"
-  }
+  },
+  "npmRebuild": false
 }

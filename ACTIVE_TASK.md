@@ -29,5 +29,21 @@
 - nginx: 80/443 正常，下载文件均可直接访问
 
 ### Git
-- `main@347173c` — 全部 commit 已推送至 GitHub
-- 包含: MCP 模块、Workflow 引擎、构建部署脚本、nginx /downloads/ 修复、Setup ASCII 文件名
+- `main@de67224b4` — 包含 TS 编译错误修复
+- `main@de67224b4` — 已推送至 GitHub ✅
+
+## 最新修复: Phase 81 — 修复 mcp-ipc.ts 8个TS编译错误
+
+### 问题
+`packages/electron` `npx tsc --noEmit` 报 8 个错误：导入路径错误 + 缺少模块。
+
+### 修复文件
+| 文件 | 变更 |
+|:-----|:------|
+| `packages/electron/src/ipc/mcp-ipc.ts` | McpManager → `@codepilot/core/mcp`；logger → `@codepilot/core/utils/logger` |
+| `packages/electron/src/services/mcp-installer.ts` | **新建** — MCPInstaller 类 |
+| `packages/electron/src/monitoring/logger.ts` | **新建** — createLogger 工厂 |
+| `.gitignore` | 添加 dist_release/、lingjing-mobile/；清理 stray "0)" |
+
+### 验证
+- `npx tsc --noEmit` → ✅ 0 errors

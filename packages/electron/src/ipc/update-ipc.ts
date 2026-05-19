@@ -125,6 +125,15 @@ function classifyUpdateError(err: Error, httpStatus?: number): UpdateErrorInfo {
     };
   }
 
+  if (msg.includes('sha512') && (msg.includes('mismatch') || msg.includes('check'))) {
+    return {
+      errorCode: 'HASH_MISMATCH',
+      userMessage: '安装包校验失败，文件可能已损坏，请重新尝试',
+      technicalDetail: msg,
+      actions: ['retry', 'skip-version'],
+    };
+  }
+
   if (msg.includes('timed out') || msg.includes('timeout') || msg.includes('ETIMEDOUT')) {
     return {
       errorCode: 'CHECK_TIMEOUT',
@@ -359,7 +368,7 @@ export function initUpdateIPC(win: BrowserWindow): void {
 
     const au = await getAutoUpdater();
     au.allowPrerelease = channel !== 'stable';
-    const baseUrl = 'https://ide.zhejiangjinmo.com/downloads';
+    const baseUrl = 'https://ide.zhejiangjinmo.com/downloads/';
     au.setFeedURL({
       provider: 'generic',
       url: channel === 'stable' ? baseUrl : `${baseUrl}/${channel}`,
@@ -423,14 +432,14 @@ export function initUpdateIPC(win: BrowserWindow): void {
     // because the baked publish.channel from electron-builder.json would append
     // "/latest" to the URL causing a 404 on /latest/latest.yml
     const channel = updateState.updateChannel;
-    const baseUrl = 'https://ide.zhejiangjinmo.com/downloads';
+    const baseUrl = 'https://ide.zhejiangjinmo.com/downloads/';
     const encodedBaseUrl = UpdateUrlEncoder.encodeUrl(baseUrl);
     autoUpdater.setFeedURL({
       provider: 'generic',
-      url: channel === 'stable' ? encodedBaseUrl : `${encodedBaseUrl}/${channel}`,
+      url: channel === 'stable' ? encodedBaseUrl : `${encodedBaseUrl}${channel}`,
       channel: undefined as any,
     });
-    console.log('[update] setFeedURL configured:', channel === 'stable' ? baseUrl : `${baseUrl}/${channel}`);
+    console.log('[update] setFeedURL configured:', channel === 'stable' ? baseUrl : `${baseUrl}${channel}`);
 
     // ── Events ──
 

@@ -12,11 +12,11 @@ const CRITICAL_HANDLERS: string[] = [
   'ssh:list-connections',
   'ssh:connect',
   'ssh:disconnect',
-  'ssh:execute-command',
+  'ssh:exec',
   // Cloud
   'cloud:connect',
   'cloud:disconnect',
-  'cloud:get-status',
+  'cloud:status',
   // Config
   'config:get',
   'config:set',
@@ -25,20 +25,20 @@ const CRITICAL_HANDLERS: string[] = [
   'update:download',
   'update:install',
   // Agent
-  'agent:send-message',
-  'agent:get-context',
+  'agent:run',
+  'agent:abort',
   // Quest
-  'quest:send-message',
-  'quest:execute-action',
+  'quest:run',
+  'quest:abort',
   // Filesystem
+  'fs:read-dir',
   'fs:read-file',
   'fs:write-file',
-  'fs:list-directory',
   // Terminal
   'terminal:create',
-  'terminal:write',
+  'terminal:input',
   // Network
-  'network:check-connectivity',
+  'network:diagnose',
 ];
 
 const LOG_FILE = join(homedir(), '.lingjing', 'startup-error.log');
@@ -122,25 +122,25 @@ function generateFeatureDescriptions(missing: string[]): string[] {
     'ssh:list-connections': 'Remote Explorer — SSH connections',
     'ssh:connect': 'Remote Explorer — SSH connect',
     'ssh:disconnect': 'Remote Explorer — SSH disconnect',
-    'ssh:execute-command': 'Remote Explorer — execute command',
+    'ssh:exec': 'Remote Explorer — execute command',
     'cloud:connect': 'Cloud Sync — connect',
     'cloud:disconnect': 'Cloud Sync — disconnect',
-    'cloud:get-status': 'Cloud Sync — status check',
+    'cloud:status': 'Cloud Sync — status check',
     'config:get': 'Settings — load configuration',
     'config:set': 'Settings — save configuration',
     'update:check': 'Update — check for updates',
     'update:download': 'Update — download update',
     'update:install': 'Update — install update',
-    'agent:send-message': 'AI Agent — send message',
-    'agent:get-context': 'AI Agent — get context',
-    'quest:send-message': 'Quest Mode — send message',
-    'quest:execute-action': 'Quest Mode — execute action',
+    'agent:run': 'AI Agent — run message',
+    'agent:abort': 'AI Agent — abort',
+    'quest:run': 'Quest Mode — run message',
+    'quest:abort': 'Quest Mode — abort execution',
+    'fs:read-dir': 'File System — read directory',
     'fs:read-file': 'File System — read file',
     'fs:write-file': 'File System — write file',
-    'fs:list-directory': 'File System — list directory',
     'terminal:create': 'Terminal — create',
-    'terminal:write': 'Terminal — write',
-    'network:check-connectivity': 'Network — connectivity check',
+    'terminal:input': 'Terminal — write input',
+    'network:diagnose': 'Network — diagnose',
   };
 
   const descriptions = missing.map((ch) => {

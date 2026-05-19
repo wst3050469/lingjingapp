@@ -44,5 +44,5 @@
 - 🪟 Windows: 本地构建 (Node.js v24.14.0, pnpm 11.1.2, electron-builder 25.1.8)
 
 ### Git
-- `main@9efc864ad` — 全部 commit 已推送至 GitHub
+- `main@5a6f4cc84` — 全部 commit 已推送至 GitHub
 - 包含: MCP 模块、Workflow 引擎、构建部署脚本

@@ -35,7 +35,8 @@
     "uninstallerIcon": "assets/icon.ico",
     "installerHeaderIcon": "assets/icon.ico",
     "createDesktopShortcut": true,
-    "createStartMenuShortcut": true
+    "createStartMenuShortcut": true,
+    "artifactName": "LingJing-Setup-${version}-win-x64.${ext}"
   },
   "portable": {
     "artifactName": "LingJing-Portable-${version}-win-x64.${ext}"

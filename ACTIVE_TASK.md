@@ -1,48 +1,32 @@
-# ACTIVE_TASK — v1.42.9 全平台构建与部署
+# ACTIVE_TASK — v1.43.0 全平台构建部署完成
 
 ## 当前状态: ✅ 生产运行正常
 
-### 部署状态 (v1.42.9)
+### 部署状态 (v1.43.0)
 
 | 平台 | 文件 | 大小 | 状态 |
 |:-----|:-----|:----:|:----:|
-| 🪟 Windows Setup | `灵境 Setup 1.42.9.exe` | 131 MB | ✅ 已部署 |
-| 🪟 Windows Portable | `LingJing-Portable-1.42.9-win-x64.exe` | 131 MB | ✅ 已部署 |
-| 🐧 Linux AppImage | `LingJing-1.42.9-linux-x86_64.AppImage` | 171 MB | ✅ 已部署 |
-| 🐧 Linux deb | `LingJing-1.42.9-linux-x86_64.deb` | 168 MB | ✅ 已部署 |
+| 🪟 Windows Setup | `LingJing-Setup-1.43.0-win-x64.exe` | 131 MB | ✅ 已部署 |
+| 🪟 Windows Portable | `LingJing-Portable-1.43.0-win-x64.exe` | 131 MB | ✅ 已部署 |
+| 🐧 Linux AppImage | `LingJing-1.43.0-linux-x86_64.AppImage` | 171 MB | ✅ 已部署 |
+| 🐧 Linux deb | `LingJing-1.43.0-linux-x86_64.deb` | 104 MB | ✅ 已部署 |
 | 🤖 Android | `lingjing-mobile-v1.40.1.apk` | 78 MB | ✅ 已部署 |
 
 ### API 状态
-- `/api/latest` → `{"version":"1.42.9","status":"published"}` ✅
-- `/api/versions` (update-server:3001) → v1.42.9 ✅
-- latest.yml / latest-linux.yml / versions.json 全部同步 ✅
+- `/api/latest` → `{"version":"1.43.0","status":"published"}` ✅
+- latest.yml / latest-linux.yml → v1.43.0 ✅
+- versions.json (6源) → v1.43.0 ✅
 
-### v1.42.9 新增内容
-- **MCP 模块**: `packages/core/src/mcp/` — client.ts, index.ts, sse-client.ts, types.ts, manager.ts
-- **Workflow 引擎**: `packages/core/src/workflow/` — workflow-engine.ts, index.ts, types.ts
-- **部署脚本**: `scripts/deploy-linux.sh`
-- **配置同步**: tsconfig.json, electron-builder.json, .gitignore 同步
+### 下载页面
+- 动态化改造完成：JavaScript fetch `/versions.json` 动态渲染版本号和下载链接
+- **修复**: versions.json 补充 `win-portable` 条目，JS 优先使用 `files['win-portable']` 正确显示便携版大小（131 MB）
+- 有 fallback 静态内容（v1.43.0）以防 JS 加载失败
+- 文件: `/var/www/downloads/index.html`
+- 数据源: `/var/www/downloads/versions.json`
 
 ### 生产服务器
-- cloud-server:8000 ✅ online | update-server:3001 ✅ online
-- nginx: 安全头 + gzip + 缓存 + 关闭目录列表 ✅
-- nginx: `/downloads/` 301 + `^~` 前缀优先 ✅ | `/ws` WebSocket 代理 ✅
-- 磁盘: / 83% (6.5G可用) | /data 16% (32G可用)
-
-### 测试覆盖 — 29 文件, 434 测试, ✅ 全部通过
-
-| 模块 | 文件数 | 测试数 |
-|:-----|:-----:|:-----:|
-| OpenSpace 集成 | 7 | 125 |
-| Fusion 核心模块 | 17 | 253 |
-| 工具/适配器 | 2 | 12 |
-| MCP/Workflow 类型与引擎 | 2 | 25 |
-| Vector/Logger 等 | 1 | 19 |
-| **总计** | **29** | **434** |
-
-### 构建能力
-- 🐧 Linux: 服务器 `/root/lingjing-git` 完整构建 (`bash scripts/deploy-linux.sh`)
-- 🪟 Windows: 本地构建 (Node.js v24.14.0, pnpm 11.1.2, electron-builder 25.1.8)
+- cloud-server:8000 ✅ online | update-server:3000 ✅ online
+- nginx: 80/443 正常，下载文件均可直接访问
 
 ### Git
 - `main@347173c` — 全部 commit 已推送至 GitHub

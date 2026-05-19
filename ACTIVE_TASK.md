@@ -47,3 +47,18 @@
 
 ### 验证
 - `npx tsc --noEmit` → ✅ 0 errors
+
+
+## Phase 82: update-server versions.json 同步 + cloud-server 缓存
+
+### 发现的问题
+- `/root/lingjing-update/data/versions.json` 仅 v1.42.7 ❌ (缺少 v1.42.9 + v1.43.0)
+- `/var/www/html/versions.json` 旧格式 ❌
+
+### 修复
+- **6个 versions.json 文件**全部同步为统一数据（含 win-portable）
+- **cloud-server 缓存** — 添加 30s TTL 内存缓存，减少磁盘 I/O
+
+### 验证
+- 所有更新通道 HTTP 200 ✅
+- cloud-server 日志无重复 "Loaded from" ✅

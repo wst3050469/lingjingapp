@@ -17,7 +17,7 @@
 - `versions.json` → latest: 1.43.9 ✅
 
 ### 服务器
-- cloud-server:8000 ✅ | update-server:3000 ✅ | nginx 80/443 ✅
+- cloud-server:8000 ✅ (30s 缓存已启用) | update-server:3000 ✅ | nginx 80/443 ✅
 - 💾 磁盘: 148GB (已用 30GB, 21%)
 
 ### Git

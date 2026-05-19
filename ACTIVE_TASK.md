@@ -26,7 +26,8 @@
 ### 生产服务器
 - cloud-server:8000 ✅ online | update-server:3001 ✅ online
 - nginx: 安全头 + gzip + 缓存 + 关闭目录列表 ✅
-- 磁盘: / 75% (9.4G可用) | /data 16% (32G可用)
+- nginx: `/downloads/` 301 + `^~` 前缀优先 ✅ | `/ws` WebSocket 代理 ✅
+- 磁盘: / 83% (6.5G可用) | /data 16% (32G可用)
 
 ### 测试覆盖 — 29 文件, 434 测试, ✅ 全部通过
 

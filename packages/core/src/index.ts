@@ -11,7 +11,7 @@ export * from './llm/types.js';
 // Agent
 export { Agent } from './agent/agent.js';
 export { AgentCore } from './agent/agent-core.js';
-export { ConversationManager } from './agent/conversation.js';
+export { Conversation } from './agent/conversation.js';
 
 // Tools
 export { ToolRegistry } from './tools/registry.js';

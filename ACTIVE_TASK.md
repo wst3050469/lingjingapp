@@ -1,21 +1,27 @@
-# ACTIVE_TASK — v1.42.8 全平台部署 + 434 测试覆盖
+# ACTIVE_TASK — v1.42.9 全平台构建与部署
 
 ## 当前状态: ✅ 生产运行正常
 
-### 部署状态 (v1.42.8)
+### 部署状态 (v1.42.9)
 
 | 平台 | 文件 | 大小 | 状态 |
 |:-----|:-----|:----:|:----:|
-| 🪟 Windows Setup | `LingJing-Setup-1.42.8-win-x64.exe` | 126 MB | ✅ 已部署 |
-| 🪟 Windows Portable | `LingJing-Portable-1.42.8-win-x64.exe` | 126 MB | ✅ 已部署 |
-| 🐧 Linux AppImage | `LingJing-1.42.8-linux-x86_64.AppImage` | 171 MB | ✅ 已部署 |
-| 🐧 Linux deb | `LingJing-1.42.8-linux-x86_64.deb` | 104 MB | ✅ 已部署 |
+| 🪟 Windows Setup | `灵境 Setup 1.42.9.exe` | 131 MB | ✅ 已部署 |
+| 🪟 Windows Portable | `LingJing-Portable-1.42.9-win-x64.exe` | 131 MB | ✅ 已部署 |
+| 🐧 Linux AppImage | `LingJing-1.42.9-linux-x86_64.AppImage` | 171 MB | ✅ 已部署 |
+| 🐧 Linux deb | `LingJing-1.42.9-linux-x86_64.deb` | 168 MB | ✅ 已部署 |
 | 🤖 Android | `lingjing-mobile-v1.40.1.apk` | 78 MB | ✅ 已部署 |
 
 ### API 状态
-- `/api/latest` → `{"version":"1.42.8","status":"published"}`
-- `/api/versions` (update-server:3001) → v1.42.8
-- latest.yml / latest-linux.yml / versions.json 全部同步
+- `/api/latest` → `{"version":"1.42.9","status":"published"}` ✅
+- `/api/versions` (update-server:3001) → v1.42.9 ✅
+- latest.yml / latest-linux.yml / versions.json 全部同步 ✅
+
+### v1.42.9 新增内容
+- **MCP 模块**: `packages/core/src/mcp/` — client.ts, index.ts, sse-client.ts, types.ts, manager.ts
+- **Workflow 引擎**: `packages/core/src/workflow/` — workflow-engine.ts, index.ts, types.ts
+- **部署脚本**: `scripts/deploy-linux.sh`
+- **配置同步**: tsconfig.json, electron-builder.json, .gitignore 同步
 
 ### 生产服务器
 - cloud-server:8000 ✅ online | update-server:3001 ✅ online
@@ -35,8 +41,8 @@
 
 ### 构建能力
 - 🐧 Linux: 服务器 `/root/lingjing-git` 完整构建 (`bash scripts/deploy-linux.sh`)
-- 🪟 Windows: 需 VS Build Tools 本地构建或 wine32 调试
+- 🪟 Windows: 本地构建 (Node.js v24.14.0, pnpm 11.1.2, electron-builder 25.1.8)
 
 ### Git
-- `main@8c601154f` — 全部 commit 已推送至 GitHub
-- 包含: 测试扩展、Linux 构建部署、nginx 加固、版本修复、mcp/workflow 加入 Git
+- `main@9efc864ad` — 全部 commit 已推送至 GitHub
+- 包含: MCP 模块、Workflow 引擎、构建部署脚本

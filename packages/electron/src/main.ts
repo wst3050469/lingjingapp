@@ -40,6 +40,7 @@ import { registerAdminIpc } from './ipc/admin-ipc.js';
 import { initCloudSyncIpc } from './ipc/cloud-sync-ipc.js';
 import { initGitHubIpc } from './ipc/github-ipc.js';
 import { registerAllCloudManagementIpc } from './ipc/cloud-management/index.js';
+import { registerFusionIPC } from './ipc/fusion/index.js';
 import { registerCheckpointIPC } from './ipc/checkpoint-ipc.js';
 import { generateDeviceFingerprint } from './services/secure-storage.js';
 import { registerWorkflowIPCWithDb } from './ipc/workflow-ipc.js';
@@ -836,6 +837,7 @@ async function bootstrap(): Promise<void> {
     // Cloud management (user, device, subscription, sync, storage, apiKey)
     try {
       registerAllCloudManagementIpc();
+      registerFusionIPC(mainWindow);
   registerCheckpointIPC(app.getPath('userData'));
       console.log('[Main] Cloud management IPC registered successfully');
     } catch (err) {

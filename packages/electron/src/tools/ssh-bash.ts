@@ -77,7 +77,6 @@ export function createSshBashTool(getSshTerminalId: string | (() => string | nul
         const result = await Promise.race([execPromise, timeoutPromise]);
 
         // Store output
-// @ts-expect-error - TS2554: Expected 2 arguments, but got 1
         storeBashOutput({
           commandId,
           command,

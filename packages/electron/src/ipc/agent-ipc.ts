@@ -68,9 +68,7 @@ export async function initAgent(): Promise<void> {
   const loaded = await loadConfig();
   config = loaded.config;
   provider = createProvider(config);
-// @ts-expect-error - TS2554: Expected 0 arguments, but got 2
   tools = createDefaultRegistry(config.tools.disabled, provider);
-// @ts-expect-error - TS2554: Expected 1 arguments, but got 2
   initUpdateMemoryTool(getDatabase, saveDatabase);
   initCodebaseSearchTool(async (query, workspace, topK, filePattern) => {
     return searchCodebase(workspace, query, config!, getDatabase(), saveDatabase, topK, filePattern);
@@ -92,9 +90,7 @@ export async function reinitProvider(): Promise<void> {
   const loaded = await loadConfig();
   config = loaded.config;
   provider = createProvider(config);
-// @ts-expect-error - TS2554: Expected 0 arguments, but got 2
   tools = createDefaultRegistry(config.tools.disabled, provider);
-// @ts-expect-error - TS2554: Expected 1 arguments, but got 2
   initUpdateMemoryTool(getDatabase, saveDatabase);
 }
 
@@ -436,7 +432,6 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
       runTools = new ToolRegistry();
     } else if (mode === 'experts') {
       // Experts mode: full tools + dispatch_experts, auto-execute for most tools
-// @ts-expect-error - TS2554: Expected 0 arguments, but got 3
       const expertBaseTools = createDefaultRegistry(config!.tools.disabled, provider!, 'experts');
       runTools = new ToolRegistry();
 

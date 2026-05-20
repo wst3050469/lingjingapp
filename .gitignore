@@ -46,5 +46,9 @@ _*.sh
 # electron-builder dist_release output
 packages/electron/dist_release/
 
+# Stale extraResources (not tracked in git, no runtime usage)
+packages/electron/skills/
+packages/electron/prompts/
+
 # Mobile submodule (stale gitlink - suppressed)
 lingjing-mobile/

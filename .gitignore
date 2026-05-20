@@ -49,6 +49,7 @@ scripts/_*.cjs
 _*.bat
 _*.py
 _*.sh
+
 # electron-builder dist_release output
 packages/electron/dist_release/
 
@@ -66,3 +67,10 @@ auto-build.sh
 auto-build.log
 .last_build_commit
 post-deploy.sh
+
+# Downloaded packages (not part of the project)
+code-server.deb
+
+# Local dev scripts
+scripts/codeserver-info.txt
+scripts/tunnel-codeserver.bat

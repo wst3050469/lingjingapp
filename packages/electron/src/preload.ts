@@ -627,6 +627,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('cloud:get-config'),
     api: (opts: { endpoint: string; method?: string; body?: unknown; token?: string; baseUrl?: string }) =>
       ipcRenderer.invoke('cloud:proxy-api', opts),
+    setUserToken: (token: string) =>
+      ipcRenderer.invoke('cloud:set-user-token', token),
   },
 
   workflow: {

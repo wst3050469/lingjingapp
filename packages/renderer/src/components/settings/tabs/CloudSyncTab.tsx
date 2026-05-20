@@ -362,6 +362,22 @@ export function CloudSyncTab() {
       addLog('cloud-login', 'ok', `${user.username} (${user.email})`);
       // Auto-register device after login
       await registerDevice(data.token);
+      // Bind user JWT to sync client so sessions go under user account (not device)
+      try {
+        const bindResult = await window.electronAPI.cloud.setUserToken(data.token);
+        if (bindResult.connected) {
+          setConnected(true);
+          setStatus(bindResult);
+          loadCloudData();
+          addLog('cloud-sync-connect', 'ok', '同步客户端已连接（用户模式）');
+          // Start auto-sync
+          if (autoSyncRef.current) clearInterval(autoSyncRef.current);
+          autoSyncRef.current = setInterval(() => { triggerAutoSync(); }, 60000);
+        }
+        addLog('bind-user-token', 'ok', '用户JWT已绑定到同步客户端');
+      } catch (err: any) {
+        addLog('bind-user-token', 'fail', err.message || '绑定失败');
+      }
     } catch (err: any) {
       setCloudError(err.message || '登录失败');
       addLog('cloud-login', 'fail', err.message);

@@ -8,12 +8,13 @@ import https from 'node:https';
 import http from 'node:http';
 import { URL } from 'node:url';
 import { CloudSyncClient, type CloudSyncOptions } from '@codepilot/core';
-// @ts-ignore
-import { logger } from './agent-ipc.js';
+// Use console for logging since @codepilot/core logger has compatibility issues with esbuild bundling
+const logger = console;
 
 let cloudClient: CloudSyncClient | null = null;
 let mainWindow: BrowserWindow | null = null;
 let cloudRetryTimer: ReturnType<typeof setInterval> | null = null;
+let isConnecting = false; // Prevents dual client creation during auto-connect
 
 // ── Config Persistence ──
 
@@ -56,6 +57,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
       // Stop auto-retry timer when user manually connects
       if (cloudRetryTimer) { clearInterval(cloudRetryTimer); cloudRetryTimer = null; }
       if (cloudClient) cloudClient.disconnect();
+      isConnecting = true;
       cloudClient = new CloudSyncClient(opts || {});
 
       // Auto-register for JWT
@@ -92,8 +94,10 @@ export function registerCloudIpc(win: BrowserWindow): void {
         console.warn('[Cloud] healthCheck failed after WS connected:', e);
         return true; // WS connected, consider it healthy even if HTTP health check fails
       });
+      isConnecting = false;
       return { connected: true, healthy, wsConnected, registered, deviceId: cloudClient.getDeviceId() };
     } catch (err) {
+      isConnecting = false;
       return { connected: false, error: String(err) };
     }
   });
@@ -104,6 +108,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
       cloudClient.disconnect();
       cloudClient = null;
     }
+    isConnecting = false;
     return { ok: true };
   });
 
@@ -111,6 +116,42 @@ export function registerCloudIpc(win: BrowserWindow): void {
     if (!cloudClient) return { connected: false, healthy: false };
     const healthy = await cloudClient.healthCheck().catch(() => false);
     return { connected: true, healthy };
+  });
+
+  /** Set user JWT token on the sync client (after cloud account login) */
+  ipcMain.handle('cloud:set-user-token', async (_event, token: string) => {
+    if (!cloudClient) {
+      // Create client first
+      cloudClient = new CloudSyncClient({});
+      // Wait for device registration so we have a fallback
+      await cloudClient.autoRegister().catch(() => {});
+    }
+    // Set the user JWT - this overrides the device JWT for all API calls
+    cloudClient.setToken(token);
+    logger.info('[Cloud] User JWT bound to sync client');
+    
+    // Connect WebSocket with user token
+    cloudClient.connectWebSocket();
+    
+    // Set up event listeners
+    cloudClient.on('connected', (data) => {
+      mainWindow?.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: cloudClient?.getDeviceId() });
+    });
+    cloudClient.on('disconnected', () => {
+      mainWindow?.webContents.send('cloud:status', { connected: false });
+    });
+    cloudClient.on('sync', (payload) => {
+      mainWindow?.webContents.send('cloud:sync-event', payload);
+    });
+    cloudClient.on('webhook', (data) => {
+      mainWindow?.webContents.send('cloud:webhook-event', data);
+    });
+
+    // Wait briefly for WebSocket to connect
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const healthy = await cloudClient.healthCheck().catch(() => false);
+    return { ok: true, connected: true, healthy, deviceId: cloudClient.getDeviceId() };
   });
 
   // ── HTTP Proxy API (bypass CORS for renderer fetch) ──
@@ -269,6 +310,13 @@ export function registerCloudIpc(win: BrowserWindow): void {
 
 /** Auto-connect to cloud on app start (if configured). Retries persistently. */
 export async function autoConnectCloud(): Promise<void> {
+  // Prevent dual client creation when cloud:connect is also being called
+  if (isConnecting) {
+    console.log('[Cloud] Already connecting, skipping auto-connect');
+    return;
+  }
+  isConnecting = true;
+
   // Helper: attempt a single connection
   const tryConnect = async (): Promise<boolean> => {
     try {
@@ -382,6 +430,7 @@ export async function autoConnectCloud(): Promise<void> {
     console.log('[Cloud] Initial connect failed, starting persistent retry loop');
     startRetryLoop();
   }
+  isConnecting = false;
 
   // Also schedule quick retries at 10s and 30s before falling back to 60s interval
   setTimeout(async () => {

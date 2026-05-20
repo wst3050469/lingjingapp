@@ -40,7 +40,7 @@ export { CheckpointManager } from './checkpoint/manager.js';
 export { RollbackExecutor } from './checkpoint/rollback-executor.js';
 
 // Indexing
-export { runIndexingPipeline } from './pipeline/index.js';
+export { PipelineEngine, DslParser, TriggerManager } from './pipeline/index.js';
 
 // Fusion
 export * as fusion from './fusion/index.js';
@@ -53,7 +53,7 @@ export * from './security/index.js';
 
 // Utils
 export * from './utils/index.js';
-export { createLogger } from './utils/logger.js';
+export { logger } from './utils/logger.js';
 
 // Errors
 export * from './errors/index.js';

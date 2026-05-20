@@ -4,6 +4,9 @@
 import { ipcMain, BrowserWindow, app } from 'electron';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import https from 'node:https';
+import http from 'node:http';
+import { URL } from 'node:url';
 import { CloudSyncClient, type CloudSyncOptions } from '@codepilot/core';
 // @ts-ignore
 import { logger } from './agent-ipc.js';
@@ -108,6 +111,77 @@ export function registerCloudIpc(win: BrowserWindow): void {
     if (!cloudClient) return { connected: false, healthy: false };
     const healthy = await cloudClient.healthCheck().catch(() => false);
     return { connected: true, healthy };
+  });
+
+  // ── HTTP Proxy API (bypass CORS for renderer fetch) ──
+
+  ipcMain.handle('cloud:proxy-api', async (_event, opts: {
+    endpoint: string;
+    method?: string;
+    body?: unknown;
+    token?: string;
+    baseUrl?: string;
+  }) => {
+    const baseUrl = opts.baseUrl || 'https://ide.zhejiangjinmo.com';
+    const url = new URL(`${baseUrl}/api${opts.endpoint}`);
+    const method = opts.method || 'GET';
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (opts.token) headers['Authorization'] = `Bearer ${opts.token}`;
+
+    return new Promise((resolve, reject) => {
+      const bodyData = opts.body ? JSON.stringify(opts.body) : undefined;
+      if (bodyData) headers['Content-Length'] = Buffer.byteLength(bodyData).toString();
+
+      const lib = url.protocol === 'https:' ? https : http;
+      const req = lib.request(
+        url,
+        {
+          method,
+          headers,
+          rejectUnauthorized: true,
+        },
+        (res) => {
+          const chunks: Buffer[] = [];
+          res.on('data', (chunk: Buffer) => chunks.push(chunk));
+          res.on('end', () => {
+            const raw = Buffer.concat(chunks).toString('utf8');
+            try {
+              const parsed = JSON.parse(raw);
+              if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                resolve(parsed);
+              } else {
+                reject(new Error(parsed.error || `HTTP ${res.statusCode}`));
+              }
+            } catch {
+              if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                resolve(raw);
+              } else {
+                reject(new Error(`HTTP ${res.statusCode}: ${raw.slice(0, 200)}`));
+              }
+            }
+          });
+        }
+      );
+      req.on('error', (err: Error) => {
+        if (err.message.includes('ENOTFOUND') || err.message.includes('ECONNREFUSED') || err.message.includes('ENETUNREACH')) {
+          reject(new Error('无法连接到云服务器，请检查网络连接或确认服务器地址是否正确'));
+        } else if (err.message.includes('CERT') || err.message.includes('SSL')) {
+          reject(new Error('云服务器SSL证书验证失败，请检查系统时间或网络环境'));
+        } else {
+          reject(new Error(`网络请求失败: ${err.message}`));
+        }
+      });
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error('请求超时（15秒），请检查网络连接或服务器状态'));
+      });
+      req.setTimeout(15000);
+
+      if (bodyData) req.write(bodyData);
+      req.end();
+    });
   });
 
   // ── Config Persistence IPC ──

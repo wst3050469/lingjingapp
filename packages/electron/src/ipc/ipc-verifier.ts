@@ -17,6 +17,7 @@ const CRITICAL_HANDLERS: string[] = [
   'cloud:connect',
   'cloud:disconnect',
   'cloud:status',
+  'cloud:proxy-api',
   // Config
   'config:get',
   'config:set',

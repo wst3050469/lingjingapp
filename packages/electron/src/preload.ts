@@ -625,6 +625,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('cloud:save-config', config),
     getConfig: () =>
       ipcRenderer.invoke('cloud:get-config'),
+    api: (opts: { endpoint: string; method?: string; body?: unknown; token?: string; baseUrl?: string }) =>
+      ipcRenderer.invoke('cloud:proxy-api', opts),
   },
 
   workflow: {

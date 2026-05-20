@@ -1,7 +1,6 @@
 // Cloud sync client v2 - 灵境云端同步客户端
 // Uses HTTP REST API + WebSocket + JWT auth for real-time cloud integration
 
-import { logger } from '../utils/logger.js';
 import { OfflineQueue } from './offline-queue.js';
 import type {
   CloudSession,
@@ -83,7 +82,7 @@ export class CloudSyncClient {
         }
       },
       onError: (item, error) => {
-        logger.warn(`[CloudSync] Queue item ${item.id} failed (retry ${item.retries}/${item.maxRetries}):`, error.message);
+        console.warn(`[CloudSync] Queue item ${item.id} failed (retry ${item.retries}/${item.maxRetries}):`, error.message);
       },
     });
     this.queue.startPeriodicFlush(5000);
@@ -112,18 +111,18 @@ export class CloudSyncClient {
       });
       if (!res.ok) {
         const text = await res.text().catch(() => 'Unknown');
-        logger.warn(`[CloudSync] Register failed: ${res.status} ${text}`);
+        console.warn(`[CloudSync] Register failed: ${res.status} ${text}`);
         return false;
       }
       const data = await res.json();
       if (data.token) {
         this.token = data.token;
-        logger.info(`[CloudSync] Device registered: ${this.deviceName} (${this.deviceId})`);
+        console.info(`[CloudSync] Device registered: ${this.deviceName} (${this.deviceId})`);
         return true;
       }
       return false;
     } catch (err) {
-      logger.warn(`[CloudSync] Register error:`, err instanceof Error ? err.message : String(err));
+      console.warn(`[CloudSync] Register error:`, err instanceof Error ? err.message : String(err));
       return false;
     }
   }
@@ -163,7 +162,7 @@ export class CloudSyncClient {
   /** Set a user JWT token directly (overrides device registration token) */
   setToken(token: string): void {
     this.token = token;
-    logger.info(`[CloudSync] User token set (${token.slice(0, 12)}...)`);
+    console.info(`[CloudSync] User token set (${token.slice(0, 12)}...)`);
     // Reconnect WebSocket with new token
     this.disconnectWebSocket();
     this.connectWebSocket();
@@ -249,7 +248,7 @@ export class CloudSyncClient {
     const WS: typeof WebSocket = (typeof WebSocket !== 'undefined' ? WebSocket : require('ws'));
     this.ws = new WS(wsUrl) as WebSocket;
     this.ws.onopen = () => {
-      logger.info('[CloudSync] WebSocket connected');
+      console.info('[CloudSync] WebSocket connected');
       this.emit('connected', { url: this.url, deviceId: this.deviceId });
     };
     this.ws.onmessage = (event: MessageEvent) => {
@@ -269,7 +268,7 @@ export class CloudSyncClient {
       this.scheduleReconnect();
     };
     this.ws.onerror = (err: any) => {
-      logger.warn('[CloudSync] WebSocket error:', err?.message || err);
+      console.warn('[CloudSync] WebSocket error:', err?.message || err);
     };
   }
 

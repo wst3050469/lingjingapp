@@ -265,6 +265,10 @@ function resolveNodeModules() {
       // Skip native packages, electron, etc.
       if (['electron', 'playwright', 'playwright-core', 'fsevents', 'cpu-features',
            'sql.js', 'ssh2', 'node-pty'].includes(external)) continue;
+      // Skip subpath entries (e.g., @codepilot/core/checkpoint) - they are not
+      // separate npm packages but subpaths of an already-listed external package.
+      if (external.startsWith('@') && external.split('/').length > 2) continue;
+      if (!external.startsWith('@') && external.includes('/')) continue;
       // Skip packages that esbuild would bundle anyway
       neededDeps.add(external);
       traceDeps(external);

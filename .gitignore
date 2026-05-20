@@ -61,3 +61,8 @@ lingjing-mobile/
 git-sync.sh
 dist.bak
 
+# Auto-build artifacts
+auto-build.sh
+auto-build.log
+.last_build_commit
+post-deploy.sh

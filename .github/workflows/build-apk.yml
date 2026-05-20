@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - 'mobile-v*'
   workflow_dispatch:
     inputs:
       buildType:

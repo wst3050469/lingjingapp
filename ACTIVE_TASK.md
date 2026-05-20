@@ -31,17 +31,21 @@
 - **移动端登录修复**: SHA-256 密码预哈希对齐桌面端认证链（api.ts + LoginScreen.tsx）
 - **管理后台 MIME 修复**: JS/CSS 静态资源 Content-Type 修复（server.js）
 - **云服务器日志增强**: 全局错误处理器记录请求路径与方法
+- **Electron 安全升级**: v35.7.5 → v39.8.10（修复 17 个安全漏洞）
 
 ### Git 状态
-- GitHub: `077378781` → `main` ✅ 已推送
-- 生产裸仓库 `/root/lingjing_git`: `0773787` ✅ 已同步
+- 本地: `ded9f819d` ✅
+- 生产裸仓库 `/root/lingjing_git`: `ded9f81` ✅ 已同步
+- GitHub: ⏳ GFW 阻断，待推送
 - 本地工作区: ✅ 干净（无待办变更）
 
 ### 服务健康
 - PM2: 4/4 online 🟢 (cloud-server, scms-server, scms-web, update-server)
 - API `/api/latest`: v1.45.0 (5 平台文件) ✅
 - 管理后台: ✅ JS/CSS MIME 类型已修复
-- 磁盘: ~34% ✅
+- 磁盘: ~27% (105G 可用) ✅
+- Electron: v39.8.10 ✅（安全漏洞 35→18）
+- 单元测试: 434/434 通过 ✅
 
 ### 最近修复
 | 修复项 | 状态 |
@@ -51,3 +55,4 @@
 | v1.45.0 Linux 安装包部署 | ✅ |
 | v1.45.0 Android APK 构建部署 | ✅ |
 | v1.45.0 GitHub 推送 + 生产裸仓库同步 | ✅ |
+| **Electron 安全升级 v35.7.5 → v39.8.10** | ✅ **修复 17 个漏洞** |

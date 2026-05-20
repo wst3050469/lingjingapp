@@ -17,6 +17,22 @@ export { initDispatchExpertsTool } from './tools/builtin/dispatch-experts.js';
 export { initUpdateMemoryTool } from './tools/builtin/update-memory.js';
 export { initCodebaseSearchTool } from './tools/builtin/codebase-search.js';
 export { initGetProblemsTool } from './tools/builtin/get-problems.js';
+export { generateCommandId, storeBashOutput } from './tools/builtin/bash-output-store.js';
+export { scanAndChunk } from './tools/builtin/codebase-search/chunker.js';
+
+// Git operations
+export { gitRevParseHead, gitDiffNameOnly, isGitRepo } from './git/operations.js';
+
+// Plan manager
+export { getPlanManager } from './planning/plan-manager.js';
+
+// Skills
+export { scanAllSkills, getSkill, getSkillCatalog } from './skills/loader.js';
+
+// Sync (GitHub)
+export { TokenManager } from './sync/token-manager.js';
+export { GitHubClient } from './sync/github-client.js';
+
 export { ContextManager } from './context/context-manager.js';
 export { CompletionEngine } from './completion/completion-engine.js';
 export { MemoryReflector as Reflector } from './memory/reflector.js';
@@ -32,6 +48,7 @@ export * as fusion from './fusion/index.js';
 export { IntentDetector } from './intent/intent-detector.js';
 export * from './security/index.js';
 export { logger } from './utils/logger.js';
+export { truncateString } from './utils/truncate.js';
 
 // Cloud sync
 export { CloudSyncClient } from './cloud/sync-client.js';

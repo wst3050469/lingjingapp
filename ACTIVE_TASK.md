@@ -26,9 +26,9 @@
 **验证**: Windows 和 Linux 构建均无 prompts 相关警告。
 
 ### Git 状态
-- 本地 tag: `v1.44.7` (commit `2f12e2e12`)
-- 服务器: `a624e73` ✅
-- GitHub: ❌ 不可达（GFW 阻断，待后续重试推送）
+- GitHub: `84abeb8` ✅ (main + tag v1.44.7 已推送)
+- 服务器: `84abeb8` ✅
+- 三端同步完成
 
 ### 服务健康
 - PM2: 4/4 online 🟢

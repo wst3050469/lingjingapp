@@ -1,52 +1,57 @@
 {
-  "name": "@codepilot/core",
-  "version": "1.44.5",
-  "type": "module",
-  "main": "dist/main.js",
-  "exports": {
-    ".": "./dist/index.js",
-    "./agent-mode": "./dist/agent-mode/index.js",
-    "./auto-fix": "./dist/auto-fix/index.js",
-    "./checkpoint": "./dist/checkpoint/index.js",
-    "./completion": "./dist/completion/index.js",
-    "./context": "./dist/context/index.js",
-    "./fusion": "./dist/fusion/index.js",
-    "./intent": "./dist/intent/index.js",
-    "./mcp": "./dist/mcp/index.js",
-    "./multi-file-edit": "./dist/multi-file-edit/index.js",
-    "./pipeline": "./dist/pipeline/index.js",
-    "./pm": "./dist/pm/index.js",
-    "./review": "./dist/review/index.js",
-    "./rules": "./dist/rules/index.js",
-    "./security": "./dist/security/index.js",
-    "./terminal-suggester": "./dist/terminal-suggester/index.js",
-    "./types": "./dist/types/index.js",
-    "./utils": "./dist/utils/index.js",
-    "./utils/logger": "./dist/utils/logger.js",
-    "./voice": "./dist/voice/index.js",
-    "./*": [
-      "./dist/*/index.js",
-      "./dist/*.js"
-    ]
+  "name": "lingjing-ide",
+  "version": "1.44.6",
+  "description": "灵境 IDE - AI 驱动的智能开发平台",
+  "homepage": "https://lingjing.ai",
+  "author": {
+    "name": "LingJing AI",
+    "email": "support@lingjing.ai"
   },
+  "main": "./dist/main.js",
   "scripts": {
-    "build": "tsc",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "clean": "rimraf dist"
+    "build": "node scripts/build-main.mjs",
+    "prepackage": "node scripts/pre-package.mjs",
+    "dist": "node scripts/build-main.mjs && node scripts/pre-package.mjs && npx electron-builder build --win --x64",
+    "dist:linux": "node scripts/build-main.mjs && node scripts/pre-package.mjs && npx electron-builder build --linux --x64"
   },
   "dependencies": {
+    "@codepilot/core": "workspace:*",
+    "adm-zip": "^0.5.17",
+    "axios": "^1.16.0",
+    "bcryptjs": "^3.0.3",
+    "chokidar": "^4.0.3",
     "cron-parser": "^4.9.0",
-    "fast-glob": "^3.3.0",
-    "gpt-tokenizer": "^2.8.0",
-    "picocolors": "^1.1.0",
-    "yaml": "^2.7.0",
-    "zod": "^3.24.0"
+    "electron-updater": "^6.8.5",
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "fast-glob": "^3.3.3",
+    "gpt-tokenizer": "^2.9.0",
+    "jose": "^6.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "mammoth": "^1.12.0",
+    "pdf-parse": "^2.4.5",
+    "picocolors": "^1.1.1",
+    "playwright": "^1.60.0",
+    "sql.js": "^1.14.1",
+    "ssh2": "^1.17.0",
+    "tmp": "0.2.5",
+    "uuid": "^11.1.1",
+    "ws": "^8.20.0",
+    "yaml": "^2.7.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "typescript": "^5.6.0",
-    "vitest": "^3.0.0"
+    "electron": "^35.0.0",
+    "electron-builder": "^25.0.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0"
   },
-  "private": true
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "cpu-features",
+      "electron",
+      "esbuild",
+      "ssh2"
+    ]
+  }
 }

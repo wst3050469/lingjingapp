@@ -37,11 +37,10 @@ console.log('[build-main] esbuild version:', esbuild.version || 'unknown');
 // 关于运行时：
 //   @codepilot/core 的 ESM 源码被 esbuild bundle 进 main.js 并转为 CJS
 //   → 运行时不再有 require(ESM) 问题
-//   只有 checkpoint/rules/utils 三个子路径保留为 external
-//   （打包到 asar 后通过 require 加载，且这些文件是 CJS 兼容的）
+//   所有子路径（checkpoint/rules/utils 等）都通过 resolveCorePlugin
+//   映射到 dist 文件后 bundle 进 main.js，无任何外部 require
 
 const coreDist = join(root, '..', 'core', 'dist');
-const EXTERNAL_CORE_SUBPATHS = ['checkpoint', 'rules', 'utils'];
 const EXTERNAL = [
   'electron', 'sql.js', 'ssh2', 'cpu-features',
   'playwright', 'playwright-core', 'bcryptjs', 'node-pty',
@@ -49,7 +48,6 @@ const EXTERNAL = [
   'electron-updater', 'fast-glob', 'adm-zip', 'pdf-parse',
   'mammoth', 'exceljs', 'uuid',
   'picocolors', 'zod', 'gpt-tokenizer',
-  ...EXTERNAL_CORE_SUBPATHS.map(s => `@codepilot/core/${s}`),
 ];
 
 // ── Plugin: 解析 @codepilot/core 到真实文件路径 ──
@@ -61,7 +59,6 @@ function resolveCorePlugin() {
         const after = args.path.slice('@codepilot/core'.length); // '' | '/mcp'
         if (!after) return { path: join(coreDist, 'index.js') };
         const sub = after.slice(1);
-        if (EXTERNAL_CORE_SUBPATHS.includes(sub)) return { external: true };
         const dir = join(coreDist, sub, 'index.js');
         if (existsSync(dir)) return { path: dir };
         const file = join(coreDist, sub + '.js');

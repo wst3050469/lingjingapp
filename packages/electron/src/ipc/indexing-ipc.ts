@@ -16,8 +16,11 @@ export interface IndexStatus {
   workspace: string;
 }
 
+/** Default maximum files to index. Configurable via workspace config `maxIndexFiles`. */
+const DEFAULT_MAX_INDEX_FILES = 500_000;
+
 /** Count files recursively, respecting gitignore + custom ignore patterns */
-async function countFiles(dir: string, ignorePatterns: string[]): Promise<number> {
+async function countFiles(dir: string, ignorePatterns: string[], maxFiles: number = DEFAULT_MAX_INDEX_FILES): Promise<number> {
   let count = 0;
   const skipDirs = new Set(['.git', 'node_modules', '.next', '.nuxt', 'dist', 'build', '__pycache__', '.cache', '.lingjing']);
 
@@ -41,8 +44,8 @@ async function countFiles(dir: string, ignorePatterns: string[]): Promise<number
           count++;
         }
 
-        // Cap at 100001 for performance (we only need to know if > 100000)
-        if (count > 100000) return;
+        // Cap at maxFiles + 1 for performance (we only need to know if > maxFiles)
+        if (count > maxFiles) return;
       }
     } catch {
       // permission denied or similar
@@ -152,11 +155,11 @@ export function registerIndexingIpc(getWorkspace: () => string, mainWindow: Brow
       const gitignore = await readGitignore(workspace);
       const lingjingIgnore = await readLingjingIgnore(workspace);
       const allIgnore = [...gitignore, ...lingjingIgnore];
-      const fileCount = await countFiles(workspace, allIgnore);
+      const fileCount = await countFiles(workspace, allIgnore, DEFAULT_MAX_INDEX_FILES);
 
       return {
         indexed: state?.indexed ?? (indexedCount > 0),
-        fileCount: Math.min(fileCount, 100001),
+        fileCount: Math.min(fileCount, DEFAULT_MAX_INDEX_FILES + 1),
         indexedCount,
         lastUpdated,
         workspace,
@@ -178,10 +181,10 @@ export function registerIndexingIpc(getWorkspace: () => string, mainWindow: Brow
       const gitignore = await readGitignore(workspace);
       const lingjingIgnore = await readLingjingIgnore(workspace);
       const allIgnore = [...gitignore, ...lingjingIgnore];
-      const fileCount = await countFiles(workspace, allIgnore);
+      const fileCount = await countFiles(workspace, allIgnore, DEFAULT_MAX_INDEX_FILES);
 
-      if (fileCount > 100000) {
-        return { success: false, error: 'Codebase exceeds 100,000 files limit' };
+      if (fileCount > DEFAULT_MAX_INDEX_FILES) {
+        return { success: false, error: `Codebase exceeds ${DEFAULT_MAX_INDEX_FILES.toLocaleString()} files limit. Add ignore patterns to .lingjingignore or adjust the limit via workspace config.` };
       }
 
       // Run embedding pipeline

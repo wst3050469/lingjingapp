@@ -327,17 +327,31 @@ export function CloudSyncTab() {
 
   // ── Cloud Account Login / Device Registration ──
 
-  /** Cloud server direct API call with optional JWT */
+  /** Cloud server direct API call with optional JWT. Includes 15s timeout and friendly error messages. */
   const cloudApi = async (endpoint: string, method: string = 'POST', body?: unknown, token?: string) => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const t = token || cloudToken;
     if (t) headers['Authorization'] = `Bearer ${t}`;
-    const res = await fetch(`${CLOUD_API_BASE}${endpoint}`, {
-      method, headers, body: body ? JSON.stringify(body) : undefined,
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-    return data;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch(`${CLOUD_API_BASE}${endpoint}`, {
+        method, headers, body: body ? JSON.stringify(body) : undefined, signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('请求超时（15秒），请检查网络连接或服务器状态');
+      }
+      if (err.message === 'Failed to fetch' || err.message?.includes('NetworkError') || err.message?.includes('network')) {
+        throw new Error('无法连接到云服务器，请检查网络连接或确认服务器地址是否正确');
+      }
+      throw err;
+    }
   };
 
   /** Login to cloud account */

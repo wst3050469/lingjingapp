@@ -30,7 +30,8 @@ const EXTERNAL = [
   'electron-updater', 'fast-glob', 'adm-zip', 'pdf-parse',
   'mammoth', 'exceljs', 'uuid',
   'picocolors', 'zod', 'gpt-tokenizer',
-  // @codepilot/core subpath exports (resolved at runtime via package.json exports map)
+  // @codepilot/core — resolved at runtime via node_modules symlink
+  '@codepilot/core',
   '@codepilot/core/checkpoint',
   '@codepilot/core/rules',
   '@codepilot/core/utils',

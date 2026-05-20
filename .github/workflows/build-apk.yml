@@ -17,11 +17,29 @@ on:
 
 env:
   ANDROID_HOME: /usr/local/lib/android/sdk
+  GRADLE_OPTS: -Xmx2048m -Dorg.gradle.daemon=false
 
 jobs:
   build:
-    name: Test With Inputs
+    name: Build Android APK
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Simple check
-        run: echo "Workflow is running with inputs!"
+        run: echo "Setup steps work!"

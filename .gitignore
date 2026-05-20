@@ -58,3 +58,6 @@ packages/electron/prompts/
 
 # Mobile submodule (stale gitlink - suppressed)
 lingjing-mobile/
+git-sync.sh
+dist.bak
+

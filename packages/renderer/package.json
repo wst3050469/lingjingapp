@@ -1,6 +1,6 @@
 {
   "name": "@codepilot/renderer",
-  "version": "1.39.0",
+  "version": "1.46.3",
   "description": "CodePilot Electron renderer (React UI)",
   "type": "module",
   "scripts": {

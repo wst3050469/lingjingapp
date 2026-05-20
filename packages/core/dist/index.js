@@ -24,7 +24,7 @@ export { MemoryReflector as Reflector } from './memory/reflector.js';
 export { McpManager } from './mcp/manager.js';
 export * from './mcp/types.js';
 // Rules
-export { RuleLoader, loadAllRules, getManualRules, applyRules } from './rules/index.js';
+export { loadAllRules, getManualRules, applyRules } from './rules/index.js';
 // Checkpoint
 export { CheckpointManager } from './checkpoint/manager.js';
 export { RollbackExecutor } from './checkpoint/rollback-executor.js';

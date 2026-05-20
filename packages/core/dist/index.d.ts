@@ -13,7 +13,7 @@ export { CompletionEngine } from './completion/completion-engine.js';
 export { MemoryReflector as Reflector } from './memory/reflector.js';
 export { McpManager } from './mcp/manager.js';
 export * from './mcp/types.js';
-export { RuleLoader, loadAllRules, getManualRules, applyRules } from './rules/index.js';
+export { loadAllRules, getManualRules, applyRules } from './rules/index.js';
 export { CheckpointManager } from './checkpoint/manager.js';
 export { RollbackExecutor } from './checkpoint/rollback-executor.js';
 export { runIndexingPipeline } from './pipeline/index.js';

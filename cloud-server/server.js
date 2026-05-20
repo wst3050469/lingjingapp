@@ -52,8 +52,8 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 
 // Global error handler — prevents JSON parse crashes from leaking HTML to clients
-app.use((err, _req, res, _next) => {
-  console.error('[Server] Unhandled error:', err.message);
+app.use((err, req, res, _next) => {
+  console.error('[Server] Error', req.method, req.path, '->', err.message);
   res.status(500).json({ error: 'internal_error', detail: err.message });
 });
 

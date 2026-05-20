@@ -2,7 +2,7 @@
   "name": "@codepilot/core",
   "version": "1.44.5",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "dist/main.js",
   "exports": {
     ".": "./dist/index.js",
     "./agent-mode": "./dist/agent-mode/index.js",

@@ -3,6 +3,12 @@ dist/
 .expo/
 *.jks
 *.p8
+_*.js
+_*.cjs
+_*.mjs
+_*.txt
+*.tar.gz
+release-v*/
 *.p12
 *.key
 *.mobileprovision

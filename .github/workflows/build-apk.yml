@@ -2,6 +2,10 @@ name: Build Mobile APK
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - 'lingjing-mobile/**'
     tags:
       - 'mobile-v*'
   workflow_dispatch:

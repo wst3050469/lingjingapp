@@ -1,6 +1,6 @@
 {
   "name": "lingjing-mobile",
-  "version": "1.44.7",
+  "version": "1.44.8",
   "description": "灵境IDE 移动端 - AI Coding Assistant Mobile",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {

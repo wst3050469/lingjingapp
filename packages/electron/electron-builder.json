@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v1447"
+    "output": "release-v1448"
   },
   "files": [
     "dist/**/*",
@@ -60,15 +60,6 @@
     "executableName": "lingjing",
     "artifactName": "LingJing-${version}-linux-x86_64.${ext}"
   },
-  "extraResources": [
-    {
-      "from": "skills",
-      "to": "skills",
-      "filter": [
-        "**/*"
-      ]
-    }
-  ],
   "publish": {
     "provider": "generic",
     "url": "https://ide.zhejiangjinmo.com/downloads"

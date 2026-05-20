@@ -1,0 +1,3 @@
+[submodule "lingjing-mobile"]
+	path = lingjing-mobile
+	url = https://github.com/wst3050469/lingjing.git

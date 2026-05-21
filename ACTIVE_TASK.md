@@ -16,7 +16,7 @@ Fix: ErrorBoundary, route safety, WebSocket heartbeat
 
 ### 部署平台
 - Windows: Setup 141MB / Portable 141MB ✅
-- Linux: AppImage 174MB ✅ (deb待修复：系统tar兼容性问题)
+- Linux: AppImage 174MB / deb 162MB ✅
 
 ### Git Status
 - main@51af11389 (生产bare repo: ✅ | GitHub: ✅)

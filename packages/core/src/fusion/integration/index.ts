@@ -82,3 +82,70 @@ export type {
   OpenSpaceDetectionResult,
   OpenSpacePatchResult,
 } from './patch-openspace.js';
+
+/**
+ * Batch D (P1 Cloud Server RBAC + Audit Log + Health Check + Degradation Test + Tenant Quota):
+ * - patch-cloud-rbac.ts    → RBAC roles, permissions, JWT middleware
+ * - patch-audit-log.ts     → Audit log entry, query, API middleware
+ * - health-check.ts        → Fusion module health check → FusionHealthReport
+ * - degradation-test.ts    → Degradation verification → DegradationReport
+ * - patch-tenant-quota.ts  → Tenant resource quotas + check
+ */
+
+export {
+  RBAC_ROLES,
+  RBAC_PERMISSIONS,
+  checkPermission,
+  extractRoleFromToken,
+  createRBACMiddleware,
+} from './patch-cloud-rbac.js';
+export type {
+  RBACRole,
+  RBACAction,
+  RBACResource,
+  RBACRoleDefinition,
+  JWTTokenPayload,
+} from './patch-cloud-rbac.js';
+
+export {
+  createAuditLog,
+  queryAuditLogs,
+  clearAuditLogs,
+  getAuditLogCount,
+  createAuditMiddleware,
+} from './patch-audit-log.js';
+export type {
+  AuditLogEntry,
+  AuditLogFilter,
+} from './patch-audit-log.js';
+
+export {
+  runFusionHealthCheck,
+} from './health-check.js';
+export type {
+  FusionHealthModule,
+  FusionHealthReport as IntegrationFusionHealthReport,
+} from './health-check.js';
+
+export {
+  verifyDegradation,
+} from './degradation-test.js';
+export type {
+  DegradationCheck,
+  DegradationReport,
+} from './degradation-test.js';
+
+export {
+  DEFAULT_QUOTAS,
+  setTenantQuota,
+  getTenantQuota,
+  reportUsage,
+  getCurrentUsage,
+  checkQuota,
+  resetAllQuotas,
+} from './patch-tenant-quota.js';
+export type {
+  TenantTier,
+  TenantQuota,
+  QuotaResource,
+} from './patch-tenant-quota.js';

@@ -1,14 +1,14 @@
-import type { IToolRegistry, Tool } from '../../adapters/types.js';
+import type { IToolRegistry, Tool } from '../adapters/types.js';
 import type { FusionConfig, FusionModuleConfig } from '../types.js';
-import type { IVectorMemoryStore } from '../../vector-memory/types.js';
-import type { MultiAgentExecutor } from '../../multi-agent/multi-agent-executor.js';
-import type { DAGOrchestrator } from '../../dag-orchestrator/dag-orchestrator.js';
-import type { OpenSpaceExecuteTool } from '../../openspace/tools/openspace-execute.js';
-import { createRememberVectorTool } from '../../vector-memory/tools/remember-vector.js';
-import { createRecallVectorTool } from '../../vector-memory/tools/recall-vector.js';
-import { createParallelExecuteTool } from '../../multi-agent/tools/parallel-execute.js';
-import { createDagExecuteTool } from '../../dag-orchestrator/tools/dag-execute.js';
-import { logger } from '../../../utils/logger.js';
+import type { IVectorMemoryStore } from '../vector-memory/types.js';
+import type { MultiAgentExecutor } from '../multi-agent/multi-agent-executor.js';
+import type { DAGOrchestrator } from '../dag-orchestrator/dag-orchestrator.js';
+import type { OpenSpaceExecuteTool } from '../openspace/tools/openspace-execute.js';
+import { createRememberVectorTool } from '../vector-memory/tools/remember-vector.js';
+import { createRecallVectorTool } from '../vector-memory/tools/recall-vector.js';
+import { createParallelExecuteTool } from '../multi-agent/tools/parallel-execute.js';
+import { createDagExecuteTool } from '../dag-orchestrator/tools/dag-execute.js';
+import { logger } from '../../utils/logger.js';
 
 export interface FusionToolDeps {
   vectorStore?: IVectorMemoryStore;

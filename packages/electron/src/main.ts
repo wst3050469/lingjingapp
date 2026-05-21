@@ -788,6 +788,19 @@ async function bootstrap(): Promise<void> {
   try { registerQuestStateIpc(); console.log('[Main] registerQuestStateIpc completed successfully');
   } catch (err) { console.error('[Main] registerQuestStateIpc failed:', err); }
 
+  // SSH IPC — register window-independent handlers (ssh:list-connections) in Phase A
+  // ssh:list-connections only reads the database, doesn't need mainWindow.
+  // This prevents "No handler registered" errors when renderer queries SSH connections
+  // before Phase B completes (race condition during startup).
+  // Window-dependent SSH handlers (terminal-data forwarding) remain in Phase B.
+  try {
+    const { registerSshIpcWindowIndependent } = await import('./ssh/ssh-ipc.js');
+    registerSshIpcWindowIndependent();
+    console.log('[Main] SSH window-independent IPC registered successfully');
+  } catch (err) {
+    console.error('[Main] registerSshIpcWindowIndependent failed:', err);
+  }
+
   // Cloud management (user, device, subscription, sync, storage, apiKey)
   try {
     registerAllCloudManagementIpc();

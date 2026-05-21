@@ -40,11 +40,11 @@ function detectLanguage(filePath: string): string {
   return langMap[ext] || 'plaintext';
 }
 
-export function registerSshIpc(mainWindow: BrowserWindow): void {
-  // Register SSH sessions for access by file tools
-  registerSshSessions(sshSessions);
-  
-  // List all saved connections (credentials stripped)
+/**
+ * Register window-independent SSH IPC handlers (safe to call before window creation).
+ * These handlers don't need mainWindow — they only read/write database and SSH sessions.
+ */
+function registerWindowIndependentHandlers(): void {
   ipcMain.handle('ssh:list-connections', async (): Promise<SSHConnection[]> => {
     return await loadConnections();
   });
@@ -101,9 +101,22 @@ export function registerSshIpc(mainWindow: BrowserWindow): void {
       client.connect(config);
     });
   });
+}
 
-  // Connect to a saved SSH server
-  ipcMain.handle('ssh:connect', async (_event, { connectionId }: { connectionId: string }): Promise<{ sshTerminalId: string; name: string; host: string; username: string }> => {
+/** Register window-independent SSH IPC handlers for Phase A registration. */
+export function registerSshIpcWindowIndependent(): void {
+  registerSshSessions(sshSessions);
+  registerWindowIndependentHandlers();
+}
+
+export function registerSshIpc(mainWindow: BrowserWindow): void {
+  // Register SSH sessions for access by file tools
+  registerSshSessions(sshSessions);
+  
+  // Register window-independent handlers (idempotent, safe to call twice)
+  registerWindowIndependentHandlers();
+
+ipcMain.handle('ssh:connect', async (_event, { connectionId }: { connectionId: string }): Promise<{ sshTerminalId: string; name: string; host: string; username: string }> => {
     const connection = await getConnectionWithCredentials(connectionId);
     if (!connection) {
       throw new Error('连接不存在');

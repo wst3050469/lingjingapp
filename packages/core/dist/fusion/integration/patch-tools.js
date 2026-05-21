@@ -56,3 +56,4 @@ export function registerFusionTools(toolRegistry, fusionConfig, deps) {
     logger.info(`[Fusion:Tools] Registered ${registered.length} fusion tools: [${registered.join(', ')}]`);
     return registered;
 }
+//# sourceMappingURL=patch-tools.js.map

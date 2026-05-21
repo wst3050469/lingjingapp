@@ -10,12 +10,16 @@ export { AgentCore } from './agent/agent-core.js';
 export { AgentFactory } from './agent/agent-factory.js';
 export { DAGExecutor } from './agent/dag-executor.js';
 export { ContextCompressor } from './agent/context-compressor.js';
+// LLM
 export { OpenAIProvider } from './llm/openai.js';
 export { AnthropicProvider } from './llm/anthropic.js';
 export { OllamaProvider } from './llm/ollama.js';
 export { createProvider, OPENAI_COMPATIBLE_PROVIDERS, getModelContextWindow } from './llm/provider-factory.js';
 export { parseSSEStream } from './llm/sse-parser.js';
+export * from './llm/types.js';
+// Tools
 export { toolToSchema } from './tools/types.js';
+export * from './tools/types.js';
 export { ToolRegistry } from './tools/registry.js';
 export { ToolExecutor } from './tools/executor.js';
 export { ToolPermission } from './tools/tool-permission.js';
@@ -33,6 +37,7 @@ export { cloudMemorySearchTool, initCloudMemoryTool } from './tools/builtin/clou
 export { cloudSessionTool, initCloudSessionTool } from './tools/builtin/cloud-session.js';
 export { cloudWebhookTool, initCloudWebhookTool } from './tools/builtin/cloud-webhook.js';
 export { generateCommandId, storeBashOutput } from './tools/builtin/bash-output-store.js';
+// Agents
 export { AGENT_PRESETS, getPreset, listPresets, EXPERT_PRESETS, getExpertPreset, getExpertPresets } from './agents/presets.js';
 export { loadAllCustomAgents, getCustomAgent, parseAgentMd } from './agents/loader.js';
 // Config
@@ -47,31 +52,42 @@ export { logger } from './utils/logger.js';
 export { truncateString, truncateLines } from './utils/truncate.js';
 export { decodeBuffer, fixGbkString } from './utils/encoding.js';
 export { withRetry } from './utils/retry.js';
+export * from './utils/index.js';
 // MCP
 export { McpClient } from './mcp/client.js';
 export { McpManager } from './mcp/manager.js';
+export * from './mcp/types.js';
 export { scanAllSkills, getSkill, getSkillCatalog } from './skills/loader.js';
 // Cloud
 export * from './cloud/index.js';
 // Planning
 export { getPlanManager } from './planning/plan-manager.js';
-// Errors
-export * from './errors/index.js';
+// Memory
+export { MemoryReflector as Reflector } from './memory/reflector.js';
+// Completion
+export { CompletionEngine } from './completion/completion-engine.js';
+// Context
+export { ContextManager } from './context/context-manager.js';
+// Intents
+export { IntentDetector } from './intent/intent-detector.js';
+// Rules
+export { loadAllRules, getManualRules, applyRules } from './rules/index.js';
+// Checkpoint
+export { CheckpointManager } from './checkpoint/manager.js';
+export { RollbackExecutor } from './checkpoint/rollback-executor.js';
+// Indexing
+export { PipelineEngine, DslParser, TriggerManager } from './pipeline/index.js';
+// Fusion
+export * as fusion from './fusion/index.js';
 // Security
 export { DataSanitizer } from './security/data-sanitizer.js';
+export * from './security/index.js';
+// Errors
+export * from './errors/index.js';
 // Observability
 export * from './observability/index.js';
 // Lifecycle
 export * from './lifecycle/index.js';
 // Cross-Session Memory
 export * from './cross-session/index.js';
-// === Legacy barrel exports (preserved for backward compatibility) ===
-export { MemoryReflector as Reflector } from './memory/reflector.js';
-export { CompletionEngine } from './completion/completion-engine.js';
-export { ContextManager } from './context/context-manager.js';
-export { IntentDetector } from './intent/intent-detector.js';
-export { loadAllRules, getManualRules, applyRules } from './rules/index.js';
-export { CheckpointManager } from './checkpoint/manager.js';
-export { RollbackExecutor } from './checkpoint/rollback-executor.js';
-export { PipelineEngine, DslParser, TriggerManager } from './pipeline/index.js';
 //# sourceMappingURL=index.js.map

@@ -1,3 +1,13 @@
+/**
+ * OpenSpace 集成完善补丁
+ *
+ * 包含：
+ * - Windows/Linux 安装路径检测逻辑
+ * - WebSocket 连接说明
+ * - 窗口嵌入说明
+ * - 帧导出 Lua 脚本示例
+ * - 全球同步连接 Lua 脚本示例
+ */
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -27,6 +37,7 @@ function existsFile(p) {
     }
 }
 export function detectOpenSpaceWindows() {
+    // 1. 注册表查询
     try {
         const output = execSync(WIN_REGISTRY_QUERY, { encoding: 'utf-8', timeout: 5000 });
         const match = output.match(/REG_SZ\s+(.+)/);
@@ -34,7 +45,8 @@ export function detectOpenSpaceWindows() {
             return { found: true, path: match[1].trim(), method: 'registry' };
         }
     }
-    catch { }
+    catch { /* ignore */ }
+    // 2. PATH 环境变量
     try {
         const whereOut = execSync('where openspace 2>nul', { encoding: 'utf-8', timeout: 5000 }).trim();
         if (whereOut) {
@@ -42,7 +54,8 @@ export function detectOpenSpaceWindows() {
             return { found: true, path: path.dirname(exePath), method: 'PATH' };
         }
     }
-    catch { }
+    catch { /* ignore */ }
+    // 3. 回退路径
     for (const fallback of WIN_PATH_FALLBACKS) {
         if (existsDir(fallback)) {
             return { found: true, path: fallback, method: 'fallback' };
@@ -51,13 +64,15 @@ export function detectOpenSpaceWindows() {
     return { found: false, path: null, method: 'none' };
 }
 export function detectOpenSpaceLinux() {
+    // 1. which openspace
     try {
         const whichOut = execSync('which openspace 2>/dev/null', { encoding: 'utf-8', timeout: 5000 }).trim();
         if (whichOut && existsFile(whichOut)) {
             return { found: true, path: path.dirname(whichOut), method: 'which' };
         }
     }
-    catch { }
+    catch { /* ignore */ }
+    // 2. 回退路径
     for (const fallback of LINUX_PATH_FALLBACKS) {
         if (existsDir(fallback)) {
             return { found: true, path: fallback, method: 'fallback' };
@@ -70,14 +85,34 @@ export function detectOpenSpace() {
         ? detectOpenSpaceWindows()
         : detectOpenSpaceLinux();
 }
+/**
+ * WebSocket 连接说明：
+ * 需要在 bridge.ts 中注入真实 ws 库（当前为接口声明）
+ * - 使用 'ws' npm 包建立与 OpenSpace 的 WebSocket 连接
+ * - 默认端口: 4680 (OpenSpace 主控端口)
+ * - 协议: JSON-RPC over WebSocket
+ * - 示例: const ws = new WebSocket('ws://localhost:4680');
+ *         ws.onmessage = (ev) => handleOpenSpaceEvent(JSON.parse(ev.data));
+ */
+/**
+ * 窗口嵌入说明：
+ * 需要在 renderer.ts 中注入 Electron BrowserWindow API
+ * - 方案A: BrowserView 嵌入（推荐，支持同进程渲染）
+ *   const view = new BrowserView({ webPreferences: { nodeIntegration: false } });
+ *   view.setBounds({ x, y, width, height });
+ *   view.webContents.loadURL('http://localhost:4680');
+ * - 方案B: 子窗口（独立窗口，通过 IPC 通信）
+ * - 方案C: 截屏流（适用于远程 OpenSpace，通过 WebSocket 截屏推送）
+ */
 export function patchOpenSpaceIntegration() {
     const detection = detectOpenSpace();
     return {
         detection,
-        wsBridgeReady: false,
-        windowEmbedReady: false,
+        wsBridgeReady: detection.installed && detection.binaryPath !== null,
+        windowEmbedReady: detection.installed,
     };
 }
+// ─── Lua 脚本示例 ──────────────────────────────────────────────
 export const LUA_FRAME_EXPORT = `-- OpenSpace 帧导出脚本
 -- 在 OpenSpace 中执行，将渲染帧推送到灵境
 
@@ -138,3 +173,4 @@ if syncConfig.role == "follower" then
   openspace.printInfo("Connected to master: " .. syncConfig.masterHost)
 end
 `;
+//# sourceMappingURL=patch-openspace.js.map

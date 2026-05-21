@@ -28,3 +28,4 @@ export function registerFusionSkills(eventBus, hookRegistry, securityConfig, ski
     }
     return { securityLoader, skillPaths: paths };
 }
+//# sourceMappingURL=patch-skills.js.map

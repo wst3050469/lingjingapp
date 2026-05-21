@@ -1,16 +1,34 @@
+/**
+ * Agent Loop Hook Injection Patch
+ *
+ * INJECTION TARGET: packages/core/src/agent/agent.ts (or agent-core.ts)
+ * INJECTION POINT: At key lifecycle points in the agent run loop
+ *
+ * This patch defines hook and event bus injection points for the agent execution
+ * lifecycle. Each function should be called at the corresponding point in the
+ * agent's run loop to enable Fusion subsystem observability and extensibility.
+ *
+ * USAGE: Call these functions at the corresponding lifecycle points in the
+ * agent's run() method. The agent does not need to import Fusion directly —
+ * these are called by the integration layer.
+ *
+ * Example injection pattern in agent.ts:
+ *
+ *   import { patchAgentHooks } from '@codepilot/core/fusion/integration/patch-agent.js';
+ *
+ *   class Agent {
+ *     private agentHooks = patchAgentHooks(hookRegistry, eventBus);
+ *
+ *     async run(prompt: string) {
+ *       await this.agentHooks.beforeRun(this, prompt);
+ *       // ... existing code ...
+ *       await this.agentHooks.afterLLMResponse(this, response);
+ *       // ... etc
+ *     }
+ *   }
+ */
 import { HookPoint } from '../hook-registry/types.js';
 import { logger } from '../../utils/logger.js';
-function extractAgentContext(agent) {
-    if (agent && typeof agent === 'object') {
-        const obj = agent;
-        return {
-            sessionId: typeof obj.sessionId === 'string' ? obj.sessionId : undefined,
-            conversationId: typeof obj.conversationId === 'string' ? obj.conversationId : undefined,
-            model: typeof obj.model === 'string' ? obj.model : undefined,
-        };
-    }
-    return {};
-}
 export function patchAgentHooks(hookRegistry, eventBus) {
     return {
         async beforeRun(agent, prompt) {
@@ -173,3 +191,15 @@ export function patchAgentHooks(hookRegistry, eventBus) {
         },
     };
 }
+function extractAgentContext(agent) {
+    if (agent && typeof agent === 'object') {
+        const obj = agent;
+        return {
+            sessionId: typeof obj.sessionId === 'string' ? obj.sessionId : undefined,
+            conversationId: typeof obj.conversationId === 'string' ? obj.conversationId : undefined,
+            model: typeof obj.model === 'string' ? obj.model : undefined,
+        };
+    }
+    return {};
+}
+//# sourceMappingURL=patch-agent.js.map

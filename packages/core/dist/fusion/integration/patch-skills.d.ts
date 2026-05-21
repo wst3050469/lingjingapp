@@ -11,3 +11,4 @@ export declare function registerFusionSkills(eventBus: IEventBus | null, hookReg
     securityLoader: SkillSecurityLoader | null;
     skillPaths: FusionSkillPaths;
 };
+//# sourceMappingURL=patch-skills.d.ts.map

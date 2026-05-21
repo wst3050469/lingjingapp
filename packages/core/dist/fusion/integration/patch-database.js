@@ -1,3 +1,27 @@
+/**
+ * Database Migration Patches for Hermes Fusion
+ *
+ * INJECTION TARGET: packages/electron/src/db/database.ts
+ * INJECTION POINT: After `db.run(migration002)` in initDatabase() (line ~320)
+ *
+ * Current code in database.ts (lines 318-320):
+ *   const { migration002 } = await import('./migrations/002-platform-tables');
+ *   db.run(migration002);
+ *
+ * Add immediately after:
+ *   const { migration003 } = await import('./migrations/migration003_hermes_fusion');
+ *   db.run(migration003);
+ *
+ *   // OpenSpace Fusion tables
+ *   const { getMigration004SQL } = await import(
+ *     '@codepilot/core/fusion/integration/patch-database.js'
+ *   );
+ *   db.run(getMigration004SQL());
+ *
+ * Or, if migration004 is created as a standalone file:
+ *   const { migration004 } = await import('./migrations/migration004_openspace_fusion');
+ *   db.run(migration004);
+ */
 export function getMigration003SQL() {
     return `
 CREATE TABLE IF NOT EXISTS vector_memory (
@@ -221,3 +245,4 @@ CREATE INDEX IF NOT EXISTS idx_openspace_recordings_state ON openspace_recording
 CREATE INDEX IF NOT EXISTS idx_openspace_sync_role ON openspace_sync_state(role);
 `;
 }
+//# sourceMappingURL=patch-database.js.map

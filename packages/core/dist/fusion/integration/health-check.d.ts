@@ -1,3 +1,8 @@
+/**
+ * Fusion Module Health Check — Batch D (P1)
+ *
+ * Validates all 16 fusion modules and produces FusionHealthReport.
+ */
 import type { FusionConfig } from '../types.js';
 import type { IEventBus } from '../event-bus/types.js';
 import type { IHookRegistry } from '../hook-registry/types.js';
@@ -21,22 +26,26 @@ export interface FusionHealthModule {
 export interface FusionHealthReport {
     overall: 'healthy' | 'degraded' | 'unhealthy';
     modules: FusionHealthModule[];
-    healthyCount: number;
-    totalConfigured: number;
+    timestamp: number;
 }
-export interface HealthCheckDeps {
+interface HealthCheckDeps {
+    config: FusionConfig;
     eventBus?: IEventBus;
     hookRegistry?: IHookRegistry;
-    vectorStore?: IVectorMemoryStore;
+    vectorMemory?: IVectorMemoryStore;
     reviewEngine?: INudgeReviewEngine;
     securityScanner?: SecurityScanner;
     traceHarvester?: ExecutionTraceHarvester;
     dagOrchestrator?: IDAGOrchestrator;
-    multiAgentExecutor?: IMultiAgentExecutor;
+    multiAgent?: IMultiAgentExecutor;
     modelRouter?: IDynamicModelRouter;
-    cronScheduler?: INLCronScheduler;
+    nlCron?: INLCronScheduler;
     userModeler?: IHonchoUserModeler;
     connectorHub?: IConnectorHubAdapter;
     messageGateway?: IMessageGateway;
+    openSpaceProcessAlive?: boolean;
+    openSpaceWsConnected?: boolean;
 }
-export declare function runFusionHealthCheck(fusionConfig: FusionConfig, deps: HealthCheckDeps): Promise<FusionHealthReport>;
+export declare function runFusionHealthCheck(deps: HealthCheckDeps): FusionHealthReport;
+export {};
+//# sourceMappingURL=health-check.d.ts.map

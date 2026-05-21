@@ -1,3 +1,10 @@
+/**
+ * Cloud Server RBAC Patch — Batch D (P1)
+ *
+ * Provides role-based access control for cloud-server JWT middleware.
+ * Roles: admin → all, developer → read+write+execute,
+ *        viewer → read-only, guest → limited.
+ */
 export const RBAC_ROLES = {
     admin: {
         role: 'admin',
@@ -66,3 +73,4 @@ export function createRBACMiddleware() {
         next();
     };
 }
+//# sourceMappingURL=patch-cloud-rbac.js.map

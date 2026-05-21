@@ -10,3 +10,4 @@ export interface MemoryLinkageResult {
     destroy(): void;
 }
 export declare function setupMemoryLinkages(eventBus: IEventBus, deps: MemoryLinkageDeps): MemoryLinkageResult;
+//# sourceMappingURL=patch-memory.d.ts.map

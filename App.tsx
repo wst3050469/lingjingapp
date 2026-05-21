@@ -19,6 +19,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import SubscriptionScreen from './src/screens/SubscriptionScreen';
 import PairingScreen from './src/screens/PairingScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import ConnectionBanner from './src/components/ConnectionBanner';
 import { loadPersistedAuth } from './src/stores/app-store';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
@@ -187,7 +188,7 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
+    <ErrorBoundary><SafeAreaProvider>
       <NavigationContainer theme={{
         dark: isDark,
         fonts: {
@@ -242,7 +243,7 @@ export default function App() {
         </Tab.Navigator>
       </NavigationContainer>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-    </SafeAreaProvider>
+    </SafeAreaProvider></ErrorBoundary>
   );
 }
 

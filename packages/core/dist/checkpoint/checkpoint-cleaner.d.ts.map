@@ -1,0 +1,1 @@
+{"version":3,"file":"checkpoint-cleaner.d.ts","sourceRoot":"","sources":["../../src/checkpoint/checkpoint-cleaner.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,gBAAgB,EAAE,MAAM,YAAY,CAAC;AAE/D,qBAAa,iBAAiB;IAC5B,OAAO,CAAC,MAAM,CAAmB;gBAErB,MAAM,CAAC,EAAE,OAAO,CAAC,gBAAgB,CAAC;IAQxC,KAAK,CAAC,WAAW,EAAE,UAAU,EAAE,GAAG,OAAO,CAAC,MAAM,EAAE,CAAC;CAsB1D"}

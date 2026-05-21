@@ -1,0 +1,20 @@
+export type { ContextSnapshot, IncrementalSnapshot, SessionMetadata, SessionMetadataIndex, PersistResult, RestoreStrategy, RestoreOptions, RestoredContext, ResolvedSnapshot, VersionCompatibility, MigrationStep, SnapshotStatus, StorageBackendType, ModelConfigSnapshot, PlanStateSnapshot, ToolCallRecord, ReflectorResultSnapshot, ContextLayers, } from './types.js';
+export type { StorageBackend } from './storage-backend.js';
+export { MemoryStorageBackend } from './backends/memory-backend.js';
+export { FileStorageBackend } from './backends/file-backend.js';
+export { SQLiteStorageBackend, type SQLiteDatabase } from './backends/sqlite-backend.js';
+export { ChainedStorageBackend } from './backends/chained-backend.js';
+export { ContextPersistor } from './context-persistor.js';
+export { ContextRestorer } from './context-restorer.js';
+export { IncrementalSnapshotter } from './incremental-snapshotter.js';
+export { SchemaVersionManager } from './schema-version-manager.js';
+export { MigrationPipeline } from './migration-pipeline.js';
+export { CrossSessionMemory } from './cross-session-memory.js';
+export { StorageGC } from './storage-gc.js';
+export { NudgerAdapter } from './adapters/nudger-adapter.js';
+export { ReflectorAdapter } from './adapters/reflector-adapter.js';
+export { ShutdownHook } from './adapters/shutdown-hook.js';
+export { computeChecksum, verifyChecksum, generateSnapshotId, generateIncrementalId } from './utils.js';
+export type { CrossSessionConfig } from './config.js';
+export { DEFAULT_CROSS_SESSION_CONFIG } from './config.js';
+//# sourceMappingURL=index.d.ts.map

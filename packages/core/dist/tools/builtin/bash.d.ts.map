@@ -1,0 +1,1 @@
+{"version":3,"file":"bash.d.ts","sourceRoot":"","sources":["../../../src/tools/builtin/bash.ts"],"names":[],"mappings":"AAIA,OAAO,KAAK,EAAE,IAAI,EAA2B,MAAM,aAAa,CAAC;AAYjE,wBAAgB,gBAAgB,CAAC,MAAM,EAAE;IAAE,OAAO,EAAE,OAAO,CAAC;IAAC,aAAa,EAAE,MAAM,CAAA;CAAE,GAAG,IAAI,CAY1F;AAuBD,eAAO,MAAM,QAAQ,EAAE,IAkKtB,CAAC"}

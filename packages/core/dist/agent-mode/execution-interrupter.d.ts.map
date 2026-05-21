@@ -1,0 +1,1 @@
+{"version":3,"file":"execution-interrupter.d.ts","sourceRoot":"","sources":["../../src/agent-mode/execution-interrupter.ts"],"names":[],"mappings":"AAAA,qBAAa,oBAAoB;IAC/B,OAAO,CAAC,OAAO,CAAS;IACxB,OAAO,CAAC,eAAe,CAAgC;IAEvD,KAAK,IAAI,WAAW;IAMpB,SAAS,IAAI,IAAI;IAKjB,aAAa,IAAI,OAAO;CAGzB"}

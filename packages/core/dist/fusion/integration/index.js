@@ -1,0 +1,14 @@
+export { patchElectronMain } from './patch-electron-main.js';
+export { getMigration003SQL, getMigration004SQL } from './patch-database.js';
+export { patchAgentHooks } from './patch-agent.js';
+export { registerFusionTools } from './patch-tools.js';
+export { registerFusionSkills } from './patch-skills.js';
+export { setupMemoryLinkages } from './patch-memory.js';
+export { detectOpenSpace, detectOpenSpaceWindows, detectOpenSpaceLinux, patchOpenSpaceIntegration, LUA_FRAME_EXPORT, LUA_GLOBE_SYNC, } from './patch-openspace.js';
+export { FUSION_SIDEBAR_PANELS, OPENSPACE_SIDEBAR_PANELS, FUSION_PANEL_COMPONENTS, OPENSPACE_PANEL_COMPONENTS, ALL_SIDEBAR_PANELS, ALL_PANEL_COMPONENTS, getPanelIconEntries, } from './patch-renderer.js';
+export { SCIFI_THEME_OPTION, SCIFI_DARK_CSS_VARS, THEME_OPTIONS, } from './patch-theme-switch.js';
+export { RBAC_ROLES, RBAC_PERMISSIONS, checkPermission, extractRoleFromToken, createRBACMiddleware, } from './patch-cloud-rbac.js';
+export { createAuditLog, queryAuditLogs, clearAuditLogs, getAuditLogCount, createAuditMiddleware, } from './patch-audit-log.js';
+export { runFusionHealthCheck, } from './health-check.js';
+export { verifyDegradation, } from './degradation-test.js';
+export { DEFAULT_QUOTAS, setTenantQuota, getTenantQuota, reportUsage, getCurrentUsage, checkQuota, resetAllQuotas, } from './patch-tenant-quota.js';

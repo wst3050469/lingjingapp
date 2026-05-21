@@ -1,0 +1,1 @@
+{"version":3,"file":"rule-watch-service.d.ts","sourceRoot":"","sources":["../../src/rules/rule-watch-service.ts"],"names":[],"mappings":"AAGA,qBAAa,gBAAgB;IAC3B,OAAO,CAAC,QAAQ,CAAmB;IACnC,OAAO,CAAC,QAAQ,CAA6B;IAE7C,KAAK,CAAC,KAAK,EAAE,MAAM,EAAE,EAAE,QAAQ,EAAE,MAAM,IAAI,GAAG,IAAI;IAalD,IAAI,IAAI,IAAI;CAOb"}

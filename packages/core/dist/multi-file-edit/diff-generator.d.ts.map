@@ -1,0 +1,1 @@
+{"version":3,"file":"diff-generator.d.ts","sourceRoot":"","sources":["../../src/multi-file-edit/diff-generator.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,QAAQ,EAAY,QAAQ,EAAgB,MAAM,YAAY,CAAC;AAE7E,qBAAa,aAAa;IACxB,QAAQ,CAAC,IAAI,EAAE,QAAQ,GAAG,QAAQ;IASlC,OAAO,CAAC,YAAY;IAoDpB,OAAO,CAAC,gBAAgB;IAWxB,OAAO,CAAC,wBAAwB;CAyBjC"}

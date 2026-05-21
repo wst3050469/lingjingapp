@@ -199,9 +199,9 @@ export function registerIndexingIpc(getWorkspace: () => string, mainWindow: Brow
           latestProgress = progress;
 
           // Update state for status queries
-          if (progress.phase === 'done') {
+          if (progress.phase === 'done' || progress.phase === 'error') {
             indexStates.set(workspace, {
-              indexed: true,
+              indexed: progress.totalChunks > 0,
               indexedCount: progress.totalChunks,
               lastUpdated: new Date().toISOString(),
             });
@@ -216,9 +216,13 @@ export function registerIndexingIpc(getWorkspace: () => string, mainWindow: Brow
         },
       );
 
-      // Clear live progress when done
-      if (result.success) {
-        latestProgress = null;
+      // Keep 'done' progress visible for 5 seconds so the UI can show it
+      if (result.success || result.error) {
+        setTimeout(() => {
+          if (latestProgress?.phase === 'done' || latestProgress?.phase === 'error') {
+            latestProgress = null;
+          }
+        }, 5000);
       }
 
       if (!result.success) {
@@ -227,7 +231,7 @@ export function registerIndexingIpc(getWorkspace: () => string, mainWindow: Brow
 
       // Store index state
       indexStates.set(workspace, {
-        indexed: true,
+        indexed: result.chunksIndexed > 0,
         indexedCount: result.chunksIndexed,
         lastUpdated: new Date().toISOString(),
       });

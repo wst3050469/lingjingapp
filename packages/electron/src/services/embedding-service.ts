@@ -26,8 +26,9 @@ const OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small';
 const OPENAI_DIMENSIONS = 1536;
 const BATCH_SIZE = 100;
 const RATE_LIMIT_DELAY = 200; // ms between batches
-const EMBED_TIMEOUT = 60_000; // 60s timeout for API calls
-const OLLAMA_TIMEOUT = 30_000; // 30s timeout for local Ollama calls
+const EMBED_TIMEOUT = 30_000; // 30s timeout for API calls (reduced from 60s)
+const OLLAMA_TIMEOUT = 15_000; // 15s timeout for local Ollama calls (reduced from 30s)
+const PROBE_TIMEOUT = 5_000; // 5s quick probe before committing to an API provider
 
 /**
  * Fetch with timeout using AbortController.
@@ -283,6 +284,23 @@ function createTfIdfEmbeddingService(): EmbeddingService {
   };
 }
 
+// --- Quick probe: validate an API embedding service is actually usable ---
+
+/**
+ * Probe an embedding service by sending a single short text.
+ * Uses a short timeout to avoid hanging.
+ * Returns true if the service responds correctly within PROBE_TIMEOUT.
+ */
+async function probeEmbeddingService(service: EmbeddingService): Promise<boolean> {
+  try {
+    const result = await service.embed(['test']);
+    return result.length === 1 && result[0].length > 0;
+  } catch (err) {
+    console.warn(`[Embedding] Probe failed for ${service.type} service:`, err instanceof Error ? err.message : String(err));
+    return false;
+  }
+}
+
 // --- Provider detection & factory ---
 
 /** Base URLs for known providers that support /embeddings */
@@ -317,16 +335,15 @@ const PROVIDER_EMBEDDING_MODELS: Record<string, string> = {
 /**
  * Create an embedding service based on the current application config.
  * Priority:
- *  1. OpenAI key → OpenAI embedding API
- *  2. Other OpenAI-compatible key → that provider's embedding API
- *  3. Custom provider with baseUrl → custom embedding API
- *  4. Ollama (if reachable) → Ollama embedding API
+ *  1. OpenAI key → OpenAI embedding API (probed)
+ *  2. Other OpenAI-compatible key → that provider's embedding API (probed)
+ *  3. Custom provider with baseUrl → custom embedding API (probed)
+ *  4. Ollama (if reachable) → Ollama embedding API (probed)
  *  5. None → TF-IDF fallback (instant, no network calls)
  *
- * Note: Ollama is only used if a quick health check confirms it's running.
- * This prevents the pipeline from hanging when Ollama is not actually available
- * (the default baseUrl always has a value, so without this check,
- * every embedding call would timeout after 30 seconds).
+ * Each API-based provider is quickly probed (5s timeout) before being selected.
+ * If the probe fails, the next provider in priority is tried.
+ * This prevents the pipeline from hanging when a configured API is not accessible.
  */
 export async function createEmbeddingService(config: AppConfig): Promise<EmbeddingService> {
   // Check for API key-based providers
@@ -338,14 +355,27 @@ export async function createEmbeddingService(config: AppConfig): Promise<Embeddi
       const baseUrl = PROVIDER_BASE_URLS[name];
       if (baseUrl) {
         const model = PROVIDER_EMBEDDING_MODELS[name] ?? OPENAI_EMBEDDING_MODEL;
-        return createOpenAIEmbeddingService(key, baseUrl, model);
+        const service = createOpenAIEmbeddingService(key, baseUrl, model);
+        console.log(`[Embedding] Probing ${name} embedding API at ${baseUrl}...`);
+        const ok = await probeEmbeddingService(service);
+        if (ok) {
+          console.log(`[Embedding] ${name} embedding API probe OK, using API provider`);
+          return service;
+        }
+        console.warn(`[Embedding] ${name} embedding API probe FAILED, trying next provider`);
       }
     }
   }
 
-  // Custom provider
+  // Custom provider (probed)
   if (config.custom.apiKey && config.custom.baseUrl) {
-    return createOpenAIEmbeddingService(config.custom.apiKey, config.custom.baseUrl);
+    const service = createOpenAIEmbeddingService(config.custom.apiKey, config.custom.baseUrl);
+    const ok = await probeEmbeddingService(service);
+    if (ok) {
+      console.log(`[Embedding] Custom provider probe OK, using API provider`);
+      return service;
+    }
+    console.warn('[Embedding] Custom provider probe FAILED');
   }
 
   // Ollama — only if actually reachable (quick 2s health check)
@@ -355,7 +385,13 @@ export async function createEmbeddingService(config: AppConfig): Promise<Embeddi
         signal: AbortSignal.timeout(2000),
       });
       if (resp.ok) {
-        return createOllamaEmbeddingService(config.ollama.baseUrl);
+        const service = createOllamaEmbeddingService(config.ollama.baseUrl);
+        const ok = await probeEmbeddingService(service);
+        if (ok) {
+          console.log(`[Embedding] Ollama probe OK, using Ollama provider`);
+          return service;
+        }
+        console.warn('[Embedding] Ollama probe FAILED');
       }
     } catch {
       // Ollama not reachable — fall through to TF-IDF
@@ -363,5 +399,6 @@ export async function createEmbeddingService(config: AppConfig): Promise<Embeddi
   }
 
   // TF-IDF fallback (instant, fully local)
+  console.log('[Embedding] Using TF-IDF fallback (no API provider available)');
   return createTfIdfEmbeddingService();
 }

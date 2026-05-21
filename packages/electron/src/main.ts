@@ -844,25 +844,23 @@ async function bootstrap(): Promise<void> {
     const osRelease = require('node:os').release();
     const appVersion = app.getVersion();
 
-    fetch('https://ide.zhejiangjinmo.com/api/user/devices/register', {
+    // Device auto-registration via /api/auth/register (correct endpoint + API key)
+    const DEVICE_API_KEY = '5379dcbe873b356430d84f3f68b0f0c6e96e2afa3b8a9b5441c9e4d7f5a0b1c2';
+    fetch('https://ide.zhejiangjinmo.com/api/auth/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        deviceId, name: 'IDE-' + platform + '-' + deviceId.slice(0, 8),
-        type: 'desktop', os: platform + ' ' + osRelease, version: appVersion
+        deviceId, deviceName: 'IDE-' + platform + '-' + deviceId.slice(0, 8),
+        deviceInfo: { type: 'desktop', os: platform + ' ' + osRelease, version: appVersion },
+        apiKey: DEVICE_API_KEY
       })
     }).then(res => {
       if (res.ok) console.log('[Main] Device auto-registered:', deviceId.slice(0, 12) + '...');
       else console.warn('[Main] Device auto-registration failed:', res.status);
     }).catch(err => { console.warn('[Main] Device auto-registration error:', err.message); });
 
-    setInterval(() => {
-      fetch('https://ide.zhejiangjinmo.com/api/user/devices/heartbeat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047' },
-        body: JSON.stringify({ deviceId })
-      }).catch(() => {});
-    }, 300000);
+    // Heartbeat is handled by CloudSyncClient (30s interval via WebSocket ping)
+    // No separate heartbeat fetch needed
     console.log('[Main] Device heartbeat scheduler started');
   } catch (err) {
     console.warn('[Main] Device auto-registration setup failed:', err);

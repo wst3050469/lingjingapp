@@ -481,14 +481,16 @@ function readVersionInfo() {
 
     // Format B: update-server format with versions array
     if (data.versions) {
-      const nonDraftVersions = data.versions.filter(v => v.status !== 'draft');
-      const latestEntry = data.versions.find(v => v.version === data.latest && v.status !== 'draft');
-      const latest = latestEntry || nonDraftVersions[0];
+      // Only published versions should be visible to clients.
+      // Draft and pending_review versions are hidden until admin publishes them.
+      const publishedVersions = data.versions.filter(v => v.status === 'published');
+      const latestEntry = data.versions.find(v => v.version === data.latest && v.status === 'published');
+      const latest = latestEntry || publishedVersions[0];
       if (latest) {
         _verCache = {
           hasUpdate: true,
           version: latest.version || '1.4.0',
-          status: latest.status || 'published',
+          status: 'published',
           releaseDate: latest.releaseDate || new Date().toISOString(),
           releaseNotes: latest.releaseNotes || ('灵境IDE v' + (latest.version || '1.4.0')),
           files: latest.files || {},
@@ -496,7 +498,7 @@ function readVersionInfo() {
         _verCacheTime = _now;
         return _verCache;
       }
-      // All versions are drafts — no public update available
+      // No published version found — no public update available
       _verCache = { hasUpdate: false, version: '0.0.0', releaseNotes: '暂无已发布的更新' };
         _verCacheTime = _now;
         return _verCache;

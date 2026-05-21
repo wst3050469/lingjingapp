@@ -1442,8 +1442,16 @@ export function registerAdminAPI(app, db) {
     const p = findVersionsJsonPath();
     if (!p) return { latest: '0.0.0', versions: [] };
     try {
-      return JSON.parse(fs.readFileSync(p, 'utf8'));
+      const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+      return normalizeVersionsJson(data);
     } catch { return { latest: '0.0.0', versions: [] }; }
+  }
+
+  function normalizeVersionsJson(data) {
+    if (data.versions && typeof data.versions === 'object' && !Array.isArray(data.versions)) {
+      data.versions = Object.values(data.versions);
+    }
+    return data;
   }
 
   function writeVersionsJson(data) {

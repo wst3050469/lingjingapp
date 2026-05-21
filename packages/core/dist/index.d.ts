@@ -1,6 +1,3 @@
-// @codepilot/core - Main entry point
-// Re-exports all public APIs
-// Agent
 export { Agent } from './agent/agent.js';
 export { Conversation } from './agent/conversation.js';
 export { estimateTokens } from './agent/token-counter.js';
@@ -15,7 +12,9 @@ export { AnthropicProvider } from './llm/anthropic.js';
 export { OllamaProvider } from './llm/ollama.js';
 export { createProvider, OPENAI_COMPATIBLE_PROVIDERS, getModelContextWindow } from './llm/provider-factory.js';
 export { parseSSEStream } from './llm/sse-parser.js';
+export * from './llm/types.js';
 export { toolToSchema } from './tools/types.js';
+export * from './tools/types.js';
 export { ToolRegistry } from './tools/registry.js';
 export { ToolExecutor } from './tools/executor.js';
 export { ToolPermission } from './tools/tool-permission.js';
@@ -35,42 +34,22 @@ export { cloudWebhookTool, initCloudWebhookTool } from './tools/builtin/cloud-we
 export { generateCommandId, storeBashOutput } from './tools/builtin/bash-output-store.js';
 export { AGENT_PRESETS, getPreset, listPresets, EXPERT_PRESETS, getExpertPreset, getExpertPresets } from './agents/presets.js';
 export { loadAllCustomAgents, getCustomAgent, parseAgentMd } from './agents/loader.js';
-// Config
 export { AppConfigSchema } from './config/schema.js';
 export { DEFAULT_CONFIG } from './config/defaults.js';
 export { loadConfig } from './config/loader.js';
-// Git
 export { gitStatus, gitDiff, gitLog, gitCurrentBranch, isGitRepo, gitRevParseHead, gitDiffNameOnly } from './git/operations.js';
 export { createPR } from './git/pr.js';
-// Utils
 export { logger } from './utils/logger.js';
 export { truncateString, truncateLines } from './utils/truncate.js';
 export { decodeBuffer, fixGbkString } from './utils/encoding.js';
 export { withRetry } from './utils/retry.js';
-// MCP
+export * from './utils/index.js';
 export { McpClient } from './mcp/client.js';
 export { McpManager } from './mcp/manager.js';
-export { scanAllSkills, getSkill, getSkillCatalog } from './skills/loader.js';
-// Cloud
-export * from './cloud/index.js';
-// Planning
-export { getPlanManager } from './planning/plan-manager.js';
-// Errors
-export * from './errors/index.js';
-// Security
-export { DataSanitizer } from './security/data-sanitizer.js';
-// Observability
-export * from './observability/index.js';
-// Lifecycle
-export * from './lifecycle/index.js';
-// Cross-Session Memory
-export * from './cross-session/index.js';
-// === Legacy barrel exports (preserved for backward compatibility) ===
-export * from './llm/types.js';
-export * from './tools/types.js';
 export * from './mcp/types.js';
-export * from './utils/index.js';
-export * from './security/index.js';
+export { scanAllSkills, getSkill, getSkillCatalog } from './skills/loader.js';
+export * from './cloud/index.js';
+export { getPlanManager } from './planning/plan-manager.js';
 export { MemoryReflector as Reflector } from './memory/reflector.js';
 export { CompletionEngine } from './completion/completion-engine.js';
 export { ContextManager } from './context/context-manager.js';
@@ -80,4 +59,10 @@ export { CheckpointManager } from './checkpoint/manager.js';
 export { RollbackExecutor } from './checkpoint/rollback-executor.js';
 export { PipelineEngine, DslParser, TriggerManager } from './pipeline/index.js';
 export * as fusion from './fusion/index.js';
+export { DataSanitizer } from './security/data-sanitizer.js';
+export * from './security/index.js';
+export * from './errors/index.js';
+export * from './observability/index.js';
+export * from './lifecycle/index.js';
+export * from './cross-session/index.js';
 //# sourceMappingURL=index.d.ts.map

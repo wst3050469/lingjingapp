@@ -1,3 +1,9 @@
+/**
+ * Audit Log Patch — Batch D (P1)
+ *
+ * Provides audit logging for cloud-server API endpoints.
+ * Each API endpoint should wrap with createAuditMiddleware().
+ */
 const auditStore = [];
 let entryCounter = 0;
 function generateId() {
@@ -15,56 +21,48 @@ export function createAuditLog(entry) {
         metadata: entry.metadata,
     };
     auditStore.push(full);
-    if (auditStore.length > 10000) {
-        auditStore.splice(0, auditStore.length - 10000);
-    }
     return full;
 }
-export function queryAuditLogs(filter) {
-    let results = [...auditStore];
-    if (filter?.userId) {
+export function queryAuditLogs(filter = {}) {
+    let results = auditStore;
+    if (filter.userId)
         results = results.filter((e) => e.userId === filter.userId);
-    }
-    if (filter?.action) {
+    if (filter.action)
         results = results.filter((e) => e.action === filter.action);
-    }
-    if (filter?.resource) {
+    if (filter.resource)
         results = results.filter((e) => e.resource === filter.resource);
-    }
-    if (filter?.result) {
+    if (filter.result)
         results = results.filter((e) => e.result === filter.result);
-    }
-    if (filter?.since) {
-        results = results.filter((e) => e.timestamp >= filter.since);
-    }
-    if (filter?.until) {
-        results = results.filter((e) => e.timestamp <= filter.until);
-    }
-    if (filter?.limit && results.length > filter.limit) {
+    if (filter.fromTimestamp)
+        results = results.filter((e) => e.timestamp >= filter.fromTimestamp);
+    if (filter.toTimestamp)
+        results = results.filter((e) => e.timestamp <= filter.toTimestamp);
+    results = results.sort((a, b) => b.timestamp - a.timestamp);
+    if (filter.limit && filter.limit > 0)
         results = results.slice(0, filter.limit);
-    }
     return results;
 }
 export function clearAuditLogs() {
     auditStore.length = 0;
+    entryCounter = 0;
 }
 export function getAuditLogCount() {
     return auditStore.length;
 }
 export function createAuditMiddleware() {
     return (req, res, next) => {
-        const originalJson = res.json.bind(res);
-        res.json = function (body) {
-            const entry = {
-                userId: req.user?.sub || 'anonymous',
-                action: `${req.method} ${req.path}`,
-                resource: req.path,
-                result: res.statusCode < 400 ? 'success' : 'failure',
-                metadata: { statusCode: res.statusCode },
-            };
-            createAuditLog(entry);
-            return originalJson(body);
-        };
+        const startTime = Date.now();
+        const userId = req.user?.sub ?? 'anonymous';
+        const resource = req.path.replace(/^\//, '').split('/')[0] || 'unknown';
         next();
+        const result = res.statusCode < 400 ? 'success' : res.statusCode === 403 ? 'denied' : 'failure';
+        createAuditLog({
+            userId,
+            action: req.method,
+            resource,
+            result,
+            metadata: { durationMs: Date.now() - startTime, statusCode: res.statusCode },
+        });
     };
 }
+//# sourceMappingURL=patch-audit-log.js.map

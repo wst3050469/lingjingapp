@@ -1,61 +1,73 @@
-const tenantQuotas = new Map();
+/**
+ * Tenant Resource Quota — Batch D (P1)
+ *
+ * Per-tenant resource limits for cloud-server multi-tenant scenarios.
+ */
 export const DEFAULT_QUOTAS = {
-    free: { tier: 'free', maxUsers: 5, maxStorageMB: 100, maxApiCallsPerDay: 1000, maxConcurrentSessions: 2 },
-    starter: { tier: 'starter', maxUsers: 20, maxStorageMB: 1024, maxApiCallsPerDay: 10000, maxConcurrentSessions: 10 },
-    pro: { tier: 'pro', maxUsers: 100, maxStorageMB: 10240, maxApiCallsPerDay: 100000, maxConcurrentSessions: 50 },
-    enterprise: { tier: 'enterprise', maxUsers: 9999, maxStorageMB: 102400, maxApiCallsPerDay: 999999999, maxConcurrentSessions: 9999 },
+    free: {
+        tier: 'free',
+        maxUsers: 1,
+        maxStorageMB: 100,
+        maxApiCallsPerDay: 1000,
+        maxConcurrentSessions: 1,
+    },
+    starter: {
+        tier: 'starter',
+        maxUsers: 5,
+        maxStorageMB: 1024,
+        maxApiCallsPerDay: 10000,
+        maxConcurrentSessions: 3,
+    },
+    pro: {
+        tier: 'pro',
+        maxUsers: 50,
+        maxStorageMB: 10240,
+        maxApiCallsPerDay: 100000,
+        maxConcurrentSessions: 20,
+    },
+    enterprise: {
+        tier: 'enterprise',
+        maxUsers: Infinity,
+        maxStorageMB: Infinity,
+        maxApiCallsPerDay: Infinity,
+        maxConcurrentSessions: Infinity,
+    },
 };
-const usageStore = new Map();
-export function setTenantQuota(tenantId, quota) {
-    const full = { tenantId, ...quota };
-    tenantQuotas.set(tenantId, full);
-    return full;
+const tenantQuotaStore = new Map();
+const tenantUsageStore = new Map();
+export function setTenantQuota(quota) {
+    tenantQuotaStore.set(quota.tenantId, quota);
+    if (!tenantUsageStore.has(quota.tenantId)) {
+        tenantUsageStore.set(quota.tenantId, {
+            maxUsers: 0,
+            maxStorageMB: 0,
+            maxApiCallsPerDay: 0,
+            maxConcurrentSessions: 0,
+        });
+    }
 }
 export function getTenantQuota(tenantId) {
-    return tenantQuotas.get(tenantId) ?? null;
+    return tenantQuotaStore.get(tenantId);
 }
-export function reportUsage(tenantId, resource, amount = 1) {
-    const key = `${tenantId}:${resource}`;
-    const now = Date.now();
-    const existing = usageStore.get(key);
-    if (existing && now - existing.timestamp < 86400000) {
-        existing.usage += amount;
-        existing.timestamp = now;
-    }
-    else {
-        usageStore.set(key, { usage: amount, timestamp: now });
+export function reportUsage(tenantId, resource, amount) {
+    const usage = tenantUsageStore.get(tenantId);
+    if (usage) {
+        usage[resource] += amount;
     }
 }
 export function getCurrentUsage(tenantId, resource) {
-    const key = `${tenantId}:${resource}`;
-    const entry = usageStore.get(key);
-    if (!entry)
-        return 0;
-    if (Date.now() - entry.timestamp > 86400000) {
-        usageStore.delete(key);
-        return 0;
-    }
-    return entry.usage;
+    return tenantUsageStore.get(tenantId)?.[resource] ?? 0;
 }
 export function checkQuota(tenantId, resource) {
-    const quota = tenantQuotas.get(tenantId);
+    const quota = tenantQuotaStore.get(tenantId);
     if (!quota)
-        return { allowed: false, reason: 'no_quota' };
+        return false;
+    const limit = quota[resource];
     const usage = getCurrentUsage(tenantId, resource);
-    const limits = {
-        max_users: quota.maxUsers,
-        max_storage_mb: quota.maxStorageMB,
-        max_api_calls_per_day: quota.maxApiCallsPerDay,
-        max_concurrent_sessions: quota.maxConcurrentSessions,
-    };
-    const limit = limits[resource];
-    if (limit == null)
-        return { allowed: true };
-    if (usage >= limit)
-        return { allowed: false, reason: 'quota_exceeded', usage, limit };
-    return { allowed: true, usage, limit };
+    return usage < limit;
 }
 export function resetAllQuotas() {
-    tenantQuotas.clear();
-    usageStore.clear();
+    tenantQuotaStore.clear();
+    tenantUsageStore.clear();
 }
+//# sourceMappingURL=patch-tenant-quota.js.map

@@ -20,7 +20,7 @@ export function setupMemoryLinkages(eventBus, deps) {
         }
     });
     unsubscribes.push(unsubMemorySync);
-    logger.info('[Fusion:Memory] memory:updated \u2192 VectorMemoryStore.syncFromMemory linked');
+    logger.info('[Fusion:Memory] memory:updated → VectorMemoryStore.syncFromMemory linked');
     const unsubUserModel = eventBus.subscribe('memory:updated', async (event) => {
         try {
             const data = event.data;
@@ -41,26 +41,26 @@ export function setupMemoryLinkages(eventBus, deps) {
         }
     });
     unsubscribes.push(unsubUserModel);
-    logger.info('[Fusion:Memory] memory:updated \u2192 HonchoUserModeler.updateUserModel linked');
+    logger.info('[Fusion:Memory] memory:updated → HonchoUserModeler.updateUserModel linked');
     const unsubMessageEnd = eventBus.subscribe('agent:message_end', (_event) => {
         logger.debug('[Fusion:Memory] agent:message_end received; MemoryNudger handles its own triggers');
     });
     unsubscribes.push(unsubMessageEnd);
-    logger.info('[Fusion:Memory] agent:message_end \u2192 MemoryNudger (self-managed) linked');
+    logger.info('[Fusion:Memory] agent:message_end → MemoryNudger (self-managed) linked');
     const unsubReflector = eventBus.subscribe('user_model:updated', async (event) => {
         try {
             const data = event.data;
             if (data && Object.keys(data).length > 0) {
                 userModeler.updateUserModel(data);
-                logger.debug('[Fusion:Memory] Reflector output \u2192 user model updated');
+                logger.debug('[Fusion:Memory] Reflector output → user model updated');
             }
         }
         catch (err) {
-            logger.warn(`[Fusion:Memory] reflector \u2192 user model update failed: ${err.message}`);
+            logger.warn(`[Fusion:Memory] reflector → user model update failed: ${err.message}`);
         }
     });
     unsubscribes.push(unsubReflector);
-    logger.info('[Fusion:Memory] MemoryReflector output \u2192 HonchoUserModeler.updateUserModel linked');
+    logger.info('[Fusion:Memory] MemoryReflector output → HonchoUserModeler.updateUserModel linked');
     return {
         unsubscribes,
         destroy() {
@@ -72,3 +72,4 @@ export function setupMemoryLinkages(eventBus, deps) {
         },
     };
 }
+//# sourceMappingURL=patch-memory.js.map

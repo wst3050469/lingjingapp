@@ -1,6 +1,13 @@
-export declare type RBACRole = 'admin' | 'developer' | 'viewer' | 'guest';
-export declare type RBACAction = 'read' | 'write' | 'execute' | 'delete' | 'admin';
-export declare type RBACResource = string;
+/**
+ * Cloud Server RBAC Patch — Batch D (P1)
+ *
+ * Provides role-based access control for cloud-server JWT middleware.
+ * Roles: admin → all, developer → read+write+execute,
+ *        viewer → read-only, guest → limited.
+ */
+export type RBACRole = 'admin' | 'developer' | 'viewer' | 'guest';
+export type RBACAction = 'read' | 'write' | 'execute' | 'delete' | 'admin';
+export type RBACResource = string;
 export interface RBACRoleDefinition {
     role: RBACRole;
     label: string;
@@ -25,3 +32,4 @@ export declare function createRBACMiddleware(): (req: {
         json: (body: object) => void;
     };
 }, next: () => void) => void;
+//# sourceMappingURL=patch-cloud-rbac.d.ts.map

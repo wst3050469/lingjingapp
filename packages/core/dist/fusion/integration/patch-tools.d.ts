@@ -11,3 +11,4 @@ export interface FusionToolDeps {
     openspaceTool?: OpenSpaceExecuteTool;
 }
 export declare function registerFusionTools(toolRegistry: IToolRegistry, fusionConfig: FusionConfig, deps: FusionToolDeps): string[];
+//# sourceMappingURL=patch-tools.d.ts.map

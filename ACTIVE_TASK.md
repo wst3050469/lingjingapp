@@ -5,6 +5,13 @@
 ### Latest Desktop: v1.46.9
 Fix: Codebase indexing stuck at 0% — probe + auto-fallback + progress fixes
 
+### Latest Server Fix: versions.json 同步修复
+- **问题**: 版本管理页面"加载版本数据失败"
+- **根因**: 4 份 versions.json 不同步，admin-api 读取到对象格式的 versions 字段
+- **修复**: 
+  - 统一同步 4 份 versions.json 为 Array 格式（含 v1.46.9 全平台文件）
+  - admin-api.js 添加 `normalizeVersionsJson()` 自动兼容对象→数组转换
+
 ### Latest Mobile: v1.33.1 
 Fix: ErrorBoundary, route safety, WebSocket heartbeat 
 
@@ -26,8 +33,9 @@ Fix: ErrorBoundary, route safety, WebSocket heartbeat
 - latest.yml / latest-linux.yml: ✅
 
 ### Git Status
-- main@b05fe55b5 (GitHub: ✅ | 生产bare: ✅ push server main)
-  - 3 commits: 0823a073c (indexing fix) + 76032d66e (docs) + b05fe55b5 (bump v1.46.9)
+- main@8eacba2cc (GitHub: ✅ | 生产bare: ✅ push server main)
+  - v1.46.9 相关 commits: 0823a073c + 76032d66e + b05fe55b5 + 4360dfcfa + 8eacba2cc
+  - 最新: fix: versions.json sync + admin-api.js normalizeVersionsJson
 
 ### Service Health 
 - PM2: cloud-server + update-server 运行正常

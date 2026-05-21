@@ -1,28 +1,29 @@
 # LingJing IDE - Task Tracker 
  
-## Current Status: v1.46.5 Deployed (All Platforms) 
+## Current Status: v1.46.5 Desktop | v1.33.1 Mobile 
  
-### Latest Version: v1.46.5 
-Release: Fix admin login 401 + version review workflow + mobile blank page + WebSocket heartbeat 
+### Latest Desktop: v1.46.5 
+Fix: admin login 401 + version review workflow + cloud sync heartbeat 
  
-### Changes in v1.46.5 
-- **Admin Login**: Created admin-api.js (1480 lines), init-admin-password.mjs 
-- **Version Review**: readVersionInfo() only returns published versions; submit-review no longer updates latest pointer 
-- **Mobile ErrorBoundary**: New src/components/ErrorBoundary.tsx wrapping entire app, prevents blank screen 
-- **Mobile ChatDetailScreen**: route?.params safety + Alert.alert on send failure 
-- **Mobile WebSocket Heartbeat**: 30s ping in api.ts, same as desktop sync-client.ts 
-- **Desktop Cloud Sync**: 30s heartbeat in sync-client.ts 
-- **Desktop Chat Blank Page**: ErrorBoundary wrapping ChatPanel and ChatSidebar 
+### Latest Mobile: v1.33.1 
+Fix: ErrorBoundary, route safety, WebSocket heartbeat 
+ 
+### Changes in v1.33.1 Mobile 
+- **ErrorBoundary**: New src/components/ErrorBoundary.tsx wrapping entire app 
+- **ChatDetailScreen**: route?.params safety + Alert on send failure 
+- **WebSocket Heartbeat**: 30s ping in api.ts (same pattern as desktop) 
+- **App.tsx**: Outer ErrorBoundary wrapping SafeAreaProvider 
  
 ### Git Status 
-- Local: 1abb960 OK 
-- Server: 1abb960 OK 
-- GitHub: 1abb960 OK 
+- main@7436569d0 ¡ª OK (Local/Server/GitHub) 
  
 ### Service Health 
 - PM2: 4/4 online 
 - nginx: all endpoints 200 
-- Mobile TypeScript: tsc --noEmit - only pre-existing uuid type error 
+- Mobile TSC: only pre-existing uuid error 
  
-### Development Environment 
-- Linux workstation (192.168.1.9): code-server v4.118.0 on port 8088
+### APK Build Status 
+- **Blocked**: EAS CLI requires Expo login credentials 
+- **Manual steps**: eas login (needs Expo account credentials) && eas build -p android --profile preview 
+- **Upload**: scp *.apk root@120.55.5.220:/var/www/html/apk/ 
+- **Publish**: Admin panel -> POST /api/versions -> submit-review -> publish

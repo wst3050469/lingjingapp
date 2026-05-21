@@ -13,6 +13,7 @@ import { PipelineEditor } from '../pipeline/PipelineEditor';
 import { ReviewPanel } from '../review/ReviewPanel';
 import { PMPanel } from '../pm/PMPanel';
 import { SecurityPanel } from '../security/SecurityPanel';
+import { ErrorBoundary } from './ErrorBoundary';
 
 function WorkflowPanel() {
   const [activeTab, setActiveTab] = useState<'list' | 'editor' | 'monitor'>('list');
@@ -65,7 +66,18 @@ export function SidebarContainer() {
     <div className="h-full bg-cp-sidebar flex flex-col overflow-hidden">
       {activeSidebarPanel === 'explorer' && <FileTree />}
       {activeSidebarPanel === 'search' && <SearchPanel />}
-      {activeSidebarPanel === 'chat' && <ChatSidebar />}
+      {activeSidebarPanel === 'chat' && (
+        <ErrorBoundary fallback={
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center px-4">
+              <p className="text-cp-text-dim/60 text-sm">对话侧栏加载异常</p>
+              <p className="text-cp-text-dim/40 text-xs mt-1">请尝试切换面板或刷新页面</p>
+            </div>
+          </div>
+        }>
+          <ChatSidebar />
+        </ErrorBoundary>
+      )}
       {activeSidebarPanel === 'git' && <GitPanel />}
       {activeSidebarPanel === 'run-debug' && <RunDebugPanel />}
       {activeSidebarPanel === 'extension' && <ExtensionPanel />}

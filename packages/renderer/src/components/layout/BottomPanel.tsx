@@ -3,6 +3,7 @@ import { TerminalPanel } from '../terminal/TerminalPanel';
 import { SSHTerminalPanel } from '../terminal/SSHTerminalPanel';
 import { ChatPanel } from '../chat/ChatPanel';
 import { ProblemsPanel } from '../problems/ProblemsPanel';
+import { ErrorBoundary } from './ErrorBoundary';
 
 const TABS: { id: BottomTab; label: string }[] = [
   { id: 'terminal', label: '终端' },
@@ -51,7 +52,18 @@ export function BottomPanel() {
         {activeBottomTab === 'terminal' && <TerminalPanel />}
         {activeBottomTab === 'ssh-terminal' && <SSHTerminalPanel />}
         {activeBottomTab === 'problems' && <ProblemsPanel />}
-        {activeBottomTab === 'chat' && <ChatPanel compact />}
+        {activeBottomTab === 'chat' && (
+          <ErrorBoundary fallback={
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center px-4">
+                <p className="text-cp-text-dim/60 text-sm">对话组件加载异常</p>
+                <p className="text-cp-text-dim/40 text-xs mt-1">请尝试刷新页面或重新打开面板</p>
+              </div>
+            </div>
+          }>
+            <ChatPanel compact />
+          </ErrorBoundary>
+        )}
       </div>
     </div>
   );

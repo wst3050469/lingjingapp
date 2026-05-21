@@ -38,6 +38,8 @@ export class CloudSyncClient {
   deviceName: string;
   ws: WebSocket | null = null;
   wsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Heartbeat timer: sends ping every 30s to keep WebSocket alive */
+  _heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   syncTimer: ReturnType<typeof setInterval> | null = null;
   listeners: Map<string, Set<EventListener>> = new Map();
   queue: OfflineQueue;
@@ -237,6 +239,28 @@ export class CloudSyncClient {
 
   // ── WebSocket ──
 
+  /** Start heartbeat: sends ping every 30s to keep WebSocket alive */
+  private _startHeartbeat(): void {
+    this._stopHeartbeat();
+    this._heartbeatTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try {
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+        } catch {
+          // Connection might have dropped; heartbeat will stop on onclose
+        }
+      }
+    }, 30000);
+  }
+
+  /** Stop heartbeat timer */
+  private _stopHeartbeat(): void {
+    if (this._heartbeatTimer) {
+      clearInterval(this._heartbeatTimer);
+      this._heartbeatTimer = null;
+    }
+  }
+
   connectWebSocket(): void {
     if (!this.enabled || this.ws) return;
     const authParam = this.token
@@ -249,6 +273,7 @@ export class CloudSyncClient {
     this.ws = new WS(wsUrl) as WebSocket;
     this.ws.onopen = () => {
       console.info('[CloudSync] WebSocket connected');
+      this._startHeartbeat();
       this.emit('connected', { url: this.url, deviceId: this.deviceId });
     };
     this.ws.onmessage = (event: MessageEvent) => {
@@ -263,6 +288,7 @@ export class CloudSyncClient {
       } catch { /* ignore */ }
     };
     this.ws.onclose = () => {
+      this._stopHeartbeat();
       this.ws = null;
       this.emit('disconnected', {});
       this.scheduleReconnect();
@@ -281,6 +307,7 @@ export class CloudSyncClient {
   }
 
   disconnectWebSocket(): void {
+    this._stopHeartbeat();
     if (this.wsReconnectTimer) {
       clearTimeout(this.wsReconnectTimer);
       this.wsReconnectTimer = null;
@@ -331,6 +358,7 @@ export class CloudSyncClient {
   disconnect(): void {
     this.disconnectWebSocket();
     this.queue.stopPeriodicFlush();
+    this._stopHeartbeat();
     if (this.syncTimer) {
       clearInterval(this.syncTimer);
       this.syncTimer = null;

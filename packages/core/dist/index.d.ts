@@ -43,7 +43,7 @@ export { loadConfig } from './config/loader.js';
 export { gitStatus, gitDiff, gitLog, gitCurrentBranch, isGitRepo, gitRevParseHead, gitDiffNameOnly } from './git/operations.js';
 export { createPR } from './git/pr.js';
 // Utils
-export { logger, setLogLevel } from './utils/logger.js';
+export { logger } from './utils/logger.js';
 export { truncateString, truncateLines } from './utils/truncate.js';
 export { decodeBuffer, fixGbkString } from './utils/encoding.js';
 export { withRetry } from './utils/retry.js';

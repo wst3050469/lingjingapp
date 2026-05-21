@@ -22,9 +22,14 @@ Fix: ErrorBoundary, route safety, WebSocket heartbeat
 ### Admin Fix (server-side, no version bump)
 - **Admin白屏修复**：cloud-server 添加 express.static 中间件
 
+### Version Review Workflow
+- **v1.46.6** 已创建并提交审核（pending_review）
+- 登录 `ide.zhejiangjinmo.com/admin` → 版本管理 → 点击「发布」
+
 ### Git Status 
-- main@bba6955c1 (local: pending push to production/GitHub)
+- main@a6a3a2119 (生产bare repo: ✅ pushed | GitHub: ❌ network受限)
 
 ### Service Health 
 - PM2: 4/4 online 
 - nginx: all endpoints 200 
+- Admin MIME fix: ✅ 验证通过

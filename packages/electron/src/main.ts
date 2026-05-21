@@ -909,9 +909,41 @@ async function bootstrap(): Promise<void> {
       console.error('[Main] registerScheduleIpc failed:', err);
     }
 
-    // Fusion IPC
+    // Fusion IPC + Full Initialization (DEF-002/003 fix)
     try {
       registerFusionIPC(mainWindow);
+      // Initialize Fusion subsystem (EventBus, HookRegistry, adapters, etc.)
+      try {
+        const { patchElectronMain } = await import('../core/src/fusion/integration/patch-electron-main.js');
+        const fusionResult = await patchElectronMain({ mainWindow, ipcMain, db: getDatabase() });
+        console.log('[Main] Fusion subsystem initialized:', fusionResult ? 'success' : 'already-initialized');
+      } catch (fusionInitErr) {
+        console.warn('[Main] Fusion subsystem init skipped (non-critical):', fusionInitErr);
+      }
+      // Register Fusion tools (dag_execute, parallel_execute, vector_remember/recall, openspace_execute)
+      try {
+        const { registerFusionTools } = await import('../core/src/fusion/integration/patch-tools.js');
+        registerFusionTools({ db: getDatabase() });
+        console.log('[Main] Fusion tools registered successfully');
+      } catch (toolErr) {
+        console.warn('[Main] Fusion tools registration skipped:', toolErr);
+      }
+      // Register Fusion skills (openspace-navigate, openspace-scene, openspace-record)
+      try {
+        const { registerFusionSkills } = await import('../core/src/fusion/integration/patch-skills.js');
+        registerFusionSkills({ skillsDir: join(homedir(), '.lingjing', 'skills') });
+        console.log('[Main] Fusion skills registered successfully');
+      } catch (skillErr) {
+        console.warn('[Main] Fusion skills registration skipped:', skillErr);
+      }
+      // Setup memory linkages (vector sync + user profile联动)
+      try {
+        const { setupMemoryLinkages } = await import('../core/src/fusion/integration/patch-memory.js');
+        setupMemoryLinkages({ db: getDatabase() });
+        console.log('[Main] Fusion memory linkages established');
+      } catch (memErr) {
+        console.warn('[Main] Fusion memory linkages skipped:', memErr);
+      }
     } catch (err) {
       console.error('[Main] registerFusionIPC failed:', err);
     }

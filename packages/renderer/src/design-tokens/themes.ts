@@ -78,9 +78,36 @@ export const lightTheme: Theme = {
   },
 };
 
+export const scifiDarkTheme: Theme = {
+  name: 'scifi-dark',
+  type: 'dark',
+  colors: {
+    background: '#0a0e1a',
+    backgroundSecondary: '#0d1117',
+    backgroundTertiary: '#131824',
+    surface: '#111827',
+    surfaceHover: '#1a2234',
+    surfaceActive: '#1e293b',
+    border: '#1e3a5f',
+    borderFocus: '#00d4ff',
+    text: '#e2e8f0',
+    textSecondary: '#94a3b8',
+    textTertiary: '#64748b',
+    textInverse: '#0a0e1a',
+    primary: '#00d4ff',
+    primaryHover: '#33ddff',
+    primaryActive: '#00b8d9',
+    success: '#4ec9b0',
+    error: '#ff4757',
+    warning: '#ffa502',
+    info: '#a855f7',
+  },
+};
+
 export const themes = {
   dark: darkTheme,
   light: lightTheme,
+  'scifi-dark': scifiDarkTheme,
 } as const;
 
 export type ThemeName = keyof typeof themes;

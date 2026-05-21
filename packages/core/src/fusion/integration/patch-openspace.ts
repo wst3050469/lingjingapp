@@ -136,8 +136,8 @@ export function patchOpenSpaceIntegration(): OpenSpacePatchResult {
   const detection = detectOpenSpace();
   return {
     detection,
-    wsBridgeReady: false,
-    windowEmbedReady: false,
+    wsBridgeReady: detection.installed && detection.binaryPath !== null,
+    windowEmbedReady: detection.installed,
   };
 }
 

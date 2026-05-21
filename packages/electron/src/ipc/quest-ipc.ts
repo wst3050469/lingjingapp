@@ -552,7 +552,7 @@ function detectSpecBlock(text: string, taskId?: string): string | null {
 
   // and \\r?\\n to support both Unix and Windows line endings.
 
-  const fenceMatch = text.match(/:::spec[ \\t]*\\r?\\n([\\s\\S]*?)\\r?\\n:::[ \\t]*(?:\\r?\\n|$)/);
+  const fenceMatch = text.match(/:::spec[ \t]*\r?\n([\s\S]*?)\r?\n:::[ \t]*(?:\r?\n|$)/);
 
   if (fenceMatch) {
 
@@ -574,7 +574,7 @@ function detectSpecBlock(text: string, taskId?: string): string | null {
 
   // Format 2: # Spec heading (alternative format)
 
-  const headingMatch = text.match(/# Spec[ \\t]*\\r?\\n([\\s\\S]*?)(?=\\r?\\n# |\\r?\\n:::\\r?\\n|\\r?\\n$|$)/);
+  const headingMatch = text.match(/# Spec[ \t]*\r?\n([\s\S]*?)(?=\r?\n# |\r?\n:::\r?\n|\r?\n$|$)/);
 
   if (headingMatch) {
 
@@ -1111,15 +1111,21 @@ Tools should have structured, parseable output:
 
 
   // Append language instruction
-
-  if ((cfg as any).language === 'zh') {
+  // Values: 'zh' -> Chinese, 'en' -> English, 'auto' -> detect from system locale
+  const questLang = (cfg as any).language || 'auto';
+  if (questLang === 'zh') {
 
     prompt += '\n\nAlways respond in Chinese.';
 
-  } else if ((cfg as any).language === 'en') {
+  } else if (questLang === 'en') {
 
     prompt += '\n\nAlways respond in English.';
 
+  } else if (questLang === 'auto') {
+    const systemLang = (process.env.LANG || '').toLowerCase();
+    if (/^(zh|cmn)/.test(systemLang)) {
+      prompt += '\n\nAlways respond in Chinese.';
+    }
   }
 
 

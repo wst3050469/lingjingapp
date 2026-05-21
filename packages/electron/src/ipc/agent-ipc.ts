@@ -731,10 +731,17 @@ function composeSystemPrompt(cfg: AppConfig, mode?: string): string {
   }
 
   // Append language instruction
-  if ((cfg as any).language === 'zh') {
+  // Values: 'zh' -> Chinese, 'en' -> English, 'auto' -> detect from system locale
+  const lang = (cfg as any).language || 'auto';
+  if (lang === 'zh') {
     prompt += '\n\nAlways respond in Chinese (\u4E2D\u6587).';
-  } else if ((cfg as any).language === 'en') {
+  } else if (lang === 'en') {
     prompt += '\n\nAlways respond in English.';
+  } else if (lang === 'auto') {
+    const systemLang = (process.env.LANG || '').toLowerCase();
+    if (/^(zh|cmn)/.test(systemLang)) {
+      prompt += '\n\nAlways respond in Chinese (\u4E2D\u6587).';
+    }
   }
 
   // Append user-defined rules

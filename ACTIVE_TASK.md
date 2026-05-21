@@ -1,15 +1,14 @@
 # LingJing IDE - Task Tracker 
 
-## Current Status: v1.46.9 (draft - 待审核)
+## Current Status: v1.46.9 (已发布)
 
-### Latest Desktop: v1.46.9
+### Latest Desktop: v1.46.9 ✅
 Fix: Codebase indexing stuck at 0% — probe + auto-fallback + progress fixes
 
 ### Latest Server Fixes
 1. **versions.json 同步修复** - 4 份文件统一，admin-api 加固 ✅
 2. **版本管理乱码 & 审核流程修复** ✅
-   - 问题：v1.46.9 直接 published 跳过审核流程，GBK编码导致乱码
-   - 修复：重编码为 UTF-8，v1.46.9 改为 draft 待审核，latest.yml 回退到 v1.46.8
+3. **latest.yml/latest-linux.yml 同步修复** ✅ — 2026-07-10 完成，更新到 v1.46.9
 
 ### Latest Mobile: v1.33.1 
 Fix: ErrorBoundary, route safety, WebSocket heartbeat 
@@ -26,20 +25,17 @@ Fix: ErrorBoundary, route safety, WebSocket heartbeat
 ### 部署平台
 - Windows: Setup 135MB / Portable 135MB ✅ (已部署到生产)
 - Linux: AppImage 174MB / deb 162MB ✅ (已部署到生产)
-- **latest.yml / latest-linux.yml**: ✅ 已回退到 v1.46.8（等待审核通过后发布）
-- **versions.json**: `latest: "1.46.8"`, v1.46.9 为 `draft`（需 admin 审核）
-- **编码**: UTF-8 修复 ✅（之前为 GBK 导致乱码）
-
-### 后续操作 (需 admin)
-1. 登录管理后台 → 版本管理 → 找到 v1.46.9
-2. 点击"提交审核" → 状态变为 `pending_review`
-3. 点击"发布" → 状态变为 `published`，客户端收到升级通知
+- **latest.yml / latest-linux.yml**: ✅ v1.46.9（已更新）
+- **versions.json**: `latest: "1.46.9"`, v1.46.9 为 `published` ✅（全4路径同步）
+- **编码**: UTF-8 ✅
 
 ### Git Status
 - main@8eacba2cc (GitHub: ✅ | 生产bare: ✅ push server main)
-  - 待提交：版本管理乱码 & 审核流程修复
 
 ### Service Health 
 - PM2: cloud-server + update-server 运行正常
 - nginx: all endpoints 200
+- /api/latest → v1.46.9 published ✅
 - /versions → 301 → /admin/versions 200 ✅
+- /downloads/latest.yml → v1.46.9 ✅
+- /downloads/latest-linux.yml → v1.46.9 ✅

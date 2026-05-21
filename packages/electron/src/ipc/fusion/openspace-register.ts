@@ -1,21 +1,13 @@
-/**
- * OpenSpace IPC Registration
- *
- * Registers IPC handlers for the OpenSpace Fusion subsystem,
- * enabling renderer-to-main communication for OpenSpace process
- * management, script execution, and data synchronization.
- */
-
 import type { BrowserWindow } from 'electron';
 import { ipcMain } from 'electron';
 
 export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
   ipcMain.handle('openspace:start', async (_event, config) => {
     try {
-      const { OpenSpaceProcessManager } = await import(
-        '@codepilot/core/fusion/openspace/process-manager.js'
-      );
-      const pm = new OpenSpaceProcessManager();
+      const fusionMod = await import('@codepilot/core/fusion');
+      const PM = fusionMod.OpenSpaceProcessManager;
+      if (!PM) return { success: false, error: 'OpenSpaceProcessManager not available' };
+      const pm = new PM();
       const result = await pm.start(config);
       return { success: true, data: result };
     } catch (err) {
@@ -25,10 +17,10 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('openspace:stop', async (_event, processId) => {
     try {
-      const { OpenSpaceProcessManager } = await import(
-        '@codepilot/core/fusion/openspace/process-manager.js'
-      );
-      const pm = new OpenSpaceProcessManager();
+      const fusionMod = await import('@codepilot/core/fusion');
+      const PM = fusionMod.OpenSpaceProcessManager;
+      if (!PM) return { success: false, error: 'OpenSpaceProcessManager not available' };
+      const pm = new PM();
       await pm.stop(processId);
       return { success: true };
     } catch (err) {
@@ -38,10 +30,10 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('openspace:execute-script', async (_event, request) => {
     try {
-      const { OpenSpaceFusionAdapter } = await import(
-        '@codepilot/core/fusion/openspace/fusion-adapter.js'
-      );
-      const adapter = new OpenSpaceFusionAdapter();
+      const fusionMod = await import('@codepilot/core/fusion');
+      const Adapter = fusionMod.OpenSpaceFusionAdapter;
+      if (!Adapter) return { success: false, error: 'OpenSpaceFusionAdapter not available' };
+      const adapter = new Adapter();
       const result = await adapter.executeScript(request);
       return { success: true, data: result };
     } catch (err) {
@@ -51,10 +43,10 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('openspace:health-check', async (_event, processId) => {
     try {
-      const { OpenSpaceProcessManager } = await import(
-        '@codepilot/core/fusion/openspace/process-manager.js'
-      );
-      const pm = new OpenSpaceProcessManager();
+      const fusionMod = await import('@codepilot/core/fusion');
+      const PM = fusionMod.OpenSpaceProcessManager;
+      if (!PM) return { success: false, error: 'OpenSpaceProcessManager not available' };
+      const pm = new PM();
       const result = await pm.healthCheck(processId);
       return { success: true, data: result };
     } catch (err) {
@@ -64,10 +56,10 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('openspace:list-profiles', async () => {
     try {
-      const { OpenSpaceProcessManager } = await import(
-        '@codepilot/core/fusion/openspace/process-manager.js'
-      );
-      const pm = new OpenSpaceProcessManager();
+      const fusionMod = await import('@codepilot/core/fusion');
+      const PM = fusionMod.OpenSpaceProcessManager;
+      if (!PM) return { success: false, error: 'OpenSpaceProcessManager not available' };
+      const pm = new PM();
       const profiles = await pm.listProfiles();
       return { success: true, data: profiles };
     } catch (err) {
@@ -76,6 +68,5 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
   });
 
   ipcMain.on('openspace:subscribe-events', () => {
-    // Bridge will be connected when process starts
   });
 }

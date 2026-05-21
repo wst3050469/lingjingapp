@@ -109,6 +109,20 @@ declare interface ElectronAPI {
   tools: {
     list: () => Promise<any[]>;
   };
+
+  trigger: {
+    create: (type: string, config: any) => Promise<any>;
+    update: (triggerId: string, config: any) => Promise<any>;
+    delete: (triggerId: string) => Promise<any>;
+    enable: (triggerId: string) => Promise<any>;
+    disable: (triggerId: string) => Promise<any>;
+    getStatus: (triggerId: string) => Promise<any>;
+    list: () => Promise<any[]>;
+    getConfig: (triggerId: string) => Promise<any>;
+    onFired: (callback: (data: any) => void) => () => void;
+    onStatusChange: (callback: (data: any) => void) => () => void;
+    onError: (callback: (data: any) => void) => () => void;
+  };
   github: {
     generateAuthUrl: (scopes?: string[]) => Promise<string>;
     handleCallback: (code: string, state: string) => Promise<any>;
@@ -280,14 +294,6 @@ declare interface ElectronAPI {
     delete: (path: string) => Promise<any>;
     read: (path: string) => Promise<any>;
     readAgent: (path: string) => Promise<any>;
-  };
-  indexing: {
-    status: () => Promise<any>;
-    build: () => Promise<any>;
-    getIgnore: () => Promise<{ content: string; exists: boolean }>;
-    setIgnore: (content: string) => Promise<any>;
-    liveProgress: () => Promise<any>;
-    onProgress: (callback: (progress: any) => void) => () => void;
   };
   integrations: {
     githubValidate: (token: string) => Promise<any>;
@@ -472,6 +478,8 @@ declare interface ElectronAPI {
     getConfig: () => Promise<{ url?: string; apiKey?: string }>;
     onSyncEvent: (callback: (data: any) => void) => () => void;
     onWebhookEvent: (callback: (data: any) => void) => () => void;
+    api: (opts: { endpoint: string; method?: string; body?: unknown; token?: string; baseUrl?: string }) => Promise<any>;
+    setUserToken: (token: string) => Promise<any>;
   };
 }
 

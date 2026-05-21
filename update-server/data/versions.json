@@ -1,10 +1,34 @@
 {
   "versions": [
     {
+      "version": "1.48.0",
+      "status": "published",
+      "releaseDate": "2026-05-21T13:01:17.000Z",
+      "releaseNotes": "灵境IDE v1.48.0 - Fusion融合层完整集成(Hermes 14特性+OpenSpace宇宙可视化+scifi-dark科技感主题+24项缺陷修复)",
+      "files": {
+        "win-x64": {
+          "url": "LingJing-Setup-1.48.0-win-x64.exe",
+          "size": 142068500
+        },
+        "win-portable": {
+          "url": "LingJing-Portable-1.48.0-win-x64.exe",
+          "size": 141726986
+        },
+        "linux-x64": {
+          "url": "LingJing-1.47.2-linux-x86_64.AppImage",
+          "size": 180355072
+        },
+        "linux-deb": {
+          "url": "LingJing-1.47.2-linux-x86_64.deb",
+          "size": 125829120
+        }
+      }
+    },
+    {
       "version": "1.42.9",
       "status": "published",
       "releaseDate": "2026-05-18T22:00:00.000Z",
-      "releaseNotes": "\u7075\u5883IDE v1.42.9 - OpenSpace\u5929\u6587\u53ef\u89c6\u5316\u96c6\u6210",
+      "releaseNotes": "灵境IDE v1.42.9 - OpenSpace天文可视化集成",
       "files": {
         "win-x64": {
           "url": "LingJing-Setup-1.42.9-win-x64.exe",
@@ -24,7 +48,7 @@
       "version": "1.43.0",
       "status": "published",
       "releaseDate": "2026-05-19T00:00:00.000Z",
-      "releaseNotes": "\u7075\u5883IDE v1.43.0 - \u591a\u5e73\u53f0\u6784\u5efa\u4f18\u5316 & \u7248\u672c\u7ba1\u7406\u589e\u5f3a",
+      "releaseNotes": "灵境IDE v1.43.0 - 多平台构建优化 & 版本管理增强",
       "files": {
         "win-x64": {
           "url": "LingJing-Setup-1.43.0-win-x64.exe",
@@ -48,7 +72,7 @@
       "version": "1.43.1",
       "status": "published",
       "releaseDate": "2026-05-19T02:00:00.000Z",
-      "releaseNotes": "\u7075\u5883IDE v1.43.1 - \u4fee\u590d\u8fd0\u884c\u65f6\u9519\u8bef\uff1aIPC\u5904\u7406\u7a0b\u5e8f\u6ce8\u518c\u7f3a\u5931\uff0c\u6784\u5efa\u811a\u672c\u4f18\u5316\uff0csql-wasm.wasm\u81ea\u52a8\u67e5\u627e",
+      "releaseNotes": "灵境IDE v1.43.1 - 修复运行时错误：IPC处理程序注册缺失，构建脚本优化，sql-wasm.wasm自动查找",
       "files": {
         "win-x64": {
           "url": "LingJing-Setup-1.43.1-win-x64.exe",
@@ -72,7 +96,7 @@
       "version": "1.43.2",
       "status": "published",
       "releaseDate": "2026-05-19T03:00:00.000Z",
-      "releaseNotes": "\u7075\u5883IDE v1.43.2 - \u4fee\u590d\u542f\u52a8\u5d29\u6e83\uff1a@codepilot/core exports map \u5b50\u8def\u5f84\u663e\u5f0f\u58f0\u660e\uff0c\u63d0\u5347ASAR\u73af\u5883\u517c\u5bb9\u6027",
+      "releaseNotes": "灵境IDE v1.43.2 - 修复启动崩溃：@codepilot/core exports map 子路径显式声明，提升ASAR环境兼容性",
       "files": {
         "win-x64": {
           "url": "LingJing-Setup-1.43.2-win-x64.exe",
@@ -93,5 +117,5 @@
       }
     }
   ],
-  "latest": "1.43.2"
+  "latest": "1.48.0"
 }

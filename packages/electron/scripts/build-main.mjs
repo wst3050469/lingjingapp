@@ -101,6 +101,7 @@ const EXTERNAL = [
   // @codepilot/core - must be external, its subpaths (checkpoint, rules, utils)
   // are resolved at runtime from the installation directory
   '@codepilot/core',
+  '@codepilot/core/fusion',
   '@codepilot/core/checkpoint',
   '@codepilot/core/rules',
   '@codepilot/core/utils',

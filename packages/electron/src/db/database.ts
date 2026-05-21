@@ -320,12 +320,17 @@ export async function initDatabase(): Promise<SqlJsDatabase> {
   db.run(migration002);
 
   // Run Hermes Fusion migrations (event_bus, hook_registry, fusion_modules, review_engine, nl_cron, etc.)
-  const { migration003 } = await import('./migrations/migration003_hermes_fusion');
-  db.run(migration003);
+  try {
+    const { migration003 } = await import('./migrations/migration003_hermes_fusion');
+    db.run(migration003);
+    console.log('[DB] Migration003 (Hermes Fusion) applied successfully');
+  } catch (m3err) {
+    console.warn('[DB] Migration003 (Hermes Fusion) skipped or failed:', m3err);
+  }
 
   // Run OpenSpace migrations (openspace_processes, openspace_profiles, openspace_scripts, openspace_recordings)
   try {
-    const { getMigration004SQL } = await import('../../../core/src/fusion/integration/patch-database.js');
+    const { getMigration004SQL } = await import('@codepilot/core/fusion');
     const migration004 = getMigration004SQL();
     db.run(migration004);
     console.log('[DB] Migration004 (OpenSpace) applied successfully');

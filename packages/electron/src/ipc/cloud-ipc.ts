@@ -114,7 +114,24 @@ export function registerCloudIpc(win: BrowserWindow): void {
 
   ipcMain.handle('cloud:status', async () => {
     if (!cloudClient) return { connected: false, healthy: false };
-    const healthy = await cloudClient.healthCheck().catch(() => false);
+    // Use Node http for healthCheck (fetch may fail in ASAR environment)
+    let healthy = false;
+    try {
+      const clientUrl = (cloudClient as any).url || 'https://ide.zhejiangjinmo.com';
+      const healthUrl = new URL('/api/health', clientUrl);
+      healthy = await new Promise<boolean>((resolve) => {
+        const lib = healthUrl.protocol === 'https:' ? https : http;
+        const req = lib.get(healthUrl.toString(), { timeout: 5000 }, (res) => {
+          let body = '';
+          res.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+          res.on('end', () => {
+            try { resolve(JSON.parse(body).status === 'ok'); } catch { resolve(false); }
+          });
+        });
+        req.on('error', () => resolve(false));
+        req.on('timeout', () => { req.destroy(); resolve(false); });
+      });
+    } catch { healthy = false; }
     return { connected: true, healthy };
   });
 
@@ -376,8 +393,24 @@ export async function autoConnectCloud(): Promise<void> {
       // Wait briefly for WebSocket to connect
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Check health to confirm connectivity
-      const healthy = await cloudClient.healthCheck().catch(() => false);
+      // Check health to confirm connectivity (use Node http for ASAR compatibility)
+      let healthy = false;
+      try {
+        const clientUrl = (cloudClient as any).url || 'https://ide.zhejiangjinmo.com';
+        const healthUrl = new URL('/api/health', clientUrl);
+        healthy = await new Promise<boolean>((resolve) => {
+          const lib = healthUrl.protocol === 'https:' ? https : http;
+          const req = lib.get(healthUrl.toString(), { timeout: 5000 }, (res) => {
+            let body = '';
+            res.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+            res.on('end', () => {
+              try { resolve(JSON.parse(body).status === 'ok'); } catch { resolve(false); }
+            });
+          });
+          req.on('error', () => resolve(false));
+          req.on('timeout', () => { req.destroy(); resolve(false); });
+        });
+      } catch {}
       if (healthy) {
         mainWindow?.webContents.send('cloud:status', { connected: true, healthy: true });
         console.log('[Cloud] Auto-connected to cloud server successfully');

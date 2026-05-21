@@ -3,6 +3,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  // Generic invoke passthrough for Fusion panels and dynamic IPC callers
+  invoke: (channel: string, ...args: unknown[]) => ipcRenderer.invoke(channel, ...args),
+
   agent: {
     run: (message: string, options?: { mode?: string; conversationId?: string; contexts?: Array<{ id: string; type: string; label: string; path: string; content?: string }>; images?: Array<{ data: string; mediaType: string }> }) =>
       ipcRenderer.invoke('agent:run', { message, ...options }),

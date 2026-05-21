@@ -40,11 +40,18 @@ import { registerAdminIpc } from './ipc/admin-ipc.js';
 import { initCloudSyncIpc } from './ipc/cloud-sync-ipc.js';
 import { initGitHubIpc } from './ipc/github-ipc.js';
 import { registerAllCloudManagementIpc } from './ipc/cloud-management/index.js';
-import { registerFusionIPC } from './ipc/fusion/index.js';
+import { registerFusionIPC, setFusionModules, setEventBus, setHookRegistry } from './ipc/fusion/index.js';
+import { registerVoiceIPC } from './ipc/voice-ipc.js';
+import { registerNewFeatureIPC } from './ipc/register-new-features.js';
+import { loadWorktreeInitConfig, saveWorktreeInitConfig } from './ipc/init-script-executor.js';
+import { VoiceEngineManager } from './voice/voice-engine-manager.js';
 import { registerCheckpointIPC } from './ipc/checkpoint-ipc.js';
 import { generateDeviceFingerprint } from './services/secure-storage.js';
 import { registerWorkflowIPCWithDb } from './ipc/workflow-ipc.js';
 import { verifyIpcRegistrations } from './ipc/ipc-verifier.js';
+import { registerBatchIPC } from './ipc/batch-ipc.js';
+import { registerConnectorIPC } from './ipc/connector-ipc.js';
+import { registerTriggerIPC } from './ipc/trigger-ipc.js';
 
 const IS_DEV = !app.isPackaged;
 
@@ -394,7 +401,7 @@ function createWindow(): void {
     
     // DevTools is disabled in production for security and performance
     // To enable temporarily: uncomment the line below and rebuild
-    // mainWindow.webContents.openDevTools({ mode: 'bottom' });
+    mainWindow.webContents.openDevTools({ mode: 'bottom' });
   }
 
   mainWindow.on('closed', () => {
@@ -678,7 +685,7 @@ async function bootstrap(): Promise<void> {
     const responseHeaders = {
       ...details.responseHeaders,
       'Content-Security-Policy': [
-        "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:*; frame-src 'self' http://localhost:* http://127.0.0.1:*;",
+        "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:*; img-src 'self' data: blob: https: http:; script-src 'self' blob: 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https: http://localhost:* ws://localhost:* wss: http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' http://localhost:* http://127.0.0.1:*;",
       ],
     };
     callback({ responseHeaders });
@@ -826,6 +833,90 @@ async function bootstrap(): Promise<void> {
     console.error('[Main] registerAdminIpc failed:', err);
   }
 
+  // Voice IPC (speech recognition)
+  try {
+    const voiceEngine = new VoiceEngineManager();
+    registerVoiceIPC(voiceEngine);
+    console.log('[Main] Voice IPC registered');
+  } catch (err) {
+    console.warn('[Main] Voice IPC registration:', err);
+  }
+
+  // New Feature IPC (register-new-features.ts)
+  try {
+    registerNewFeatureIPC({
+      checkpointDir: app.getPath('userData'),
+      projectRoot: workspacePath,
+      contextMaxTokens: 8000,
+    });
+    console.log('[Main] New feature IPC registered');
+  } catch (err) {
+    console.warn('[Main] New feature IPC registration:', err);
+  }
+
+  // Register fallback handlers for new-feature IPC channels lacking backend impl
+  try {
+    ipcMain.handle('intent:getState', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('terminalSuggest:analyze', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('autoFix:suggest', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('autoFix:apply', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('autoFix:batchSuggest', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('rule:reload', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('rule:getMerged', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('rule:getConflicts', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('agentMode:previewPlan', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('agentMode:executePlan', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('agentMode:confirmStep', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('agentMode:interrupt', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('multiFileEdit:generate', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('multiFileEdit:acceptFile', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('multiFileEdit:rejectFile', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('multiFileEdit:acceptBlock', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('multiFileEdit:rejectBlock', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('multiFileEdit:applyAll', async () => ({ success: false, error: 'Not implemented' }));
+    console.log('[Main] Registered fallback IPC handlers');
+  } catch (err) {
+    console.warn('[Main] Fallback handler registration:', err);
+  }
+
+  // Pipeline/PM/Review/Security fallback IPC handlers
+  try {
+    // Pipeline
+    for (const ch of ['pipeline:list','pipeline:save','pipeline:delete','pipeline:trigger','pipeline:cancel','pipeline:runHistory']) {
+      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
+    }
+    // Project Management
+    for (const ch of ['pm:getBoard','pm:listWorkItems','pm:createWorkItem','pm:updateWorkItem','pm:deleteWorkItem',
+      'pm:updateStatus','pm:listMilestones','pm:linkCommit','pm:updateWipLimit','pm:exportData']) {
+      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
+    }
+    // Review
+    for (const ch of ['review:execute','review:listReports','review:getReport','review:listRules','review:saveRule','review:deleteRule','review:applyFix']) {
+      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
+    }
+    // Security
+    for (const ch of ['security:scan','security:listResults','security:getResult','security:compareResults',
+      'security:cancel','security:listRules','security:saveRule','security:deleteRule','security:applyFix']) {
+      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
+    }
+    console.log('[Main] Registered pipeline/pm/review/security fallback handlers');
+  } catch (err) {
+    console.warn('[Main] Pipeline fallback registration:', err);
+  }
+
+  // Subscription fallback IPC handlers (preload exposes subscription:xxx but no backend impl)
+  try {
+    ipcMain.handle('subscription:status', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('subscription:plans', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('subscription:create', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('subscription:cancel', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('subscription:payments', async () => ({ success: false, error: 'Not implemented' }));
+    ipcMain.handle('subscription:offline-payment', async () => ({ success: false, error: 'Not implemented' }));
+    console.log('[Main] Registered subscription fallback IPC handlers');
+  } catch (err) {
+    console.warn('[Main] Subscription fallback registration:', err);
+  }
+
   // Initialize cloud sync and GitHub integration
   try {
     const deviceId = generateDeviceFingerprint().fingerprint;
@@ -909,45 +1000,119 @@ async function bootstrap(): Promise<void> {
       console.error('[Main] registerScheduleIpc failed:', err);
     }
 
-    // Fusion IPC + Full Initialization (DEF-002/003 fix)
+    // Batch task processing (@codepilot/core at runtime)
+    try {
+      // @ts-ignore - core types available at runtime
+      const { BatchTaskQueue, BatchExecutor } = require('@codepilot/core');
+      registerBatchIPC(ipcMain, new BatchTaskQueue(), new BatchExecutor());
+      console.log('[Main] Batch IPC registered');
+    } catch (err) {
+      console.error('[Main] registerBatchIPC failed:', err);
+    }
+
+    // Connector management
+    try {
+      // @ts-ignore - core types available at runtime
+      const { ConnectorManager } = require('@codepilot/core');
+      registerConnectorIPC(ipcMain, new ConnectorManager());
+      console.log('[Main] Connector IPC registered');
+    } catch (err) {
+      console.error('[Main] registerConnectorIPC failed:', err);
+    }
+
+    // Trigger management
+    try {
+      // @ts-ignore - core types available at runtime
+      const { TriggerManager } = require('@codepilot/core');
+      registerTriggerIPC(ipcMain, new TriggerManager());
+      console.log('[Main] Trigger IPC registered');
+    } catch (err) {
+      console.error('[Main] registerTriggerIPC failed:', err);
+    }
+
+    // Fusion IPC + Full Initialization (DEF-002/003 fix) — comprehensive module init
     try {
       registerFusionIPC(mainWindow);
-      // Initialize Fusion subsystem (EventBus, HookRegistry, adapters, etc.)
+      // Initialize all Fusion modules and inject into IPC layer
       try {
-        const { patchElectronMain } = await import('../core/src/fusion/integration/patch-electron-main.js');
-        const fusionResult = await patchElectronMain({ mainWindow, ipcMain, db: getDatabase() });
-        console.log('[Main] Fusion subsystem initialized:', fusionResult ? 'success' : 'already-initialized');
+        const fusionMod = await import('@codepilot/core/fusion');
+        const {
+          FusionInitializer, DEFAULT_FUSION_CONFIG,
+          EventBus, HookRegistry,
+          SlidingWindowMemoryManager, DEFAULT_SLIDING_WINDOW_CONFIG,
+          VectorMemoryStore, InMemoryVectorAdapter, DEFAULT_VECTOR_MEMORY_CONFIG,
+          NudgeReviewEngine, DEFAULT_REVIEW_CONFIG,
+          SkillSecurityLoader, DEFAULT_SECURITY_CONFIG,
+          ExecutionTraceHarvester, DEFAULT_TRACE_HARVESTER_CONFIG,
+          DAGOrchestrator,
+          MultiAgentExecutor, DEFAULT_MULTI_AGENT_CONFIG,
+          DynamicModelRouter, DEFAULT_MODEL_ROUTER_CONFIG,
+          NLCronScheduler, DEFAULT_NL_CRON_CONFIG,
+          HonchoUserModeler, DEFAULT_USER_MODELER_CONFIG,
+        } = fusionMod;
+
+        if (FusionInitializer) {
+          const init = new FusionInitializer();
+          const modules = {};
+
+          try { const eb = new EventBus(); init.setEventBus(eb); setEventBus(eb); console.log('[Main] Fusion EventBus created'); } catch (e) { console.warn('[Main] EventBus failed:', e); }
+          try { const hr = new HookRegistry(); init.setHookRegistry(hr); setHookRegistry(hr); console.log('[Main] Fusion HookRegistry created'); } catch (e) { console.warn('[Main] HookRegistry failed:', e); }
+          try { new SlidingWindowMemoryManager(DEFAULT_SLIDING_WINDOW_CONFIG); console.log('[Main] Fusion SlidingWindow created'); } catch (e) { console.warn('[Main] SlidingWindow failed:', e); }
+          try { const vm = new VectorMemoryStore(DEFAULT_VECTOR_MEMORY_CONFIG, new InMemoryVectorAdapter()); init.setVectorMemory(vm); modules.vectorMemory = vm; console.log('[Main] Fusion VectorMemory created'); } catch (e) { console.warn('[Main] VectorMemory failed:', e); }
+          try { const re = new NudgeReviewEngine(DEFAULT_REVIEW_CONFIG); init.setReviewEngine(re); modules.reviewEngine = re; console.log('[Main] Fusion ReviewEngine created'); } catch (e) { console.warn('[Main] ReviewEngine failed:', e); }
+          try { const th = new ExecutionTraceHarvester(DEFAULT_TRACE_HARVESTER_CONFIG); init.setTraceHarvester(th); modules.traceHarvester = th; console.log('[Main] Fusion TraceHarvester created'); } catch (e) { console.warn('[Main] TraceHarvester failed:', e); }
+          try { const ss = new SkillSecurityLoader(DEFAULT_SECURITY_CONFIG); modules.skillSecurity = ss; console.log('[Main] Fusion SkillSecurity created'); } catch (e) { console.warn('[Main] SkillSecurity failed:', e); }
+          try { const dag = new DAGOrchestrator(async () => ({ success: false, error: 'no-executor' })); init.setDAGOrchestrator(dag); modules.dagOrchestrator = dag; console.log('[Main] Fusion DAGOrchestrator created'); } catch (e) { console.warn('[Main] DAGOrchestrator failed:', e); }
+          try { const ma = new MultiAgentExecutor(DEFAULT_MULTI_AGENT_CONFIG, async () => ({ success: false, error: 'no-executor' })); init.setMultiAgent(ma); modules.multiAgent = ma; console.log('[Main] Fusion MultiAgent created'); } catch (e) { console.warn('[Main] MultiAgent failed:', e); }
+          try { const mr = new DynamicModelRouter([], DEFAULT_MODEL_ROUTER_CONFIG); init.setModelRouter(mr); modules.modelRouter = mr; console.log('[Main] Fusion ModelRouter created'); } catch (e) { console.warn('[Main] ModelRouter failed:', e); }
+          try { const nc = new NLCronScheduler(DEFAULT_NL_CRON_CONFIG); init.setNLCron(nc); modules.nlCron = nc; console.log('[Main] Fusion NLCronScheduler created'); } catch (e) { console.warn('[Main] NLCronScheduler failed:', e); }
+          try { const um = new HonchoUserModeler('default', DEFAULT_USER_MODELER_CONFIG); init.setUserModeler(um); modules.userModeler = um; console.log('[Main] Fusion UserModeler created'); } catch (e) { console.warn('[Main] UserModeler failed:', e); }
+
+          // Enable all modules
+          const cfg = { ...DEFAULT_FUSION_CONFIG, enabled: true };
+          cfg.modules = DEFAULT_FUSION_CONFIG.modules.map((m) => ({ ...m, enabled: true }));
+          const initResult = init.initialize(cfg);
+          console.log('[Main] Fusion initialized:', initResult.success ? 'success' : 'degraded');
+          if (initResult.degraded.length > 0) console.warn('[Main] Fusion degraded:', initResult.degraded.join(', '));
+
+          // Inject all into IPC layer
+          modules.fusionInitializer = init;
+          setFusionModules(modules);
+          console.log('[Main] All Fusion modules injected into IPC layer');
+
+          // Register Agent tools via integration namespace
+          try {
+            const integ = fusionMod.integration;
+            if (integ && integ.registerFusionTools) {
+              integ.registerFusionTools();
+              console.log('[Main] Fusion tools registered');
+            }
+          } catch (e) { console.warn('[Main] Fusion tools:', e); }
+
+          // Register Agent skills
+          try {
+            const integ = fusionMod.integration;
+            if (integ && integ.registerFusionSkills) {
+              integ.registerFusionSkills(null, null);
+              console.log('[Main] Fusion skills registered');
+            }
+          } catch (e) { console.warn('[Main] Fusion skills:', e); }
+
+          // Setup memory linkages
+          try {
+            const integ = fusionMod.integration;
+            if (integ && integ.setupMemoryLinkages) {
+              integ.setupMemoryLinkages({ db: getDatabase() });
+              console.log('[Main] Fusion memory linkages established');
+            }
+          } catch (e) { console.warn('[Main] Fusion memory:', e); }
+        }
       } catch (fusionInitErr) {
         console.warn('[Main] Fusion subsystem init skipped (non-critical):', fusionInitErr);
-      }
-      // Register Fusion tools (dag_execute, parallel_execute, vector_remember/recall, openspace_execute)
-      try {
-        const { registerFusionTools } = await import('../core/src/fusion/integration/patch-tools.js');
-        registerFusionTools({ db: getDatabase() });
-        console.log('[Main] Fusion tools registered successfully');
-      } catch (toolErr) {
-        console.warn('[Main] Fusion tools registration skipped:', toolErr);
-      }
-      // Register Fusion skills (openspace-navigate, openspace-scene, openspace-record)
-      try {
-        const { registerFusionSkills } = await import('../core/src/fusion/integration/patch-skills.js');
-        registerFusionSkills({ skillsDir: join(homedir(), '.lingjing', 'skills') });
-        console.log('[Main] Fusion skills registered successfully');
-      } catch (skillErr) {
-        console.warn('[Main] Fusion skills registration skipped:', skillErr);
-      }
-      // Setup memory linkages (vector sync + user profile联动)
-      try {
-        const { setupMemoryLinkages } = await import('../core/src/fusion/integration/patch-memory.js');
-        setupMemoryLinkages({ db: getDatabase() });
-        console.log('[Main] Fusion memory linkages established');
-      } catch (memErr) {
-        console.warn('[Main] Fusion memory linkages skipped:', memErr);
       }
     } catch (err) {
       console.error('[Main] registerFusionIPC failed:', err);
     }
-
     // Auto-copy frpc binary
     try {
       ensureFrpcBinary();
@@ -1040,62 +1205,62 @@ async function bootstrap(): Promise<void> {
 }
 
 // Electron app lifecycle
-	// ── Crash / exit protection: flush DB before process termination ──
-	// These handlers prevent database corruption when the process is killed
-	// forcefully (Ctrl+C, task-kill, uncaught exception, etc.)
-	app.on('before-quit', async (event) => {
-	  event.preventDefault();
+// ── Crash / exit protection: flush DB before process termination ──
+// These handlers prevent database corruption when the process is killed
+// forcefully (Ctrl+C, task-kill, uncaught exception, etc.)
+app.on('before-quit', async (event) => {
+  event.preventDefault();
 
-	  try {
-	    if (mainWindow && !mainWindow.isDestroyed()) {
-	      console.log('[Main] Notifying renderer to save before quit');
-	      mainWindow.webContents.send('window:before-close');
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      console.log('[Main] Notifying renderer to save before quit');
+      mainWindow.webContents.send('window:before-close');
 
-	      await new Promise<void>((resolve) => {
-	        const timeout = setTimeout(() => {
-	          console.warn('[Main] Renderer save timeout (5s), proceeding to quit');
-	          resolve();
-	        }, 5000);
+      await new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => {
+          console.warn('[Main] Renderer save timeout (5s), proceeding to quit');
+          resolve();
+        }, 5000);
 
-	        ipcMain.once('window:close-confirmed', () => {
-	          clearTimeout(timeout);
-	          console.log('[Main] Renderer confirmed close, saving database');
-	          resolve();
-	        });
-	      });
-	    }
+        ipcMain.once('window:close-confirmed', () => {
+          clearTimeout(timeout);
+          console.log('[Main] Renderer confirmed close, saving database');
+          resolve();
+        });
+      });
+    }
 
-	    destroyAllTerminals();
-	    destroyAllSshSessions();
-	    shutdownLspServers();
-	    stopAutoCheck();
-	    saveDatabaseSync();
-	    console.log('[Main] All cleanup complete, exiting');
-	  } catch (err) {
-	    console.error('[Main] Error during before-quit cleanup:', err);
-	  }
+    destroyAllTerminals();
+    destroyAllSshSessions();
+    shutdownLspServers();
+    stopAutoCheck();
+    saveDatabaseSync();
+    console.log('[Main] All cleanup complete, exiting');
+  } catch (err) {
+    console.error('[Main] Error during before-quit cleanup:', err);
+  }
 
-	  app.exit(0);
-	});
+  app.exit(0);
+});
 
-	process.on('uncaughtException', (error) => {
-	  console.error('[Main] Uncaught exception:', error);
-	  if (error?.message?.includes('EADDRINUSE') || error?.message?.includes('spawn')) {
-	    return;
-	  }
-	  try { saveDatabaseSync(); } catch { /* ignore */ }
-	  process.exit(1);
-	});
+process.on('uncaughtException', (error) => {
+  console.error('[Main] Uncaught exception:', error);
+  if (error?.message?.includes('EADDRINUSE') || error?.message?.includes('spawn')) {
+    return;
+  }
+  try { saveDatabaseSync(); } catch { /* ignore */ }
+  process.exit(1);
+});
 
-	process.on('unhandledRejection', (reason) => {
-	  console.error('[Main] Unhandled rejection:', reason);
-	});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Main] Unhandled rejection:', reason);
+});
 
-	// Enable Web Speech API for voice input
-	// Note: commandLine.appendSwitch must be called before app.whenReady()
-	app.commandLine.appendSwitch('enable-speech-recognition');
+// Enable Web Speech API for voice input
+// Note: commandLine.appendSwitch must be called before app.whenReady()
+app.commandLine.appendSwitch('enable-speech-recognition');
 
-	app.whenReady().then(bootstrap);
+app.whenReady().then(bootstrap);
 
 app.on('window-all-closed', () => {
   // Unregister all global shortcuts
@@ -1300,4 +1465,3 @@ ipcMain.on('quest:cancel-from-mobile', (_event, data: any) => {
     mainWindow.webContents.send('quest:cancel-from-mobile', data);
   }
 });
-

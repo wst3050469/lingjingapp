@@ -411,6 +411,12 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
       await initAgent();
     }
 
+    // Always reload config to pick up runtime changes (language, autoExecute, etc.)
+    try {
+      const freshConfig = await loadConfig();
+      config = freshConfig.config;
+    } catch {}
+
     // Abort any existing agent before starting new one (prevents event pollution)
     if (currentAbortController) {
       currentAbortController.abort();

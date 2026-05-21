@@ -1,35 +1,27 @@
 # LingJing IDE - Task Tracker 
 
-## Current Status: v1.46.6 Desktop | v1.33.1 Mobile 
+## Current Status: v1.46.8 Desktop
 
-### Latest Desktop: v1.46.6 
-Fix: SSH tools local fallback when not connected
+### Latest Desktop: v1.46.8 
+Fix: All SSH handlers moved to Phase A (resolve ssh:connect race) + @codepilot/core missing exports (loadPrompts etc.) + remove setLogLevel phantom export
 
 ### Latest Mobile: v1.33.1 
 Fix: ErrorBoundary, route safety, WebSocket heartbeat 
 
-### Changes in v1.46.6 Desktop
-- **SSH远程执行bug修复**：SSH工具内部实现本地回退
-  - ssh-bash/ssh-file-tools/ssh-list-dir：未连接时回退到本地执行
-  - agent-ipc/quest-ipc：始终使用SSH包装器，运行时动态判断
+### Changes in v1.46.8 Desktop
+- **SSH handlers Phase A提前注册**：全部14个handler（list-connections, connect, disconnect, read-dir, read-file, write-file, stat, mkdir, delete, rename, exec等）在Phase A注册
+- **@codepilot/core导出修复**：补齐loadPrompts, createDefaultRegistry, getTodoList等30+个缺失导出
+- **setLogLevel phantom export移除**：从dist/index.js, dist/index.d.ts, src/index.ts移除
+- **nginx /versions 404修复**：添加 `location = /versions { return 301 /admin/versions; }`
 
-### Changes in v1.33.1 Mobile 
-- **ErrorBoundary**: New src/components/ErrorBoundary.tsx wrapping entire app 
-- **ChatDetailScreen**: route?.params safety + Alert on send failure 
-- **WebSocket Heartbeat**: 30s ping in api.ts (same pattern as desktop) 
-- **App.tsx**: Outer ErrorBoundary wrapping SafeAreaProvider 
+### 部署平台
+- Windows: Setup 141MB / Portable 141MB ✅
+- Linux: AppImage 174MB ✅ (deb待修复：系统tar兼容性问题)
 
-### Admin Fix (server-side, no version bump)
-- **Admin白屏修复**：cloud-server 添加 express.static 中间件
-
-### Version Review Workflow
-- **v1.46.6** 已创建并提交审核（pending_review）
-- 登录 `ide.zhejiangjinmo.com/admin` → 版本管理 → 点击「发布」
-
-### Git Status 
-- main@a6a3a2119 (生产bare repo: ✅ pushed | GitHub: ❌ network受限)
+### Git Status
+- main@51af11389 (生产bare repo: ✅ | GitHub: ✅)
 
 ### Service Health 
-- PM2: 4/4 online 
-- nginx: all endpoints 200 
-- Admin MIME fix: ✅ 验证通过
+- PM2: cloud-server + update-server 运行正常
+- nginx: all endpoints 200
+- /versions → 301 → /admin/versions 200 ✅

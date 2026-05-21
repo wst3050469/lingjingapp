@@ -1,0 +1,1 @@
+{"version":3,"file":"types.js","sourceRoot":"","sources":["../../../src/fusion/sliding-window/types.ts"],"names":[],"mappings":"AAyBA,MAAM,CAAC,MAAM,6BAA6B,GAAwB;IAChE,OAAO,EAAE,IAAI;IACb,gBAAgB,EAAE,MAAM;IACxB,gBAAgB,EAAE,KAAK;IACvB,eAAe,EAAE,EAAE;IACnB,gBAAgB,EAAE,GAAG;IACrB,aAAa,EAAE,GAAG;CACnB,CAAC"}

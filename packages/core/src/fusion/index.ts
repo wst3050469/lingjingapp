@@ -59,6 +59,8 @@ export { VectorMemoryStore } from './vector-memory/vector-memory-store.js';
 export { InMemoryVectorAdapter } from './vector-memory/adapters/in-memory-adapter.js';
 export { createRememberVectorTool } from './vector-memory/tools/remember-vector.js';
 export { createRecallVectorTool } from './vector-memory/tools/recall-vector.js';
+export { createParallelExecuteTool } from './multi-agent/tools/parallel-execute.js';
+export { createDagExecuteTool } from './dag-orchestrator/tools/dag-execute.js';
 export type { VectorMemoryConfig, VectorSearchResult, IVectorStoreAdapter, IVectorMemoryStore } from './vector-memory/types.js';
 export { DEFAULT_VECTOR_MEMORY_CONFIG } from './vector-memory/types.js';
 
@@ -145,3 +147,5 @@ export { FusionInitializer } from './fusion-initializer.js';
 export type { FusionInitResult } from './fusion-initializer.js';
 
 export * as openspace from './openspace/index.js';
+
+export * as integration from './integration/index.js';

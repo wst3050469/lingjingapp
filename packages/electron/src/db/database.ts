@@ -319,6 +319,20 @@ export async function initDatabase(): Promise<SqlJsDatabase> {
   const { migration002 } = await import('./migrations/002-platform-tables');
   db.run(migration002);
 
+  // Run Hermes Fusion migrations (event_bus, hook_registry, fusion_modules, review_engine, nl_cron, etc.)
+  const { migration003 } = await import('./migrations/migration003_hermes_fusion');
+  db.run(migration003);
+
+  // Run OpenSpace migrations (openspace_processes, openspace_profiles, openspace_scripts, openspace_recordings)
+  try {
+    const { getMigration004SQL } = await import('../../../core/src/fusion/integration/patch-database.js');
+    const migration004 = getMigration004SQL();
+    db.run(migration004);
+    console.log('[DB] Migration004 (OpenSpace) applied successfully');
+  } catch (m4err) {
+    console.warn('[DB] Migration004 (OpenSpace) skipped or failed:', m4err);
+  }
+
   } catch (schemaErr) {
     // Database file is corrupted — recreate from scratch
     console.error('[DB] Database corrupted, recreating:', schemaErr);

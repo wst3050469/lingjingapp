@@ -18,7 +18,7 @@ function getInitialTheme(): ThemeName {
   }
   
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored && (stored === 'dark' || stored === 'light')) {
+  if (stored && (stored === 'dark' || stored === 'light' || stored === 'scifi-dark')) {
     return stored;
   }
   
@@ -37,26 +37,52 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
   
   const toggleTheme = useCallback(() => {
-    const newTheme = themeName === 'dark' ? 'light' : 'dark';
+    const cycle: ThemeName[] = ['dark', 'light', 'scifi-dark'];
+    const idx = cycle.indexOf(themeName);
+    const newTheme = cycle[(idx + 1) % cycle.length];
     setTheme(newTheme);
   }, [themeName, setTheme]);
   
   useEffect(() => {
     const root = document.documentElement;
     
-    if (themeName === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-    } else {
+    if (themeName === 'light') {
       root.classList.add('light');
       root.classList.remove('dark');
+      root.removeAttribute('data-theme');
+    } else if (themeName === 'scifi-dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.setAttribute('data-theme', 'scifi-dark');
+    } else {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.removeAttribute('data-theme');
     }
     
     Object.entries(theme.colors).forEach(([key, value]) => {
       root.style.setProperty(`--color-${key}`, value);
     });
 
-    // Set cp-* CSS variables for tailwind color tokens
+    const SCIFI_VARS: Record<string, string> = {
+      '--cp-bg': '#0a0e1a',
+      '--cp-sidebar': '#0d1117',
+      '--cp-editor': '#0a0e1a',
+      '--cp-panel': '#111827',
+      '--cp-statusbar': '#00d4ff',
+      '--cp-activitybar': '#0d1117',
+      '--cp-tab-active': '#0a0e1a',
+      '--cp-tab-inactive': '#131824',
+      '--cp-border': '#1e3a5f',
+      '--cp-text': '#e2e8f0',
+      '--cp-text-dim': '#94a3b8',
+      '--cp-accent': '#00d4ff',
+      '--cp-success': '#4ec9b0',
+      '--cp-error': '#ff4757',
+      '--cp-warning': '#ffa502',
+      '--cp-info': '#a855f7',
+    };
+
     const cpVars = themeName === 'light'
       ? {
           '--cp-bg': '#ffffff',
@@ -76,24 +102,26 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           '--cp-warning': '#d97706',
           '--cp-info': '#2563eb',
         }
-      : {
-          '--cp-bg': '#1e1e1e',
-          '--cp-sidebar': '#252526',
-          '--cp-editor': '#1e1e1e',
-          '--cp-panel': '#1e1e1e',
-          '--cp-statusbar': '#007acc',
-          '--cp-activitybar': '#333333',
-          '--cp-tab-active': '#1e1e1e',
-          '--cp-tab-inactive': '#2d2d2d',
-          '--cp-border': '#3c3c3c',
-          '--cp-text': '#ffffff',
-          '--cp-text-dim': '#b0b0b0',
-          '--cp-accent': '#007acc',
-          '--cp-success': '#4ec9b0',
-          '--cp-error': '#f44747',
-          '--cp-warning': '#cca700',
-          '--cp-info': '#3794ff',
-        };
+      : themeName === 'scifi-dark'
+        ? SCIFI_VARS
+        : {
+            '--cp-bg': '#1e1e1e',
+            '--cp-sidebar': '#252526',
+            '--cp-editor': '#1e1e1e',
+            '--cp-panel': '#1e1e1e',
+            '--cp-statusbar': '#007acc',
+            '--cp-activitybar': '#333333',
+            '--cp-tab-active': '#1e1e1e',
+            '--cp-tab-inactive': '#2d2d2d',
+            '--cp-border': '#3c3c3c',
+            '--cp-text': '#ffffff',
+            '--cp-text-dim': '#b0b0b0',
+            '--cp-accent': '#007acc',
+            '--cp-success': '#4ec9b0',
+            '--cp-error': '#f44747',
+            '--cp-warning': '#cca700',
+            '--cp-info': '#3794ff',
+          };
     Object.entries(cpVars).forEach(([key, value]) => {
       root.style.setProperty(key, value);
     });

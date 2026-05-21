@@ -1,0 +1,1 @@
+{"version":3,"file":"conflict-detector.d.ts","sourceRoot":"","sources":["../../src/multi-file-edit/conflict-detector.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,QAAQ,EAAgB,MAAM,YAAY,CAAC;AAEzD,qBAAa,gBAAgB;IAC3B,eAAe,CAAC,KAAK,EAAE,QAAQ,EAAE,EAAE,UAAU,EAAE,GAAG,CAAC,MAAM,EAAE,MAAM,CAAC,GAAG,QAAQ,EAAE;IAuB/E,OAAO,CAAC,eAAe;CASxB"}

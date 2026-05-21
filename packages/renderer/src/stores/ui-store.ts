@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
 type ViewMode = 'editor' | 'quest';
-export type SidebarPanel = 'explorer' | 'search' | 'chat' | 'git' | 'run-debug' | 'extension' | 'remote' | 'workflow' | 'admin' | 'pipeline' | 'review' | 'pm' | 'security';
+export type SidebarPanel = 'explorer' | 'search' | 'chat' | 'git' | 'run-debug' | 'extension' | 'remote' | 'workflow' | 'admin' | 'pipeline' | 'review' | 'pm' | 'security' | 'fusion-settings' | 'vector-memory' | 'dag-canvas' | 'multi-agent' | 'model-router' | 'cron-scheduler' | 'review-report' | 'user-profile' | 'openspace' | 'openspace-script' | 'openspace-dataset' | 'openspace-profile' | 'openspace-recorder';
 export type BottomTab = 'terminal' | 'problems' | 'chat' | 'ssh-terminal';
 export type TopTab = 'Spec' | 'Changed Files' | 'Preview';
-export type ThemeMode = 'dark' | 'light';
+export type ThemeMode = 'dark' | 'light' | 'scifi-dark';
 
 interface UIState {
   viewMode: ViewMode;
@@ -76,21 +76,41 @@ export const useUIStore = create<UIState>((set) => ({
   setShowRemoteFolderPicker: (show) => set({ showRemoteFolderPicker: show }),
 
   setTheme: (theme) => {
+    const root = document.documentElement;
     if (theme === 'light') {
-      document.documentElement.classList.add('light');
+      root.classList.add('light');
+      root.classList.remove('dark');
+      root.removeAttribute('data-theme');
+    } else if (theme === 'scifi-dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.setAttribute('data-theme', 'scifi-dark');
     } else {
-      document.documentElement.classList.remove('light');
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.removeAttribute('data-theme');
     }
     localStorage.setItem('theme', theme);
     set({ theme });
   },
 
   toggleTheme: () => set((state) => {
-    const newTheme = state.theme === 'dark' ? 'light' : 'dark';
+    const cycle: ThemeMode[] = ['dark', 'light', 'scifi-dark'];
+    const idx = cycle.indexOf(state.theme);
+    const newTheme = cycle[(idx + 1) % cycle.length];
+    const root = document.documentElement;
     if (newTheme === 'light') {
-      document.documentElement.classList.add('light');
+      root.classList.add('light');
+      root.classList.remove('dark');
+      root.removeAttribute('data-theme');
+    } else if (newTheme === 'scifi-dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.setAttribute('data-theme', 'scifi-dark');
     } else {
-      document.documentElement.classList.remove('light');
+      root.classList.add('dark');
+      root.classList.remove('light');
+      root.removeAttribute('data-theme');
     }
     localStorage.setItem('theme', newTheme);
     return { theme: newTheme };

@@ -1,0 +1,1 @@
+{"version":3,"file":"compactor.d.ts","sourceRoot":"","sources":["../../src/context/compactor.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,WAAW,EAAE,YAAY,EAAE,oBAAoB,EAAE,MAAM,YAAY,CAAC;AAElF,qBAAa,SAAS;IACpB,OAAO,CAAC,KAAK,EAAE,WAAW,EAAE,EAAE,KAAK,EAAE,YAAY,EAAE,MAAM,EAAE,oBAAoB,GAAG,WAAW,EAAE;CA0BhG"}

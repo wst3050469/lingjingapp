@@ -1,0 +1,1 @@
+{"version":3,"file":"suggestion-filter.d.ts","sourceRoot":"","sources":["../../src/completion/suggestion-filter.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,gBAAgB,EAAE,MAAM,YAAY,CAAC;AAEnD,qBAAa,gBAAgB;IAC3B,MAAM,CAAC,MAAM,EAAE,gBAAgB,EAAE,UAAU,EAAE,MAAM,GAAG,gBAAgB,GAAG,IAAI;CAe9E"}

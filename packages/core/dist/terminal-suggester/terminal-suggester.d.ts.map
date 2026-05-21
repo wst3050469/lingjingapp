@@ -1,0 +1,1 @@
+{"version":3,"file":"terminal-suggester.d.ts","sourceRoot":"","sources":["../../src/terminal-suggester/terminal-suggester.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,kBAAkB,EAAE,MAAM,YAAY,CAAC;AAErD,qBAAa,iBAAiB;IAC5B,OAAO,CAAC,eAAe,CAAkB;IACzC,OAAO,CAAC,cAAc,CAAiB;;IAOvC,OAAO,CAAC,MAAM,EAAE,MAAM,EAAE,WAAW,EAAE,MAAM,GAAG,kBAAkB,EAAE;CAInE"}

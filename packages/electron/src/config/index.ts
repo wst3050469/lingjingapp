@@ -90,7 +90,7 @@ export function loadConfig(): AppConfig {
   return {
     cloudSync: {
       serverUrl: getEnv('CLOUD_SYNC_SERVER_URL', 'https://ide.zhejiangjinmo.com'),
-      apiKey: getEnv('CLOUD_SYNC_API_KEY', '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047'),
+      apiKey: getEnv('CLOUD_SYNC_API_KEY', '5379dcbe873b356430d84f3f68b0f0c6e96e2afa3b8a9b5441c9e4d7f5a0b1c2'),
       jwtSecret: getEnv('CLOUD_SYNC_JWT_SECRET', 'a1e9886e99cdd5fa3bb0f090919cd57b4b2b22a5a5214800'),
       syncInterval: getEnvNumber('CLOUD_SYNC_INTERVAL', 300000),
       maxRetries: getEnvNumber('CLOUD_SYNC_MAX_RETRIES', 3),

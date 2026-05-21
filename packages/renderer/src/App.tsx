@@ -47,6 +47,13 @@ function AppContent() {
     }
   }, []);
 
+  // Sandbox check: detect if electronAPI bridge is missing (non-Electron runtime or preload failure)
+  useEffect(() => {
+    if (!window.electronAPI) {
+      console.warn('[App] electronAPI bridge not loaded — running outside Electron or preload script failed');
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 

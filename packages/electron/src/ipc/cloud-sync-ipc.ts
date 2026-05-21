@@ -6,8 +6,7 @@ import type { DataType, OperationType, SyncProgress } from '@codepilot/core/type
 let cloudSyncClient: any = null;
 
 export function initCloudSyncIpc(deviceId: string): void {
-  // @ts-expect-error - constructor accepts string deviceId
-    cloudSyncClient = new CloudSyncClient(deviceId);
+    cloudSyncClient = new CloudSyncClient({ deviceId });
 
   ipcMain.handle('cloud-sync:init', async () => {
     return { success: true, deviceId };

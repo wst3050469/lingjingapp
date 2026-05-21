@@ -50,6 +50,7 @@ async function getEmbeddingService(config: AppConfig): Promise<EmbeddingService>
     return cachedEmbeddingService;
   }
   cachedEmbeddingService = await createEmbeddingService(config);
+  console.log(`[Indexing] Using embedding service type: ${cachedEmbeddingService.type}, dimensions: ${cachedEmbeddingService.dimensions}`);
   cachedConfigHash = hash;
   return cachedEmbeddingService;
 }
@@ -111,6 +112,7 @@ export async function runIndexingPipeline(
   let processedFiles = 0;
   let totalChunks = 0;
   let processedChunks = 0;
+  let firstFileError: string | null = null;
 
   try {
     onProgress?.({
@@ -177,7 +179,7 @@ export async function runIndexingPipeline(
       phase: 'embedding',
       totalFiles, processedFiles: 0,
       totalChunks, processedChunks: 0,
-      message: `Indexing ${totalFiles} files (${totalChunks} chunks)...`,
+      message: `Indexing ${totalFiles} files (${totalChunks} chunks) using ${embeddingService.type}...`,
     });
 
     // Process files in batches for embedding
@@ -186,17 +188,17 @@ export async function runIndexingPipeline(
 
     /**
      * Process a single file: embed its chunks and store results.
-     * Returns true if the file was successfully indexed, false on error/skip.
+     * Returns the number of chunks successfully embedded, or 0 on error.
      */
-    async function processFile(fileData) {
-      if (state.abort) return false;
+    async function processFile(fileData): Promise<number> {
+      if (state.abort) return 0;
 
       const chunkTexts = fileData.chunks.map(c => `${fileData.file}\n${c.text}`);
       const embeddings: Float32Array[] = [];
 
       // Batch embed chunks for this file
       for (let i = 0; i < chunkTexts.length; i += EMBED_BATCH) {
-        if (state.abort) return false;
+        if (state.abort) return 0;
 
         const batch = chunkTexts.slice(i, i + EMBED_BATCH);
         try {
@@ -212,10 +214,10 @@ export async function runIndexingPipeline(
             processedFiles,
             totalChunks,
             processedChunks,
-            message: `Embedding failed: ${fileData.file}`,
+            message: `Embedding failed: ${errMsg}`,
             fileError: errMsg,
           });
-          return false;
+          return 0; // No chunks successfully embedded for this file
         }
       }
 
@@ -231,8 +233,7 @@ export async function runIndexingPipeline(
         await vectorStore.storeFileEmbeddings(fileData.file, fileData.mtime, chunksWithEmbeddings);
       }
 
-      processedChunks += embeddings.length;
-      return true;
+      return embeddings.length;
     }
 
     // Concurrent pool: process up to CONCURRENCY files at once
@@ -243,16 +244,22 @@ export async function runIndexingPipeline(
         const idx = currentFileIndex++;
         if (idx >= filesToIndex.length) return;
 
-        const success = await processFile(filesToIndex[idx]);
-        if (success) {
+        const chunkCount = await processFile(filesToIndex[idx]);
+        if (chunkCount > 0) {
           processedFiles++;
+          processedChunks += chunkCount;
+        } else if (!firstFileError) {
+          // Track the first error for the final summary
+          firstFileError = filesToIndex[idx].file;
         }
 
         onProgress?.({
           phase: 'storing',
           totalFiles, processedFiles,
           totalChunks, processedChunks,
-          message: `Indexed: ${processedFiles}/${totalFiles} files`,
+          message: processedChunks > 0
+            ? `Indexed: ${processedFiles}/${totalFiles} files (${processedChunks} chunks)`
+            : `Processing: ${processedFiles}/${totalFiles} files (waiting for embeddings...)`,
         });
       }
     }
@@ -270,6 +277,24 @@ export async function runIndexingPipeline(
     await vectorStore.flush();
 
     const finalCount = vectorStore.getChunkCount();
+
+    // If all files failed embedding, report a clear error
+    if (processedFiles === 0 && filesToIndex.length > 0) {
+      const errorMsg = firstFileError
+        ? `All files failed embedding (first error at: ${firstFileError}). Index contains ${finalCount} chunks.`
+        : `No files were indexed. ${filesToIndex.length} files scanned but 0 embedded.`;
+      console.error(`[Indexing] ${errorMsg}`);
+      onProgress?.({
+        phase: 'done',
+        totalFiles, processedFiles: 0,
+        totalChunks: finalCount, processedChunks: finalCount,
+        message: errorMsg,
+        fileError: errorMsg,
+      });
+      activeIndexing.delete(workspace);
+      return { success: true, chunksIndexed: finalCount, error: errorMsg };
+    }
+
     onProgress?.({
       phase: 'done',
       totalFiles, processedFiles,

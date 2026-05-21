@@ -465,6 +465,7 @@ export function initUpdateIPC(win: BrowserWindow): void {
 
       // ── Safety check 2: Cross-check version status from /api/latest. ──
       // If version is pending_review, suppress notification — admin hasn't approved yet.
+      // Also suppress if /api/latest reports a different version (admin rolled back or staging).
       try {
         const statusCheckController = new AbortController();
         const statusTimer = setTimeout(() => statusCheckController.abort(), 3000);
@@ -474,8 +475,21 @@ export function initUpdateIPC(win: BrowserWindow): void {
         clearTimeout(statusTimer);
         if (statusRes.ok) {
           const statusData = await statusRes.json();
+          // Case 1: Version is pending review — suppress
           if (statusData.status === 'pending_review') {
             console.log('[update] electron-updater found version ' + info.version + ' but it is pending review — suppressing');
+            win.webContents.send('update:not-available');
+            return;
+          }
+          // Case 2: /api/latest reports a different version than electron-updater
+          if (statusData.version && statusData.version !== info.version) {
+            console.log('[update] /api/latest reports v' + statusData.version + ' but electron-updater found v' + info.version + ' — suppressing');
+            win.webContents.send('update:not-available');
+            return;
+          }
+          // Case 3: Version exists but status is 'draft' (not yet submitted)
+          if (statusData.status === 'draft') {
+            console.log('[update] Version ' + info.version + ' is in draft status — suppressing');
             win.webContents.send('update:not-available');
             return;
           }

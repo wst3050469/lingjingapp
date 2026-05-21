@@ -1,0 +1,11 @@
+export declare const validateUsername: (username: string) => boolean;
+export declare const validateEmail: (email: string) => boolean;
+export declare const validatePasswordStrength: (password: string) => "weak" | "medium" | "strong";
+export declare const validateKeyName: (name: string) => boolean;
+export declare const validateDeviceName: (name: string) => boolean;
+export declare const validateUrl: (url: string) => boolean;
+export declare const validatePort: (port: number) => boolean;
+export declare const validatePath: (path: string) => boolean;
+export declare const validateApiKeyFormat: (key: string) => boolean;
+export declare const maskApiKey: (key: string) => string;
+//# sourceMappingURL=validation.d.ts.map

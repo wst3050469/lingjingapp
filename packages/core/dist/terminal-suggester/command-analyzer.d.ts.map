@@ -1,0 +1,1 @@
+{"version":3,"file":"command-analyzer.d.ts","sourceRoot":"","sources":["../../src/terminal-suggester/command-analyzer.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,kBAAkB,EAA+B,MAAM,YAAY,CAAC;AAElF,qBAAa,eAAe;IAC1B,OAAO,CAAC,MAAM,EAAE,MAAM,EAAE,WAAW,EAAE,MAAM,GAAG,kBAAkB,EAAE;IAmDlE,OAAO,CAAC,mBAAmB;CAsB5B"}

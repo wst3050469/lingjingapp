@@ -2,13 +2,14 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release"
+    "output": "release-v1472"
   },
   "files": [
     "dist/**/*",
     "renderer/**/*",
     "node_modules/**/*",
-    "package.json"
+    "package.json",
+    "assets/**/*"
   ],
   "win": {
     "target": [

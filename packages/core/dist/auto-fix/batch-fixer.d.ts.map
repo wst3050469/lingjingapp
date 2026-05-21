@@ -1,0 +1,1 @@
+{"version":3,"file":"batch-fixer.d.ts","sourceRoot":"","sources":["../../src/auto-fix/batch-fixer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,cAAc,EAAE,aAAa,EAAE,aAAa,EAAE,MAAM,YAAY,CAAC;AAE/E,qBAAa,UAAU;IACrB,WAAW,CAAC,WAAW,EAAE,cAAc,EAAE,GAAG,aAAa,EAAE;IAU3D,aAAa,CAAC,KAAK,EAAE,aAAa,EAAE,UAAU,EAAE,aAAa,GAAG,aAAa,EAAE;CAOhF"}

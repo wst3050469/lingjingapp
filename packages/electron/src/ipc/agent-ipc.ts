@@ -449,10 +449,8 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
             waitForConfirmReply
           );
         } else if (tool.name === 'bash') {
-          // Use SSH bash if connected to remote server
-          const bashWrapper = currentSshTerminalId
-            ? createSshBashTool(() => currentSshTerminalId)
-            : tool;
+          // Always use SSH bash wrapper (falls back to local if no SSH connection)
+          const bashWrapper = createSshBashTool(() => currentSshTerminalId);
           // bash: auto-execute except blocked commands
           wrapped = wrapToolWithConfirmation(
             bashWrapper,
@@ -464,26 +462,18 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
           wrapped = wrapTodoTool(tool, emitTodoToSender);
         }
 
-        // Use SSH file tools if connected to remote server (experts mode)
+        // Always use SSH file tools (falls back to local if no SSH connection)
         if (tool.name === 'file_read') {
-          wrapped = currentSshTerminalId
-            ? createSshFileReadTool(() => currentSshTerminalId)
-            : wrapped;
+          wrapped = createSshFileReadTool(() => currentSshTerminalId);
         } else if (tool.name === 'file_write') {
-          wrapped = currentSshTerminalId
-            ? createSshFileWriteTool(() => currentSshTerminalId)
-            : wrapped;
+          wrapped = createSshFileWriteTool(() => currentSshTerminalId);
         } else if (tool.name === 'file_edit') {
-          wrapped = currentSshTerminalId
-            ? createSshFileEditTool(() => currentSshTerminalId)
-            : wrapped;
+          wrapped = createSshFileEditTool(() => currentSshTerminalId);
         }
 
-        // Use SSH list_dir if connected to remote server (experts mode)
+        // Always use SSH list_dir (falls back to local if no SSH connection)
         if (tool.name === 'list_dir') {
-          wrapped = currentSshTerminalId
-            ? createSshListDirTool(() => currentSshTerminalId)
-            : wrapped;
+          wrapped = createSshListDirTool(() => currentSshTerminalId);
         }
 
         // Snapshot wrapping for file tools (diff review)
@@ -506,10 +496,8 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
         let wrapped = tool;
 
         if (tool.name === 'bash') {
-          // Use SSH bash if connected to remote server
-          const bashWrapper = currentSshTerminalId
-            ? createSshBashTool(() => currentSshTerminalId)
-            : tool;
+          // Always use SSH bash wrapper (falls back to local if no SSH connection)
+          const bashWrapper = createSshBashTool(() => currentSshTerminalId);
           wrapped = wrapToolWithConfirmation(
             bashWrapper,
             () => config!,
@@ -527,26 +515,18 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
           );
         }
 
-        // Use SSH file tools if connected to remote server
+        // Always use SSH file tools (falls back to local if no SSH connection)
         if (tool.name === 'file_read') {
-          wrapped = currentSshTerminalId
-            ? createSshFileReadTool(() => currentSshTerminalId)
-            : wrapped;
+          wrapped = createSshFileReadTool(() => currentSshTerminalId);
         } else if (tool.name === 'file_write') {
-          wrapped = currentSshTerminalId
-            ? createSshFileWriteTool(() => currentSshTerminalId)
-            : wrapped;
+          wrapped = createSshFileWriteTool(() => currentSshTerminalId);
         } else if (tool.name === 'file_edit') {
-          wrapped = currentSshTerminalId
-            ? createSshFileEditTool(() => currentSshTerminalId)
-            : wrapped;
+          wrapped = createSshFileEditTool(() => currentSshTerminalId);
         }
 
-        // Use SSH list_dir if connected to remote server
+        // Always use SSH list_dir (falls back to local if no SSH connection)
         if (tool.name === 'list_dir') {
-          wrapped = currentSshTerminalId
-            ? createSshListDirTool(() => currentSshTerminalId)
-            : wrapped;
+          wrapped = createSshListDirTool(() => currentSshTerminalId);
         }
 
         // Snapshot wrapping for file tools (diff review)
@@ -751,10 +731,17 @@ function composeSystemPrompt(cfg: AppConfig, mode?: string): string {
   }
 
   // Append language instruction
-  if ((cfg as any).language === 'zh') {
+  // Values: 'zh' -> Chinese, 'en' -> English, 'auto' -> detect from system locale
+  const lang = (cfg as any).language || 'auto';
+  if (lang === 'zh') {
     prompt += '\n\nAlways respond in Chinese (\u4E2D\u6587).';
-  } else if ((cfg as any).language === 'en') {
+  } else if (lang === 'en') {
     prompt += '\n\nAlways respond in English.';
+  } else if (lang === 'auto') {
+    const systemLang = (process.env.LANG || '').toLowerCase();
+    if (/^(zh|cmn)/.test(systemLang)) {
+      prompt += '\n\nAlways respond in Chinese (\u4E2D\u6587).';
+    }
   }
 
   // Append user-defined rules

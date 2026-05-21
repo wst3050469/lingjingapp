@@ -1,0 +1,1 @@
+{"version":3,"file":"risk-classifier.d.ts","sourceRoot":"","sources":["../../src/terminal-suggester/risk-classifier.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAa,kBAAkB,EAAE,MAAM,YAAY,CAAC;AAGhE,qBAAa,cAAc;IACzB,OAAO,CAAC,aAAa,CAAgB;;IAMrC,QAAQ,CAAC,UAAU,EAAE,kBAAkB,GAAG,kBAAkB;CAI7D"}

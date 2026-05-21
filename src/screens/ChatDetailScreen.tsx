@@ -1,11 +1,12 @@
 // 对话详情页
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView, Alert } from 'react-native';
 import { api } from '../services/api';
 import { useAppStore, Message } from '../stores/app-store';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ChatDetailScreen({ route }: any) {
+  if (!route?.params) { return null; }
   const { sessionId, title } = route.params;
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -60,6 +61,7 @@ export default function ChatDetailScreen({ route }: any) {
       }
     } catch (e) {
       console.log('Send failed:', e);
+      Alert.alert('发送失败', '消息发送失败，请检查网络连接');
       // Show failed indicator
       setMessages(prev => prev.map(m => m === userMsg ? { ...m, role: 'system' as const, content: '发送失败: ' + msg } : m));
     }

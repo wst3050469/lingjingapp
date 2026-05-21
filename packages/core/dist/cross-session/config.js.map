@@ -1,0 +1,1 @@
+{"version":3,"file":"config.js","sourceRoot":"","sources":["../../src/cross-session/config.ts"],"names":[],"mappings":"AAcA,MAAM,CAAC,MAAM,4BAA4B,GAAuB;IAC9D,cAAc,EAAE,QAAQ;IACxB,UAAU,EAAE,EAAE;IACd,MAAM,EAAE,EAAE;IACV,YAAY,EAAE,GAAG;IACjB,aAAa,EAAE,GAAG;IAClB,yBAAyB,EAAE,IAAI;IAC/B,iBAAiB,EAAE,IAAI;IACvB,sBAAsB,EAAE,SAAS;IACjC,iBAAiB,EAAE,EAAE;CACtB,CAAC"}

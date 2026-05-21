@@ -25,6 +25,16 @@ export function setSshTerminalChangeCallback(callback: (sshTerminalId: string | 
 
 const sshSessions = new Map<string, SSHSession>();
 
+// Module-level mainWindow reference, set in Phase B for terminal data forwarding.
+// ssh:connect is registered in Phase A, but its callback closures need mainWindow
+// to forward terminal data to the renderer via webContents.send().
+let _sshMainWindow: BrowserWindow | null = null;
+
+/** Set the mainWindow reference for SSH terminal event forwarding. Called in Phase B. */
+export function setSshMainWindow(mw: BrowserWindow): void {
+  _sshMainWindow = mw;
+}
+
 // Language detection helper (mirrors fs-ipc.ts logic)
 function detectLanguage(filePath: string): string {
   const ext = extname(filePath).toLowerCase();
@@ -40,11 +50,13 @@ function detectLanguage(filePath: string): string {
   return langMap[ext] || 'plaintext';
 }
 
-export function registerSshIpc(mainWindow: BrowserWindow): void {
-  // Register SSH sessions for access by file tools
-  registerSshSessions(sshSessions);
-  
-  // List all saved connections (credentials stripped)
+/**
+ * Register window-independent SSH IPC handlers (safe to call before window creation).
+ * These handlers don't need mainWindow — they only read/write database and SSH sessions.
+ */
+function registerWindowIndependentHandlers(): void {
+  // Window-independent handlers (database/SFTP operations)
+
   ipcMain.handle('ssh:list-connections', async (): Promise<SSHConnection[]> => {
     return await loadConnections();
   });
@@ -102,8 +114,8 @@ export function registerSshIpc(mainWindow: BrowserWindow): void {
     });
   });
 
-  // Connect to a saved SSH server
-  ipcMain.handle('ssh:connect', async (_event, { connectionId }: { connectionId: string }): Promise<{ sshTerminalId: string; name: string; host: string; username: string }> => {
+  // ===== Handlers moved from registerSshIpc (window-independent, safe for Phase A) =====
+ipcMain.handle('ssh:connect', async (_event, { connectionId }: { connectionId: string }): Promise<{ sshTerminalId: string; name: string; host: string; username: string }> => {
     const connection = await getConnectionWithCredentials(connectionId);
     if (!connection) {
       throw new Error('连接不存在');
@@ -182,8 +194,8 @@ export function registerSshIpc(mainWindow: BrowserWindow): void {
 
           // Forward stdout to renderer
           stream.on('data', (data: Buffer) => {
-            if (!mainWindow.isDestroyed() && mainWindow.webContents) {
-              mainWindow.webContents.send('ssh:terminal-data', {
+            if (_sshMainWindow && !_sshMainWindow.isDestroyed() && _sshMainWindow.webContents) {
+              _sshMainWindow!.webContents.send('ssh:terminal-data', {
                 sshTerminalId,
                 data: data.toString('utf8'),
               });
@@ -191,8 +203,8 @@ export function registerSshIpc(mainWindow: BrowserWindow): void {
           });
 
           stream.stderr.on('data', (data: Buffer) => {
-            if (!mainWindow.isDestroyed() && mainWindow.webContents) {
-              mainWindow.webContents.send('ssh:terminal-data', {
+            if (_sshMainWindow && !_sshMainWindow.isDestroyed() && _sshMainWindow.webContents) {
+              _sshMainWindow!.webContents.send('ssh:terminal-data', {
                 sshTerminalId,
                 data: data.toString('utf8'),
               });
@@ -207,8 +219,8 @@ export function registerSshIpc(mainWindow: BrowserWindow): void {
               session.shell = null as any;
               console.log('[SSH] Shell stream closed, but keeping client alive for exec(). Session:', sshTerminalId);
             }
-            if (!mainWindow.isDestroyed() && mainWindow.webContents) {
-              mainWindow.webContents.send('ssh:terminal-closed', { sshTerminalId });
+            if (_sshMainWindow && !_sshMainWindow.isDestroyed() && _sshMainWindow.webContents) {
+              _sshMainWindow!.webContents.send('ssh:terminal-closed', { sshTerminalId });
             }
             // Don't delete session or update status here — client.on('end') handles that.
           });
@@ -223,8 +235,8 @@ export function registerSshIpc(mainWindow: BrowserWindow): void {
         if (onSshTerminalChange) {
           onSshTerminalChange(null);
         }
-        if (!mainWindow.isDestroyed() && mainWindow.webContents) {
-          mainWindow.webContents.send('ssh:terminal-closed', { sshTerminalId });
+        if (_sshMainWindow && !_sshMainWindow.isDestroyed() && _sshMainWindow.webContents) {
+          _sshMainWindow!.webContents.send('ssh:terminal-closed', { sshTerminalId });
         }
         reject(new Error(`SSH 连接失败: ${err.message}`));
       });
@@ -237,8 +249,8 @@ export function registerSshIpc(mainWindow: BrowserWindow): void {
         if (onSshTerminalChange) {
           onSshTerminalChange(null);
         }
-        if (!mainWindow.isDestroyed() && mainWindow.webContents) {
-          mainWindow.webContents.send('ssh:terminal-closed', { sshTerminalId });
+        if (_sshMainWindow && !_sshMainWindow.isDestroyed() && _sshMainWindow.webContents) {
+          _sshMainWindow!.webContents.send('ssh:terminal-closed', { sshTerminalId });
         }
       });
 
@@ -435,6 +447,24 @@ export function registerSshIpc(mainWindow: BrowserWindow): void {
       });
     });
   });
+}
+
+/** Register window-independent SSH IPC handlers for Phase A registration. */
+export function registerSshIpcWindowIndependent(): void {
+  registerSshSessions(sshSessions);
+  registerWindowIndependentHandlers();
+}
+
+export function registerSshIpc(mainWindow: BrowserWindow): void {
+  // Register SSH sessions for access by file tools
+  registerSshSessions(sshSessions);
+  
+  // Register window-independent handlers (idempotent, safe to call twice)
+  registerWindowIndependentHandlers();
+  
+  // Set mainWindow reference for SSH terminal event forwarding
+  // (closures inside ssh:connect handler use _sshMainWindow)
+  setSshMainWindow(mainWindow);
 }
 
 async function disconnectSession(sshTerminalId: string): Promise<void> {

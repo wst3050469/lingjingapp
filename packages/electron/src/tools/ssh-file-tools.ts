@@ -1,7 +1,8 @@
-// SSH File tools - read/write/edit files on remote server via SFTP
+// SSH File tools - read/write/edit files on remote server via SFTP, with local fallback
 
 import type { Tool, ToolContext, ToolResult } from '@codepilot/core';
 import { resolve, dirname } from 'node:path';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 
 // SSH session manager - accesses the global sshSessions map
 import { getSftpSession, getRemoteWorkspacePath } from '../ssh/session-manager.js';
@@ -46,13 +47,23 @@ function resolveRemotePath(filePath: string, sshTerminalId: string, context: Too
 }
 
 /**
+ * Resolve file path for local fallback (uses context.workingDirectory).
+ */
+function resolveLocalPath(filePath: string, context: ToolContext): string {
+  if (filePath.startsWith('/') || /^[a-zA-Z]:[\\/]/.test(filePath)) {
+    return filePath;
+  }
+  return resolve(context.workingDirectory, filePath);
+}
+
+/**
  * SSH File Read Tool
- * Reads files from remote server via SFTP
+ * Reads files from remote server via SFTP, with local fallback
  */
 export function createSshFileReadTool(getSshTerminalId: SshIdArg): Tool {
   return {
     name: 'file_read',
-    description: 'Read a file from the remote server via SFTP. Returns file content with line numbers. Supports offset and limit for large files.',
+    description: 'Read a file. When SSH is connected, reads from remote server via SFTP; otherwise reads locally. Returns file content with line numbers.',
     parameters: {
       type: 'object',
       properties: {
@@ -85,27 +96,32 @@ export function createSshFileReadTool(getSshTerminalId: SshIdArg): Tool {
       }
 
       const sshTerminalId = resolveSshId(getSshTerminalId);
-      if (!sshTerminalId) {
-        return { content: 'Error: SSH 未连接。请先在"远程"面板中连接到 SSH 服务器。', isError: true };
-      }
-
-      const absolutePath = resolveRemotePath(filePath, sshTerminalId, context);
+      let absolutePath = filePath;
+      let content: string;
 
       try {
-        const sftp = getSftpSession(sshTerminalId);
-        if (!sftp) {
-          return {
-            content: `Error: No SFTP session available for terminal ${sshTerminalId}`,
-            isError: true,
-          };
-        }
+        if (sshTerminalId) {
+          // === SSH execution ===
+          absolutePath = resolveRemotePath(filePath, sshTerminalId, context);
+          const sftp = getSftpSession(sshTerminalId);
+          if (!sftp) {
+            return {
+              content: `Error: No SFTP session available for terminal ${sshTerminalId}`,
+              isError: true,
+            };
+          }
 
-        const content = await new Promise<string>((resolve, reject) => {
-          sftp.readFile(absolutePath, (err: Error | null | undefined, data: Buffer) => {
-            if (err) return reject(err);
-            resolve(data.toString('utf8'));
+          content = await new Promise<string>((resolveRead, reject) => {
+            sftp.readFile(absolutePath, (err: Error | null | undefined, data: Buffer) => {
+              if (err) return reject(err);
+              resolveRead(data.toString('utf8'));
+            });
           });
-        });
+        } else {
+          // === Local fallback ===
+          absolutePath = resolveLocalPath(filePath, context);
+          content = await readFile(absolutePath, 'utf8');
+        }
 
         const lines = content.split('\n');
         const startLine = Math.max(1, offset);
@@ -131,7 +147,7 @@ export function createSshFileReadTool(getSshTerminalId: SshIdArg): Tool {
         return { content: `${header}\n${formatted}` };
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        return { content: `Error reading file ${absolutePath}: ${msg}`, isError: true };
+        return { content: `Error reading file ${absolutePath || filePath}: ${msg}`, isError: true };
       }
     },
   };
@@ -139,12 +155,12 @@ export function createSshFileReadTool(getSshTerminalId: SshIdArg): Tool {
 
 /**
  * SSH File Write Tool
- * Writes files to remote server via SFTP
+ * Writes files to remote server via SFTP, with local fallback
  */
 export function createSshFileWriteTool(getSshTerminalId: SshIdArg): Tool {
   return {
     name: 'file_write',
-    description: 'Write content to a file on the remote server. Creates the file if it does not exist, or overwrites it if it does. Also creates parent directories if needed.',
+    description: 'Write content to a file. When SSH is connected, writes to remote server; otherwise writes locally. Creates parent directories if needed.',
     parameters: {
       type: 'object',
       properties: {
@@ -165,50 +181,56 @@ export function createSshFileWriteTool(getSshTerminalId: SshIdArg): Tool {
       const content = params.content as string;
 
       const sshTerminalId = resolveSshId(getSshTerminalId);
-      if (!sshTerminalId) {
-        return { content: 'Error: SSH 未连接。请先在"远程"面板中连接到 SSH 服务器。', isError: true };
-      }
-
-      const absolutePath = resolveRemotePath(filePath, sshTerminalId, context);
+      let absolutePath = filePath;
 
       try {
-        const sftp = getSftpSession(sshTerminalId);
-        if (!sftp) {
-          return {
-            content: `Error: No SFTP session available for terminal ${sshTerminalId}`,
-            isError: true,
-          };
-        }
+        if (sshTerminalId) {
+          // === SSH execution ===
+          absolutePath = resolveRemotePath(filePath, sshTerminalId, context);
+          const sftp = getSftpSession(sshTerminalId);
+          if (!sftp) {
+            return {
+              content: `Error: No SFTP session available for terminal ${sshTerminalId}`,
+              isError: true,
+            };
+          }
 
-        // Ensure parent directory exists (via SSH mkdir command)
-        const parentDir = dirname(absolutePath);
-        await new Promise<void>((resolve, reject) => {
-          sftp.mkdir(parentDir, (err: Error | null | undefined) => {
-            if (err) {
-              // mkdir might fail if directory already exists, which is fine
-              if (err.message.includes('exists')) {
-                resolve();
+          // Ensure parent directory exists (via SSH mkdir command)
+          const parentDir = dirname(absolutePath);
+          await new Promise<void>((resolveMkdir, reject) => {
+            sftp.mkdir(parentDir, (err: Error | null | undefined) => {
+              if (err) {
+                // mkdir might fail if directory already exists, which is fine
+                if (err.message.includes('exists')) {
+                  resolveMkdir();
+                } else {
+                  reject(err);
+                }
               } else {
-                reject(err);
+                resolveMkdir();
               }
-            } else {
-              resolve();
-            }
+            });
           });
-        });
 
-        await new Promise<void>((resolve, reject) => {
-          sftp.writeFile(absolutePath, Buffer.from(content, 'utf8'), (err: Error | null | undefined) => {
-            if (err) return reject(err);
-            resolve();
+          await new Promise<void>((resolveWrite, reject) => {
+            sftp.writeFile(absolutePath, Buffer.from(content, 'utf8'), (err: Error | null | undefined) => {
+              if (err) return reject(err);
+              resolveWrite();
+            });
           });
-        });
+        } else {
+          // === Local fallback ===
+          absolutePath = resolveLocalPath(filePath, context);
+          const parentDir = dirname(absolutePath);
+          await mkdir(parentDir, { recursive: true });
+          await writeFile(absolutePath, content, 'utf8');
+        }
 
         const lineCount = content.split('\n').length;
         return { content: `Successfully wrote ${lineCount} lines to ${absolutePath}` };
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        return { content: `Error writing file ${absolutePath}: ${msg}`, isError: true };
+        return { content: `Error writing file ${absolutePath || filePath}: ${msg}`, isError: true };
       }
     },
   };
@@ -216,12 +238,12 @@ export function createSshFileWriteTool(getSshTerminalId: SshIdArg): Tool {
 
 /**
  * SSH File Edit Tool
- * Performs exact string replacements in files on remote server via SFTP
+ * Performs exact string replacements in files on remote server via SFTP, with local fallback
  */
 export function createSshFileEditTool(getSshTerminalId: SshIdArg): Tool {
   return {
     name: 'file_edit',
-    description: 'Perform exact string replacements in files on the remote server. The old_string must match exactly (including whitespace and indentation). If replace_all is true, replaces all occurrences; otherwise only works if old_string is unique in the file.',
+    description: 'Perform exact string replacements in files. When SSH is connected, edits on remote server; otherwise edits locally.',
     parameters: {
       type: 'object',
       properties: {
@@ -252,69 +274,100 @@ export function createSshFileEditTool(getSshTerminalId: SshIdArg): Tool {
       const replaceAll = (params.replace_all as boolean) ?? false;
 
       const sshTerminalId = resolveSshId(getSshTerminalId);
-      if (!sshTerminalId) {
-        return { content: 'Error: SSH 未连接。请先在"远程"面板中连接到 SSH 服务器。', isError: true };
-      }
-
-      const absolutePath = resolveRemotePath(filePath, sshTerminalId, context);
+      let absolutePath = filePath;
+      let content: string;
 
       try {
-        const sftp = getSftpSession(sshTerminalId);
-        if (!sftp) {
-          return {
-            content: `Error: No SFTP session available for terminal ${sshTerminalId}`,
-            isError: true,
-          };
-        }
-
-        // Read file content
-        const content = await new Promise<string>((resolve, reject) => {
-          sftp.readFile(absolutePath, (err: Error | null | undefined, data: Buffer) => {
-            if (err) return reject(err);
-            resolve(data.toString('utf8'));
-          });
-        });
-
-        if (!content.includes(oldString)) {
-          return {
-            content: `Error: old_string not found in ${absolutePath}. Make sure the string matches exactly including whitespace.`,
-            isError: true,
-          };
-        }
-
-        if (!replaceAll) {
-          // Check uniqueness
-          const firstIdx = content.indexOf(oldString);
-          const secondIdx = content.indexOf(oldString, firstIdx + 1);
-          if (secondIdx !== -1) {
-            const count = content.split(oldString).length - 1;
+        if (sshTerminalId) {
+          // === SSH execution ===
+          absolutePath = resolveRemotePath(filePath, sshTerminalId, context);
+          const sftp = getSftpSession(sshTerminalId);
+          if (!sftp) {
             return {
-              content: `Error: old_string appears ${count} times in ${absolutePath}. Use replace_all: true to replace all occurrences, or provide more surrounding context to make it unique.`,
+              content: `Error: No SFTP session available for terminal ${sshTerminalId}`,
               isError: true,
             };
           }
-        }
 
-        let newContent: string;
-        if (replaceAll) {
-          newContent = content.split(oldString).join(newString);
-        } else {
-          newContent = content.replace(oldString, newString);
-        }
-
-        // Write updated content
-        await new Promise<void>((resolve, reject) => {
-          sftp.writeFile(absolutePath, Buffer.from(newContent, 'utf8'), (err: Error | null | undefined) => {
-            if (err) return reject(err);
-            resolve();
+          // Read file content via SFTP
+          content = await new Promise<string>((resolveRead, reject) => {
+            sftp.readFile(absolutePath, (err: Error | null | undefined, data: Buffer) => {
+              if (err) return reject(err);
+              resolveRead(data.toString('utf8'));
+            });
           });
-        });
+
+          if (!content.includes(oldString)) {
+            return {
+              content: `Error: old_string not found in ${absolutePath}. Make sure the string matches exactly including whitespace.`,
+              isError: true,
+            };
+          }
+
+          if (!replaceAll) {
+            const firstIdx = content.indexOf(oldString);
+            const secondIdx = content.indexOf(oldString, firstIdx + 1);
+            if (secondIdx !== -1) {
+              const count = content.split(oldString).length - 1;
+              return {
+                content: `Error: old_string appears ${count} times in ${absolutePath}. Use replace_all: true to replace all occurrences, or provide more surrounding context to make it unique.`,
+                isError: true,
+              };
+            }
+          }
+
+          let newContent: string;
+          if (replaceAll) {
+            newContent = content.split(oldString).join(newString);
+          } else {
+            newContent = content.replace(oldString, newString);
+          }
+
+          // Write updated content via SFTP
+          await new Promise<void>((resolveWrite, reject) => {
+            sftp.writeFile(absolutePath, Buffer.from(newContent, 'utf8'), (err: Error | null | undefined) => {
+              if (err) return reject(err);
+              resolveWrite();
+            });
+          });
+        } else {
+          // === Local fallback ===
+          absolutePath = resolveLocalPath(filePath, context);
+          content = await readFile(absolutePath, 'utf8');
+
+          const replacements = replaceAll
+            ? content.split(oldString).length - 1
+            : content.includes(oldString) ? 1 : 0;
+
+          if (replacements === 0) {
+            return {
+              content: `Error: old_string not found in ${absolutePath}. Make sure the string matches exactly including whitespace.`,
+              isError: true,
+            };
+          }
+
+          if (!replaceAll && replacements > 1) {
+            return {
+              content: `Error: old_string appears ${replacements} times in ${absolutePath}. Use replace_all: true to replace all occurrences, or provide more surrounding context to make it unique.`,
+              isError: true,
+            };
+          }
+
+          let newContent: string;
+          if (replaceAll) {
+            newContent = content.split(oldString).join(newString);
+          } else {
+            newContent = content.replace(oldString, newString);
+          }
+
+          await writeFile(absolutePath, newContent, 'utf8');
+        }
 
         const replacements = replaceAll ? content.split(oldString).length - 1 : 1;
         return { content: `Successfully made ${replacements} replacement(s) in ${absolutePath}` };
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
-        return { content: `Error editing file ${absolutePath}: ${msg}`, isError: true };
+        return { content: `Error editing file ${absolutePath || filePath}: ${msg}`, isError: true };
       }
     },
   };

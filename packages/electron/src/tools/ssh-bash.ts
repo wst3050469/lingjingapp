@@ -1,13 +1,32 @@
-// SSH Bash tool - execute commands on remote server via SSH
+// SSH Bash tool - execute commands on remote server via SSH, with local fallback
 
 import type { Tool, ToolContext, ToolResult } from '@codepilot/core';
 import { truncateString } from '@codepilot/core';
 import { generateCommandId, storeBashOutput } from '@codepilot/core';
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
 import { executeSshCommand } from '../ssh/ssh-ipc.js';
 import { getRemoteWorkspacePath } from '../ssh/session-manager.js';
 
+const execAsync = promisify(exec);
+
 const DEFAULT_TIMEOUT = 120_000; // 2 minutes
 const MAX_OUTPUT = 100_000; // 100KB output limit
+
+/**
+ * Execute a command locally (fallback when SSH is not connected).
+ */
+async function executeLocalCommand(
+  command: string,
+  timeout: number,
+): Promise<{ stdout: string; stderr: string; exitCode: number | null }> {
+  const { stdout, stderr } = await execAsync(command, {
+    timeout,
+    maxBuffer: MAX_OUTPUT * 2,
+    windowsHide: true,
+  });
+  return { stdout, stderr, exitCode: 0 };
+}
 
 export function createSshBashTool(getSshTerminalId: string | (() => string | null)): Tool {
   // Support both static string (backwards compat) and dynamic getter function
@@ -17,7 +36,7 @@ export function createSshBashTool(getSshTerminalId: string | (() => string | nul
 
   return {
     name: 'bash',
-    description: 'Execute a shell command on the remote server via SSH. Returns stdout and stderr. Use for git, npm, build commands, etc.',
+    description: 'Execute a shell command. When SSH is connected, executes on the remote server; otherwise executes locally.',
     parameters: {
       type: 'object',
       properties: {
@@ -44,67 +63,83 @@ export function createSshBashTool(getSshTerminalId: string | (() => string | nul
         };
       }
 
-      // Resolve the current SSH terminal ID (may change if reconnected)
-      const sshTerminalId = resolveId();
-      if (!sshTerminalId) {
-        return {
-          content: 'Error: SSH 未连接。请先在"远程"面板中连接到 SSH 服务器。',
-          isError: true,
-        };
-      }
-
       const timeout = (params.timeout as number) ?? DEFAULT_TIMEOUT;
       const commandId = generateCommandId();
       const startedAt = Date.now();
 
+      // Resolve the current SSH terminal ID (may change if reconnected)
+      const sshTerminalId = resolveId();
+
       try {
-        // Use remote workspace path if available, otherwise fall back to context.workingDirectory
-        const remotePath = getRemoteWorkspacePath(sshTerminalId);
-        const workDir = remotePath || context.workingDirectory;
+        let stdout: string;
+        let stderr: string;
+        let exitCode: number | null;
 
-        // Build command with cd for working directory
-        const fullCommand = workDir
-          ? `cd "${workDir}" && ${command}`
-          : command;
+        if (sshTerminalId) {
+          // === SSH execution ===
+          const remotePath = getRemoteWorkspacePath(sshTerminalId);
+          const workDir = remotePath || context.workingDirectory;
+          const fullCommand = workDir
+            ? `cd "${workDir}" && ${command}`
+            : command;
 
-        // Execute with timeout
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('Command timed out')), timeout);
-        });
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Command timed out')), timeout);
+          });
+          const execPromise = executeSshCommand(sshTerminalId, fullCommand, timeout);
+          const result = await Promise.race([execPromise, timeoutPromise]);
+          stdout = result.stdout;
+          stderr = result.stderr;
+          exitCode = result.exitCode;
+        } else {
+          // === Local fallback execution ===
+          const workDir = context.workingDirectory;
+          const fullCommand = workDir
+            ? `cd "${workDir}" && ${command}`
+            : command;
+          // Use shell-specific command on Windows
+          const shellCommand = process.platform === 'win32'
+            ? `cmd /d /s /c "${fullCommand}"`
+            : fullCommand;
 
-        const execPromise = executeSshCommand(sshTerminalId, fullCommand, timeout);
-
-        const result = await Promise.race([execPromise, timeoutPromise]);
+          const result = await executeLocalCommand(shellCommand, timeout);
+          stdout = result.stdout;
+          stderr = result.stderr;
+          exitCode = result.exitCode;
+        }
 
         // Store output
         storeBashOutput({
           commandId,
           command,
-          stdout: result.stdout,
-          stderr: result.stderr,
-          exitCode: result.exitCode,
+          stdout,
+          stderr,
+          exitCode,
           startedAt,
           completedAt: Date.now(),
         });
 
         let output = '';
-        if (result.stdout) output += truncateString(result.stdout, MAX_OUTPUT);
-        if (result.stderr) {
+        if (stdout) output += truncateString(stdout, MAX_OUTPUT);
+        if (stderr) {
           if (output) output += '\n';
-          output += `STDERR:\n${truncateString(result.stderr, MAX_OUTPUT / 2)}`;
+          output += `STDERR:\n${truncateString(stderr, MAX_OUTPUT / 2)}`;
         }
 
-        output += `\nExit code: ${result.exitCode ?? 'unknown'}`;
+        output += `\nExit code: ${exitCode ?? 'unknown'}`;
         output += `\n[command_id: ${commandId}]`;
-        output += `\n[remote: ${sshTerminalId}]`;
+        if (sshTerminalId) {
+          output += `\n[remote: ${sshTerminalId}]`;
+        }
 
         return {
-          content: output || `Command completed with exit code ${result.exitCode}`,
-          isError: (result.exitCode ?? 1) !== 0,
+          content: output || `Command completed with exit code ${exitCode}`,
+          isError: (exitCode ?? 1) !== 0,
         };
       } catch (error: any) {
+        const prefix = sshTerminalId ? 'remote' : 'local';
         return {
-          content: `Error executing remote command: ${error.message}`,
+          content: `Error executing ${prefix} command: ${error.message}`,
           isError: true,
         };
       }

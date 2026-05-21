@@ -1,16 +1,15 @@
 # LingJing IDE - Task Tracker 
 
-## Current Status: v1.46.9 Desktop
+## Current Status: v1.46.9 (draft - 待审核)
 
 ### Latest Desktop: v1.46.9
 Fix: Codebase indexing stuck at 0% — probe + auto-fallback + progress fixes
 
-### Latest Server Fix: versions.json 同步修复
-- **问题**: 版本管理页面"加载版本数据失败"
-- **根因**: 4 份 versions.json 不同步，admin-api 读取到对象格式的 versions 字段
-- **修复**: 
-  - 统一同步 4 份 versions.json 为 Array 格式（含 v1.46.9 全平台文件）
-  - admin-api.js 添加 `normalizeVersionsJson()` 自动兼容对象→数组转换
+### Latest Server Fixes
+1. **versions.json 同步修复** - 4 份文件统一，admin-api 加固 ✅
+2. **版本管理乱码 & 审核流程修复** ✅
+   - 问题：v1.46.9 直接 published 跳过审核流程，GBK编码导致乱码
+   - 修复：重编码为 UTF-8，v1.46.9 改为 draft 待审核，latest.yml 回退到 v1.46.8
 
 ### Latest Mobile: v1.33.1 
 Fix: ErrorBoundary, route safety, WebSocket heartbeat 
@@ -27,15 +26,18 @@ Fix: ErrorBoundary, route safety, WebSocket heartbeat
 ### 部署平台
 - Windows: Setup 135MB / Portable 135MB ✅ (已部署到生产)
 - Linux: AppImage 174MB / deb 162MB ✅ (已部署到生产)
-  - 构建完成时间: 2026-07-10 13:04 CST
-  - 构建日志: /tmp/linux_build_v1469.log
-- versions.json: `latest: "1.46.9"` ✅ (全平台，已同步 update-server)
-- latest.yml / latest-linux.yml: ✅
+- **latest.yml / latest-linux.yml**: ✅ 已回退到 v1.46.8（等待审核通过后发布）
+- **versions.json**: `latest: "1.46.8"`, v1.46.9 为 `draft`（需 admin 审核）
+- **编码**: UTF-8 修复 ✅（之前为 GBK 导致乱码）
+
+### 后续操作 (需 admin)
+1. 登录管理后台 → 版本管理 → 找到 v1.46.9
+2. 点击"提交审核" → 状态变为 `pending_review`
+3. 点击"发布" → 状态变为 `published`，客户端收到升级通知
 
 ### Git Status
 - main@8eacba2cc (GitHub: ✅ | 生产bare: ✅ push server main)
-  - v1.46.9 相关 commits: 0823a073c + 76032d66e + b05fe55b5 + 4360dfcfa + 8eacba2cc
-  - 最新: fix: versions.json sync + admin-api.js normalizeVersionsJson
+  - 待提交：版本管理乱码 & 审核流程修复
 
 ### Service Health 
 - PM2: cloud-server + update-server 运行正常

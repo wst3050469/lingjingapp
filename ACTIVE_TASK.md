@@ -9,7 +9,8 @@
 | 🐧 Linux deb | 112MB | ✅ 已部署到生产 |
 | 🪟 Windows Setup | 94MB | ✅ 已部署到生产 |
 | 🪟 Windows Portable | 94MB | ✅ 已部署到生产 |
-| ☁️ versions.json | 4份同步 | ✅ 4平台文件大小全部正确 |
+| 📱 Android APK | 36MB | ✅ 软链 v1.49.0 → v1.46.0 |
+| ☁️ versions.json | 5平台 | ✅ 含android条目，4份同步 |
 | 🌐 /api/latest | 1.49.0 | ✅ 全平台完整返回 |
 
 ### Git

@@ -58,7 +58,7 @@ function isModuleEnabled(config: FusionConfig, configName: string): boolean {
 function safeCheck(fn: () => boolean): { healthy: boolean; details: string } {
   try {
     const ok = fn();
-    return { ok, details: ok ? 'healthy' : 'health check returned false' };
+    return { healthy: ok, details: ok ? 'healthy' : 'health check returned false' };
   } catch (err) {
     return { healthy: false, details: (err as Error).message };
   }

@@ -8,8 +8,8 @@ import type { FusionConfig } from '../types.js';
 import { FusionInitializer } from '../fusion-initializer.js';
 import { EventBus } from '../event-bus/event-bus.js';
 import { HookPoint } from '../hook-registry/types.js';
-import { HookPoint } from '../hook-registry/types.js';
-import { HookPoint } from '../hook-registry/types.js';
+
+
 import { HookRegistry } from '../hook-registry/hook-registry.js';
 
 export interface DegradationCheck {

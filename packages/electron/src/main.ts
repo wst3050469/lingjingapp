@@ -1039,6 +1039,7 @@ async function bootstrap(): Promise<void> {
           EventBus, HookRegistry,
           SlidingWindowMemoryManager, DEFAULT_SLIDING_WINDOW_CONFIG,
           VectorMemoryStore, InMemoryVectorAdapter, DEFAULT_VECTOR_MEMORY_CONFIG,
+          SqliteVectorAdapter,
           NudgeReviewEngine, DEFAULT_REVIEW_CONFIG,
           SkillSecurityLoader, DEFAULT_SECURITY_CONFIG,
           ExecutionTraceHarvester, DEFAULT_TRACE_HARVESTER_CONFIG,
@@ -1056,7 +1057,30 @@ async function bootstrap(): Promise<void> {
           try { const eb = new EventBus(); init.setEventBus(eb); setEventBus(eb); console.log('[Main] Fusion EventBus created'); } catch (e) { console.warn('[Main] EventBus failed:', e); }
           try { const hr = new HookRegistry(); init.setHookRegistry(hr); setHookRegistry(hr); console.log('[Main] Fusion HookRegistry created'); } catch (e) { console.warn('[Main] HookRegistry failed:', e); }
           try { new SlidingWindowMemoryManager(DEFAULT_SLIDING_WINDOW_CONFIG); console.log('[Main] Fusion SlidingWindow created'); } catch (e) { console.warn('[Main] SlidingWindow failed:', e); }
-          try { const vm = new VectorMemoryStore(DEFAULT_VECTOR_MEMORY_CONFIG, new InMemoryVectorAdapter()); init.setVectorMemory(vm); modules.vectorMemory = vm; console.log('[Main] Fusion VectorMemory created'); } catch (e) { console.warn('[Main] VectorMemory failed:', e); }
+          try {
+            const db = getDatabase();
+            const sqliteAdapter = new SqliteVectorAdapter(db, 'vector_memory_store');
+            await sqliteAdapter.initialize();
+            const vm = new VectorMemoryStore(DEFAULT_VECTOR_MEMORY_CONFIG, sqliteAdapter);
+            // Inject real embedding function using createEmbeddingService
+            try {
+              const { createEmbeddingService } = await import('../services/embedding-service.js');
+              const { loadConfig: loadCoreConfig } = await import('@codepilot/core');
+              const freshConfig = await loadCoreConfig();
+              const embedService = await createEmbeddingService(freshConfig.config);
+              const embedDims = embedService.dimensions;
+              vm.setEmbedFn(async (text: string) => {
+                const vectors = await embedService.embed([text]);
+                return Array.from(vectors[0]);
+              });
+              console.log(`[Main] VectorMemory embedFn injected (type=${embedService.type}, dims=${embedDims})`);
+            } catch (embedErr) {
+              console.warn('[Main] VectorMemory embedFn injection failed, using hash fallback:', embedErr instanceof Error ? embedErr.message : String(embedErr));
+            }
+            init.setVectorMemory(vm);
+            modules.vectorMemory = vm;
+            console.log(`[Main] Fusion VectorMemory created (SqliteAdapter, ${sqliteAdapter.size} existing vectors)`);
+          } catch (e) { console.warn('[Main] VectorMemory failed:', e); }
           try { const re = new NudgeReviewEngine(DEFAULT_REVIEW_CONFIG); init.setReviewEngine(re); modules.reviewEngine = re; console.log('[Main] Fusion ReviewEngine created'); } catch (e) { console.warn('[Main] ReviewEngine failed:', e); }
           try { const th = new ExecutionTraceHarvester(DEFAULT_TRACE_HARVESTER_CONFIG); init.setTraceHarvester(th); modules.traceHarvester = th; console.log('[Main] Fusion TraceHarvester created'); } catch (e) { console.warn('[Main] TraceHarvester failed:', e); }
           try { const ss = new SkillSecurityLoader(DEFAULT_SECURITY_CONFIG); modules.skillSecurity = ss; console.log('[Main] Fusion SkillSecurity created'); } catch (e) { console.warn('[Main] SkillSecurity failed:', e); }

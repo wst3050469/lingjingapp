@@ -55,6 +55,10 @@ export function setFusionModules(modules: {
   if (modules.userModeler) userModeler = modules.userModeler;
 }
 
+export function getVectorMemory(): IVectorMemoryStore | null {
+  return vectorMemory;
+}
+
 export function registerFusionModuleIpc(): void {
   ipcMain.handle('fusion:vector:store', async (_event, content: string, metadata: Record<string, unknown>) => {
     if (!vectorMemory) throw new Error('VectorMemory not initialized');

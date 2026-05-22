@@ -34,6 +34,7 @@ import { createSshBashTool } from '../tools/ssh-bash.js';
 import { createSshFileReadTool, createSshFileWriteTool, createSshFileEditTool } from '../tools/ssh-file-tools.js';
 import { createSshListDirTool } from '../tools/ssh-list-dir.js';
 import { abortAllQuestAgents } from './quest-ipc.js';
+import { getVectorMemory } from './fusion/fusion-module-ipc.js';
 
 let currentAgent: Agent | null = null;
 let currentAbortController: AbortController | null = null;
@@ -562,6 +563,20 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
       }
     }
 
+    // Register vector memory tools (remember_vector / recall_vector) when available
+    const vectorMem = getVectorMemory();
+    if (vectorMem && mode !== 'ask') {
+      try {
+        const { createRememberVectorTool, createRecallVectorTool } = await import('@codepilot/core/fusion');
+        const rememberTool = createRememberVectorTool(vectorMem);
+        const recallTool = createRecallVectorTool(vectorMem);
+        runTools.register(rememberTool);
+        runTools.register(recallTool);
+      } catch (e) {
+        console.warn('[Agent IPC] Failed to register vector memory tools:', e instanceof Error ? e.message : String(e));
+      }
+    }
+
     // Compose system prompt (with optional memory enhancement)
     let systemPrompt = composeSystemPrompt(config!, mode);
 
@@ -649,6 +664,25 @@ Only save genuinely useful, non-trivial information. Do NOT save obvious or temp
             const learningTitle = 'Expert session: ' + message.slice(0, 80);
             await saveExpertLearning(learningTitle, learningContent, workingDirectory);
           }
+        }
+      }
+
+      // Post-task: sync memories to vector store for semantic retrieval
+      if (config!.autoMemory && vectorMem) {
+        try {
+          const db = getDatabase();
+          const rows = db.exec("SELECT id, content, category FROM memories ORDER BY updated_at DESC LIMIT 100");
+          if (rows && rows[0] && rows[0].values && rows[0].values.length > 0) {
+            const entries = rows[0].values.map((r: any[]) => ({
+              id: `mem_${r[0]}`,
+              content: String(r[1]),
+              category: String(r[2] || 'general'),
+            }));
+            await vectorMem.syncFromMemory(entries);
+            console.log(`[Agent IPC] Synced ${entries.length} memories to vector store`);
+          }
+        } catch (syncErr) {
+          console.warn('[Agent IPC] Memory→vector sync failed:', syncErr instanceof Error ? syncErr.message : String(syncErr));
         }
       }
     } catch (error) {

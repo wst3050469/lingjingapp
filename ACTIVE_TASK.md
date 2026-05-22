@@ -12,11 +12,11 @@
 | 📱 Android APK | 36MB | ✅ 软链至v1.46.0（待Expo构建） |
 | ☁️ versions.json | 5平台 | ✅ 含android条目，4份同步 |
 | 🔄 auto-update YAML | 1.49.0 | ✅ SHA512已更新 |
-| 🌐 /api/latest | 1.49.0 | ✅ 完整返回
-| 🌐 /api/latest | 1.49.0 | ✅ 全平台完整返回 |
+| 🌐 /api/latest | 1.49.0 | ✅ 完整返回 |
+| 📱 Mobile API | ide.zhejiangjinmo.com | ✅ 已修复旧IP地址 |
 
 ### Git
-- `f2abe94cb` — 已推送到 GitHub + 生产 bare repo
+- `bf607e446` — 已推送到 GitHub + 生产 bare repo
 
 ## Phase 92 修复概要 (23项)
 

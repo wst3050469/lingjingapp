@@ -50,7 +50,7 @@ function verifyEventBusNoOp(): DegradationCheck {
     bus.subscribe('test.topic', () => { received = true; });
     bus.publish('test.topic', { payload: null });
     const works = received;
-    bus.removeAllHandlers();
+    ;
     return {
       name: 'EventBus.publish is no-op when disabled',
       passed: true,

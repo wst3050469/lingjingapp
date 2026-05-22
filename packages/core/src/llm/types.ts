@@ -24,7 +24,15 @@ export interface ToolSchema {
 
 /** LLM provider configuration */
 export interface LLMProvider {
-  chat(messages: unknown[], options?: unknown): Promise<unknown>;
+  chat(opts: {
+    messages: { role: string; content: string | unknown[] }[];
+    tools?: unknown[];
+    toolChoice?: unknown;
+    systemPrompt?: string;
+    maxTokens?: number;
+    temperature?: number;
+    signal?: AbortSignal;
+  }): AsyncIterable<{ type: string; text?: string; [key: string]: unknown }>;
   name: string;
   model: string;
   apiKey?: string;

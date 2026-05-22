@@ -3,7 +3,7 @@ export interface WorkflowRequirement {
   featureName?: string;
   requirement?: string;
   projectPath?: string;
-  goal: string;
+  goal?: string;
   context?: Record<string, unknown>;
   constraints?: string[];
   priority?: 'low' | 'normal' | 'high';

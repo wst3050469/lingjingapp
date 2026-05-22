@@ -150,4 +150,5 @@ export type { FusionInitResult } from './fusion-initializer.js';
 
 export * as openspace from './openspace/index.js';
 
+export { getMigration003SQL, getMigration004SQL } from './integration/patch-database.js';
 export * as integration from './integration/index.js';

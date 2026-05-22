@@ -2956,11 +2956,15 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     if (taskAgent) {
 
-      // If a runId was provided, only stop if it matches the current agent's runId
+      // runId guard: only stop if the provided runId matches the current agent's runId.
+      // If no runId was provided (undefined), we cannot safely identify the target run —
+      // aborting would risk killing a newly-started agent after a quick mode toggle.
+      // In that case, skip the abort and let the agent continue or time out naturally.
+      if (!runId) {
+        return { success: false, reason: 'no_runId_guard' };
+      }
 
-      // (prevents a late stopOnSwitch from killing a newly-started run)
-
-      if (runId && taskAgent.runId && taskAgent.runId !== runId) {
+      if (taskAgent.runId && taskAgent.runId !== runId) {
 
         return { success: false, reason: 'stale_runId' };
 

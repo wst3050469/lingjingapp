@@ -120,10 +120,12 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
 
   const expressApp = express();
   
-  // CORS for mobile access - must be BEFORE static middleware
-  // so that module scripts with crossorigin attribute get proper headers
+    // CORS for mobile access - restrict origins to localhost + FRP domain
   expressApp.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin || '';
+    const allowedOrigins = ['http://localhost', 'http://127.0.0.1', 'https://' + serverConfig.frpServerAddr, 'http://' + serverConfig.frpServerAddr];
+    const isAllowed = allowedOrigins.some(a => origin.startsWith(a) || origin === 'null');
+    res.header('Access-Control-Allow-Origin', isAllowed ? origin : 'http://localhost');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') {
@@ -131,7 +133,8 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
       return;
     }
     next();
-  });
+  });  // so that module scripts with crossorigin attribute get proper headers
+  
 
   // Serve mobile web UI (static files)
   // Support both dev mode and packaged app
@@ -245,7 +248,7 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
   expressApp.get('/api/quest/:taskId', authenticate, (req, res) => {
     try {
       const db = getDatabaseFn!();
-      const task = db.exec(`SELECT * FROM quest_tasks WHERE id = '${req.params.taskId}'`);
+      const task = db.exec(`SELECT * FROM quest_tasks WHERE id = ?`, [req.params.taskId]);
       if (task[0]?.values.length > 0) {
         const row = task[0].values[0];
         res.json({
@@ -453,7 +456,7 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
           plans: planCount,
           mobile_clients: activeConnections.size,
         },
-        version: require('../../package.json').version || '1.3.1',
+        version: (() => { try { return require('../../package.json').version; } catch { return '1.3.1'; } })() || '1.3.1',
         server_time: new Date().toISOString(),
       });
     } catch (err) {

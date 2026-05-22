@@ -95,10 +95,16 @@ export function QuestView() {
       
       if (ids.length > 0) {
         console.log('[QuestView] Unmounting, pausing running agents:', ids);
-        // Use stopOnSwitch instead of stop - this preserves task state
-        ids.forEach((id) => {
-          window.electronAPI.quest.stopOnSwitch(id, currentRunId || undefined).catch(() => {});
-        });
+        // Serial await: ensure all stopOnSwitch calls complete before clearing state,
+        // preventing a late stopOnSwitch from killing a newly-started agent after re-mount.
+        const stopAll = async () => {
+          for (const id of ids) {
+            try {
+              await window.electronAPI.quest.stopOnSwitch(id, currentRunId || undefined);
+            } catch { /* ignore */ }
+          }
+        };
+        stopAll();
       }
       
       // Only reset streaming state, keep runningTaskIds for when we return

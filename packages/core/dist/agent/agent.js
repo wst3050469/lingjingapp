@@ -136,9 +136,29 @@ function looksLikeTaskComplete(text) {
         /[会要需][将去].*完成/,
         /还没[有]?完成/,
     ];
+    // Single-step completion patterns: model says a sub-step is done but
+    // the overall task may not be complete. These OVERRIDE COMPLETION patterns.
+    // E.g. "文件已创建" / "修改完成" / "步骤1完成" — NOT overall completion.
+    const SINGLE_STEP_PATTERNS = [
+        /(?:文件|代码|配置|函数|模块|组件|变量|类|接口)[已将]?(?:创建|修改|更新|删除|写入|生成|添加|调整|修复|重命名)[了完]?[。，！]?\s*$/,
+        /(?:step|phase|part)\s+\d+\s+(?:done|complete|finished)/i,
+        /第[一二三四五六七八九十\d]+[步个环节阶段][已将]?(?:完成|结束|搞定)/,
+        /修改完成[了。]?\s*$/,
+        /创建完成[了。]?\s*$/,
+        /更新完成[了。]?\s*$/,
+        /删除完成[了。]?\s*$/,
+        /写入完成[了。]?\s*$/,
+        /保存成功[了。]?\s*$/,
+        /操作完成[了。]?\s*$/,
+        /执行完成[了。]?\s*$/,
+    ];
     const textLower = text.toLowerCase();
     // First, check for INCOMPLETE patterns — these override completion
     if (INCOMPLETE_PATTERNS.some(p => p.test(text) || p.test(textLower))) {
+        return false;
+    }
+    // Check for single-step completion — sub-step done but overall task may not be
+    if (SINGLE_STEP_PATTERNS.some(p => p.test(text) || p.test(textLower))) {
         return false;
     }
     // Then, check for explicit completion (at end of statement)
@@ -256,7 +276,7 @@ export class Agent {
         let turn = 0;
         let hasNudgedForTools = false;
         let noToolRetryCount = 0;
-        const MAX_NO_TOOL_RETRIES = 3;
+        const MAX_NO_TOOL_RETRIES = 5;
         // Enhance system prompt with tool-use instructions when tools are available
         const hasTools = this.config.tools.getSchemas().length > 0;
         const effectiveSystemPrompt = hasTools
@@ -286,6 +306,7 @@ export class Agent {
                 // Call LLM
                 let responseText = '';
                 let reasoningText = '';
+                let turnFinishReason = null;
                 const toolCalls = [];
                 const toolCallBuffers = new Map();
                 // When nudging (retrying after model described but didn't call tools),
@@ -360,13 +381,24 @@ export class Agent {
                                 this.emit({ type: 'usage', inputTokens: event.inputTokens, outputTokens: event.outputTokens });
                                 break;
                             case 'done':
+                                if (event.finishReason) {
+                                    turnFinishReason = event.finishReason;
+                                }
                                 break;
                         }
                     }
                 }
                 catch (error) {
                     const err = error instanceof Error ? error : new Error(String(error));
-                    // Don't emit error event for normal aborts
+                    // Turn timeout: emit error to notify the user (NOT silently swallowed)
+                    const isTurnTimeout = err.message.includes('Turn timeout');
+                    if (isTurnTimeout) {
+                        const turnTimeoutMin = Math.round(this.config.turnTimeout / 60000);
+                        const friendlyMsg = `⏱️ 单轮超时：当前操作执行超过${turnTimeoutMin}分钟被自动中止。\n\n可能原因：\n- 命令执行时间过长\n- 网络请求等待过久\n- 模型思考时间过长\n\n建议：检查上方最后执行的操作，确认是否需要重新执行或调整参数。`;
+                        this.emit({ type: 'error', error: new Error(friendlyMsg) });
+                        throw err;
+                    }
+                    // Don't emit error event for normal aborts (user-initiated)
                     const isAbortError = err.name === 'AbortError' ||
                         err.name === 'TimeoutError' ||
                         err.message === 'Aborted' ||
@@ -374,8 +406,7 @@ export class Agent {
                         err.message.includes('aborted') ||
                         err.message.includes('abort') ||
                         err.message.includes('terminated') ||
-                        err.message.includes('max duration') ||
-                        err.message.includes('Turn timeout');
+                        err.message.includes('max duration');
                     // TimeoutError: provide user-friendly message with actionable advice
                     const isTimeoutError = err.name === 'TimeoutError';
                     if (isTimeoutError && !isAbortError) {
@@ -397,6 +428,17 @@ Technical details: ${err.message}`;
                 }
                 // Add assistant message to conversation
                 this.conversation.addAssistantMessage(responseText, toolCalls.length > 0 ? toolCalls : undefined, reasoningText || undefined);
+                // Handle output truncation: finish_reason==="length" means maxResponseTokens was hit.
+                // The response (and any tool_calls) may be incomplete. Auto-continue by appending
+                // a continuation prompt so the model picks up where it left off.
+                if (turnFinishReason === 'length') {
+                    logger.warn('[Agent] Output truncated (finish_reason=length), auto-continuing');
+                    this.conversation.addUserMessage('[自动续写] 上一个回复因长度限制被截断，请从断点处继续输出，不要重复已输出内容。');
+                    noToolRetryCount = 0; // reset so the continuation doesn't count against retries
+                    if (turnTimer)
+                        clearTimeout(turnTimer);
+                    continue;
+                }
                 // If no tool calls, check if model needs a nudge to use tools
                 if (toolCalls.length === 0) {
                     // If the model described actions without calling tools, retry once with a nudge
@@ -423,7 +465,8 @@ Technical details: ${err.message}`;
                         noToolRetryCount++;
                         if (noToolRetryCount > MAX_NO_TOOL_RETRIES) {
                             logger.info('No tool calls after ' + MAX_NO_TOOL_RETRIES + ' retries - returning control to user');
-                            this.conversation.addUserMessage('我已经尝试多次但未能继续执行新的操作。如果你希望我继续，请提供更具体的指示或说明需要执行什么操作。');
+                            this.emit({ type: 'error', error: new Error('⚠️ 任务暂停：连续' + MAX_NO_TOOL_RETRIES + '轮未调用工具。可能原因：模型不确定下一步操作、上下文丢失、或任务实际已完成。请检查结果并决定是否继续。') });
+                            this.conversation.addUserMessage('⚠️ 已连续' + MAX_NO_TOOL_RETRIES + '轮未调用工具，任务已暂停。如果你希望我继续，请提供更具体的指示或说明需要执行什么操作。输入"继续"可让我重试。');
                             if (turnTimer)
                                 clearTimeout(turnTimer);
                             return responseText;

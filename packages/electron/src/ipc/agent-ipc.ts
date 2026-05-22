@@ -33,6 +33,7 @@ import { lspManager } from '../services/lsp/lsp-manager.js';
 import { createSshBashTool } from '../tools/ssh-bash.js';
 import { createSshFileReadTool, createSshFileWriteTool, createSshFileEditTool } from '../tools/ssh-file-tools.js';
 import { createSshListDirTool } from '../tools/ssh-list-dir.js';
+import { abortAllQuestAgents } from './quest-ipc.js';
 
 let currentAgent: Agent | null = null;
 let currentAbortController: AbortController | null = null;
@@ -334,7 +335,9 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         pendingConfirmation.delete(requestId);
-        reject(new Error('用户未在10分钟内确认，命令已自动取消'));
+        // Instead of rejecting (which kills the agent), resolve with approved:false
+        // so the agent skips this command gracefully and can continue
+        resolve({ approved: false, feedback: '用户未在10分钟内确认，已自动跳过' });
       }, CONFIRM_TIMEOUT);
       pendingConfirmation.set(requestId, { resolve, timeout });
     });
@@ -417,11 +420,15 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
       config = freshConfig.config;
     } catch {}
 
-    // Abort any existing agent before starting new one (prevents event pollution)
+    // Abort any existing Chat agent before starting new one (prevents event pollution)
     if (currentAbortController) {
       currentAbortController.abort();
       currentAgent = null;
     }
+
+    // Abort all Quest agents when entering Chat mode (prevents Quest agents from
+    // generating events that pollute the Chat conversation stream)
+    abortAllQuestAgents();
     currentAbortController = new AbortController();
 
     // Expert event forwarder (for experts mode)
@@ -604,7 +611,9 @@ Only save genuinely useful, non-trivial information. Do NOT save obvious or temp
           const requestId = `ask-${++askUserCounter}`;
           const timeout = setTimeout(() => {
             pendingAskUser.delete(requestId);
-            reject(new Error('用户未在5分钟内响应，任务已自动取消'));
+            // Instead of rejecting (which kills the agent), resolve with empty string
+            // so the agent pauses gracefully and can continue when user returns
+            resolve('');
           }, ASK_USER_TIMEOUT);
           pendingAskUser.set(requestId, { resolve, timeout });
           if (!senderWindow.isDestroyed()) {

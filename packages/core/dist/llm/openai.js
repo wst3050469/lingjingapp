@@ -290,6 +290,7 @@ export class OpenAIProvider {
                         let sseEventCountRetry = 0;
                         let hadToolCallsRetry = false;
                         let accumulatedTextRetry = '';
+                        let lastFinishReasonRetry = null;
                         for await (const sseEvent of parseSSEStream(retryResponse.body, request.signal)) {
                             sseEventCountRetry++;
                             let data;
@@ -340,6 +341,7 @@ export class OpenAIProvider {
                                 }
                             }
                             if (choices[0].finish_reason) {
+                                lastFinishReasonRetry = choices[0].finish_reason;
                                 for (const [, buf] of toolCallBuffersRetry) {
                                     if (!buf.started && buf.name)
                                         yield { type: 'tool_call_start', id: buf.id, name: buf.name };
@@ -362,7 +364,7 @@ export class OpenAIProvider {
                                 }
                             }
                         }
-                        yield { type: 'done' };
+                        yield { type: 'done', finishReason: lastFinishReasonRetry };
                         _llmTimeout.clear();
                         return;
                     }
@@ -408,6 +410,7 @@ export class OpenAIProvider {
         const toolCallBuffers = new Map();
         let hadToolCalls = false; // Track if any tool calls were received via API
         let accumulatedText = ''; // Accumulate text for post-processing (DeepSeek text-based tool call detection)
+        let lastFinishReason = null; // Track finish_reason for truncation detection
         // Diagnostic: log raw SSE events to understand provider behavior
         let sseEventCount = 0;
         for await (const sseEvent of parseSSEStream(response.body, request.signal)) {
@@ -534,6 +537,7 @@ export class OpenAIProvider {
             }
             // Check finish reason - emit tool_call_end for all buffered delta tool calls
             if (choice.finish_reason) {
+                lastFinishReason = choice.finish_reason;
                 logger.info(`[LLM] finish_reason: ${choice.finish_reason}, buffered tool calls: ${toolCallBuffers.size}, total SSE events: ${sseEventCount}`);
                 for (const [, buf] of toolCallBuffers) {
                     if (!buf.started && buf.name) {
@@ -562,7 +566,7 @@ export class OpenAIProvider {
                 }
             }
         }
-        yield { type: 'done' };
+        yield { type: 'done', finishReason: lastFinishReason };
         _llmTimeout.clear();
     }
     /**
@@ -731,7 +735,7 @@ export class OpenAIProvider {
             yield { type: 'usage', inputTokens: usage.prompt_tokens, outputTokens: usage.completion_tokens };
         }
         logger.info(`[LLM] DeepSeek non-streaming complete. hadToolCalls=${hadToolCalls}, finish_reason=${choice.finish_reason}`);
-        yield { type: 'done' };
+        yield { type: 'done', finishReason: choice.finish_reason || null };
     }
     convertMessages(messages, systemPrompt) {
         const result = [];

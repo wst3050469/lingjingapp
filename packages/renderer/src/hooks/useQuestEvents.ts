@@ -28,10 +28,14 @@ export function useQuestEvents(): void {
       }
 
       // runId epoch filter: discard stale events from old runs.
-      // If both the event and the store carry a runId, they must match.
+      // If the event carries a runId but the store's activeRunId is null (e.g. after
+      // switchTask clears it), we still filter: an event with a runId arriving when
+      // there is no active run is almost certainly stale.
       // Events without a runId (legacy / cross-task) are always accepted.
-      if (event.runId && store.activeRunId && event.runId !== store.activeRunId) {
-        return; // Stale event from a previous run – drop it
+      if (event.runId) {
+        if (!store.activeRunId || event.runId !== store.activeRunId) {
+          return; // Stale event from a previous run – drop it
+        }
       }
 
       switch (event.type) {

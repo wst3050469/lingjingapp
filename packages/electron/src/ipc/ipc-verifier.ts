@@ -105,7 +105,6 @@ export function verifyIpcRegistrations(): string[] {
   } else {
     // All handlers registered — clear any previous error log if it exists
     try {
-      const { existsSync } = require('node:fs') as typeof import('node:fs');
       if (existsSync(LOG_FILE)) {
         writeLog(''); // Clear the log on successful startup
       }

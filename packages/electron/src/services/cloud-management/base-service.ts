@@ -29,7 +29,7 @@ export class CloudManagementBaseService {
     // Use the configured API key from environment
     // The cloud-server validates x-api-key against process.env.API_KEY
     try {
-      const apiKey = '5379dcbe873b356430d84f3f68b0f0c6e96e2afa3b8a9b5441c9e4d7f5a0b1c2';
+      const apiKey = process.env.LINGJING_CLOUD_API_KEY || process.env.API_KEY || '';
       if (apiKey) {
         this.client.setApiKey(apiKey);
       }

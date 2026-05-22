@@ -35,7 +35,6 @@ import { initWebServerFunctions, startWebServer, stopWebServer, broadcastToMobil
 import { startFrpClient, stopFrpClient, getFrpStatus } from './frp-client.js';
 import { registerCloudIpc, autoConnectCloud, pushMemoryToCloud, pushSessionToCloud } from './ipc/cloud-ipc.js';
 import { registerScheduleIpc } from './ipc/schedule-ipc.js';
-import { registerSubscriptionIpc } from './ipc/cloud-management/subscription-ipc.js';
 import { registerAdminIpc } from './ipc/admin-ipc.js';
 import { initCloudSyncIpc } from './ipc/cloud-sync-ipc.js';
 import { initGitHubIpc } from './ipc/github-ipc.js';
@@ -43,7 +42,6 @@ import { registerAllCloudManagementIpc } from './ipc/cloud-management/index.js';
 import { registerFusionIPC, setFusionModules, setEventBus, setHookRegistry } from './ipc/fusion/index.js';
 import { registerVoiceIPC } from './ipc/voice-ipc.js';
 import { registerNewFeatureIPC } from './ipc/register-new-features.js';
-import { loadWorktreeInitConfig, saveWorktreeInitConfig } from './ipc/init-script-executor.js';
 import { VoiceEngineManager } from './voice/voice-engine-manager.js';
 import { registerCheckpointIPC } from './ipc/checkpoint-ipc.js';
 import { generateDeviceFingerprint } from './services/secure-storage.js';
@@ -401,7 +399,7 @@ function createWindow(): void {
     
     // DevTools is disabled in production for security and performance
     // To enable temporarily: uncomment the line below and rebuild
-    mainWindow.webContents.openDevTools({ mode: 'bottom' });
+    // mainWindow.webContents.openDevTools({ mode: 'bottom' });
   }
 
   mainWindow.on('closed', () => {
@@ -685,7 +683,7 @@ async function bootstrap(): Promise<void> {
     const responseHeaders = {
       ...details.responseHeaders,
       'Content-Security-Policy': [
-        "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* http://127.0.0.1:*; img-src 'self' data: blob: https: http:; script-src 'self' blob: 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https: http://localhost:* ws://localhost:* wss: http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' http://localhost:* http://127.0.0.1:*;",
+        "default-src 'self'; img-src 'self' data: blob: https:; script-src 'self' blob: 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https://ide.zhejiangjinmo.com http://localhost:* ws://localhost:* wss://ide.zhejiangjinmo.com; worker-src 'self' blob:; frame-src 'self' http://localhost:*;",
       ],
     };
     callback({ responseHeaders });
@@ -729,7 +727,7 @@ async function bootstrap(): Promise<void> {
     });
   }
 
-    // ── Phase A: Register IPC handlers that DON'T need mainWindow ──
+  // ── Phase A: Register IPC handlers that DON'T need mainWindow ──
   // These critical handlers (config:set, update:check, web-server) MUST be registered
   // even if window creation fails. The renderer may start making IPC calls immediately
   // after loading, and window-independent handlers must be ready.
@@ -773,11 +771,11 @@ async function bootstrap(): Promise<void> {
             const current = app.getVersion();
             return { ok: true, version: data.version, currentVersion: current };
           }
-        } catch { /* ignore */ }
+        } catch { /* network error - browser fetch failed */ }
         return { notActive: true, currentVersion: app.getVersion() };
       });
       console.log('[Main] Registered emergency update:check fallback handler');
-    } catch { /* best effort */ }
+    } catch { /* emergency fallback registration failed - best effort */ }
   }
 
   // Other window-independent handlers
@@ -935,15 +933,15 @@ async function bootstrap(): Promise<void> {
     const osRelease = require('node:os').release();
     const appVersion = app.getVersion();
 
-    // Device auto-registration via /api/auth/register (correct endpoint + API key)
-    const DEVICE_API_KEY = '5379dcbe873b356430d84f3f68b0f0c6e96e2afa3b8a9b5441c9e4d7f5a0b1c2';
+    // Device auto-registration via /api/auth/register (API key from environment)
+    const deviceApiKey = process.env.LINGJING_CLOUD_API_KEY || process.env.API_KEY || '';
     fetch('https://ide.zhejiangjinmo.com/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceId, deviceName: 'IDE-' + platform + '-' + deviceId.slice(0, 8),
         deviceInfo: { type: 'desktop', os: platform + ' ' + osRelease, version: appVersion },
-        apiKey: DEVICE_API_KEY
+        apiKey: deviceApiKey
       })
     }).then(res => {
       if (res.ok) console.log('[Main] Device auto-registered:', deviceId.slice(0, 12) + '...');

@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron';
+import { ipcMain, BrowserWindow, systemPreferences } from 'electron';
 import type { VoiceEngineManager } from '../voice/voice-engine-manager.js';
 
 export function registerVoiceIPC(engineManager: VoiceEngineManager): void {

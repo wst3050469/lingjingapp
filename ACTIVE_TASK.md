@@ -1,4 +1,4 @@
-# ACTIVE_TASK -- v1.50.0 Phase 93 全平台部署完成 ✅
+# ACTIVE_TASK -- v1.50.0 Phase 93 全平台部署完成 ✅ + 构建迁移完成
 
 ## 状态：✅ 全部完成
 
@@ -10,15 +10,13 @@
 | 📱 移动端APP完善 | 4项 | ✅ 心跳/Markdown/持久化/文件查看 |
 | 🪟 Windows Setup | 142MB | ✅ 已部署到生产 |
 | 🪟 Windows Portable | 141MB | ✅ 已部署到生产 |
-| 🐧 Linux AppImage | 172MB | ✅ 已部署到生产 |
-| 🐧 Linux deb | 105MB | ✅ 已部署到生产 |
-| 📱 Android APK | 35MB | ✅ 软链至v1.46.0（待Expo原生构建） |
-| ☁️ versions.json | 全平台 | ✅ 4份同步，latest=1.50.0 |
-| 🔄 latest.yml | 1.50.0 | ✅ SHA512已更新 |
-| 🔄 latest-linux.yml | 1.50.0 | ✅ 含AppImage+deb双文件 |
-| 🌐 /api/latest | 1.50.0 | ✅ 完整返回 |
+| 🐧 Linux AppImage | 172MB | ✅ 已部署到生产（192.168.1.9构建） |
+| 🐧 Linux deb | 105MB | ✅ 已部署到生产（192.168.1.9构建） |
+| 📱 Android APK | 81MB | ✅ 已部署到生产（192.168.1.9构建, 2m19s） |
+| ☁️ versions.json | v1.50.0 | ✅ 已更新 |
+| 🔄 latest.yml / latest-linux.yml | 1.50.0 | ✅ SHA512已更新 |
 
-### Git
-- `5a05b012a` — 已提交 ✅
-- GitHub: 已推送 ✅
-- 生产 bare repo: 已同步 ✅
+## 构建平台迁移完成
+- **从**: 120.55.5.220 (阿里云 7.3GB 内存, OOM崩溃)
+- **到**: 192.168.1.9 (liuhui-AI-Station-395-Max, 32核/62GB/1.9TB NVMe)
+- **构建耗时对比**: Android 30min+ → 2m19s, Linux ~2min

@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "灵境",
+    "slug": "lingjing-mobile",
+    "version": "1.51.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "lingjing",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e1e1e"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lingjing.codepilot"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1e1e1e"
+      },
+      "package": "com.lingjing.codepilot"
+    },
+    "plugins": [
+      "expo-notifications"
+    ],
+    "extra": {
+      "cloudUrl": "https://ide.zhejiangjinmo.com",
+      "apiKey": ""
+    }
+  }
+}

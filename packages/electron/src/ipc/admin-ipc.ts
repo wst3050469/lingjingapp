@@ -2,7 +2,7 @@
  * Admin IPC Bridge — exposes admin modules (auth, version, mcp, quest, config, log)
  * to the renderer process for the SaaS admin dashboard.
  */
-import { ipcMain } from 'electron';
+import { ipcMain, app } from 'electron';
 import { createLogger } from '../monitoring/logger';
 
 const logger = createLogger('admin-ipc');
@@ -26,7 +26,7 @@ async function getAuthManager(): Promise<any> {
 async function getVersionModule(): Promise<any> {
   if (!_versionModule) {
     const { VersionModule } = await import('../admin/version-module.js');
-    _versionModule = new VersionModule('1.4.0');
+    _versionModule = new VersionModule(app.getVersion());
   }
   return _versionModule;
 }

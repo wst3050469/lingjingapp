@@ -2,7 +2,7 @@
 // Startup self-check: verifies critical IPC handlers are registered after startup
 // If any are missing, writes diagnostic info to ~/.lingjing/startup-error.log
 import { ipcMain, app } from 'electron';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 

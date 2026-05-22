@@ -9,7 +9,8 @@
     "renderer/**/*",
     "node_modules/**/*",
     "package.json",
-    "assets/**/*"
+    "assets/**/*",
+    "prompts/**/*"
   ],
   "win": {
     "target": [
@@ -65,5 +66,21 @@
     "provider": "generic",
     "url": "https://ide.zhejiangjinmo.com/downloads"
   },
-  "npmRebuild": false
+  "npmRebuild": false,
+  "extraResources": [
+    {
+      "from": "prompts",
+      "to": "prompts",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "skills",
+      "to": "skills",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ]
 }

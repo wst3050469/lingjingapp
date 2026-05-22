@@ -12,7 +12,7 @@
 | 🪟 Windows Portable | 141MB | ✅ 已部署到生产 |
 | 🐧 Linux AppImage | 172MB | ✅ 已部署到生产 |
 | 🐧 Linux deb | 105MB | ✅ 已部署到生产 |
-| 📱 Android APK | - | ⏳ 软链至v1.46.0（待Expo构建） |
+| 📱 Android APK | 35MB | ✅ 软链至v1.46.0（待Expo原生构建） |
 | ☁️ versions.json | 全平台 | ✅ 4份同步，latest=1.50.0 |
 | 🔄 latest.yml | 1.50.0 | ✅ SHA512已更新 |
 | 🔄 latest-linux.yml | 1.50.0 | ✅ 含AppImage+deb双文件 |

@@ -1,4 +1,4 @@
-# ACTIVE_TASK -- v1.50.0 Phase 93 发布中 🚀
+# ACTIVE_TASK -- v1.51.0 Phase 93 发布中 🚀
 
 ## 状态：⏳ 构建中
 
@@ -13,7 +13,7 @@
 | 🐧 Linux AppImage | - | ⏳ 待构建 |
 | 🐧 Linux deb | - | ⏳ 待构建 |
 | ☁️ versions.json | 全平台 | ⏳ 待更新 |
-| 🔄 auto-update YAML | 1.50.0 | ⏳ 待更新 |
+| 🔄 auto-update YAML | 1.51.0 | ⏳ 待更新 |
 
 ### Phase 93 修改文件清单 (15个)
 

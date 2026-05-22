@@ -1,18 +1,18 @@
 # ACTIVE_TASK -- v1.49.0 全平台部署完成 ✅
 
-## 状态：✅ 全部完成
+## 状态：✅ 全部完成（移动端APK需Expo环境构建）
 
 | 项目 | 大小 | 状态 |
 |:-----|:-----|:----:|
-| 🔍 代码审查与23项修复 | - | ✅ 10个文件已修复 |
-| 🐧 Linux AppImage | 145MB | ✅ 已部署到生产 |
-| 🐧 Linux deb | 112MB | ✅ 已部署到生产 |
-| 🪟 Windows Setup | 94MB | ✅ 已部署到生产 |
-| 🪟 Windows Portable | 94MB | ✅ 已部署到生产 |
-| 📱 Android APK | 36MB | ✅ 软链 v1.49.0 → v1.46.0 |
+| 🔍 代码审查与23+项修复 | - | ✅ 10+个文件已修复 |
+| 🐧 Linux AppImage | 139MB | ✅ 已部署到生产 |
+| 🐧 Linux deb | 107MB | ✅ 已部署到生产 |
+| 🪟 Windows Setup | 90MB | ✅ 已部署到生产 |
+| 🪟 Windows Portable | 90MB | ✅ 已部署到生产 |
+| 📱 Android APK | 36MB | ✅ 软链至v1.46.0（待Expo构建） |
 | ☁️ versions.json | 5平台 | ✅ 含android条目，4份同步 |
-| 🔄 auto-update latest.yml | 1.49.0 | ✅ SHA512已更新 |
-| 🔄 auto-update latest-linux.yml | 1.49.0 | ✅ SHA512+双文件已更新 |
+| 🔄 auto-update YAML | 1.49.0 | ✅ SHA512已更新 |
+| 🌐 /api/latest | 1.49.0 | ✅ 完整返回
 | 🌐 /api/latest | 1.49.0 | ✅ 全平台完整返回 |
 
 ### Git

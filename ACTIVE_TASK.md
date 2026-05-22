@@ -11,6 +11,8 @@
 | 🪟 Windows Portable | 94MB | ✅ 已部署到生产 |
 | 📱 Android APK | 36MB | ✅ 软链 v1.49.0 → v1.46.0 |
 | ☁️ versions.json | 5平台 | ✅ 含android条目，4份同步 |
+| 🔄 auto-update latest.yml | 1.49.0 | ✅ SHA512已更新 |
+| 🔄 auto-update latest-linux.yml | 1.49.0 | ✅ SHA512+双文件已更新 |
 | 🌐 /api/latest | 1.49.0 | ✅ 全平台完整返回 |
 
 ### Git

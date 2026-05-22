@@ -422,17 +422,17 @@ export class Agent {
               break;
 
             case 'tool_call_start':
-              toolCallBuffers.set(event.id, { name: event.name, argsJson: '' });
+              toolCallBuffers.set(String(event.id), { name: String(event.name), argsJson: '' });
               break;
 
             case 'tool_call_delta': {
-              const buf = toolCallBuffers.get(event.id);
-              if (buf) buf.argsJson += event.args;
+              const buf = toolCallBuffers.get(String(event.id));
+              if (buf) buf.argsJson += (String(event.args ?? '') as string ?? "");
               break;
             }
 
             case 'tool_call_end': {
-              const buf = toolCallBuffers.get(event.id);
+              const buf = toolCallBuffers.get(String(event.id));
               if (buf) {
                 let args: Record<string, unknown> = {};
                 try {
@@ -450,13 +450,13 @@ export class Agent {
                   break;
                 }
 
-                toolCalls.push({ id: event.id, name: buf.name, arguments: args });
+                toolCalls.push({ id: String(event.id) as string, name: buf.name, arguments: args });
               }
               break;
             }
 
             case 'usage':
-              this.emit({ type: 'usage', inputTokens: event.inputTokens, outputTokens: event.outputTokens });
+              this.emit({ type: 'usage', inputTokens: event.inputTokens as number, outputTokens: event.outputTokens as number });
               break;
 
             case 'done':

@@ -75,3 +75,6 @@ code-server.deb
 # Local dev scripts
 scripts/codeserver-info.txt
 scripts/tunnel-codeserver.bat
+  
+# Scripts node_modules (not tracked)  
+scripts/node_modules/ 

@@ -113,3 +113,8 @@ export * from './lifecycle/index.js';
 
 // Cross-Session Memory
 export * from './cross-session/index.js';
+
+export type { AppConfig } from './config/schema.js';
+export type { Message } from './fusion/adapters/types.js';
+export type { Tool } from './tools/types.js';
+export type { AgentEvent } from "./agent/agent.js";

@@ -2,7 +2,7 @@
   "expo": {
     "name": "灵境",
     "slug": "lingjing-mobile",
-    "version": "1.52.6",
+    "version": "1.52.9",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "lingjing",

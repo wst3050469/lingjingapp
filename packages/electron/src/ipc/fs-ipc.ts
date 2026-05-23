@@ -92,13 +92,19 @@ export function registerFsIpc(mainWindow: BrowserWindow, getWorkspace?: () => st
   });
 
   // Open file dialog - returns selected file path(s)
-  ipcMain.handle('fs:select-file', async () => {
+  ipcMain.handle('fs:select-file', async (_event, { filters }?: { filters?: Electron.FileFilter[] }) => {
     const defaultPath = getWorkspace?.();
     const result = await dialog.showOpenDialog(mainWindow, {
-      properties: ['openFile'],
+      properties: ['openFile', 'multiSelections'],
       defaultPath: defaultPath || undefined,
+      filters: filters || [
+        { name: '所有支持的文件', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'pdf', 'txt', 'md', 'doc', 'docx', 'xls', 'xlsx'] },
+        { name: '图片', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] },
+        { name: '文档', extensions: ['pdf', 'txt', 'md', 'doc', 'docx', 'xls', 'xlsx'] },
+        { name: '所有文件', extensions: ['*'] },
+      ],
     });
-    return result.canceled ? null : result.filePaths[0];
+    return result.canceled ? null : result.filePaths;
   });
 
   // Save-as dialog - returns selected save path

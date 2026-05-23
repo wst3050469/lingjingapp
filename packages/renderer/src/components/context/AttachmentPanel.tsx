@@ -27,9 +27,10 @@ export function AttachmentPanel({
 
   const handleSelectFile = useCallback(async () => {
     try {
-      const filePath = await window.electronAPI.fs.selectFile();
-      if (!filePath) return;
+      const filePaths = await window.electronAPI.fs.selectFile();
+      if (!filePaths || filePaths.length === 0) return;
 
+      const filePath = filePaths[0];
       const fileName = filePath.split(/[/\\]/).pop() || filePath;
       const item: MentionItem = {
         id: `attachment-${filePath}-${Date.now()}`,

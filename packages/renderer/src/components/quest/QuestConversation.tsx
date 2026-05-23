@@ -6,8 +6,8 @@ import { useQuestStore, generateQuestMessageId, type QuestMessage } from '../../
 import { useModelStore } from '../../stores/model-store';
 import { useTodoStore } from '../../stores/todo-store';
 import { useEditTrackerStore } from '../../stores/edit-tracker-store';
-import { useImageAttachments } from '../../hooks/useImageAttachments';
-import { useFileMentions } from '../../hooks/useFileMentions';
+import { useFileAttachments } from '../../hooks/useFileAttachments';
+import type { FileAttachment } from '../../hooks/useFileAttachments';
 import { useContextSelector } from '../../hooks/useContextSelector';
 import { useDragDropFiles } from '../../hooks/useDragDropFiles';
 import { usePromptPolish } from '../../hooks/usePromptPolish';
@@ -52,9 +52,7 @@ export function QuestConversation() {
   const { currentModel } = useModelStore();
   const { chatMode, setChatMode } = useChatStore();
 
-  // 添加附件相关的 hooks
-  const { images, addImages, removeImage, triggerFileInput } = useImageAttachments();
-  const { mentionedFiles, addMention, removeMention } = useFileMentions();
+  const { attachments, images, documents, addFiles, addFileFromFile, removeAttachment, clearAttachments, triggerFileInput, totalSize } = useFileAttachments();
   const {
     showSelector,
     selectorType,
@@ -74,13 +72,7 @@ export function QuestConversation() {
   } = useContextSelector('quest');
 
   const { isDragging, dragHandlers, pasteHandler } = useDragDropFiles('quest', {
-    onImageAdd: (file: File) => {
-      // Convert file to image attachment flow
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      const fakeEvent = { target: { files: dt.files } } as unknown as React.ChangeEvent<HTMLInputElement>;
-      addImages(fakeEvent);
-    },
+    onFileAdd: addFileFromFile,
   });
   const { isPolishing, polish } = usePromptPolish();
 
@@ -139,13 +131,15 @@ export function QuestConversation() {
 
   const handleSend = useCallback(async () => {
     const hasText = !!text.trim();
-    const hasImages = images.length > 0;
-    if ((!hasText && !hasImages) || isStreaming || !activeTaskId) return;
+    const hasAttachments = attachments.length > 0;
+    if ((!hasText && !hasAttachments) || isStreaming || !activeTaskId) return;
 
     // Capture values before clearing
     const messageText = text;
     const contexts = selectedContexts;
-    const currentImages = [...images];
+    const currentAttachments = [...attachments];
+    const currentImages = images;
+    const currentDocuments = documents;
 
     // Clear input immediately - before any store operations
     setText('');
@@ -155,14 +149,13 @@ export function QuestConversation() {
     }
     clearContexts();
     dismissSelector();
-    // Clear attached images after capture
-    currentImages.forEach((_, i) => removeImage(i));
+    clearAttachments();
 
     const store = useQuestStore.getState();
 
-    // Build display content (text + image indicator)
-    const displayContent = hasImages && !hasText
-      ? `[Image${currentImages.length > 1 ? 's' : ''}]`
+    // Build display content (text + attachment indicator)
+    const displayContent = hasAttachments && !hasText
+      ? `[Attachment${currentAttachments.length > 1 ? 's' : ''}]`
       : messageText;
 
     // Add user message
@@ -185,12 +178,17 @@ export function QuestConversation() {
     const autoMode = activeTask?.autoMode || 'auto';
 
     // Prepare images for IPC (base64 payload)
-    const imagePayload = hasImages
+    const imagePayload = currentImages.length > 0
       ? currentImages.map(img => {
-          const m = img.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+          const m = img.dataUrl?.match(/^data:(image\/\w+);base64,(.+)$/);
           return m ? { data: m[2], mediaType: m[1] } : null;
         }).filter(Boolean) as Array<{ data: string; mediaType: string }>
       : undefined;
+
+    // Prepare documents for IPC (text content payload)
+    const documentPayload = currentDocuments
+      .filter(d => d.parseStatus === 'success' && d.content)
+      .map(d => ({ name: d.name, content: d.content!, ext: d.ext }));
 
     try {
       // Smart dispatch: if task was paused/interrupted (has history messages and
@@ -206,13 +204,14 @@ export function QuestConversation() {
       } else {
         await window.electronAPI.quest.run({
           taskId: activeTaskId,
-          message: messageText || 'Please analyze this image.',
+          message: messageText || 'Please analyze this.',
           scenario,
           runMode,
           autoMode,
           chatMode,
           runId,
           images: imagePayload,
+          documents: documentPayload.length > 0 ? documentPayload : undefined,
           contexts: contexts.map(ctx => ({
             id: ctx.id,
             type: ctx.type,
@@ -232,7 +231,7 @@ export function QuestConversation() {
       store.setActiveRunId(null);
       if (activeTaskId) store.removeRunningTask(activeTaskId);
     }
-  }, [text, images, isStreaming, activeTaskId, activeTask, selectedContexts, clearContexts, dismissSelector, removeImage]);
+  }, [text, attachments, images, documents, isStreaming, activeTaskId, activeTask, selectedContexts, clearContexts, dismissSelector, clearAttachments]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // If context selector is showing, let it handle keyboard events
@@ -438,15 +437,13 @@ export function QuestConversation() {
               </div>
             )}
 
-            {/* Context chips - 显示已添加的图片和文件 */}
-            {(images.length > 0 || mentionedFiles.length > 0 || selectedContexts.length > 0) && (
+            {/* Context chips - 显示已添加的附件和上下文 */}
+            {(attachments.length > 0 || selectedContexts.length > 0) && (
               <div className="pt-1.5">
                 <ContextChips
-                  images={images}
-                  files={mentionedFiles}
+                  attachments={attachments}
                   contexts={selectedContexts}
-                  onRemoveImage={removeImage}
-                  onRemoveFile={removeMention}
+                  onRemoveAttachment={removeAttachment}
                   onRemoveContext={removeContext}
                 />
               </div>
@@ -471,7 +468,7 @@ export function QuestConversation() {
                   handleTextChange(text, cursorPos);
                 }
               }}
-              placeholder={chatMode === 'ask' ? '提问或粘贴代码... (@ 添加上下文, Enter 发送)' : '发送消息... (@ 添加上下文, Enter 发送)'}
+              placeholder={chatMode === 'ask' ? '提问或粘贴代码... (Enter 发送, @ 添加上下文)' : '发送消息... (Enter 发送, @ 添加上下文)'}
               rows={1}
               className="w-full bg-transparent px-3 pt-2 pb-1 text-sm text-cp-text outline-none resize-none min-h-[40px] placeholder:text-cp-text-dim/40 leading-relaxed"
             />
@@ -498,8 +495,7 @@ export function QuestConversation() {
               
               {/* Input toolbar */}
               <InputToolbar
-                onMention={() => openViaButton('file')}
-                onImage={triggerFileInput}
+                onFile={triggerFileInput}
                 onVoice={() => toggleRecording(text)}
                 onPolish={async () => {
                   if (text.trim()) {
@@ -507,12 +503,12 @@ export function QuestConversation() {
                     setText(polished);
                   }
                 }}
-                onSend={() => { if (text.trim() || images.length > 0) handleSend(); }}
+                onSend={() => { if (text.trim() || attachments.length > 0) handleSend(); }}
                 onStop={handleStop}
                 isStreaming={isStreaming}
                 isRecording={isRecording}
                 isPolishing={isPolishing}
-                canSend={!!text.trim() || images.length > 0}
+                canSend={!!text.trim() || attachments.length > 0}
               />
             </div>
           </div>
@@ -521,10 +517,10 @@ export function QuestConversation() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,.pdf,.txt,.md,.doc,.docx,.xls,.xlsx"
             multiple
             className="hidden"
-            onChange={addImages}
+            onChange={addFiles}
           />
         </div>
       </div>

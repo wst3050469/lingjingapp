@@ -8,6 +8,7 @@ declare interface ElectronAPI {
       conversationId?: string;
       contexts?: { id: string; type: string; label: string; path: string; content?: string }[];
       images?: { data: string; mediaType: string }[];
+      documents?: { name: string; content: string; ext?: string }[];
       conversationMessages?: any[];
     }) => Promise<void>;
     abort: () => Promise<void>;
@@ -26,7 +27,7 @@ declare interface ElectronAPI {
     writeFile: (path: string, content: string) => Promise<any>;
     onChanged: (callback: (event: any) => void) => () => void;
     selectFolder: () => Promise<string | null>;
-    selectFile: () => Promise<string | null>;
+    selectFile: (filters?: Array<{ name: string; extensions: string[] }>) => Promise<string[] | null>;
     saveAs: (defaultName?: string) => Promise<string | null>;
   };
   terminal: {

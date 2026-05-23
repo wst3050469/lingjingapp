@@ -61,6 +61,10 @@ export interface FileChangeEvent {
 export interface AgentRunOptions {
   mode?: 'ask' | 'agent' | 'experts';
   contexts?: Array<{ id: string; type: string; label: string; path: string; content?: string }>;
+  images?: Array<{ data: string; mediaType: string }>;
+  documents?: Array<{ name: string; content: string; ext?: string }>;
+  conversationId?: string;
+  conversationMessages?: any[];
 }
 
 export interface ElectronAPI {
@@ -80,7 +84,7 @@ export interface ElectronAPI {
     writeFile: (path: string, content: string) => Promise<void>;
     onChanged: (callback: (event: FileChangeEvent) => void) => () => void;
     selectFolder: () => Promise<string | null>;
-    selectFile: () => Promise<string | null>;
+    selectFile: (filters?: Array<{ name: string; extensions: string[] }>) => Promise<string[] | null>;
     saveAs: (defaultName?: string) => Promise<string | null>;
   };
   terminal: {

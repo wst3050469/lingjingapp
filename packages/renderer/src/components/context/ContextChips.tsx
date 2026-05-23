@@ -1,27 +1,31 @@
-// ContextChips - displays selected context items as chips
-// Moved from chat/ to context/ for shared use
-
-import type { AttachedImage } from '../../hooks/useImageAttachments';
+import type { FileAttachment } from '../../hooks/useFileAttachments';
 import type { MentionItem } from '../../types/mention';
 
+function getDocIcon(ext?: string): string {
+  switch (ext) {
+    case '.pdf':  return '\u{1F4D5}';
+    case '.doc': case '.docx': return '\u{1F4D8}';
+    case '.xls': case '.xlsx': return '\u{1F4CA}';
+    case '.md':   return '\u{1F4DD}';
+    case '.txt':  return '\u{1F4C3}';
+    default:      return '\u{1F4C4}';
+  }
+}
+
 interface ContextChipsProps {
-  images?: AttachedImage[];
-  files?: string[];
+  attachments?: FileAttachment[];
   contexts?: MentionItem[];
-  onRemoveImage?: (index: number) => void;
-  onRemoveFile?: (path: string) => void;
+  onRemoveAttachment?: (id: string) => void;
   onRemoveContext?: (id: string) => void;
 }
 
 export function ContextChips({
-  images = [],
-  files = [],
+  attachments = [],
   contexts = [],
-  onRemoveImage,
-  onRemoveFile,
+  onRemoveAttachment,
   onRemoveContext,
 }: ContextChipsProps) {
-  if (images.length === 0 && files.length === 0 && contexts.length === 0) return null;
+  if (attachments.length === 0 && contexts.length === 0) return null;
 
   const getContextIcon = (context: MentionItem): string => {
     switch (context.type) {
@@ -51,27 +55,39 @@ export function ContextChips({
 
   return (
     <div className="flex gap-1.5 px-3 pb-1.5 pt-2 flex-wrap">
-      {images.map((img, i) => (
-        <span key={`img-${i}`} className="inline-flex items-center gap-1 pl-0.5 pr-1.5 py-0.5 rounded-md bg-white/[0.06] border border-cp-border/40 text-[10px] text-cp-text-dim group">
-          <img src={img.dataUrl} alt={img.name} className="w-4 h-4 object-cover rounded" />
-          <span className="truncate max-w-[60px]">{img.name}</span>
-          {onRemoveImage && (
-            <button
-              onClick={() => onRemoveImage(i)}
-              className="text-cp-text-dim/40 hover:text-cp-text ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              &times;
-            </button>
+      {attachments.map((att) => (
+        <span
+          key={att.id}
+          className={`inline-flex items-center gap-1 pl-0.5 pr-1.5 py-0.5 rounded-md text-[10px] border group ${
+            att.type === 'image'
+              ? 'bg-white/[0.06] border-cp-border/40 text-cp-text-dim'
+              : 'bg-purple-500/10 border-purple-500/20 text-purple-300'
+          }`}
+        >
+          {att.type === 'image' && att.dataUrl ? (
+            <img src={att.dataUrl} alt={att.name} className="w-4 h-4 object-cover rounded" />
+          ) : (
+            <span className="text-xs">{getDocIcon(att.ext)}</span>
           )}
-        </span>
-      ))}
-      {files.map((f) => (
-        <span key={f} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-cp-accent/10 border border-cp-accent/20 text-[10px] text-cp-accent group">
-          @{f.split(/[/\\]/).pop()}
-          {onRemoveFile && (
+
+          <span className="truncate max-w-[80px]">{att.name}</span>
+
+          {att.type === 'document' && att.parseStatus === 'parsing' && (
+            <span className="text-[9px] text-purple-400/60 animate-pulse">解析中</span>
+          )}
+          {att.type === 'document' && att.parseStatus === 'failed' && (
+            <span className="text-[9px] text-red-400/80">失败</span>
+          )}
+          {att.type === 'document' && att.parseStatus === 'success' && att.content && (
+            <span className="text-[9px] opacity-60">
+              {att.content.length > 1000 ? `${(att.content.length / 1000).toFixed(0)}k` : `${att.content.length}`}
+            </span>
+          )}
+
+          {onRemoveAttachment && (
             <button
-              onClick={() => onRemoveFile(f)}
-              className="text-cp-accent/50 hover:text-cp-accent ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => onRemoveAttachment(att.id)}
+              className="opacity-0 group-hover:opacity-100 transition-opacity ml-0.5"
             >
               &times;
             </button>

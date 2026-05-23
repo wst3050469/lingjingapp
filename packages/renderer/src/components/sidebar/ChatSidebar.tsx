@@ -14,8 +14,8 @@ import { FileChangeSummary } from '../chat/FileChangeSummary';
 import { TodoTracker } from '../chat/TodoTracker';
 import { CodeContextPanel } from '../chat/CodeContextPanel';
 import { ContextMeter } from '../chat/ContextMeter';
-import { useImageAttachments } from '../../hooks/useImageAttachments';
-import { useFileMentions } from '../../hooks/useFileMentions';
+import { useFileAttachments } from '../../hooks/useFileAttachments';
+import type { FileAttachment } from '../../hooks/useFileAttachments';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { usePromptPolish } from '../../hooks/usePromptPolish';
 
@@ -37,8 +37,7 @@ export function ChatSidebar() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Shared hooks for attachments & input enhancements
-  const { images, addImages, addImageFromFile, removeImage, fileInputRef, triggerFileInput, clearImages } = useImageAttachments();
-  const { mentionedFiles, addMention, removeMention, clearMentions } = useFileMentions();
+  const { attachments, images, documents, addFiles, addFileFromFile, removeAttachment, clearAttachments, fileInputRef, triggerFileInput, totalSize } = useFileAttachments();
   const { isRecording, toggleRecording } = useVoiceInput(useCallback((text: string) => setInputText(text), []));
   const { isPolishing, polish } = usePromptPolish();
 
@@ -78,11 +77,11 @@ export function ChatSidebar() {
         const file = items[i].getAsFile();
         if (file) {
           e.preventDefault();
-          addImageFromFile(file);
+          addFileFromFile(file);
         }
       }
     }
-  }, [addImageFromFile]);
+  }, [addFileFromFile]);
 
   const handleContinueSession = async () => {
     if (!sessionSnapshot) return;
@@ -117,7 +116,7 @@ export function ChatSidebar() {
   };
 
   const handleSend = async (text: string) => {
-    if ((!text.trim() && images.length === 0) || isStreaming) return;
+    if ((!text.trim() && attachments.length === 0) || isStreaming) return;
 
     // Compose prompt with context
     let finalPrompt = text;
@@ -133,19 +132,24 @@ export function ChatSidebar() {
       finalPrompt = `[Code from ${fileName}${lineInfo}]\n\`\`\`${codeContext.language}\n${codeContext.code}\n\`\`\`\n\n${finalPrompt}`;
     }
 
-    if (mentionedFiles.length > 0) {
-      finalPrompt = `[Referenced files: ${mentionedFiles.join(', ')}]\n\n${finalPrompt}`;
-    }
     if (images.length > 0) {
       finalPrompt = `[${images.length} image(s) attached]\n\n${finalPrompt}`;
+    }
+    const currentDocuments = documents.filter(d => d.parseStatus === 'success' && d.content);
+    if (currentDocuments.length > 0) {
+      finalPrompt = `[${currentDocuments.length} document(s) attached]\n\n${finalPrompt}`;
     }
 
     const userMsg: ChatMessage = {
       id: generateMessageId(),
       role: 'user',
       content: finalPrompt,
-      attachments: (images.length > 0 || mentionedFiles.length > 0)
-        ? { images: images.length > 0 ? [...images] : undefined, files: mentionedFiles.length > 0 ? [...mentionedFiles] : undefined }
+      attachments: attachments.length > 0
+        ? {
+            images: images.length > 0 ? images.filter(img => img.dataUrl).map(img => ({ name: img.name, dataUrl: img.dataUrl! })) : undefined,
+            files: currentDocuments.map(d => d.name),
+            documents: currentDocuments.length > 0 ? currentDocuments : undefined,
+          }
         : undefined,
       timestamp: Date.now(),
     };
@@ -155,8 +159,7 @@ export function ChatSidebar() {
     useChatStore.getState().setLastUsage(null);
     useChatStore.getState().setCodeContext(null);
     setInputText('');
-    clearImages();
-    clearMentions();
+    clearAttachments();
     setShowConvList(false);
     try {
       // Inject conversation summary if available (for LLM context, not shown in UI)
@@ -170,13 +173,17 @@ export function ChatSidebar() {
       // Prepare images for IPC (extract base64 from dataUrl)
       const imagePayload = images.length > 0
         ? images.map(img => {
-            const m = img.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+            const m = img.dataUrl?.match(/^data:(image\/\w+);base64,(.+)$/);
             return m ? { data: m[2], mediaType: m[1] } : null;
           }).filter(Boolean) as Array<{ data: string; mediaType: string }>
         : undefined;
 
-      console.log('[ChatSidebar] Sending agent.run:', { mode: chatMode, conversationId: convId, messageLength: agentPrompt.length, images: imagePayload?.length || 0 });
-      await window.electronAPI.agent.run(agentPrompt, { mode: chatMode, conversationId: convId || undefined, images: imagePayload, conversationMessages: messages });
+      const documentPayload = documents
+        .filter(d => d.parseStatus === 'success' && d.content)
+        .map(d => ({ name: d.name, content: d.content!, ext: d.ext }));
+
+      console.log('[ChatSidebar] Sending agent.run:', { mode: chatMode, conversationId: convId, messageLength: agentPrompt.length, images: imagePayload?.length || 0, documents: documentPayload.length });
+      await window.electronAPI.agent.run(agentPrompt, { mode: chatMode, conversationId: convId || undefined, images: imagePayload, documents: documentPayload.length > 0 ? documentPayload : undefined, conversationMessages: messages });
     } catch (err) {
       console.error('Agent run failed:', err);
     } finally {
@@ -400,13 +407,11 @@ export function ChatSidebar() {
             )}
 
             {/* Context chips */}
-            {(images.length > 0 || mentionedFiles.length > 0) && (
+            {(attachments.length > 0) && (
               <div className="pt-1.5">
                 <ContextChips
-                  images={images}
-                  files={mentionedFiles}
-                  onRemoveImage={removeImage}
-                  onRemoveFile={removeMention}
+                  attachments={attachments}
+                  onRemoveAttachment={removeAttachment}
                 />
               </div>
             )}
@@ -444,16 +449,15 @@ export function ChatSidebar() {
               <ChatModeSelector />
               <div className="flex-1" />
               <InputToolbar
-                onMention={addMention}
-                onImage={triggerFileInput}
+                onFile={triggerFileInput}
                 onVoice={() => toggleRecording(inputText)}
                 onPolish={handlePolish}
-                onSend={() => { if (inputText.trim()) handleSend(inputText.trim()); }}
+                onSend={() => { if (inputText.trim() || attachments.length > 0) handleSend(inputText.trim()); }}
                 onStop={handleStop}
                 isStreaming={isStreaming}
                 isRecording={isRecording}
                 isPolishing={isPolishing}
-                canSend={!!inputText.trim()}
+                canSend={!!inputText.trim() || attachments.length > 0}
               />
             </div>
           </div>
@@ -464,10 +468,10 @@ export function ChatSidebar() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.pdf,.txt,.md,.doc,.docx,.xls,.xlsx"
         multiple
         className="hidden"
-        onChange={addImages}
+        onChange={addFiles}
       />
 
       {/* Bottom: user info */}

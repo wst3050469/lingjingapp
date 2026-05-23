@@ -162,7 +162,7 @@ export default function App() {
     Notifications.registerPushToken(newToken, '灵境 Mobile').catch(() => {});
   }
 
-  function handleLoginSuccess() {
+  async function handleLoginSuccess() {
     setShowLogin(false);
     const state = useAppStore.getState();
     // If pairing exists, try local web-server for sessions first
@@ -174,10 +174,10 @@ export default function App() {
         wsUrl: `ws://${state.pairingLanIp}:3001/ws`,
       });
       try {
-        await api.getStatus();
+        const status = await api.getStatus();
         api.connectWs();
         setConnection(true, 'cloud_account', pairingUrl);
-        setStatus(await api.getStatus());
+        setStatus(status);
         Notifications.registerPushToken(state.pairingToken, '灵境 Mobile').catch(() => {});
         return;
       } catch {

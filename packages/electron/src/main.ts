@@ -1,6 +1,6 @@
 // CodePilot Electron main process entry point
 
-import { app, BrowserWindow, ipcMain, shell, Menu, dialog, globalShortcut, session } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Menu, dialog, globalShortcut, session, screen } from 'electron';
 import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -297,12 +297,57 @@ async function loadWorkspaceFromConfig(): Promise<string> {
   }
 }
 
+/**
+ * Calculate a safe window size that fits within the primary display's work area.
+ * Supports CLI overrides via --width=N and --height=N (e.g. --width=1024 --height=768).
+ * Falls back to a percentage of the work area if the default size exceeds available space.
+ */
+function getSafeWindowSize(defaultWidth: number, defaultHeight: number): { width: number; height: number } {
+  // 1. CLI user overrides
+  const cliWidthIdx = process.argv.findIndex(a => a.startsWith('--width='));
+  const cliHeightIdx = process.argv.findIndex(a => a.startsWith('--height='));
+  const cliWidth = cliWidthIdx !== -1 ? parseInt(process.argv[cliWidthIdx].split('=')[1], 10) : NaN;
+  const cliHeight = cliHeightIdx !== -1 ? parseInt(process.argv[cliHeightIdx].split('=')[1], 10) : NaN;
+  if (!isNaN(cliWidth) && !isNaN(cliHeight)) {
+    console.log(`[Main] Using CLI override: ${cliWidth}x${cliHeight}`);
+    return { width: cliWidth, height: cliHeight };
+  }
+
+  // 2. Get primary display's work area (excludes taskbar/docks)
+  try {
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width: maxW, height: maxH } = primaryDisplay.workAreaSize;
+    const margin = 40; // 20px margin on each side
+
+    let w = defaultWidth;
+    let h = defaultHeight;
+
+    // If defaults fit with margin, use them
+    if (w + margin <= maxW && h + margin <= maxH) {
+      return { width: w, height: h };
+    }
+
+    // Otherwise scale down to 90% of available area, maintaining aspect ratio
+    const availableW = maxW - margin;
+    const availableH = maxH - margin;
+    const scale = Math.min(availableW / w, availableH / h, 0.9);
+    w = Math.floor(w * scale);
+    h = Math.floor(h * scale);
+    console.log(`[Main] Window size constrained: ${defaultWidth}x${defaultHeight} → ${w}x${h} (display: ${maxW}x${maxH})`);
+    return { width: w, height: h };
+  } catch (err) {
+    console.error('[Main] Failed to get display info, using defaults:', err);
+    return { width: defaultWidth, height: defaultHeight };
+  }
+}
+
 function createWindow(): void {
   Menu.setApplicationMenu(buildApplicationMenu());
 
+  const winSize = getSafeWindowSize(1400, 900);
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: winSize.width,
+    height: winSize.height,
     minWidth: 800,
     minHeight: 600,
     title: '灵境',
@@ -587,9 +632,10 @@ function registerAppIpc(): void {
 
   // Window management IPC
   ipcMain.handle('window:new', async () => {
+    const childSize = getSafeWindowSize(1400, 900);
     const child = new BrowserWindow({
-      width: 1400,
-      height: 900,
+      width: childSize.width,
+      height: childSize.height,
       minWidth: 800,
       minHeight: 600,
       title: '灵境',

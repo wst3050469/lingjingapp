@@ -290,7 +290,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
   },
 
+  githubSkill: {
+    list: () => ipcRenderer.invoke('github-skill:list'),
+    uninstall: (id: string) => ipcRenderer.invoke('github-skill:uninstall', { id }),
+  },
+
   github: {
+    search: (query: string, limit?: number) =>
+      ipcRenderer.invoke('github:search', { query, limit }),
     generateAuthUrl: (scopes?: string[]) =>
       ipcRenderer.invoke('github:generate-auth-url', scopes),
     handleCallback: (code: string, state: string) =>

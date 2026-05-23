@@ -56,25 +56,6 @@ async function doLogin() {
     document.getElementById('app').innerHTML = '<div class="error">登录失败: ' + e.message + '</div>';
   }
 }
-});
-    ADMIN_TOKEN = r.token;
-    localStorage.setItem('admin_token', r.token);
-    await loadVersions();
-  } catch (e) {
-    document.getElementById('app').innerHTML = '<div class="error">登录失败: ' + e.message + '</div>';
-  }
-}
-
-async function loadVersions() {
-  document.getElementById('app').innerHTML = '<div class="loading">加载中...</div>';
-  try {
-    const data = await api('/versions');
-    versions = Array.isArray(data) ? data : [];
-    render();
-  } catch (e) {
-    document.getElementById('app').innerHTML = '<div class="error">加载版本列表失败: ' + e.message + '</div>';
-  }
-}
 
 let showOnlyPublished = false;
 
@@ -170,7 +151,7 @@ async function deleteVersion(ver) {
 
 function editVersion(ver) {
   editingId = ver.version;
-  showOnlyPublished = false; // Show all when editing
+  showOnlyPublished = false;
   render();
   document.getElementById('formArea').innerHTML = renderForm(ver);
   document.getElementById('fVer').focus();
@@ -190,7 +171,6 @@ function showError(msg) {
 function render() {
   let html = '';
   
-  // Form (only show when not filtered)
   if (!editingId) {
     if (showOnlyPublished) {
       html += '<div class="card" style="text-align:center;padding:12px;background:rgba(210,153,34,0.05);border-color:rgba(210,153,34,0.2)">' +
@@ -203,7 +183,6 @@ function render() {
     html += '<div id="formArea"></div>';
   }
   
-  // Filter controls
   html += '<div class="card" style="padding:12px">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">' +
     '<span style="color:#8b949e;font-size:0.85rem">' +
@@ -215,7 +194,6 @@ function render() {
     '<button class="btn-sm ' + (showOnlyPublished ? 'success' : '') + '" onclick="showOnlyPublished=true;render()">仅已发布</button>' +
     '</div></div></div>';
   
-  // Version table
   const filteredVersions = showOnlyPublished ? versions.filter(v => v.status === 'published') : versions;
   html += '<div class="card"><div class="card-title">版本列表 (' + filteredVersions.length + '/' + versions.length + ')</div>';
   if (filteredVersions.length === 0) {

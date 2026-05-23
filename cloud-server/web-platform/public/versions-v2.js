@@ -26,7 +26,7 @@ async function loadVersions() {
     render();
   } catch (e) {
     console.error('Load error:', e.message);
-    if (e.message.includes('unauthorized') || e.message.includes('401')) {
+    if (e.message.includes('unauthorized') || e.message.includes('401') || e.message.includes('invalid_token')) {
       localStorage.removeItem('admin_token');
       ADMIN_TOKEN = '';
       showLogin();

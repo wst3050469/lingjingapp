@@ -1299,6 +1299,39 @@ app.delete('/api/sessions/:id', auth, (req, res) => {
   res.json({ ok: true });
 });
 
+// Send message to a session (mobile app endpoint)
+// Appends the user message to the session's messages array and broadcasts
+// to connected WebSocket clients for real-time sync
+app.post('/api/sessions/:id/send', auth, (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: 'message_is_required' });
+
+  try {
+    const s = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.id);
+    if (!s) return res.status(404).json({ error: 'session_not_found' });
+
+    const messages = safeJsonParse(s.messages, []);
+    const userMsg = { role: 'user', content: message, created_at: new Date().toISOString() };
+    messages.push(userMsg);
+
+    const now = new Date().toISOString();
+    db.prepare('UPDATE sessions SET messages = ?, updated_at = ? WHERE id = ?')
+      .run(JSON.stringify(messages), now, req.params.id);
+
+    // Broadcast to WebSocket clients
+    broadcast({
+      type: 'push',
+      channel: 'chat',
+      data: { conversationId: req.params.id, message: userMsg },
+    });
+
+    res.json({ ok: true, status: 'sent', conversationId: req.params.id, message: userMsg });
+  } catch (err) {
+    console.error('[Sessions] Send error:', err);
+    res.status(500).json({ error: 'failed_to_send_message' });
+  }
+});
+
 // ── Memories ──
 app.get('/api/memories', auth, (req, res) => {
   const { action, query } = req.query;

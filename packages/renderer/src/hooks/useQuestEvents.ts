@@ -28,13 +28,15 @@ export function useQuestEvents(): void {
       }
 
       // runId epoch filter: discard stale streaming events from old runs.
+      // Cross-task events (todo_update, file_snapshot, etc.) are exempt from this filter
+      // because they carry task metadata that must be applied regardless of run epoch.
       // IMPORTANT: 'done', 'error', and 'status_change' are lifecycle events that MUST be
       // processed even with mismatched runId — they clean up activeRunId, runningTaskIds,
       // and task status. Without this, error events from Agent (which carry their runId)
       // are dropped when activeRunId changes, leaving error messages never shown and
       // state never cleaned up.
       const isLifecycleEvent = event.type === 'done' || event.type === 'error' || event.type === 'status_change';
-      if (!isLifecycleEvent && event.runId) {
+      if (!isCrossTask && !isLifecycleEvent && event.runId) {
         if (!store.activeRunId || event.runId !== store.activeRunId) {
           return; // Stale streaming event from a previous run – drop it
         }

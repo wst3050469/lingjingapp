@@ -317,27 +317,34 @@ function getSafeWindowSize(defaultWidth: number, defaultHeight: number): { width
   try {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width: maxW, height: maxH } = primaryDisplay.workAreaSize;
-    const margin = 40; // 20px margin on each side
+    const scaleFactor = primaryDisplay.scaleFactor || 1;
+    const margin = 60; // 30px margin on each side
 
-    let w = defaultWidth;
-    let h = defaultHeight;
+    // Adjust for DPI scaling: ensure effective physical size doesn't exceed screen.
+    // On Linux with 200% scaling, workAreaSize reports logical pixels (e.g. 960x540 for 1920x1080).
+    // We use logical pixels but reduce default if it would exceed physical bounds.
+    const effectiveDefaultW = Math.round(defaultWidth / scaleFactor);
+    const effectiveDefaultH = Math.round(defaultHeight / scaleFactor);
 
-    // If defaults fit with margin, use them
+    let w = effectiveDefaultW;
+    let h = effectiveDefaultH;
+
+    // If defaults fit with margin, use them (in logical pixels)
     if (w + margin <= maxW && h + margin <= maxH) {
       return { width: w, height: h };
     }
 
-    // Otherwise scale down to 90% of available area, maintaining aspect ratio
+    // Otherwise fill available area (up to 95% to leave some breathing room)
     const availableW = maxW - margin;
     const availableH = maxH - margin;
-    const scale = Math.min(availableW / w, availableH / h, 0.9);
-    w = Math.floor(w * scale);
-    h = Math.floor(h * scale);
-    console.log(`[Main] Window size constrained: ${defaultWidth}x${defaultHeight} → ${w}x${h} (display: ${maxW}x${maxH})`);
+    const scale = Math.min(availableW / w, availableH / h, 0.95);
+    w = Math.max(Math.floor(w * scale), 640); // never go below 640
+    h = Math.max(Math.floor(h * scale), 480); // never go below 480
+    console.log(`[Main] Window size constrained: ${defaultWidth}x${defaultHeight} → ${w}x${h} (display: ${maxW}x${maxH}, scale: ${scaleFactor})`);
     return { width: w, height: h };
   } catch (err) {
-    console.error('[Main] Failed to get display info, using defaults:', err);
-    return { width: defaultWidth, height: defaultHeight };
+    console.error('[Main] Failed to get display info, using conservative defaults:', err);
+    return { width: 800, height: 600 };
   }
 }
 

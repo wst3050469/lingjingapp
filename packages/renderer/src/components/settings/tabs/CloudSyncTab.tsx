@@ -376,7 +376,7 @@ export function CloudSyncTab() {
     try {
       const data = await cloudApi('/auth/login', 'POST', {
         username: loginEmail,
-        password: await sha256(loginPassword),
+        password: loginPassword,
       });
       const user: CloudUser = data.user;
       localStorage.setItem(CLOUD_TOKEN_KEY, data.token);

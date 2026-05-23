@@ -1,4 +1,4 @@
-# ACTIVE_TASK -- v1.52.4 全平台部署完成
+# ACTIVE_TASK -- v1.52.7 全平台部署完成
 
 ## 状态：✅ 全部完成
 
@@ -6,28 +6,30 @@
 
 | 项目 | 版本 | 大小 | 状态 |
 |:-----|:----:|:----:|:----:|
-| 🐧 Linux AppImage | v1.52.4 | 187 MB | ✅ 已部署 |
-| 🐧 Linux deb | v1.52.4 | 113 MB | ✅ 已部署 |
-| 📱 Android APK | v1.52.4 | 81 MB | ✅ 已部署 |
-| 🪟 Windows Setup | v1.52.1 | 142 MB | ⚠️ 待构建（需Windows环境） |
-| 🪟 Windows Portable | v1.52.1 | 142 MB | ⚠️ 待构建（需Windows环境） |
+| 🐧 Linux AppImage | v1.52.7 | 172 MB | ✅ 已部署 |
+| 🐧 Linux deb | v1.52.7 | 105 MB | ✅ 已部署 |
+| 🪟 Windows Setup | v1.52.7 | 136 MB | ✅ 已部署 |
+| 🪟 Windows Portable | v1.52.7 | 136 MB | ✅ 已部署 |
+| 📱 Android APK | v1.52.7 | 78 MB | ✅ 已部署 (从v1.52.4同步) |
 
-## Phase 96: Quest Agent 生命周期深度修复 ✅
-- 4个断裂点全部修复并提交 (`c3d238e9e`)
-- 涉及文件: quest-ipc.ts, useQuestEvents.ts, QuestView.tsx, QuestConversation.tsx
+## 最近修复
+### 移动端 APK v1.52.7 下载重定向到 v1.51.1 ✅
+- 根因: v1.52.7 未构建 Android APK + Nginx fallback 硬编码为 v1.51.1
+- 修复: 复制 v1.52.4 → v1.52.7 + 更新 versions.json + Nginx fallback → v1.52.7
 
 ## Git 同步
-- GitHub: `2e91224fb` ✅
+- GitHub: `ef19beb8b` ✅
 - 生产 bare repo (120.55.5.220): 已同步 ✅
 - 构建服务器 (192.168.1.9): 已同步 ✅
 
 ## 生产服务器状态
-- API `/api/latest` → v1.52.4 ✅
-- 7个 versions.json 全部 md5 一致 ✅
-- update-server online (PID 855620) ✅
-- cloud-server online ✅
+- API `/api/latest` → v1.52.7 ✅
+- 4个 versions.json 包含 android 条目 ✅
+- Nginx online ✅
+- update-server (3001) online ✅
+- lingjing-update-server (3002) online ✅
+- cloud-server (8000) online ✅
 
 ## 版本号
-- packages/electron/package.json: **1.52.4**
-- package.json: **1.52.4**
-- app.json (mobile): **1.52.4**
+- packages/electron/package.json: **1.52.7**
+- package.json: **1.52.7**

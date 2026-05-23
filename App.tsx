@@ -21,7 +21,7 @@ import PairingScreen from './src/screens/PairingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import ConnectionBanner from './src/components/ConnectionBanner';
-import { loadPersistedAuth } from './src/stores/app-store';
+import { loadPersistedAuth, loadPersistedPairing } from './src/stores/app-store';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
 
 const Tab = createBottomTabNavigator();
@@ -59,6 +59,13 @@ export default function App() {
   }, []);
 
   async function initConnection() {
+    // Phase 0: Load persisted pairing info (separate from cloud auth)
+    const pairing = await loadPersistedPairing();
+    if (pairing) {
+      setToken(pairing.token);
+      setLanIp(pairing.lanIp);
+    }
+
     // Phase 1: Check for persisted cloud account token
     const persisted = await loadPersistedAuth();
     if (persisted?.token) {
@@ -75,8 +82,16 @@ export default function App() {
           // Token is valid, use cloud mode
           setAuth(me.user?.id || 'cloud_user', persisted.token);
           if (persisted.user) setUser(persisted.user);
-          api.connectWs();
-          setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
+          // If pairing exists, use local web-server for sessions
+          if (pairing) {
+            const pairingUrl = `http://${pairing.lanIp}:3001`;
+            api.configure({ baseUrl: pairingUrl, token: pairing.token, wsUrl: `ws://${pairing.lanIp}:3001/ws` });
+            api.connectWs();
+            setConnection(true, 'cloud_account', pairingUrl);
+          } else {
+            api.connectWs();
+            setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
+          }
           setInitializing(false);
           return;
         }
@@ -84,8 +99,9 @@ export default function App() {
     }
 
     // Phase 2: Check for pairing token (desktop connection)
-    if (token) {
-      const storedIp = lanIp || '';
+    if (token || pairing) {
+      const storedToken = token || pairing?.token || '';
+      const storedIp = lanIp || pairing?.lanIp || '';
       if (!storedIp) {
         setLoadingText('请先配对桌面端IP');
         setShowPairing(true);
@@ -97,9 +113,9 @@ export default function App() {
       setLoadingText('正在连接局域网...');
       try {
         const lanUrl = `http://${storedIp}:3001`;
-        api.configure({ baseUrl: lanUrl, token, wsUrl: `ws://${storedIp}:3001/ws` });
+        api.configure({ baseUrl: lanUrl, token: storedToken, wsUrl: `ws://${storedIp}:3001/ws` });
         const res = await fetch(`${lanUrl}/api/status`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${storedToken}` },
         });
         if (res.ok) {
           const data = await res.json();
@@ -107,7 +123,7 @@ export default function App() {
           setConnection(true, 'lan', lanUrl);
           setStatus(data);
           setInitializing(false);
-          Notifications.registerPushToken(token, '灵境 Mobile').catch(() => {});
+          Notifications.registerPushToken(storedToken, '灵境 Mobile').catch(() => {});
           return;
         }
       } catch { /* LAN failed, try Cloud */ }
@@ -136,6 +152,8 @@ export default function App() {
   async function handlePaired(newToken: string, newIp: string) {
     setToken(newToken);
     setLanIp(newIp);
+    // Also store in separate pairing fields for cloud_account mode
+    useAppStore.setState({ pairingToken: newToken, pairingLanIp: newIp });
     setShowPairing(false);
     try {
       const s = await api.getStatus();
@@ -146,18 +164,31 @@ export default function App() {
 
   function handleLoginSuccess() {
     setShowLogin(false);
-    // Connect to cloud server as cloud_account mode
-    api.configure({
-      baseUrl: 'https://ide.zhejiangjinmo.com',
-      token: useAppStore.getState().token,
-      wsUrl: 'wss://ide.zhejiangjinmo.com/ws',
-    });
-    api.connectWs();
-    setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
+    const state = useAppStore.getState();
+    // If pairing exists, keep using local web-server for sessions
+    if (state.pairingToken && state.pairingLanIp) {
+      const pairingUrl = `http://${state.pairingLanIp}:3001`;
+      api.configure({
+        baseUrl: pairingUrl,
+        token: state.pairingToken,
+        wsUrl: `ws://${state.pairingLanIp}:3001/ws`,
+      });
+      api.connectWs();
+      setConnection(true, 'cloud_account', pairingUrl);
+    } else {
+      // No pairing — use cloud server directly
+      api.configure({
+        baseUrl: 'https://ide.zhejiangjinmo.com',
+        token: state.cloudToken || state.token,
+        wsUrl: 'wss://ide.zhejiangjinmo.com/ws',
+      });
+      api.connectWs();
+      setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
+    }
     try {
       api.getStatus().then(setStatus).catch(() => {});
     } catch { /* ignore */ }
-    Notifications.registerPushToken(useAppStore.getState().token, '灵境 Mobile').catch(() => {});
+    Notifications.registerPushToken(state.cloudToken || state.token, '灵境 Mobile').catch(() => {});
   }
 
   function switchToPairing() {

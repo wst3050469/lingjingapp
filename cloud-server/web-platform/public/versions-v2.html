@@ -39,6 +39,8 @@ td .badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:0.7
 .dl-link.win{background:#1f6feb}
 .dl-link.linux{background:#238636}
 .dl-link.android{background:#9e6a03}
+.dl-link.ios{background:#8b5cf6}
+.dl-link.web{background:#0ea5e9}
 .error{color:#f85149;font-size:0.85rem;padding:8px;background:rgba(248,81,73,0.1);border-radius:4px;margin-bottom:12px}
 .success-msg{color:#3fb950;font-size:0.85rem;padding:8px;background:rgba(63,185,80,0.1);border-radius:4px;margin-bottom:12px}
 .loading{text-align:center;padding:40px;color:#8b949e}
@@ -114,6 +116,8 @@ function renderForm(v) {
   const dw = v ? (v.downloadUrls?.windows || v.downloadUrl || '') : '';
   const dl = v ? (v.downloadUrls?.linux || '') : '';
   const da = v ? (v.downloadUrls?.android || '') : '';
+  const di = v ? (v.downloadUrls?.ios || '') : '';
+  const dwb = v ? (v.downloadUrls?.web || '') : '';
   
   return '<div class="card">' +
     '<div class="card-title">' + (isEdit ? '编辑版本' : '新建版本') + '</div>' +
@@ -121,9 +125,11 @@ function renderForm(v) {
     '<div class="form-row"><label>版本号</label><input type="text" id="fVer" value="' + ver + '" placeholder="例如 1.53.0"></div>' +
     '<div class="form-row"><label>更新内容</label><textarea id="fChangelog" placeholder="版本更新说明">' + changelog + '</textarea></div>' +
     '<div class="platform-grid">' +
-    '<div class="platform-box"><label>🪟 Windows 下载链接</label><input type="text" id="fWinUrl" value="' + dw + '" placeholder="https://..."></div>' +
-    '<div class="platform-box"><label>🐧 Linux 下载链接</label><input type="text" id="fLinuxUrl" value="' + dl + '" placeholder="https://..."></div>' +
-    '<div class="platform-box"><label>📱 Android 下载链接</label><input type="text" id="fAndroidUrl" value="' + da + '" placeholder="https://..."></div>' +
+    '<div class="platform-box"><label>🪟 Windows</label><input type="text" id="fWinUrl" value="' + dw + '" placeholder="https://..."></div>' +
+    '<div class="platform-box"><label>🐧 Linux</label><input type="text" id="fLinuxUrl" value="' + dl + '" placeholder="https://..."></div>' +
+    '<div class="platform-box"><label>📱 Android</label><input type="text" id="fAndroidUrl" value="' + da + '" placeholder="https://..."></div>' +
+    '<div class="platform-box"><label>🍎 iOS</label><input type="text" id="fIosUrl" value="' + di + '" placeholder="https://..."></div>' +
+    '<div class="platform-box"><label>🌐 Web</label><input type="text" id="fWebUrl" value="' + dwb + '" placeholder="https://..."></div>' +
     '</div>' +
     '<div style="margin-top:12px" class="btn-group">' +
     '<button onclick="saveVersion(\'' + (isEdit ? v.version : '') + '\')">' + (isEdit ? '保存修改' : '创建版本（草稿）') + '</button>' +
@@ -137,14 +143,16 @@ async function saveVersion(verId) {
   const windowsUrl = document.getElementById('fWinUrl').value.trim();
   const linuxUrl = document.getElementById('fLinuxUrl').value.trim();
   const androidUrl = document.getElementById('fAndroidUrl').value.trim();
+  const iosUrl = document.getElementById('fIosUrl').value.trim();
+  const webUrl = document.getElementById('fWebUrl').value.trim();
   
   if (!version) { showError('请输入版本号'); return; }
   
   try {
     if (verId) {
-      await api('/versions/' + verId, { method: 'PUT', body: JSON.stringify({ version, changelog, windowsUrl, linuxUrl, androidUrl }) });
+      await api('/versions/' + verId, { method: 'PUT', body: JSON.stringify({ version, changelog, windowsUrl, linuxUrl, androidUrl, iosUrl, webUrl }) });
     } else {
-      await api('/versions', { method: 'POST', body: JSON.stringify({ version, changelog, windowsUrl, linuxUrl, androidUrl }) });
+      await api('/versions', { method: 'POST', body: JSON.stringify({ version, changelog, windowsUrl, linuxUrl, androidUrl, iosUrl, webUrl }) });
     }
     editingId = null;
     await loadVersions();
@@ -222,6 +230,8 @@ function render() {
           dlButton(dl.windows, 'Win', 'win') +
           dlButton(dl.linux, 'Linux', 'linux') + 
           dlButton(dl.android, 'APK', 'android') +
+          dlButton(dl.ios, 'iOS', 'ios') +
+          dlButton(dl.web, 'Web', 'web') +
         '</div></td>' +
         '<td><div class="btn-group">' +
           '<button class="btn-sm success" onclick="editVersion(versions.find(x=>x.version===\'' + v.version + '\'))">编辑</button>' +

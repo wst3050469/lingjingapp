@@ -853,6 +853,8 @@ export function registerAdminAPI(app, db) {
           linux: getUrl(v.files || {}, 'linux-x64'),
           linuxDeb: getUrl(v.files || {}, 'linux-deb'),
           android: getUrl(v.files || {}, 'android'),
+          ios: getUrl(v.files || {}, 'ios'),
+          web: getUrl(v.files || {}, 'web'),
         },
         active: v.status === 'published',
         status: v.status || 'published',
@@ -865,21 +867,31 @@ export function registerAdminAPI(app, db) {
 
   app.post('/api/versions', adminAuth, (req, res) => {
     try {
-      const { version, changelog, downloadUrl } = req.body;
+      const { version, changelog, downloadUrl, windowsUrl, linuxUrl, androidUrl, iosUrl, webUrl } = req.body;
       if (!version) return res.status(400).json({ error: 'version required' });
       const data = readVersionsJson();
       const now = new Date().toISOString();
       
       // Check if version already exists
       const existingIdx = data.versions.findIndex(v => v.version === version);
+      const pfx = 'https://ide.zhejiangjinmo.com/downloads/';
+      const clean = (url) => url ? (url.startsWith(pfx) ? url.slice(pfx.length) : url) : '';
+      
       const entry = {
         version,
         releaseDate: now,
         releaseNotes: changelog || '灵境IDE v' + version,
         downloadUrl: downloadUrl || '',
         files: {},
-        status: 'draft',  // Default to draft - requires admin review to publish
+        status: 'draft',
       };
+      
+      if (windowsUrl) entry.files['win-x64'] = { url: clean(windowsUrl), size: 0 };
+      if (linuxUrl) entry.files['linux-x64'] = { url: clean(linuxUrl), size: 0 };
+      if (androidUrl) entry.files['android'] = { url: clean(androidUrl), size: 0 };
+      if (iosUrl) entry.files['ios'] = { url: clean(iosUrl), size: 0 };
+      if (webUrl) entry.files['web'] = { url: clean(webUrl), size: 0 };
+      if (downloadUrl && !windowsUrl) entry.files['win-x64'] = { url: clean(downloadUrl), size: 0 };
       
       if (existingIdx >= 0) {
         data.versions[existingIdx] = { ...data.versions[existingIdx], ...entry };

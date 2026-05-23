@@ -62,6 +62,16 @@ class ApiService {
  return this.request('/auth/verify');
  }
 
+ // --- Auth ---
+ async login(username: string, password: string): Promise<{ok: boolean; token?: string; user?: any; error?: string}> {
+ try { return await this.request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }); }
+ catch (e: any) { return { ok: false, error: e.message }; }
+ }
+ async signup(username: string, password: string, email?: string): Promise<{ok: boolean; token?: string; user?: any; error?: string}> {
+ try { return await this.request('/auth/signup', { method: 'POST', body: JSON.stringify({ username, password, email }) }); }
+ catch (e: any) { return { ok: false, error: e.message }; }
+ }
+
  // --- Sessions ---
  async getSessions(limit = 50) { return this.request<any>('/sessions?limit=' + limit); }
  async getSession(id: string) { return this.request<any>('/sessions/' + id); }

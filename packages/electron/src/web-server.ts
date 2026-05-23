@@ -328,9 +328,9 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
   // Create new conversation (from mobile)
   expressApp.post('/api/sessions', authenticate, async (req, res) => {
     try {
-      const { title, message } = req.body;
+      const { id: providedId, title, message, messages } = req.body;
       const db = getDatabaseFn!();
-      const id = `conv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const id = providedId || `conv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
       const convTitle = title || (message ? message.slice(0, 50) : '新对话');
 
       db.run(
@@ -338,12 +338,22 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
         [id, convTitle]
       );
 
-      // Insert initial message if provided
+      // Insert initial message if provided (string format)
       if (message) {
         db.run(
           `INSERT INTO messages (conversation_id, role, content) VALUES (?, 'user', ?)`,
           [id, message]
         );
+      }
+
+      // Insert messages from array format (mobile app sends { id, title, messages: [...] })
+      if (messages && Array.isArray(messages) && messages.length > 0) {
+        const stmt = `INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)`;
+        for (const msg of messages) {
+          if (msg.role && msg.content) {
+            db.run(stmt, [id, msg.role, msg.content]);
+          }
+        }
       }
 
       await saveDatabaseFn!();

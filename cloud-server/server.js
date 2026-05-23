@@ -1464,6 +1464,16 @@ app.post('/api/webhook-config', auth, (req, res) => {
 const tenantManager = new TenantManager(db);
 
 // Serve SaaS Web Dashboard
+// NOTE: Static assets middleware MUST be mounted BEFORE the wildcard route,
+// otherwise /admin/* catches all asset requests and returns index.html
+// (text/html MIME type), causing MIME type mismatch errors.
+app.use('/admin/assets', express.static(resolve(__dirname, 'web-platform', 'public', 'assets'), {
+  maxAge: '7d',
+  immutable: true,
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  },
+}));
 app.get('/admin', (req, res) => {
   res.sendFile(resolve(__dirname, 'web-platform', 'public', 'index.html'));
 });

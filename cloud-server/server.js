@@ -1539,6 +1539,10 @@ app.get('/admin/versions-v2.js', (req, res) => {
   }
 });
 
+app.get('/admin/versions-redirect.js', (req, res) => {
+  res.type('js').sendFile(resolve(__dirname, 'web-platform', 'public', 'versions-redirect.js'));
+});
+
 app.get('/admin/versions', (req, res) => {
   res.sendFile(resolve(__dirname, 'web-platform', 'public', 'versions-v2.html'));
 });

@@ -37,7 +37,12 @@ async function loadVersions() {
 }
 
 function showLogin() {
-  document.getElementById('app').innerHTML = '<div class="card"><div class="card-title">管理员登录</div><div class="form-row"><input type="password" id="pwInput" placeholder="管理员密码" onkeydown="if(event.key==='Enter')doLogin()"></div><button onclick="doLogin()">登录</button></div>';
+  document.getElementById('app').innerHTML = '<div class="card"><div class="card-title">管理员登录</div><div class="form-row"><input type="password" id="pwInput" placeholder="管理员密码"></div><button id="loginBtn">登录</button></div>';
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('pwInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('pwInput').focus();
 }
 
 async function doLogin() {

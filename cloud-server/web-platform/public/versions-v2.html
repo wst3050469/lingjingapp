@@ -66,19 +66,45 @@ async function api(path, opts = {}) {
 }
 
 async function init() {
-  // Try to get admin token from localStorage
   ADMIN_TOKEN = localStorage.getItem('admin_token') || '';
-  if (!ADMIN_TOKEN) {
-    document.getElementById('app').innerHTML = '<div class="card"><div class="card-title">管理员登录</div><div class="form-row"><input type="password" id="pwInput" placeholder="管理员密码" onkeydown="if(event.key===\\'Enter\\')doLogin()"></div><button onclick="doLogin()">登录</button></div>';
-    return;
-  }
+  if (!ADMIN_TOKEN) { showLogin(); return; }
   await loadVersions();
+}
+
+async function loadVersions() {
+  document.getElementById('app').innerHTML = '<div class="loading">加载中...</div>';
+  try {
+    const data = await api('/versions');
+    versions = Array.isArray(data) ? data : [];
+    render();
+  } catch (e) {
+    console.error('Load error:', e.message);
+    if (e.message.includes('unauthorized') || e.message.includes('401')) {
+      localStorage.removeItem('admin_token');
+      ADMIN_TOKEN = '';
+      showLogin();
+    } else {
+      document.getElementById('app').innerHTML = '<div class="error">加载失败: ' + e.message + '</div>';
+    }
+  }
+}
+
+function showLogin() {
+  document.getElementById('app').innerHTML = '<div class="card"><div class="card-title">管理员登录</div><div class="form-row"><input type="password" id="pwInput" placeholder="管理员密码" onkeydown="if(event.key==='Enter')doLogin()"></div><button onclick="doLogin()">登录</button></div>';
 }
 
 async function doLogin() {
   const pw = document.getElementById('pwInput').value;
   try {
     const r = await api('/admin/login', { method: 'POST', body: JSON.stringify({ username: 'admin', password: pw }) });
+    ADMIN_TOKEN = r.token;
+    localStorage.setItem('admin_token', r.token);
+    await loadVersions();
+  } catch (e) {
+    document.getElementById('app').innerHTML = '<div class="error">登录失败: ' + e.message + '</div>';
+  }
+}
+});
     ADMIN_TOKEN = r.token;
     localStorage.setItem('admin_token', r.token);
     await loadVersions();

@@ -59,9 +59,16 @@ export default function ChatDetailScreen({ route }: any) {
       } else {
         await api.sendMessage(sessionId, msg);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log('Send failed:', e);
-      Alert.alert('发送失败', '消息发送失败，请检查网络连接');
+      // Show specific guidance based on error type
+      if (e.status === 401 || (e.message && e.message.includes('unauthorized'))) {
+        Alert.alert('未授权', '配对 Token 与服务器不匹配。请检查：\n1. 是否连接到正确的桌面端\n2. 配对 Token 是否有误\n3. 如需远程连接，请使用云账号登录');
+      } else if (e.message && e.message.includes('network')) {
+        Alert.alert('网络错误', '无法连接到服务器，请检查网络连接');
+      } else {
+        Alert.alert('发送失败', '消息发送失败，请检查网络连接');
+      }
       // Show failed indicator
       setMessages(prev => prev.map(m => m === userMsg ? { ...m, role: 'system' as const, content: '发送失败: ' + msg } : m));
     }

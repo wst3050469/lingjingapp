@@ -51,8 +51,13 @@ class ApiService {
  var baseUrl = this.config.baseUrl || 'https://lingjing.zhejiangjinmo.com';
  var url = baseUrl + '/api' + path;
  var res = await fetch(url, { ...options, headers: { ...this.headers, ...options?.headers } });
- var data = await res.json();
- if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
+ var data;
+ try { data = await res.json(); } catch { data = {}; }
+ if (!res.ok) {
+   var err = new Error(data.error || 'HTTP ' + res.status);
+   (err as any).status = res.status;
+   throw err;
+ }
  return data;
  }
  private setCloudUser(result: any) {

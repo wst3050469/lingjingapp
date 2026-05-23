@@ -352,18 +352,14 @@ function createWindow(): void {
   Menu.setApplicationMenu(buildApplicationMenu());
 
   const winSize = getSafeWindowSize(1400, 900);
-  // Ensure min size is consistent with calculated safe size to avoid
-  // Electron forcing a minimum that exceeds the screen on HiDPI Linux.
-  // On Linux with scaleFactor > 1, the logical pixels may be small,
-  // so min size should match the constrained fallback (640x480 min).
   const isLinux = process.platform === 'linux';
-  const minW = isLinux ? Math.min(winSize.width, 800) : 800;
-  const minH = isLinux ? Math.min(winSize.height, 600) : 600;
+  // Allow window to be resized smaller for Linux small screens / HiDPI.
+  // min size should be small enough to fit any display but not too small to be unusable.
   mainWindow = new BrowserWindow({
     width: winSize.width,
     height: winSize.height,
-    minWidth: minW,
-    minHeight: minH,
+    minWidth: 400,
+    minHeight: 300,
     title: '灵境',
     backgroundColor: '#1e1e1e',
     show: false,

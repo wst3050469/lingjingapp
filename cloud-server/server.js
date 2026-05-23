@@ -9,6 +9,7 @@ import { randomUUID, createHmac, createHash, timingSafeEqual, scryptSync, random
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import os from 'node:os';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { initDB, closeDB } from './db.js';
@@ -510,28 +511,40 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '3.0.0', uptime: process.uptime(), node: process.version });
 });
 
-// Status — returns basic server info, auth-optional for diagnostics
-// Used by mobile app to verify server reachability
+// Status — returns basic server info compatible with mobile app layout
+// Must include 'memory', 'cpu', 'stats' fields to match SettingsScreen expectations
 app.get('/api/status', (req, res) => {
   try {
-    const totalSessions = db.prepare('SELECT COUNT(*) as count FROM sessions').get()?.count || 0;
-    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get()?.count || 0;
+    let totalSessions = 0;
+    try { totalSessions = db.prepare('SELECT COUNT(*) as count FROM sessions').get()?.count || 0; } catch (e) {}
     res.json({
       device: 'LingJing Cloud Server',
       platform: process.platform,
-      uptime: process.uptime(),
+      arch: os.arch(),
+      uptime: Math.floor(process.uptime()),
+      memory: {
+        total: Math.round(os.totalmem() / 1024 / 1024),
+        free: Math.round(os.freemem() / 1024 / 1024),
+      },
+      cpu: os.cpus().length + ' cores',
       version: '3.0.0',
       stats: {
         conversations: totalSessions,
+        quest_tasks: 0,
+        plans: 0,
         mobile_clients: 0,
       }
     });
   } catch (err) {
+    console.error('[Status] Error:', err.message);
     res.json({
       device: 'LingJing Cloud Server',
       platform: process.platform,
-      uptime: process.uptime(),
+      uptime: Math.floor(process.uptime()),
+      memory: { total: 0, free: 0 },
+      cpu: 'unknown',
       version: '3.0.0',
+      stats: { conversations: 0, quest_tasks: 0, plans: 0, mobile_clients: 0 },
     });
   }
 });

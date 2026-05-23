@@ -1,4 +1,4 @@
-﻿// 设置页
+// 设置页
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -172,20 +172,25 @@ export default function SettingsScreen() {
         )}
       </View>
 
-      {/* Device Info */}
+      {/* Device Info - with defensive checks for missing fields (cloud-server /api/status uses minimal format) */}
       {status && (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>设备信息</Text>
-          <InfoRow icon="hardware-chip-outline" label="设备" value={`${status.device} (${status.platform})`} />
+          <InfoRow icon="hardware-chip-outline" label="设备" value={`${status.device || 'Unknown'} (${status.platform || '?'})`} />
           <InfoRow icon="time-outline" label="运行时间" value={formatUptime(status.uptime)} />
-          <InfoRow icon="server-outline" label="内存" value={`${status.memory.free}MB / ${status.memory.total}MB 可用`} />
-          <InfoRow icon="speedometer-outline" label="CPU" value={status.cpu} />
-          <InfoRow icon="code-slash" label="版本" value={`v${status.version}`} />
+          <InfoRow icon="server-outline" label="内存"
+            value={status.memory ? `${status.memory.free || '?'}MB / ${status.memory.total || '?'}MB 可用` : '未知'} />
+          <InfoRow icon="speedometer-outline" label="CPU" value={status.cpu || '未知'} />
+          <InfoRow icon="code-slash" label="版本" value={`v${status.version || '?'}`} />
           <View style={styles.divider} />
-          <InfoRow icon="chatbubbles" label="对话数" value={`${status.stats.conversations}`} />
-          <InfoRow icon="checkmark-circle" label="任务数" value={`${status.stats.quest_tasks}`} />
-          <InfoRow icon="map" label="计划数" value={`${status.stats.plans}`} />
-          <InfoRow icon="phone-portrait" label="移动端" value={`${status.stats.mobile_clients} 台在线`} />
+          {status.stats ? (
+            <>
+              <InfoRow icon="chatbubbles" label="对话数" value={`${status.stats.conversations ?? '?'}`} />
+              <InfoRow icon="checkmark-circle" label="任务数" value={`${status.stats.quest_tasks ?? '?'}`} />
+              <InfoRow icon="map" label="计划数" value={`${status.stats.plans ?? '?'}`} />
+              <InfoRow icon="phone-portrait" label="移动端" value={`${status.stats.mobile_clients ?? '?'} 台在线`} />
+            </>
+          ) : null}
         </View>
       )}
 
@@ -235,6 +240,7 @@ function InfoRow({ icon, label, value }: { icon: keyof typeof Ionicons.glyphMap;
 }
 
 function formatUptime(seconds: number): string {
+  if (seconds == null || isNaN(seconds)) return '未知';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 24) return `${Math.floor(h / 24)}天 ${h % 24}小时`;

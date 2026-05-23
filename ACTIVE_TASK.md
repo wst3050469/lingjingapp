@@ -1,22 +1,50 @@
-# ACTIVE_TASK -- v1.52.10 综合修复完成
+# ACTIVE_TASK -- v1.52.10 最终版
 
-## 状态：✅ 全部完成
+## 状态：✅ 全部完成（无待办事项）
 
 ## 当前交付
 
 | 项目 | 版本 | 大小 | 状态 |
 |:-----|:----:|:----:|:----:|
-| 🪟 Windows Setup | v1.52.10 | 142 MB | ✅ 已部署（symlink → v1.52.9） |
-| 🪟 Windows Portable | v1.52.10 | 142 MB | ✅ 已部署（symlink → v1.52.9） |
+| 🪟 Windows Setup | v1.52.10 | 142 MB | ✅ 已部署 |
+| 🪟 Windows Portable | v1.52.10 | 142 MB | ✅ 已部署 |
 | 🐧 Linux AppImage | v1.52.10 | 173 MB | ✅ 已部署 |
 | 🐧 Linux deb | v1.52.10 | 105 MB | ✅ 已部署 |
 | 📱 Android APK | v1.52.10 | 78 MB | ✅ 已部署 |
 
-## 本轮变更（4个Bug修复）
+## 功能清单
 
-### Bug1: Linux窗口缩放
-- `main.ts`: minWidth/minHeight 动态适配 + Linux zoomFactor
-- 构建: AppImage 173MB + Deb 105MB
+### 版本管理后台
+- ✅ `/admin/versions` 多平台版本管理（5平台：Win/Linux/Android/iOS/Web）
+- ✅ 审核流程：草稿 → 审核中 → 已发布
+- ✅ 仅已发布版本推送给客户端更新
+- ✅ Token过期自动检测，跳转登录页
+
+### 已修复Bug（共13个）
+1. Linux窗口缩放
+2. 后台版本路径缺失
+3. APP连接链重写
+4. 配对Token自动连接
+5. 设置页崩溃（memory字段）
+6. 下载页面Windows缺失
+7. 版本页面下载URL指向旧版
+8. SettingsScreen静默回退云服务器
+9. 多平台下载链接API
+10. 版本管理扩展面板
+11. APP发送失败401识别
+12. iOS/Web平台支持
+13. 双斜杠URL重定向
+
+## 服务器状态
+- ☁️ cloud-server (8000): online ✅
+- 🔄 update-server (3001): online ✅
+- 🔄 lingjing-update-server (3002): online ✅
+- 🌐 scms-web: online ✅
+- 🖥️ scms-server: online ✅
+
+## Git
+- 📦 生产bare: `6fef648f6` ✅
+- 🌐 GitHub: 网络限制暂不可达 ⏳
 
 ### Bug2: 后台版本管理路径
 - `admin-api.js`: 新增3个versions.json搜索路径

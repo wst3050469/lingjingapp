@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 export type ParseStatus = 'pending' | 'parsing' | 'success' | 'failed';
 export type AttachmentType = 'image' | 'document';
@@ -38,9 +38,28 @@ function readFileAsDataURL(file: File): Promise<string> {
 export function useFileAttachments() {
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentsRef = useRef<FileAttachment[]>([]);
+
+  // Keep ref in sync with state for stale-closure free callbacks
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
 
   const triggerFileInput = useCallback(() => {
     fileInputRef.current?.click();
+  }, []);
+
+  const parseDocumentContent = useCallback(async (id: string, filePath: string) => {
+    try {
+      const result = await window.electronAPI.context.parseDocument(filePath);
+      setAttachments(prev => prev.map(a =>
+        a.id === id ? { ...a, content: result.content, parseStatus: 'success' as ParseStatus } : a
+      ));
+    } catch {
+      setAttachments(prev => prev.map(a =>
+        a.id === id ? { ...a, parseStatus: 'failed' as ParseStatus } : a
+      ));
+    }
   }, []);
 
   const processFile = useCallback(async (file: File): Promise<{ error?: string } | void> => {
@@ -48,7 +67,7 @@ export function useFileAttachments() {
     const filePath = (file as any).path as string | undefined;
     const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    const currentTotal = attachments.reduce((sum, a) => sum + a.size, 0);
+    const currentTotal = attachmentsRef.current.reduce((sum, a) => sum + a.size, 0);
     if (currentTotal + file.size > MAX_TOTAL_SIZE) {
       return { error: 'FILE_SIZE_EXCEEDED' };
     }
@@ -77,20 +96,7 @@ export function useFileAttachments() {
       setAttachments(prev => [...prev, attachment]);
       parseDocumentContent(id, filePath);
     }
-  }, [attachments]);
-
-  const parseDocumentContent = useCallback(async (id: string, filePath: string) => {
-    try {
-      const result = await window.electronAPI.context.parseDocument(filePath);
-      setAttachments(prev => prev.map(a =>
-        a.id === id ? { ...a, content: result.content, parseStatus: 'success' as ParseStatus } : a
-      ));
-    } catch {
-      setAttachments(prev => prev.map(a =>
-        a.id === id ? { ...a, parseStatus: 'failed' as ParseStatus } : a
-      ));
-    }
-  }, []);
+  }, [parseDocumentContent]);
 
   const addFiles = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

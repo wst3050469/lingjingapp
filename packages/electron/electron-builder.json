@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "\u7075\u5883",
   "directories": {
-    "output": "release-v1510"
+    "output": "release"
   },
   "files": [
     "dist/**/*",
@@ -66,21 +66,5 @@
     "provider": "generic",
     "url": "https://ide.zhejiangjinmo.com/downloads"
   },
-  "npmRebuild": false,
-  "extraResources": [
-    {
-      "from": "prompts",
-      "to": "prompts",
-      "filter": [
-        "**/*"
-      ]
-    },
-    {
-      "from": "skills",
-      "to": "skills",
-      "filter": [
-        "**/*"
-      ]
-    }
-  ]
+  "npmRebuild": false
 }

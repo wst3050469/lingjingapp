@@ -1430,6 +1430,7 @@ export function registerAdminAPI(app, db) {
   function findVersionsJsonDownloadPath() {
     const searchPaths = [
       '/var/www/html/downloads/versions.json',
+      '/var/www/html/versions.json',
       '/var/www/downloads/versions.json',
     ];
     for (const p of searchPaths) {

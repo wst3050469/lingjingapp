@@ -111,4 +111,58 @@ export function registerGitIpc(getWorkspace: () => string): void {
       return { success: false, error: err.message };
     }
   });
+
+  ipcMain.handle('git:checkout', async (_event, { paths }: { paths: string[] }) => {
+    const cwd = getWorkspace();
+    try {
+      await execFileAsync('git', ['checkout', '--', ...paths], { cwd, timeout: 10000 });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('git:restore', async (_event, { paths, staged }: { paths: string[]; staged?: boolean }) => {
+    const cwd = getWorkspace();
+    try {
+      const args = staged ? ['restore', '--staged', '--', ...paths] : ['restore', '--', ...paths];
+      await execFileAsync('git', args, { cwd, timeout: 10000 });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('git:stash', async (_event, { message }: { message?: string }) => {
+    const cwd = getWorkspace();
+    try {
+      const args = message ? ['stash', 'push', '-m', message] : ['stash'];
+      await execFileAsync('git', args, { cwd, timeout: 15000 });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('git:diff', async (_event, { path, staged }: { path?: string; staged?: boolean }) => {
+    const cwd = getWorkspace();
+    try {
+      const args = staged ? ['diff', '--cached'] : ['diff'];
+      if (path) args.push('--', path);
+      const { stdout } = await execFileAsync('git', args, { cwd, timeout: 10000 });
+      return { success: true, diff: stdout };
+    } catch (err: any) {
+      return { success: false, error: err.message, diff: '' };
+    }
+  });
+
+  ipcMain.handle('git:acceptAllChanges', async () => {
+    const cwd = getWorkspace();
+    try {
+      await execFileAsync('git', ['checkout', '--', '.'], { cwd, timeout: 15000 });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
 }

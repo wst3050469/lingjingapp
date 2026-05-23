@@ -92,7 +92,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
 
       const healthy = await cloudClient.healthCheck().catch(e => {
         console.warn('[Cloud] healthCheck failed after WS connected:', e);
-        return true; // WS connected, consider it healthy even if HTTP health check fails
+        return false;
       });
       isConnecting = false;
       return { connected: true, healthy, wsConnected, registered, deviceId: cloudClient.getDeviceId() };

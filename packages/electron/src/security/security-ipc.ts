@@ -9,8 +9,18 @@ function getService(projectPath: string): SecurityService {
 }
 
 export function registerSecurityIPC(): void {
+  const validScopes = ['full', 'quick', 'staged', 'custom'] as const;
+  type ValidScope = typeof validScopes[number];
+
   ipcMain.handle('security:scan', async (_e, projectPath: string, scope?: string, files?: string[]) => {
-    return getService(projectPath).scan((scope as any) || 'full', files);
+    try {
+      const validatedScope: ValidScope = validScopes.includes(scope as any) ? (scope as ValidScope) : 'full';
+      const service = getService(projectPath);
+      const result = await service.scan(validatedScope, files);
+      return result;
+    } catch (err: any) {
+      return { success: false, error: err.message || String(err) };
+    }
   });
   ipcMain.handle('security:cancel', async (_e, projectPath: string) => {
     return getService(projectPath).cancelScan();

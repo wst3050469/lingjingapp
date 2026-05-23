@@ -179,8 +179,15 @@ export function registerFusionModuleIpc(): void {
   });
 
   ipcMain.handle('fusion:health:check', async () => {
-    if (!fusionInitializer) throw new Error('FusionInitializer not initialized');
-    return Object.fromEntries(fusionInitializer.healthCheck());
+    if (!fusionInitializer) {
+      return { healthy: false, error: 'FusionInitializer not initialized' };
+    }
+    try {
+      const result = fusionInitializer.healthCheck();
+      return Object.fromEntries(result);
+    } catch (err) {
+      return { healthy: false, error: (err as Error).message };
+    }
   });
   ipcMain.handle('fusion:config:get', async () => {
     return {};

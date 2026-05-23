@@ -79,28 +79,29 @@ function renderForm(v) {
   const isEdit = !!v;
   const ver = v ? v.version : '';
   const changelog = v ? v.changelog : '';
-  const dw = v ? (v.downloadUrls?.windows || v.downloadUrl || '') : '';
-  const dl = v ? (v.downloadUrls?.linux || '') : '';
-  const da = v ? (v.downloadUrls?.android || '') : '';
-  const di = v ? (v.downloadUrls?.ios || '') : '';
-  const dwb = v ? (v.downloadUrls?.web || '') : '';
+  const dw = v ? (v.downloadUrls && (v.downloadUrls.windows || v.downloadUrl) || '') : '';
+  const dl = v ? (v.downloadUrls && v.downloadUrls.linux || '') : '';
+  const da = v ? (v.downloadUrls && v.downloadUrls.android || '') : '';
+  const di = v ? (v.downloadUrls && v.downloadUrls.ios || '') : '';
+  const dwb = v ? (v.downloadUrls && v.downloadUrls.web || '') : '';
   
-  return '<div class="card">' +
+  let html = '<div class="card">' +
     '<div class="card-title">' + (isEdit ? '编辑版本' : '新建版本') + '</div>' +
     '<div id="formError"></div>' +
     '<div class="form-row"><label>版本号</label><input type="text" id="fVer" value="' + ver + '" placeholder="例如 1.53.0"></div>' +
     '<div class="form-row"><label>更新内容</label><textarea id="fChangelog" placeholder="版本更新说明">' + changelog + '</textarea></div>' +
     '<div class="platform-grid">' +
-    '<div class="platform-box"><label>🪟 Windows</label><input type="text" id="fWinUrl" value="' + dw + '" placeholder="https://..."></div>' +
-    '<div class="platform-box"><label>🐧 Linux</label><input type="text" id="fLinuxUrl" value="' + dl + '" placeholder="https://..."></div>' +
-    '<div class="platform-box"><label>📱 Android</label><input type="text" id="fAndroidUrl" value="' + da + '" placeholder="https://..."></div>' +
-    '<div class="platform-box"><label>🍎 iOS</label><input type="text" id="fIosUrl" value="' + di + '" placeholder="https://..."></div>' +
-    '<div class="platform-box"><label>🌐 Web</label><input type="text" id="fWebUrl" value="' + dwb + '" placeholder="https://..."></div>' +
+    '<div class="platform-box"><label>Windows</label><input type="text" id="fWinUrl" value="' + dw + '" placeholder="https://"></div>' +
+    '<div class="platform-box"><label>Linux</label><input type="text" id="fLinuxUrl" value="' + dl + '" placeholder="https://"></div>' +
+    '<div class="platform-box"><label>Android</label><input type="text" id="fAndroidUrl" value="' + da + '" placeholder="https://"></div>' +
+    '<div class="platform-box"><label>iOS</label><input type="text" id="fIosUrl" value="' + di + '" placeholder="https://"></div>' +
+    '<div class="platform-box"><label>Web</label><input type="text" id="fWebUrl" value="' + dwb + '" placeholder="https://"></div>' +
     '</div>' +
     '<div style="margin-top:12px" class="btn-group">' +
-    '<button onclick="saveVersion(\'' + (isEdit ? v.version : '') + '\')">' + (isEdit ? '保存修改' : '创建版本（草稿）') + '</button>' +
-    (isEdit ? '<button class="danger btn-sm" onclick="cancelEdit()">取消</button>' : '') +
+    '<button class="btn-sm" id="saveBtn">' + (isEdit ? '保存修改' : '创建版本（草稿）') + '</button>' +
+    (isEdit ? '<button class="danger btn-sm" id="cancelBtn">取消</button>' : '') +
     '</div></div>';
+  return html;
 }
 
 async function saveVersion(verId) {
@@ -111,9 +112,7 @@ async function saveVersion(verId) {
   const androidUrl = document.getElementById('fAndroidUrl').value.trim();
   const iosUrl = document.getElementById('fIosUrl').value.trim();
   const webUrl = document.getElementById('fWebUrl').value.trim();
-  
   if (!version) { showError('请输入版本号'); return; }
-  
   try {
     if (verId) {
       await api('/versions/' + verId, { method: 'PUT', body: JSON.stringify({ version, changelog, windowsUrl, linuxUrl, androidUrl, iosUrl, webUrl }) });
@@ -128,25 +127,16 @@ async function saveVersion(verId) {
 }
 
 async function submitReview(ver) {
-  try {
-    await api('/versions/' + ver.version + '/submit-review', { method: 'POST' });
-    await loadVersions();
-  } catch (e) { showError(e.message); }
+  try { await api('/versions/' + ver.version + '/submit-review', { method: 'POST' }); await loadVersions(); } catch (e) { showError(e.message); }
 }
 
 async function publish(ver) {
-  try {
-    await api('/versions/' + ver.version + '/publish', { method: 'POST' });
-    await loadVersions();
-  } catch (e) { showError(e.message); }
+  try { await api('/versions/' + ver.version + '/publish', { method: 'POST' }); await loadVersions(); } catch (e) { showError(e.message); }
 }
 
 async function deleteVersion(ver) {
   if (!confirm('确定删除版本 ' + ver.version + ' 吗？')) return;
-  try {
-    await api('/versions/' + ver.version, { method: 'DELETE' });
-    await loadVersions();
-  } catch (e) { showError(e.message); }
+  try { await api('/versions/' + ver.version, { method: 'DELETE' }); await loadVersions(); } catch (e) { showError(e.message); }
 }
 
 function editVersion(ver) {
@@ -170,12 +160,10 @@ function showError(msg) {
 
 function render() {
   let html = '';
-  
   if (!editingId) {
     if (showOnlyPublished) {
       html += '<div class="card" style="text-align:center;padding:12px;background:rgba(210,153,34,0.05);border-color:rgba(210,153,34,0.2)">' +
-        '💡 当前仅显示已发布的版本（<a href="javascript:toggleFilter()" style="color:#58a6ff">显示所有版本</a>）' +
-        '</div>';
+        '<span>当前仅显示已发布的版本</span> <a href="#" id="showAllLink" style="color:#58a6ff">显示所有版本</a></div>';
     } else {
       html += '<div id="formArea">' + renderForm(null) + '</div>';
     }
@@ -185,13 +173,10 @@ function render() {
   
   html += '<div class="card" style="padding:12px">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">' +
-    '<span style="color:#8b949e;font-size:0.85rem">' +
-    '审核流程：<span class="badge draft">草稿</span> → <span class="badge pending_review">审核中</span> → <span class="badge published">已发布</span>' +
-    '｜仅已发布版本会推送给客户端升级' +
-    '</span>' +
+    '<span style="color:#8b949e;font-size:0.85rem">审核流程：<span class="badge draft">草稿</span> <span class="badge pending_review">审核中</span> <span class="badge published">已发布</span></span>' +
     '<div class="btn-group">' +
-    '<button class="btn-sm ' + (showOnlyPublished ? '' : 'success') + '" onclick="showOnlyPublished=false;render()">全部版本</button>' +
-    '<button class="btn-sm ' + (showOnlyPublished ? 'success' : '') + '" onclick="showOnlyPublished=true;render()">仅已发布</button>' +
+    '<button class="btn-sm" id="showAllBtn">全部版本</button>' +
+    '<button class="btn-sm" id="showPublishedBtn">仅已发布</button>' +
     '</div></div></div>';
   
   const filteredVersions = showOnlyPublished ? versions.filter(v => v.status === 'published') : versions;
@@ -199,12 +184,10 @@ function render() {
   if (filteredVersions.length === 0) {
     html += '<div class="loading">' + (showOnlyPublished ? '暂无已发布的版本' : '暂无版本') + '</div>';
   } else {
-    html += '<table><thead><tr>' +
-      '<th>版本号</th><th>更新内容</th><th>状态</th><th>发布日期</th><th>下载链接</th><th>操作</th>' +
-      '</tr></thead><tbody>';
+    html += '<table><thead><tr><th>版本号</th><th>更新内容</th><th>状态</th><th>发布日期</th><th>下载链接</th><th>操作</th></tr></thead><tbody id="versionTableBody">';
     for (const v of filteredVersions) {
       const dl = v.downloadUrls || {};
-      html += '<tr>' +
+      html += '<tr data-version="' + v.version + '">' +
         '<td style="font-weight:600">v' + v.version + '</td>' +
         '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (v.changelog || '-') + '</td>' +
         '<td>' + statusBadge(v.status) + '</td>' +
@@ -217,18 +200,58 @@ function render() {
           dlButton(dl.web, 'Web', 'web') +
         '</div></td>' +
         '<td><div class="btn-group">' +
-          '<button class="btn-sm success" onclick="editVersion(versions.find(x=>x.version===\'' + v.version + '\'))">编辑</button>' +
-          (v.status === 'draft' ? '<button class="btn-sm" onclick="submitReview(versions.find(x=>x.version===\'' + v.version + '\'))">提交审核</button>' : '') +
-          (v.status === 'pending_review' || v.status === 'draft' ? '<button class="btn-sm success" onclick="publish(versions.find(x=>x.version===\'' + v.version + '\'))">发布</button>' : '') +
-          '<button class="btn-sm danger" onclick="deleteVersion(versions.find(x=>x.version===\'' + v.version + '\'))">删除</button>' +
-        '</div></td>' +
-        '</tr>';
+          '<button class="btn-sm success" data-action="edit">编辑</button>' +
+          (v.status === 'draft' ? '<button class="btn-sm" data-action="review">提交审核</button>' : '') +
+          (v.status === 'pending_review' || v.status === 'draft' ? '<button class="btn-sm success" data-action="publish">发布</button>' : '') +
+          '<button class="btn-sm danger" data-action="delete">删除</button>' +
+        '</div></td></tr>';
     }
     html += '</tbody></table>';
   }
   html += '</div>';
-  
   document.getElementById('app').innerHTML = html;
+  
+  // Bind event handlers
+  bindEvents();
+}
+
+function bindEvents() {
+  // Login
+  const loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) loginBtn.addEventListener('click', doLogin);
+  const pwInput = document.getElementById('pwInput');
+  if (pwInput) {
+    pwInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+  }
+  
+  // Filter buttons
+  const showAll = document.getElementById('showAllBtn') || document.getElementById('showAllLink');
+  if (showAll) showAll.addEventListener('click', function(e) { e.preventDefault(); showOnlyPublished = false; render(); });
+  const showPub = document.getElementById('showPublishedBtn');
+  if (showPub) showPub.addEventListener('click', function() { showOnlyPublished = true; render(); });
+  
+  // Save / Cancel
+  const saveBtn = document.getElementById('saveBtn');
+  if (saveBtn) saveBtn.addEventListener('click', function() { saveVersion(editingId || ''); });
+  const cancelBtn = document.getElementById('cancelBtn');
+  if (cancelBtn) cancelBtn.addEventListener('click', cancelEdit);
+  
+  // Version table actions
+  const tableBody = document.getElementById('versionTableBody');
+  if (tableBody) {
+    tableBody.addEventListener('click', function(e) {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const row = btn.closest('tr[data-version]');
+      const ver = row ? versions.find(x => x.version === row.getAttribute('data-version')) : null;
+      if (!ver) return;
+      const action = btn.getAttribute('data-action');
+      if (action === 'edit') editVersion(ver);
+      else if (action === 'review') submitReview(ver);
+      else if (action === 'publish') publish(ver);
+      else if (action === 'delete') deleteVersion(ver);
+    });
+  }
 }
 
 init();

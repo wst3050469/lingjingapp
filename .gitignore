@@ -25,6 +25,12 @@ keystore.properties
 
 # electron-builder release output
 packages/electron/release-*/
+packages/electron/release*/
+
+# Build artifacts (large binary outputs)
+packages/electron/build_output/
+packages/electron/build_portable/
+packages/electron/*.log
 
 # Local fix scripts
 packages/electron/_*.cjs

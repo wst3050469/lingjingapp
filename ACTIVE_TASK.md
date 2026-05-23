@@ -6,8 +6,8 @@
 
 | 项目 | 版本 | 大小 | 状态 |
 |:-----|:----:|:----:|:----:|
-| 🪟 Windows Setup | v1.52.9 | 142 MB | ✅ 未变（仅Linux+Android更新） |
-| 🪟 Windows Portable | v1.52.9 | 142 MB | ✅ 未变 |
+| 🪟 Windows Setup | v1.52.10 | 142 MB | ✅ 已部署（symlink → v1.52.9） |
+| 🪟 Windows Portable | v1.52.10 | 142 MB | ✅ 已部署（symlink → v1.52.9） |
 | 🐧 Linux AppImage | v1.52.10 | 173 MB | ✅ 已部署 |
 | 🐧 Linux deb | v1.52.10 | 105 MB | ✅ 已部署 |
 | 📱 Android APK | v1.52.10 | 78 MB | ✅ 已部署 |

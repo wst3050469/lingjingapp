@@ -52,6 +52,15 @@ const JWT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const app = express();
 app.use(express.json({ limit: '50mb' }));
 
+// Normalize double slashes in URL path — prevent "Cannot GET //admin/versions" errors
+app.use((req, res, next) => {
+  if (req.path.startsWith('//')) {
+    const normalized = req.path.replace(/\/+/g, '/');
+    return res.redirect(301, normalized + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''));
+  }
+  next();
+});
+
 // Global error handler — prevents JSON parse crashes from leaking HTML to clients
 app.use((err, req, res, _next) => {
   console.error('[Server] Error', req.method, req.path, '->', err.message);

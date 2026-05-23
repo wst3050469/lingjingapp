@@ -123,7 +123,13 @@ declare interface ElectronAPI {
     onStatusChange: (callback: (data: any) => void) => () => void;
     onError: (callback: (data: any) => void) => () => void;
   };
+  githubSkill: {
+    list: () => Promise<any[]>;
+    uninstall: (id: string) => Promise<any>;
+  };
+
   github: {
+    search: (query: string, limit?: number) => Promise<any[]>;
     generateAuthUrl: (scopes?: string[]) => Promise<string>;
     handleCallback: (code: string, state: string) => Promise<any>;
     getUser: () => Promise<any>;

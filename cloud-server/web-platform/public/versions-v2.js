@@ -13,9 +13,10 @@ async function api(path, opts = {}) {
 }
 
 async function init() {
-  ADMIN_TOKEN = localStorage.getItem('admin_token') || '';
-  if (!ADMIN_TOKEN) { showLogin(); return; }
-  await loadVersions();
+  // Clear any stale token first - always show login form on fresh load
+  localStorage.removeItem('admin_token');
+  ADMIN_TOKEN = '';
+  showLogin();
 }
 
 async function loadVersions() {

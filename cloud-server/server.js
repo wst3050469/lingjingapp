@@ -2191,7 +2191,8 @@ wss.on('connection', (ws, req) => {
         }
         return;
       }
-      
+
+            
       // Desktop heartbeat
       if (data.type === 'desktop:heartbeat' && wsUserId && wsDeviceId) {
         try {
@@ -2202,7 +2203,40 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ type: 'desktop:heartbeat:ack' }));
         return;
       }
-      
+
+
+      // Chat: handle mobile app chat messages via WebSocket
+      // Mobile sends: { type: "cmd", channel: "chat", action: "send", payload: { conversationId, message } }
+      if (data.type === "cmd" && data.channel === "chat" && data.action === "send") {
+        const { conversationId, message } = data.payload || {};
+        if (!conversationId || !message) {
+          ws.send(JSON.stringify({ type: "error", id: data.id, error: "conversationId_and_message_required" }));
+          return;
+        }
+        try {
+          const s = db.prepare("SELECT * FROM sessions WHERE id = ?").get(conversationId);
+          if (!s) {
+            ws.send(JSON.stringify({ type: "error", id: data.id, error: "session_not_found" }));
+            return;
+          }
+          const messages = safeJsonParse(s.messages, []);
+          const userMsg = { role: "user", content: message, created_at: new Date().toISOString() };
+          messages.push(userMsg);
+          const now = new Date().toISOString();
+          db.prepare("UPDATE sessions SET messages = ?, updated_at = ? WHERE id = ?")
+            .run(JSON.stringify(messages), now, conversationId);
+          broadcast({
+            type: "push",
+            channel: "chat",
+            data: { conversationId, message: userMsg }
+          });
+          ws.send(JSON.stringify({ type: "ack", id: data.id, success: true, data: { status: "sent", conversationId, message: userMsg } }));
+        } catch (err) {
+          console.error("[WS] Chat send error:", err.message);
+          ws.send(JSON.stringify({ type: "error", id: data.id, error: err.message }));
+        }
+        return;
+      }
       // Relay: send message to a desktop device
       if (data.type === 'relay:to-desktop') {
         const { targetDeviceId, payload, correlationId } = data;
@@ -2225,7 +2259,8 @@ wss.on('connection', (ws, req) => {
         }
         return;
       }
-      
+
+            
       // Relay: desktop replies to mobile
       if (data.type === 'relay:to-mobile') {
         const { correlationId, payload } = data;

@@ -2998,13 +2998,13 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
 
 
-    // Set status to idle (not failed — user just switched away)
+    // Set status to paused (not idle) so the Resume button appears when user returns
 
     try {
 
       const db = getDatabase();
 
-      db.run(`UPDATE quest_tasks SET status = 'idle', updated_at = datetime('now') WHERE id = ?`, [taskId]);
+      db.run(`UPDATE quest_tasks SET status = 'paused', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
       await saveDatabase();
 
@@ -3014,7 +3014,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     sendQuestEvent({ type: 'done', taskId, runId });
 
-    sendQuestEvent({ type: 'status_change', taskId, status: 'idle', runId });
+    sendQuestEvent({ type: 'status_change', taskId, status: 'paused', runId });
 
 
 

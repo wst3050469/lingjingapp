@@ -67,23 +67,39 @@ const AUTO_MODES = [
 export function QuestView() {
   const { tasks, activeTaskId, runningTaskIds } = useQuestStore();
 
-  // Mount: reset streaming state in case we're returning from editor mode.
-  // The main-process agent was already aborted on unmount, but the Zustand store
-  // may still hold stale isStreaming / runningTaskIds that block new messages.
+  // Mount: check for paused tasks that should be auto-resumed
+  // When user returns from editor mode, tasks left in 'paused' status by stopOnSwitch
+  // should either auto-resume (if they were running) or show the Resume button.
   useEffect(() => {
     const store = useQuestStore.getState();
-    
-    // Only reset if truly stale (no actual running agent in main process)
-    // We keep runningTaskIds if the task might still be active
+
     if (store.isStreaming) {
       console.log('[QuestView] Mount: resetting stale streaming state');
       store.resetStreamText();
       store.setStreaming(false);
       store.setActiveRunId(null);
     }
-    
-    // DO NOT clear runningTaskIds on mount - they may represent real running tasks
-    // Only clear if confirmed stale by checking with main process
+
+    // Auto-resume any task that was paused by stopOnSwitch (user just returned)
+    const pausedTaskId = store.activeTaskId;
+    if (pausedTaskId) {
+      const task = store.tasks.find(t => t.id === pausedTaskId);
+      if (task?.status === 'paused') {
+        console.log('[QuestView] Mount: auto-resuming paused task:', pausedTaskId);
+        const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        store.setStreaming(true);
+        store.resetStreamText();
+        store.addRunningTask(pausedTaskId);
+        store.setActiveRunId(runId);
+        store.setTaskStatus(pausedTaskId, 'running');
+        window.electronAPI.quest.resume(pausedTaskId, undefined, runId).catch((err) => {
+          console.error('[QuestView] Auto-resume failed:', err);
+          store.setStreaming(false);
+          store.setActiveRunId(null);
+          store.removeRunningTask(pausedTaskId);
+        });
+      }
+    }
   }, []);
 
   // Cleanup: pause (not stop) running agents when leaving quest mode

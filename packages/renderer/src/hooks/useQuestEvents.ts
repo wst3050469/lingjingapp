@@ -27,14 +27,15 @@ export function useQuestEvents(): void {
         return; // Ignore events from other/old tasks
       }
 
-      // runId epoch filter: discard stale events from old runs.
-      // If the event carries a runId but the store's activeRunId is null (e.g. after
-      // switchTask clears it), we still filter: an event with a runId arriving when
-      // there is no active run is almost certainly stale.
-      // Events without a runId (legacy / cross-task) are always accepted.
-      if (event.runId) {
+      // runId epoch filter: discard stale streaming events from old runs.
+      // IMPORTANT: 'done' and 'status_change' are lifecycle events that MUST be
+      // processed even with mismatched runId — they clean up runningTaskIds and
+      // task status. Without this, unmounting QuestView (which sets activeRunId=null)
+      // causes done events to be dropped, leaving stale runningTaskIds.
+      const isLifecycleEvent = event.type === 'done' || event.type === 'status_change';
+      if (!isLifecycleEvent && event.runId) {
         if (!store.activeRunId || event.runId !== store.activeRunId) {
-          return; // Stale event from a previous run – drop it
+          return; // Stale streaming event from a previous run – drop it
         }
       }
 
@@ -83,6 +84,10 @@ export function useQuestEvents(): void {
             timestamp: Date.now(),
           });
           store.setStreaming(false);
+          store.setActiveRunId(null);
+          if (event.taskId) {
+            store.removeRunningTask(event.taskId);
+          }
           break;
 
         case 'done': {
@@ -97,6 +102,7 @@ export function useQuestEvents(): void {
           }
           store.resetStreamText();
           store.setStreaming(false);
+          store.setActiveRunId(null);
 
           // Remove from running tasks
           if (event.taskId) {

@@ -90,15 +90,37 @@ export function QuestConversation() {
   // 语音输入处理
   const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setText(newText), []));
 
-  // Defensive reset: if the store still thinks we're streaming after mount
-  // (e.g. returning from editor mode), clear it so send is not blocked.
+  // On mount: if active task is paused (e.g. returning from editor), auto-resume it.
+  // If isStreaming is stale, clear it.
   useEffect(() => {
     const store = useQuestStore.getState();
-    if (store.isStreaming) {
+    const taskId = store.activeTaskId;
+
+    if (store.isStreaming && !taskId) {
       console.log('[QuestConversation] Mount: resetting stale isStreaming');
       store.resetStreamText();
       store.setStreaming(false);
       store.setActiveRunId(null);
+    }
+
+    // Auto-resume paused task on mount (user just came back)
+    if (taskId) {
+      const task = store.tasks.find(t => t.id === taskId);
+      if (task?.status === 'paused' && !store.isStreaming) {
+        console.log('[QuestConversation] Mount: auto-resuming paused task:', taskId);
+        const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+        store.setStreaming(true);
+        store.resetStreamText();
+        store.addRunningTask(taskId);
+        store.setActiveRunId(runId);
+        store.setTaskStatus(taskId, 'running');
+        window.electronAPI.quest.resume(taskId, undefined, runId).catch((err) => {
+          console.error('[QuestConversation] Auto-resume failed:', err);
+          store.setStreaming(false);
+          store.setActiveRunId(null);
+          store.removeRunningTask(taskId);
+        });
+      }
     }
   }, []);
 
@@ -171,22 +193,34 @@ export function QuestConversation() {
       : undefined;
 
     try {
-      await window.electronAPI.quest.run({
-        taskId: activeTaskId,
-        message: messageText || 'Please analyze this image.',
-        scenario,
-        runMode,
-        autoMode,
-        chatMode,
-        runId,
-        images: imagePayload,
-        contexts: contexts.map(ctx => ({
-          id: ctx.id,
-          type: ctx.type,
-          label: ctx.label,
-          path: ctx.path,
-        })),
-      } as any);
+      // Smart dispatch: if task was paused/interrupted (has history messages and
+      // status is paused/idle/failed), use quest:resume to continue from where it
+      // stopped. Otherwise start a fresh quest:run.
+      const taskStatus = activeTask?.status;
+      const hasHistory = store.messages.length > 0;
+      const shouldResume = hasHistory && (taskStatus === 'paused' || taskStatus === 'idle' || taskStatus === 'failed');
+
+      if (shouldResume) {
+        console.log('[QuestConversation] Resuming interrupted task:', { taskId: activeTaskId, taskStatus, msgCount: store.messages.length });
+        await window.electronAPI.quest.resume(activeTaskId, messageText || undefined, runId);
+      } else {
+        await window.electronAPI.quest.run({
+          taskId: activeTaskId,
+          message: messageText || 'Please analyze this image.',
+          scenario,
+          runMode,
+          autoMode,
+          chatMode,
+          runId,
+          images: imagePayload,
+          contexts: contexts.map(ctx => ({
+            id: ctx.id,
+            type: ctx.type,
+            label: ctx.label,
+            path: ctx.path,
+          })),
+        } as any);
+      }
     } catch (err) {
       store.addMessage({
         id: generateQuestMessageId(),
@@ -295,7 +329,7 @@ export function QuestConversation() {
               Pause
             </button>
           )}
-          {activeTask?.status === 'paused' && !isStreaming && (
+          {(activeTask?.status === 'paused' || activeTask?.status === 'idle') && !isStreaming && (
             <button
               onClick={handleResume}
               className="text-[10px] px-2 py-0.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors"

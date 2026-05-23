@@ -835,14 +835,26 @@ export function registerAdminAPI(app, db) {
       if (!data || !data.versions || data.versions.length === 0) {
         return res.json([]);
       }
-      // Map versions.json entries to the expected format, including status
+      const DL = 'https://ide.zhejiangjinmo.com/downloads/';
+      const getUrl = (files, key) => {
+        const e = files[key]; if (!e) return '';
+        if (typeof e === 'string') return DL + e;
+        return e.url ? DL + e.url : '';
+      };
       const result = data.versions.map((v, idx) => ({
         id: v.version || 'v-' + idx,
         version: v.version || '0.0.0',
         releaseDate: v.releaseDate || v.date || null,
-        changelog: v.releaseNotes || v.description || v.changelog || '',
-        downloadUrl: v.files ? (typeof v.files['win-x64'] === 'string' ? 'https://ide.zhejiangjinmo.com/downloads/' + v.files['win-x64'] : (v.files['win-x64'] && v.files['win-x64'].url ? v.files['win-x64'].url : '')) : (v.downloadUrl || ''),
-        active: v.status === 'published' || v.status !== 'draft',
+        changelog: v.releaseNotes || v.description || v.changelog || "",
+        downloadUrl: getUrl(v.files || {}, 'win-x64'),
+        downloadUrls: {
+          windows: getUrl(v.files || {}, 'win-x64'),
+          windowsPortable: getUrl(v.files || {}, 'win-x64-portable'),
+          linux: getUrl(v.files || {}, 'linux-x64'),
+          linuxDeb: getUrl(v.files || {}, 'linux-deb'),
+          android: getUrl(v.files || {}, 'android'),
+        },
+        active: v.status === 'published',
         status: v.status || 'published',
       }));
       res.json(result);
@@ -850,7 +862,6 @@ export function registerAdminAPI(app, db) {
       res.status(500).json({ error: error.message });
     }
   });
-
 
   app.post('/api/versions', adminAuth, (req, res) => {
     try {

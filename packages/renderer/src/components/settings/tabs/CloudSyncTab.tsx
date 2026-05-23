@@ -338,7 +338,32 @@ export function CloudSyncTab() {
       });
       return result;
     } catch (err: any) {
-      // Error messages are already translated by the main process proxy
+      // If the IPC handler is not registered (e.g. running an older build), fall back to direct fetch
+      if (err.message?.includes('No handler registered') || err.message?.includes('cloud:proxy-api')) {
+        console.warn('[CloudSync] cloud:proxy-api handler not found, falling back to direct fetch');
+        try {
+          const baseUrl = 'https://ide.zhejiangjinmo.com';
+          const url = `${baseUrl}/api${endpoint}`;
+          const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+          if (token || cloudToken) headers['Authorization'] = `Bearer ${token || cloudToken}`;
+          const res = await fetch(url, {
+            method,
+            headers,
+            body: body ? JSON.stringify(body) : undefined,
+          });
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${res.status}`);
+          }
+          return await res.json();
+        } catch (fallbackErr: any) {
+          // If fetch also fails (likely CORS in Electron renderer), translate the error
+          if (fallbackErr.message?.includes('CORS') || fallbackErr.message?.includes('Failed to fetch')) {
+            throw new Error('云服务器连接失败 - 请尝试重新安装最新版本以启用 IPC 代理模式');
+          }
+          throw fallbackErr;
+        }
+      }
       throw err;
     }
   };

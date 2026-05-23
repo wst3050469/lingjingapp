@@ -205,6 +205,23 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
     }
   });
 
+  // Alias: /api/quest-tasks (mobile-compatible endpoint name)
+  expressApp.get('/api/quest-tasks', authenticate, (req, res) => {
+    try {
+      const db = getDatabaseFn!();
+      const tasks = db.exec('SELECT * FROM quest_tasks ORDER BY created_at DESC LIMIT 20');
+      res.json(tasks[0]?.values.map((row: any) => ({
+        id: row[0],
+        title: row[3],
+        status: row[6],
+        createdAt: row[7],
+      })) || []);
+    } catch (err) {
+      console.error('[Web Server] /api/quest-tasks error:', err);
+      res.status(500).json({ error: 'Failed to get tasks' });
+    }
+  });
+
   // Create new quest task
   expressApp.post('/api/quest', authenticate, async (req, res) => {
     try {
@@ -305,6 +322,35 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
     } catch (err) {
       console.error('[Web Server] /api/sessions error:', err);
       res.status(500).json({ error: 'Failed to list sessions' });
+    }
+  });
+
+  // Create new conversation (from mobile)
+  expressApp.post('/api/sessions', authenticate, async (req, res) => {
+    try {
+      const { title, message } = req.body;
+      const db = getDatabaseFn!();
+      const id = `conv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      const convTitle = title || (message ? message.slice(0, 50) : '新对话');
+
+      db.run(
+        `INSERT INTO conversations (id, title) VALUES (?, ?)`,
+        [id, convTitle]
+      );
+
+      // Insert initial message if provided
+      if (message) {
+        db.run(
+          `INSERT INTO messages (conversation_id, role, content) VALUES (?, 'user', ?)`,
+          [id, message]
+        );
+      }
+
+      await saveDatabaseFn!();
+      res.json({ id, title: convTitle, created_at: new Date().toISOString() });
+    } catch (err) {
+      console.error('[Web Server] POST /api/sessions error:', err);
+      res.status(500).json({ error: 'Failed to create session' });
     }
   });
 

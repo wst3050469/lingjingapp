@@ -1,35 +1,22 @@
-<<<<<<< HEAD
-# ACTIVE_TASK -- v1.50.0 Phase 93 全平台部署完成 ✅ + 构建迁移完成
-=======
-# ACTIVE_TASK -- v1.51.0 Phase 93 发布中 🚀
->>>>>>> 1b55c246b9a5ad4601eb82ab4b1149f752fb3591
+# ACTIVE_TASK -- v1.51.1 全平台部署完成 + 安全加固完成
 
 ## 状态：✅ 全部完成
 
-| 项目 | 大小 | 状态 |
-|:-----|:-----|:----:|
-| 🐛 Bug1: Quest Agent生命周期管理 | 4项 | ✅ 全部修复 |
-| 🐛 Bug2: 任务执行意外中断 | 5项 | ✅ 全部修复 |
-| 🏗️ 持久记忆机制 | 3模块 | ✅ VectorMemory+SqliteAdapter |
-| 📱 移动端APP完善 | 4项 | ✅ 心跳/Markdown/持久化/文件查看 |
-<<<<<<< HEAD
-| 🪟 Windows Setup | 142MB | ✅ 已部署到生产 |
-| 🪟 Windows Portable | 141MB | ✅ 已部署到生产 |
-| 🐧 Linux AppImage | 172MB | ✅ 已部署到生产（192.168.1.9构建） |
-| 🐧 Linux deb | 105MB | ✅ 已部署到生产（192.168.1.9构建） |
-| 📱 Android APK | 81MB | ✅ 已部署到生产（192.168.1.9构建, 2m19s） |
-| ☁️ versions.json | v1.50.0 | ✅ 已更新 |
-| 🔄 latest.yml / latest-linux.yml | 1.50.0 | ✅ SHA512已更新 |
-=======
-| 🪟 Windows Setup | - | ⏳ 待构建 |
-| 🪟 Windows Portable | - | ⏳ 待构建 |
-| 🐧 Linux AppImage | - | ⏳ 待构建 |
-| 🐧 Linux deb | - | ⏳ 待构建 |
-| ☁️ versions.json | 全平台 | ⏳ 待更新 |
-| 🔄 auto-update YAML | 1.51.0 | ⏳ 待更新 |
->>>>>>> 1b55c246b9a5ad4601eb82ab4b1149f752fb3591
+## 当前交付
 
-## 构建平台迁移完成
-- **从**: 120.55.5.220 (阿里云 7.3GB 内存, OOM崩溃)
-- **到**: 192.168.1.9 (liuhui-AI-Station-395-Max, 32核/62GB/1.9TB NVMe)
-- **构建耗时对比**: Android 30min+ → 2m19s, Linux ~2min
+| 项目 | 版本 | 状态 |
+|:-----|:-----|:----:|
+| 🐧 Linux AppImage | v1.51.1 (179MB) | ✅ 已部署 |
+| 🐧 Linux deb | v1.51.1 (109MB) | ✅ 已部署 |
+| 🐛 Bug1: Linux桌面超出屏幕 | `--force-device-scale-factor=1.25` | ✅ 已修复 |
+| 🐛 Bug2: APK invalid_credentials | 创建admin账号+API_KEY | ✅ 已修复 |
+| 🐛 Bug3: 文件变更自动处理失效 | useEffect逐文件追踪 | ✅ 已修复 |
+| 🔒 CORS 中间件 | 域名白名单 | ✅ 已部署 |
+| 🔒 Rate Limiting | auth 10次/分钟 | ✅ 已部署 |
+| 🔒 Nginx 安全头部 | HSTS/CSP/X-Frame等 | ✅ 已部署 |
+| 🔒 错误处理 | 不再泄露内部详情 | ✅ 已部署 |
+| 📋 全面审查报告 | review-report.md | ✅ 已完成 |
+| 🌐 Git 同步 | GitHub + 生产服务器 | ✅ 已完成 |
+
+## 当前版本号
+- packages/electron/package.json: **1.51.0** → ⏳ 待发布 v1.52.0 (含 Phase 94 GitHub 集成)

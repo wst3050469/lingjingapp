@@ -29,5 +29,5 @@
 ## Git
 - 生产 bare repo 已同步 ✅
 - 构建服务器 (192.168.1.9) 已同步 ✅
-- GitHub 推送因网络暂缓（需手动重试）
+- GitHub 推送 ✅ 已完成
 - **已知问题**: preload.ts 缺少 githubSkill 桥接 — 已修复 `7e7b299`

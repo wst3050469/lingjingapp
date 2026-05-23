@@ -21,3 +21,30 @@ export interface ToolSchema {
     description: string;
     parameters: JSONSchema;
 }
+
+/** LLM provider configuration */
+export interface LLMProvider {
+  chat(opts: {
+    messages: { role: string; content: string | unknown[] }[];
+    tools?: unknown[];
+    toolChoice?: unknown;
+    systemPrompt?: string;
+    maxTokens?: number;
+    temperature?: number;
+    signal?: AbortSignal;
+  }): AsyncIterable<{ type: string; text?: string; [key: string]: unknown }>;
+  name: string;
+  model: string;
+  apiKey?: string;
+  baseUrl?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+/** Stream event from LLM */
+export interface StreamEvent {
+  type: "token" | "done" | "error";
+  data?: string;
+  error?: Error;
+  finishReason?: string;
+}

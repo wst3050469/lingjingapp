@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # ACTIVE_TASK -- v1.50.0 Phase 93 全平台部署完成 ✅ + 构建迁移完成
+=======
+# ACTIVE_TASK -- v1.51.0 Phase 93 发布中 🚀
+>>>>>>> 1b55c246b9a5ad4601eb82ab4b1149f752fb3591
 
 ## 状态：✅ 全部完成
 
@@ -8,6 +12,7 @@
 | 🐛 Bug2: 任务执行意外中断 | 5项 | ✅ 全部修复 |
 | 🏗️ 持久记忆机制 | 3模块 | ✅ VectorMemory+SqliteAdapter |
 | 📱 移动端APP完善 | 4项 | ✅ 心跳/Markdown/持久化/文件查看 |
+<<<<<<< HEAD
 | 🪟 Windows Setup | 142MB | ✅ 已部署到生产 |
 | 🪟 Windows Portable | 141MB | ✅ 已部署到生产 |
 | 🐧 Linux AppImage | 172MB | ✅ 已部署到生产（192.168.1.9构建） |
@@ -15,6 +20,14 @@
 | 📱 Android APK | 81MB | ✅ 已部署到生产（192.168.1.9构建, 2m19s） |
 | ☁️ versions.json | v1.50.0 | ✅ 已更新 |
 | 🔄 latest.yml / latest-linux.yml | 1.50.0 | ✅ SHA512已更新 |
+=======
+| 🪟 Windows Setup | - | ⏳ 待构建 |
+| 🪟 Windows Portable | - | ⏳ 待构建 |
+| 🐧 Linux AppImage | - | ⏳ 待构建 |
+| 🐧 Linux deb | - | ⏳ 待构建 |
+| ☁️ versions.json | 全平台 | ⏳ 待更新 |
+| 🔄 auto-update YAML | 1.51.0 | ⏳ 待更新 |
+>>>>>>> 1b55c246b9a5ad4601eb82ab4b1149f752fb3591
 
 ## 构建平台迁移完成
 - **从**: 120.55.5.220 (阿里云 7.3GB 内存, OOM崩溃)

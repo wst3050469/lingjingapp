@@ -1,15 +1,16 @@
 {
   "appId": "com.lingjing.ide",
-  "productName": "灵境",
+  "productName": "\u7075\u5883",
   "directories": {
-    "output": "release-v1500"
+    "output": "release-v1510"
   },
   "files": [
     "dist/**/*",
     "renderer/**/*",
     "node_modules/**/*",
     "package.json",
-    "assets/**/*"
+    "assets/**/*",
+    "prompts/**/*"
   ],
   "win": {
     "target": [
@@ -65,5 +66,21 @@
     "provider": "generic",
     "url": "https://ide.zhejiangjinmo.com/downloads"
   },
-  "npmRebuild": false
+  "npmRebuild": false,
+  "extraResources": [
+    {
+      "from": "prompts",
+      "to": "prompts",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "skills",
+      "to": "skills",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ]
 }

@@ -46,31 +46,6 @@ export type { MemoryLinkageDeps, MemoryLinkageResult } from './patch-memory.js';
  */
 
 export {
-  FUSION_SIDEBAR_PANELS,
-  OPENSPACE_SIDEBAR_PANELS,
-  FUSION_PANEL_COMPONENTS,
-  OPENSPACE_PANEL_COMPONENTS,
-  ALL_SIDEBAR_PANELS,
-  ALL_PANEL_COMPONENTS,
-  getPanelIconEntries,
-} from './patch-renderer.js';
-export type {
-  SidebarPanelDef,
-  FusionSidebarPanel,
-  OpenSpaceSidebarPanel,
-} from './patch-renderer.js';
-
-export {
-  SCIFI_THEME_OPTION,
-  SCIFI_DARK_CSS_VARS,
-  THEME_OPTIONS,
-} from './patch-theme-switch.js';
-export type {
-  ScifiThemeId,
-  ExtendedThemeMode,
-} from './patch-theme-switch.js';
-
-export {
   detectOpenSpace,
   detectOpenSpaceWindows,
   detectOpenSpaceLinux,

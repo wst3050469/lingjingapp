@@ -1,121 +1,27 @@
 {
+  "latest": "1.51.0",
   "versions": [
     {
-      "version": "1.48.0",
-      "status": "published",
-      "releaseDate": "2026-05-21T13:01:17.000Z",
-      "releaseNotes": "灵境IDE v1.48.0 - Fusion融合层完整集成(Hermes 14特性+OpenSpace宇宙可视化+scifi-dark科技感主题+24项缺陷修复)",
+      "version": "1.51.0",
+      "releaseDate": "2026-05-22T15:00:00.000Z",
+      "releaseNotes": "v1.51.0: 全平台构建迁移到高性能工作站192.168.1.9 + 正式签名 + 类型修复",
       "files": {
-        "win-x64": {
-          "url": "LingJing-Setup-1.48.0-win-x64.exe",
-          "size": 142068500
-        },
-        "win-portable": {
-          "url": "LingJing-Portable-1.48.0-win-x64.exe",
-          "size": 141726986
-        },
-        "linux-x64": {
-          "url": "LingJing-1.47.2-linux-x86_64.AppImage",
-          "size": 180355072
-        },
-        "linux-deb": {
-          "url": "LingJing-1.47.2-linux-x86_64.deb",
-          "size": 125829120
-        }
-      }
-    },
-    {
-      "version": "1.42.9",
-      "status": "published",
-      "releaseDate": "2026-05-18T22:00:00.000Z",
-      "releaseNotes": "灵境IDE v1.42.9 - OpenSpace天文可视化集成",
-      "files": {
-        "win-x64": {
-          "url": "LingJing-Setup-1.42.9-win-x64.exe",
-          "size": 131846144
-        },
-        "linux-x64": {
-          "url": "LingJing-1.42.9-linux-x86_64.AppImage",
-          "size": 191751737
-        },
-        "linux-deb": {
-          "url": "LingJing-1.42.9-linux-x86_64.deb",
-          "size": 116657668
-        }
-      }
-    },
-    {
-      "version": "1.43.0",
-      "status": "published",
-      "releaseDate": "2026-05-19T00:00:00.000Z",
-      "releaseNotes": "灵境IDE v1.43.0 - 多平台构建优化 & 版本管理增强",
-      "files": {
-        "win-x64": {
-          "url": "LingJing-Setup-1.43.0-win-x64.exe",
-          "size": 136990360
-        },
-        "win-portable": {
-          "url": "LingJing-Portable-1.43.0-win-x64.exe",
-          "size": 136671696
-        },
-        "linux-x64": {
-          "url": "LingJing-1.43.0-linux-x86_64.AppImage",
-          "size": 178929758
-        },
-        "linux-deb": {
-          "url": "LingJing-1.43.0-linux-x86_64.deb",
-          "size": 108697218
-        }
-      }
-    },
-    {
-      "version": "1.43.1",
-      "status": "published",
-      "releaseDate": "2026-05-19T02:00:00.000Z",
-      "releaseNotes": "灵境IDE v1.43.1 - 修复运行时错误：IPC处理程序注册缺失，构建脚本优化，sql-wasm.wasm自动查找",
-      "files": {
-        "win-x64": {
-          "url": "LingJing-Setup-1.43.1-win-x64.exe",
-          "size": 131300375
-        },
-        "win-portable": {
-          "url": "LingJing-Portable-1.43.1-win-x64.exe",
-          "size": 131094449
-        },
-        "linux-x64": {
-          "url": "LingJing-1.43.1-linux-x86_64.AppImage",
-          "size": 178916931
-        },
-        "linux-deb": {
-          "url": "LingJing-1.43.1-linux-x86_64.deb",
-          "size": 108674098
-        }
-      }
-    },
-    {
-      "version": "1.43.2",
-      "status": "published",
-      "releaseDate": "2026-05-19T03:00:00.000Z",
-      "releaseNotes": "灵境IDE v1.43.2 - 修复启动崩溃：@codepilot/core exports map 子路径显式声明，提升ASAR环境兼容性",
-      "files": {
-        "win-x64": {
-          "url": "LingJing-Setup-1.43.2-win-x64.exe",
-          "size": 131305388
-        },
-        "win-portable": {
-          "url": "LingJing-Portable-1.43.2-win-x64.exe",
-          "size": 131099472
-        },
-        "linux-x64": {
-          "url": "LingJing-1.43.2-linux-x86_64.AppImage",
-          "size": 178917147
-        },
-        "linux-deb": {
-          "url": "LingJing-1.43.2-linux-x86_64.deb",
-          "size": 108678246
-        }
-      }
+        "installer": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.51.0-win-x64.exe",
+        "portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.51.0-win-x64-portable.exe",
+        "linux-x86_64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.51.0-linux-x86_64.AppImage",
+        "linux-amd64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.51.0-linux-x86_64.deb",
+        "mobile": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.51.0.apk"
+      },
+      "sha512": "TBD",
+      "size": 0,
+      "features": [
+        "全平台构建迁移到192.168.1.9（32核/62GB）",
+        "Android APK 正式签名",
+        "Hermes Fusion 54项 + OpenSpace 28项全部完成",
+        "Fusion/OpenSpace IPC 通道注册",
+        "TypeScript 类型错误修复（LLM/Workflow/Fusion）",
+        "migration004 数据库迁移导出修复"
+      ]
     }
-  ],
-  "latest": "1.48.0"
+  ]
 }

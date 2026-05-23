@@ -6,6 +6,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { registerAgentIpc, initAgent, setWorkingDirectory, setSshTerminalId, reinitProvider } from './ipc/agent-ipc.js';
+import { registerGithubSkillIpc, setGithubSkillDb } from './ipc/github-skill-ipc.js';
 import { registerFsIpc } from './ipc/fs-ipc.js';
 import { registerTerminalIpc, destroyAllTerminals } from './ipc/terminal-ipc.js';
 import { registerMcpIpc, autoConnectMcpServers } from './ipc/mcp-ipc.js';
@@ -960,6 +961,8 @@ async function bootstrap(): Promise<void> {
   // skipped if the window failed to create.
   if (mainWindow) {
     registerAgentIpc(mainWindow);
+    registerGithubSkillIpc();
+    setGithubSkillDb(getDatabase());
     registerFsIpc(mainWindow, () => workspacePath);
     registerTerminalIpc(mainWindow);
     registerGitIpc(() => workspacePath);

@@ -338,6 +338,15 @@ export async function initDatabase(): Promise<SqlJsDatabase> {
     console.warn('[DB] Migration004 (OpenSpace) skipped or failed:', m4err);
   }
 
+  // Run GitHub Skills migration (installed_skills)
+  try {
+    const { migration005 } = await import('./migrations/migration005_github_skills');
+    db.run(migration005);
+    console.log('[DB] Migration005 (GitHub Skills) applied successfully');
+  } catch (m5err) {
+    console.warn('[DB] Migration005 (GitHub Skills) skipped or failed:', m5err);
+  }
+
   } catch (schemaErr) {
     // Database file is corrupted — recreate from scratch
     console.error('[DB] Database corrupted, recreating:', schemaErr);

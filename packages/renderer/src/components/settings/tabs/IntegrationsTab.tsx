@@ -118,6 +118,10 @@ export function IntegrationsTab({ config, saveKey }: IntegrationsTabProps) {
   const [planPolicy, setPlanPolicy] = useState<string>(pa.executionPolicy ?? 'ask');
   const [builtinBrowser, setBuiltinBrowser] = useState<boolean>(integ.builtinBrowser ?? true);
 
+  // Installed GitHub skills state
+  const [installedSkills, setInstalledSkills] = useState<any[]>([]);
+  const [skillsLoading, setSkillsLoading] = useState(true);
+
   // GitHub states
   const [ghConnected, setGhConnected] = useState<boolean>(gh.connected ?? false);
   const [ghUsername, setGhUsername] = useState<string>(gh.username ?? '');
@@ -264,6 +268,27 @@ export function IntegrationsTab({ config, saveKey }: IntegrationsTabProps) {
     } catch {} finally {
       setFrpSaving(false);
     }
+  };
+
+  // Load installed skills
+  useEffect(() => {
+    const loadSkills = async () => {
+      try {
+        const skills = await (window as any).electronAPI?.githubSkill?.list?.();
+        setInstalledSkills(skills || []);
+      } catch { /* ignore */ }
+      setSkillsLoading(false);
+    };
+    loadSkills();
+    const interval = setInterval(loadSkills, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleUninstallSkill = async (id: string) => {
+    try {
+      await (window as any).electronAPI?.githubSkill?.uninstall?.(id);
+      setInstalledSkills(prev => prev.filter((s: any) => s.id !== id));
+    } catch { /* ignore */ }
   };
 
   // --- GitHub handlers ---
@@ -746,6 +771,106 @@ export function IntegrationsTab({ config, saveKey }: IntegrationsTabProps) {
                 </div>
               )}
             </div>
+          </div>
+        </Card>
+
+        {/* GitHub Open-Source Skills Integration */}
+        <SectionHeader title="GitHub 开源技能" badge="NEW" />
+        <Card>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.795.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.145 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.621.242 2.842.118 3.145.78.84 1.234 1.91 1.234 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm text-cp-text font-medium">开源项目自动集成</p>
+                <p className="text-[11px] text-cp-text-dim/50 mt-0.5">搜索GitHub开源项目并封装为灵境技能，扩展AI能力</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="搜索开源项目 (如: markdown parser python)"
+                className="flex-1 bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-2 text-sm text-cp-text outline-none focus:border-cp-accent placeholder:text-cp-text-dim/30"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const target = e.target as HTMLInputElement;
+                    if (target.value.trim()) {
+                      (window as any).electronAPI?.github?.search?.(target.value.trim(), 10)
+                        ?.then?.((results: any[]) => {
+                          (window as any).__githubSearchResults = results;
+                          (window as any).__githubSearchQuery = target.value.trim();
+                          window.dispatchEvent(new CustomEvent('github-search-results', { detail: results }));
+                        });
+                    }
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  const input = document.querySelector('[placeholder*="搜索开源项目"]') as HTMLInputElement;
+                  if (input?.value.trim()) {
+                    (window as any).electronAPI?.github?.search?.(input.value.trim(), 10)
+                      ?.then?.((results: any[]) => {
+                        (window as any).__githubSearchResults = results;
+                        window.dispatchEvent(new CustomEvent('github-search-results', { detail: results }));
+                      });
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-cp-accent/15 text-cp-accent text-sm hover:bg-cp-accent/25 transition-colors"
+              >
+                搜索
+              </button>
+            </div>
+
+            <div className="text-[10px] text-cp-text-dim/40 flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              在对话中输入"搜索GitHub项目 XXX"或使用search_github工具即可搜索
+            </div>
+          </div>
+        </Card>
+
+        {/* Installed Skills List */}
+        <SectionHeader title="已集成的功能" badge={installedSkills.length > 0 ? String(installedSkills.length) : undefined} />
+        <Card>
+          <div className="space-y-2">
+            {skillsLoading ? (
+              <div className="text-[11px] text-cp-text-dim/40 py-2">加载中...</div>
+            ) : installedSkills.length === 0 ? (
+              <div className="text-[11px] text-cp-text-dim/40 py-2">尚未安装任何GitHub技能。在上方搜索并安装开源项目。</div>
+            ) : (
+              installedSkills.map((skill: any) => (
+                <div key={skill.id} className="flex items-center justify-between py-2 px-3 bg-white/[0.02] border border-cp-border/30 rounded-lg">
+                  <div className="min-w-0 mr-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-cp-text font-medium">{skill.repo_name}</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-cp-accent/10 text-cp-accent uppercase">{skill.skill_type}</span>
+                      {skill.language && <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-cp-text-dim/60">{skill.language}</span>}
+                    </div>
+                    <p className="text-[10px] text-cp-text-dim/40 mt-0.5 truncate">{skill.repo_owner}/{skill.repo_name} · {skill.description || '无描述'}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {skill.stars > 0 && (
+                      <span className="text-[10px] text-cp-text-dim/40 flex items-center gap-0.5">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        {skill.stars}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleUninstallSkill(skill.id)}
+                      className="text-[10px] px-2 py-1 rounded bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                    >
+                      卸载
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
       </div>

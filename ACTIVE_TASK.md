@@ -1,4 +1,4 @@
-# ACTIVE_TASK -- v1.52.7 全平台部署完成
+# ACTIVE_TASK -- v1.52.9 全平台部署完成
 
 ## 状态：✅ 全部完成
 
@@ -6,30 +6,34 @@
 
 | 项目 | 版本 | 大小 | 状态 |
 |:-----|:----:|:----:|:----:|
-| 🐧 Linux AppImage | v1.52.7 | 172 MB | ✅ 已部署 |
-| 🐧 Linux deb | v1.52.7 | 105 MB | ✅ 已部署 |
-| 🪟 Windows Setup | v1.52.7 | 136 MB | ✅ 已部署 |
-| 🪟 Windows Portable | v1.52.7 | 136 MB | ✅ 已部署 |
-| 📱 Android APK | v1.52.7 | 78 MB | ✅ 已部署 (从v1.52.4同步) |
+| 🪟 Windows Setup | v1.52.9 | 142 MB | ✅ 已部署 |
+| 🪟 Windows Portable | v1.52.9 | 142 MB | ✅ 已部署 |
+| 🐧 Linux AppImage | v1.52.9 | 173 MB | ✅ 已部署 |
+| 🐧 Linux deb | v1.52.9 | 105 MB | ✅ 已部署 |
+| 📱 Android APK | v1.52.9 | 78 MB | ✅ 已部署 |
 
-## 最近修复
-### 移动端 APK v1.52.7 下载重定向到 v1.51.1 ✅
-- 根因: v1.52.7 未构建 Android APK + Nginx fallback 硬编码为 v1.51.1
-- 修复: 复制 v1.52.4 → v1.52.7 + 更新 versions.json + Nginx fallback → v1.52.7
+## 本轮变更
+### 输入区改造 — 移除@提及 + 通用文件上传（11项任务全部完成）
+- 新增 `useFileAttachments.ts` — 统一附件管理Hook
+- 删除 `useFileMentions.ts` + `useImageAttachments.ts`
+- 改造 `InputToolbar.tsx` / `ContextChips.tsx` / `ChatInput.tsx` / `ChatPanel.tsx` / `ChatSidebar.tsx` / `QuestConversation.tsx`
+- 改造 `useDragDropFiles.ts` / `fs-ipc.ts` / `electron.d.ts`
+- 共13个文件变更：1新增、2删除、10修改
+- TypeScript 编译零错误 ✅
 
 ## Git 同步
-- GitHub: `ef19beb8b` ✅
-- 生产 bare repo (120.55.5.220): 已同步 ✅
-- 构建服务器 (192.168.1.9): 已同步 ✅
+- GitHub: ❌ 连接失败（需手动重试）
+- 生产 bare repo (120.55.5.220): ✅ `c87f84667`
+- 构建服务器 (192.168.1.9): ✅ 已同步
 
 ## 生产服务器状态
-- API `/api/latest` → v1.52.7 ✅
-- 4个 versions.json 包含 android 条目 ✅
+- API `/api/latest` → v1.52.9 ✅
+- 8个 versions.json 全部一致 md5=`e78cd5ea94fc72d86c03ed2108aa0e9e` ✅
 - Nginx online ✅
-- update-server (3001) online ✅
-- lingjing-update-server (3002) online ✅
-- cloud-server (8000) online ✅
+- update-server (3001): online ✅
+- lingjing-update-server (3002): online ✅
+- cloud-server (8000): online ✅
 
 ## 版本号
-- packages/electron/package.json: **1.52.7**
-- package.json: **1.52.7**
+- packages/electron/package.json: **1.52.9**
+- package.json: **1.52.9**

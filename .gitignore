@@ -78,3 +78,6 @@ scripts/tunnel-codeserver.bat
   
 # Scripts node_modules (not tracked)  
 scripts/node_modules/ 
+"*.tar.gz"  
+"tmp_*"  
+"PHASE96_QUEST_LIFECYCLE_FIX.md"  

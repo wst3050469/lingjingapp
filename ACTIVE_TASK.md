@@ -1,33 +1,24 @@
-# ACTIVE_TASK -- v1.52.0 全平台发布完成
+# ACTIVE_TASK -- Phase 96 Quest Agent 生命周期修复 (待提交)
 
-## 状态：✅ 全部完成
+## 状态：🔧 代码已完成，待提交构建部署
 
 ## 当前交付
 
-| 项目 | 版本 | 大小 | 状态 |
-|:-----|:-----|:----:|:----:|
-| 🐧 Linux AppImage | v1.52.0 | 179 MB | ✅ 已部署 |
-| 🐧 Linux deb | v1.52.0 | 108 MB | ✅ 已部署 |
-| 🪟 Windows Setup | v1.52.0 | 142 MB | ✅ 已部署 |
-| 🪟 Windows Portable | v1.52.0 | 142 MB | ✅ 已部署 |
-| 📱 Android APK | v1.52.0 | 78 MB | ✅ 已部署 |
-| 🔒 CORS 中间件 | 域名白名单 | - | ✅ 已部署 |
-| 🔒 Rate Limiting | auth 10次/分钟 | - | ✅ 已部署 |
-| 🔒 安全头部 | HSTS/CSP/X-Frame等 | - | ✅ 已部署 |
-| 🔒 错误处理 | 不再泄露内部详情 | - | ✅ 已部署 |
-| 🧹 项目清理 | 删除30+临时脚本 | - | ✅ 已完成 |
+| 项目 | 版本 | 状态 |
+|:-----|:----:|:----:|
+| 🎯 Phase 96: Quest Agent 4个断裂点修复 | v1.52.4-dev | 🔧 代码完成，待提交 |
+| 🐧 Linux (AppImage/Deb) | v1.52.3 | ✅ 已部署 |
+| 🪟 Windows (Setup/Portable) | v1.52.1 | ✅ 已部署 |
+| 📱 Android APK | v1.52.3 | ✅ 已部署 |
+| 📱 移动端源码 | v1.52.3 | ✅ 本地同步 |
+
+## 待办事项
+1. ⏳ Git 提交 Phase 96 + 移动端修复
+2. ⏳ 同步构建服务器 (192.168.1.9)
+3. ⏳ 全平台构建部署
+4. ⏳ 生产服务器更新
 
 ## 版本号
-- packages/electron/package.json: **1.52.0**
-- app.json: **1.52.0**
-
-## API 验证
-- `/api/latest` → `{"hasUpdate":true,"version":"1.52.0"}` ✅
-- `latest.yml` → version: 1.52.0 ✅
-- `latest-linux.yml` → version: 1.52.0 ✅
-
-## Git
-- 生产 bare repo 已同步 ✅
-- 构建服务器 (192.168.1.9) 已同步 ✅
-- GitHub 推送 ✅ 已完成
-- **已知问题**: preload.ts 缺少 githubSkill 桥接 — 已修复 `7e7b299`
+- packages/electron/package.json: **1.52.1** (需bump)
+- app.json: **1.52.3**
+- mobile/app.json: **1.52.1**

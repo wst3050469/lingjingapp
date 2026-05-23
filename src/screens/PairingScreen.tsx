@@ -60,11 +60,12 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
     } catch { /* will try cloud */ }
     setLanAttempt('failed');
 
-    // ── Channel 2: FRP Relay (Cloud tunnel to desktop) ──
+    // ── Channel 2: FRP Relay (cloud tunnel to desktop) ──
     setCloudAttempt('trying');
     try {
       api.configure({ baseUrl: FRP_RELAY_URL, token: tokenStr, wsUrl: FRP_RELAY_WS });
-      const res = await fetch(`${FRP_RELAY_URL}/api/status`, {
+      // Use authenticated endpoint to verify token works with desktop web-server
+      const res = await fetch(`${FRP_RELAY_URL}/api/sessions?limit=1`, {
         headers: { Authorization: `Bearer ${tokenStr}` },
       });
       if (res.ok) {

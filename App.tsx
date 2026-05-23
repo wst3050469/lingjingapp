@@ -146,17 +146,19 @@ export default function App() {
       }
 
       // ── Attempt 2: FRP relay (cloud tunnel to desktop) ──
+      // Note: FRP server (frps) must be running on the relay domain.
+      // Uses authenticated endpoint /api/sessions to verify the token works.
       setLoadingText('正在通过中转连接...');
       try {
         api.configure({ baseUrl: FRP_RELAY_URL, token: storedToken, wsUrl: FRP_RELAY_WS });
-        const res = await fetch(`${FRP_RELAY_URL}/api/status`, {
+        const res = await fetch(`${FRP_RELAY_URL}/api/sessions?limit=1`, {
           headers: { Authorization: `Bearer ${storedToken}` },
         });
         if (res.ok) {
           const data = await res.json();
           api.connectWs();
           setConnection(true, 'cloud', FRP_RELAY_URL);
-          setStatus(data);
+          if (data && data.device) setStatus(data);
           setInitializing(false);
           Notifications.registerPushToken(storedToken, '灵境 Mobile').catch(() => {});
           return;

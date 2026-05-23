@@ -165,7 +165,7 @@ export default function App() {
   function handleLoginSuccess() {
     setShowLogin(false);
     const state = useAppStore.getState();
-    // If pairing exists, keep using local web-server for sessions
+    // If pairing exists, try local web-server for sessions first
     if (state.pairingToken && state.pairingLanIp) {
       const pairingUrl = `http://${state.pairingLanIp}:3001`;
       api.configure({
@@ -173,22 +173,31 @@ export default function App() {
         token: state.pairingToken,
         wsUrl: `ws://${state.pairingLanIp}:3001/ws`,
       });
-      api.connectWs();
-      setConnection(true, 'cloud_account', pairingUrl);
-    } else {
-      // No pairing — use cloud server directly
-      api.configure({
-        baseUrl: 'https://ide.zhejiangjinmo.com',
-        token: state.cloudToken || state.token,
-        wsUrl: 'wss://ide.zhejiangjinmo.com/ws',
-      });
-      api.connectWs();
-      setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
+      try {
+        await api.getStatus();
+        api.connectWs();
+        setConnection(true, 'cloud_account', pairingUrl);
+        setStatus(await api.getStatus());
+        Notifications.registerPushToken(state.pairingToken, '灵境 Mobile').catch(() => {});
+        return;
+      } catch {
+        // Pairing unreachable — fall through to cloud server
+        console.log('[App] Pairing unreachable after login, using cloud server');
+      }
     }
+    // Fallback: use cloud server directly
+    const cloudToken = state.cloudToken || state.token;
+    api.configure({
+      baseUrl: 'https://ide.zhejiangjinmo.com',
+      token: cloudToken,
+      wsUrl: 'wss://ide.zhejiangjinmo.com/ws',
+    });
+    api.connectWs();
+    setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
     try {
       api.getStatus().then(setStatus).catch(() => {});
     } catch { /* ignore */ }
-    Notifications.registerPushToken(state.cloudToken || state.token, '灵境 Mobile').catch(() => {});
+    Notifications.registerPushToken(cloudToken, '灵境 Mobile').catch(() => {});
   }
 
   function switchToPairing() {

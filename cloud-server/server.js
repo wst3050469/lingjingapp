@@ -1520,6 +1520,10 @@ app.get('/admin/versions-v2.html', (req, res) => {
   res.sendFile(resolve(__dirname, 'web-platform', 'public', 'versions-v2.html'));
 });
 
+app.get('/admin/versions', (req, res) => {
+  res.sendFile(resolve(__dirname, 'web-platform', 'public', 'versions-v2.html'));
+});
+
 app.get('/admin/*', (req, res) => {
   res.sendFile(resolve(__dirname, 'web-platform', 'public', 'index.html'));
 });

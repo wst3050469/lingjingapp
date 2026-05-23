@@ -98,6 +98,13 @@ async function loadVersions() {
   }
 }
 
+let showOnlyPublished = false;
+
+function toggleFilter() {
+  showOnlyPublished = !showOnlyPublished;
+  render();
+}
+
 function statusBadge(status) {
   const cls = status === 'published' ? 'published' : status === 'pending_review' ? 'pending_review' : 'draft';
   const label = status === 'published' ? '已发布' : status === 'pending_review' ? '审核中' : '草稿';
@@ -185,6 +192,7 @@ async function deleteVersion(ver) {
 
 function editVersion(ver) {
   editingId = ver.version;
+  showOnlyPublished = false; // Show all when editing
   render();
   document.getElementById('formArea').innerHTML = renderForm(ver);
   document.getElementById('fVer').focus();
@@ -204,22 +212,41 @@ function showError(msg) {
 function render() {
   let html = '';
   
-  // Form
+  // Form (only show when not filtered)
   if (!editingId) {
-    html += '<div id="formArea">' + renderForm(null) + '</div>';
+    if (showOnlyPublished) {
+      html += '<div class="card" style="text-align:center;padding:12px;background:rgba(210,153,34,0.05);border-color:rgba(210,153,34,0.2)">' +
+        '💡 当前仅显示已发布的版本（<a href="javascript:toggleFilter()" style="color:#58a6ff">显示所有版本</a>）' +
+        '</div>';
+    } else {
+      html += '<div id="formArea">' + renderForm(null) + '</div>';
+    }
   } else {
     html += '<div id="formArea"></div>';
   }
   
+  // Filter controls
+  html += '<div class="card" style="padding:12px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">' +
+    '<span style="color:#8b949e;font-size:0.85rem">' +
+    '审核流程：<span class="badge draft">草稿</span> → <span class="badge pending_review">审核中</span> → <span class="badge published">已发布</span>' +
+    '｜仅已发布版本会推送给客户端升级' +
+    '</span>' +
+    '<div class="btn-group">' +
+    '<button class="btn-sm ' + (showOnlyPublished ? '' : 'success') + '" onclick="showOnlyPublished=false;render()">全部版本</button>' +
+    '<button class="btn-sm ' + (showOnlyPublished ? 'success' : '') + '" onclick="showOnlyPublished=true;render()">仅已发布</button>' +
+    '</div></div></div>';
+  
   // Version table
-  html += '<div class="card"><div class="card-title">版本列表 (' + versions.length + ')</div>';
-  if (versions.length === 0) {
-    html += '<div class="loading">暂无版本</div>';
+  const filteredVersions = showOnlyPublished ? versions.filter(v => v.status === 'published') : versions;
+  html += '<div class="card"><div class="card-title">版本列表 (' + filteredVersions.length + '/' + versions.length + ')</div>';
+  if (filteredVersions.length === 0) {
+    html += '<div class="loading">' + (showOnlyPublished ? '暂无已发布的版本' : '暂无版本') + '</div>';
   } else {
     html += '<table><thead><tr>' +
       '<th>版本号</th><th>更新内容</th><th>状态</th><th>发布日期</th><th>下载链接</th><th>操作</th>' +
       '</tr></thead><tbody>';
-    for (const v of versions) {
+    for (const v of filteredVersions) {
       const dl = v.downloadUrls || {};
       html += '<tr>' +
         '<td style="font-weight:600">v' + v.version + '</td>' +

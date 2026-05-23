@@ -1418,6 +1418,9 @@ export function registerAdminAPI(app, db) {
       '/root/lingjing-update/data/versions.json',
       '/var/www/update-server/data/versions.json',
       '/opt/lingjing-update/data/versions.json',
+      '/var/www/html/downloads/versions.json',
+      '/var/www/html/versions.json',
+      '/var/www/downloads/versions.json',
       path.resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
       path.resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
     ];

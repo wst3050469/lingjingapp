@@ -1,10 +1,14 @@
-﻿// 设备配对页 — 首次启动时显示
-// v1.0.1: 增强 FRP 外网连接提示 + 通道尝试状态可视化
+// 设备配对页 — 首次启动时显示
+// v1.0.2: 统一使用 FRP_RELAY_URL 中转域名，Token 验证需经 /api/status
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api';
 import { useAppStore } from '../stores/app-store';
+
+// 与 App.tsx 保持一致的连接常量
+const FRP_RELAY_URL = 'https://wap.zhejiangjinmo.com';
+const FRP_RELAY_WS = 'wss://wap.zhejiangjinmo.com/ws';
 
 type ChannelAttempt = 'idle' | 'trying' | 'success' | 'failed';
 
@@ -56,12 +60,11 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
     } catch { /* will try cloud */ }
     setLanAttempt('failed');
 
-    // ── Channel 2: Cloud ──
+    // ── Channel 2: FRP Relay (Cloud tunnel to desktop) ──
     setCloudAttempt('trying');
     try {
-      const cloudUrl = 'https://lingjing.zhejiangjinmo.com';
-      api.configure({ baseUrl: cloudUrl, token: tokenStr, wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
-      const res = await fetch(`${cloudUrl}/api/status`, {
+      api.configure({ baseUrl: FRP_RELAY_URL, token: tokenStr, wsUrl: FRP_RELAY_WS });
+      const res = await fetch(`${FRP_RELAY_URL}/api/status`, {
         headers: { Authorization: `Bearer ${tokenStr}` },
       });
       if (res.ok) {
@@ -70,7 +73,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
         setToken(tokenStr);
         setLanIp(ipStr);
         api.connectWs();
-        setConnection(true, 'cloud', cloudUrl);
+        setConnection(true, 'cloud', FRP_RELAY_URL);
         setStatus('success');
         setStep('done');
         return;
@@ -79,7 +82,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
     setCloudAttempt('failed');
 
     setStatus('failed');
-    setErrorMsg('所有通道均连接失败\n\n📡 LAN: 同WiFi直连\n☁️ Cloud: 云服务器中转\n\n请检查桌面端是否已启动并开启 Web Server');
+    setErrorMsg('所有通道均连接失败\n\n📡 LAN: 同WiFi直连\n☁️ FRP中转: 通过云服务器连接桌面端\n\n请检查桌面端是否已启动并开启 Web Server');
     setStep('token');
   }
 
@@ -101,7 +104,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
           <Text style={styles.successTitle}>配对成功！</Text>
           <Text style={styles.successSub}>
             {connectedChannel === 'lan' ? '已通过局域网连接' :
-             '已通过云服务器连接'}
+             '已通过FRP中转连接'}
           </Text>
           <Text style={styles.successUrl}>
             {connectedChannel === 'lan' ? `${editingIp}:3001` : 'lingjing.zhejiangjinmo.com'}
@@ -173,7 +176,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
             <View style={styles.channelRow}>
               {channelIcon(cloudAttempt)}
               <Text style={[styles.channelText, cloudAttempt === 'trying' && styles.channelActive]}>
-                ☁️ Cloud 云服务器
+                ☁️ FRP 中转（远程连接）
               </Text>
             </View>
           </View>
@@ -189,7 +192,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
             📡 局域网：手机和桌面端在同 WiFi 下自动连接
           </Text>
           <Text style={styles.infoText}>
-            ☁️ 云服务器：通过 lingjing.zhejiangjinmo.com 远程连接
+            ☁️ FRP 中转：通过 lingjing.zhejiangjinmo.com 远程连接（需桌面端开启FRP）
           </Text>
           <Text style={styles.infoHint}>
             提示：桌面设置→移动端→开启「灵境移动端」开关即可

@@ -352,11 +352,18 @@ function createWindow(): void {
   Menu.setApplicationMenu(buildApplicationMenu());
 
   const winSize = getSafeWindowSize(1400, 900);
+  // Ensure min size is consistent with calculated safe size to avoid
+  // Electron forcing a minimum that exceeds the screen on HiDPI Linux.
+  // On Linux with scaleFactor > 1, the logical pixels may be small,
+  // so min size should match the constrained fallback (640x480 min).
+  const isLinux = process.platform === 'linux';
+  const minW = isLinux ? Math.min(winSize.width, 800) : 800;
+  const minH = isLinux ? Math.min(winSize.height, 600) : 600;
   mainWindow = new BrowserWindow({
     width: winSize.width,
     height: winSize.height,
-    minWidth: 800,
-    minHeight: 600,
+    minWidth: minW,
+    minHeight: minH,
     title: '灵境',
     backgroundColor: '#1e1e1e',
     show: false,
@@ -395,6 +402,23 @@ function createWindow(): void {
   mainWindow.once('ready-to-show', () => {
     clearTimeout(showTimeout);
     mainWindow?.show();
+
+    // On Linux, adjust content zoom to match display scale factor
+    // Electron's webContents zoom does not auto-scale on all Linux DEs
+    if (isLinux && mainWindow && !mainWindow.isDestroyed()) {
+      try {
+        const primaryDisplay = screen.getPrimaryDisplay();
+        const sf = primaryDisplay.scaleFactor || 1;
+        if (sf > 1 && sf !== 2) {
+          // Only adjust for non-standard scaling (e.g. 1.5, 1.75)
+          // Standard 2x Retina is usually handled by the renderer
+          mainWindow.webContents.setZoomFactor(1 / sf);
+          console.log(`[Main] Linux zoom adjusted: scaleFactor=${sf}, zoomFactor=${1 / sf}`);
+        }
+      } catch (err) {
+        console.warn('[Main] Failed to adjust Linux zoom:', err);
+      }
+    }
   });
 
   // ── Renderer failure protection layer 2: did-fail-load ──

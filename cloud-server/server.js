@@ -510,6 +510,32 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '3.0.0', uptime: process.uptime(), node: process.version });
 });
 
+// Status — returns basic server info, auth-optional for diagnostics
+// Used by mobile app to verify server reachability
+app.get('/api/status', (req, res) => {
+  try {
+    const totalSessions = db.prepare('SELECT COUNT(*) as count FROM sessions').get()?.count || 0;
+    const totalUsers = db.prepare('SELECT COUNT(*) as count FROM users').get()?.count || 0;
+    res.json({
+      device: 'LingJing Cloud Server',
+      platform: process.platform,
+      uptime: process.uptime(),
+      version: '3.0.0',
+      stats: {
+        conversations: totalSessions,
+        mobile_clients: 0,
+      }
+    });
+  } catch (err) {
+    res.json({
+      device: 'LingJing Cloud Server',
+      platform: process.platform,
+      uptime: process.uptime(),
+      version: '3.0.0',
+    });
+  }
+});
+
 // ── Version Info (for electron-updater) ──
 // Reads from versions.json (supports both download-list and update-server formats)
 function readVersionInfo() {

@@ -186,7 +186,7 @@ function listInstalledSkills(): InstalledSkill[] {
 
 function getSkillById(id: string): InstalledSkill | null {
   if (!dbRef) throw new Error('Database not initialized');
-  const rows = dbRef.exec(`SELECT * FROM installed_skills WHERE id = '${id}'`);
+  const rows = dbRef.exec(`SELECT * FROM installed_skills WHERE id = ?`, [id]);
   if (!rows || !rows[0] || !rows[0].values || !rows[0].values[0]) return null;
   const cols = rows[0].columns;
   const obj: Record<string, any> = {};

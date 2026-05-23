@@ -2129,10 +2129,10 @@ const wss = new WebSocketServer({ server });
 
 const clients = new Set();
 
-function broadcast(data) {
+function broadcast(data, excludeWs) {
   const msg = JSON.stringify(data);
   for (const ws of clients) {
-    if (ws.readyState === 1) ws.send(msg);
+    if (ws.readyState === 1 && ws !== excludeWs) ws.send(msg);
   }
 }
 
@@ -2229,7 +2229,7 @@ wss.on('connection', (ws, req) => {
             type: "push",
             channel: "chat",
             data: { conversationId, message: userMsg }
-          });
+          }, ws);
           ws.send(JSON.stringify({ type: "ack", id: data.id, success: true, data: { status: "sent", conversationId, message: userMsg } }));
         } catch (err) {
           console.error("[WS] Chat send error:", err.message);

@@ -32,11 +32,11 @@ export class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;  
       return ( 
         <View style={styles.container}> 
-          <Text style={styles.icon}>??</Text> 
-          <Text style={styles.title}>Ò³Ãæ³ö´íÁË</Text>  
-          <Text style={styles.message}>{this.state.error?.message || 'Î´Öª´íÎó'}</Text> 
+          <Text style={styles.icon}>âš ï¸</Text> 
+          <Text style={styles.title}>é¡µé¢å‡ºé”™äº†</Text>  
+          <Text style={styles.message}>{this.state.error?.message || 'æœªçŸ¥é”™è¯¯'}</Text> 
           <TouchableOpacity style={styles.button} onPress={this.handleRetry}>  
-            <Text style={styles.buttonText}>ÖØÊÔ</Text>  
+            <Text style={styles.buttonText}>é‡è¯•</Text>  
           </TouchableOpacity>  
         </View> 
       );  

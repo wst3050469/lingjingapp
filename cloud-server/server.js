@@ -1530,7 +1530,13 @@ app.get('/admin/versions-v2.html', (req, res) => {
 });
 
 app.get('/admin/versions-v2.js', (req, res) => {
-  res.sendFile(resolve(__dirname, 'web-platform', 'public', 'versions-v2.js'));
+  const filePath = resolve(__dirname, 'web-platform', 'public', 'versions-v2.js');
+  try {
+    const content = readFileSync(filePath, 'utf8');
+    res.type('js').send(content);
+  } catch {
+    res.status(404).json({ error: 'versions-v2.js not found' });
+  }
 });
 
 app.get('/admin/versions', (req, res) => {

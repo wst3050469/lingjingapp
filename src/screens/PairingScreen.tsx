@@ -1,4 +1,4 @@
-// 设备配对页 — 首次启动时显示
+﻿// 设备配对页 — 首次启动时显示
 // v1.0.1: 增强 FRP 外网连接提示 + 通道尝试状态可视化
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, SafeAreaView, ScrollView } from 'react-native';
@@ -59,8 +59,8 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
     // ── Channel 2: Cloud ──
     setCloudAttempt('trying');
     try {
-      const cloudUrl = 'https://ide.zhejiangjinmo.com';
-      api.configure({ baseUrl: cloudUrl, token: tokenStr, wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
+      const cloudUrl = 'https://lingjing.zhejiangjinmo.com';
+      api.configure({ baseUrl: cloudUrl, token: tokenStr, wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
       const res = await fetch(`${cloudUrl}/api/status`, {
         headers: { Authorization: `Bearer ${tokenStr}` },
       });
@@ -104,7 +104,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
              '已通过云服务器连接'}
           </Text>
           <Text style={styles.successUrl}>
-            {connectedChannel === 'lan' ? `${editingIp}:3001` : 'ide.zhejiangjinmo.com'}
+            {connectedChannel === 'lan' ? `${editingIp}:3001` : 'lingjing.zhejiangjinmo.com'}
           </Text>
         </View>
       </SafeAreaView>
@@ -189,7 +189,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
             📡 局域网：手机和桌面端在同 WiFi 下自动连接
           </Text>
           <Text style={styles.infoText}>
-            ☁️ 云服务器：通过 ide.zhejiangjinmo.com 远程连接
+            ☁️ 云服务器：通过 lingjing.zhejiangjinmo.com 远程连接
           </Text>
           <Text style={styles.infoHint}>
             提示：桌面设置→移动端→开启「灵境移动端」开关即可

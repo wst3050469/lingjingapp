@@ -1,4 +1,4 @@
-// LingJing IDE Mobile - API Service Layer
+﻿// LingJing IDE Mobile - API Service Layer
 import { Platform } from 'react-native';
 
 export interface ApiConfig {
@@ -34,8 +34,10 @@ class ApiService {
  public onConnectionChange?: (connected: boolean) => void;
  private _deviceId: string|null = null;
  private _jwtToken: string|null = null;
+ private _cloudUser: any = null;
  get deviceId(): string|null { return this._deviceId; }
  get jwtToken(): string|null { return this._jwtToken; }
+ get cloudUser(): any { return this._cloudUser; }
  configure(config: Partial<ApiConfig>) { this.config = { ...this.config, ...config }; if (config.token) this._jwtToken = config.token; }
  getConfig(): ApiConfig { return { ...this.config }; }
  private get headers(): Record<string, string> {
@@ -46,12 +48,18 @@ class ApiService {
  return h;
  }
  private async request<T>(path: string, options?: RequestInit): Promise<T> {
- var baseUrl = this.config.baseUrl || 'https://ide.zhejiangjinmo.com';
+ var baseUrl = this.config.baseUrl || 'https://lingjing.zhejiangjinmo.com';
  var url = baseUrl + '/api' + path;
  var res = await fetch(url, { ...options, headers: { ...this.headers, ...options?.headers } });
  var data = await res.json();
  if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
  return data;
+ }
+ private setCloudUser(result: any) {
+ if (result && result.ok && result.token) {
+ this._jwtToken = result.token;
+ this._cloudUser = result.user || null;
+ }
  }
  async registerDevice(deviceName?: string): Promise<any> {
  var result: any = await this.request('/auth/register', { method: 'POST', body: JSON.stringify({ deviceId: this._deviceId || undefined, deviceName: deviceName || 'Mobile - ' + Platform.OS, deviceInfo: { platform: Platform.OS, version: Platform.Version }, apiKey: this.config.apiKey || undefined }) });
@@ -64,12 +72,15 @@ class ApiService {
 
  // --- Auth ---
  async login(username: string, password: string): Promise<{ok: boolean; token?: string; user?: any; error?: string}> {
- try { return await this.request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }); }
+ try { var result = await this.request<any>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }); this.setCloudUser(result); return result; }
  catch (e: any) { return { ok: false, error: e.message }; }
  }
  async signup(username: string, password: string, email?: string): Promise<{ok: boolean; token?: string; user?: any; error?: string}> {
- try { return await this.request('/auth/signup', { method: 'POST', body: JSON.stringify({ username, password, email }) }); }
+ try { var result = await this.request<any>('/auth/signup', { method: 'POST', body: JSON.stringify({ username, password, email }) }); this.setCloudUser(result); return result; }
  catch (e: any) { return { ok: false, error: e.message }; }
+ }
+ async cloudLogout(): Promise<void> {
+ this._jwtToken = null; this._cloudUser = null; this.disconnectWs();
  }
 
  // --- Sessions ---
@@ -187,6 +198,9 @@ class ApiService {
  async triggerWebhook(channel: string, payload: any) { return this.request<any>('/webhook/' + encodeURIComponent(channel), { method: 'POST', body: JSON.stringify(payload) }); }
  async getSubscription() { return this.request<any>('/subscription'); }
  async getPlans2() { return this.request<any>('/plans'); }
+ async getPayments() { return this.request<any>('/payments'); }
+ async upgrade(planId: string) { return this.request<any>('/subscriptions/upgrade', { method: 'POST', body: JSON.stringify({ planId }) }); }
+ async downgrade(planId: string) { return this.request<any>('/subscriptions/downgrade', { method: 'POST', body: JSON.stringify({ planId }) }); }
  async createPayment(channel: string, amount: number, planId: string) { return this.request<any>('/payments/create', { method: 'POST', body: JSON.stringify({ channel, amount, planId }) }); }
  async confirmPayment(orderId: string) { return this.request<any>('/payments/confirm/' + orderId, { method: 'POST' }); }
  async queryPayment(orderId: string) { return this.request<any>('/payments/query/' + orderId); }
@@ -197,4 +211,3 @@ class ApiService {
 }
 
 export const api = new ApiService();
-

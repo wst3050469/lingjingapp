@@ -1,4 +1,4 @@
-// 设置页
+﻿// 设置页
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,8 +47,8 @@ export default function SettingsScreen() {
       throw new Error('LAN failed');
     }).catch(() => {
       // Try Cloud
-      const cloudUrl = 'https://ide.zhejiangjinmo.com';
-      api.configure({ baseUrl: cloudUrl, token: editingToken, wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
+      const cloudUrl = 'https://lingjing.zhejiangjinmo.com';
+      api.configure({ baseUrl: cloudUrl, token: editingToken, wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
       return fetch(`${cloudUrl}/api/health`).then(res => {
         if (res.ok) {
           setConnection(true, 'cloud', cloudUrl);
@@ -70,8 +70,8 @@ export default function SettingsScreen() {
           setUser({ id: cloudUser.id, username: cloudUser.username, email: cloudUser.email });
           setCloudPassword('');
           // Switch to cloud account mode
-          const cloudUrl = 'https://ide.zhejiangjinmo.com';
-          api.configure({ baseUrl: cloudUrl, token: api.jwtToken || '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
+          const cloudUrl = 'https://lingjing.zhejiangjinmo.com';
+          api.configure({ baseUrl: cloudUrl, token: api.jwtToken || '', wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
           api.connectWs();
           setConnection(true, 'cloud_account', cloudUrl);
         }

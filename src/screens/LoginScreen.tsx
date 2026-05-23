@@ -1,4 +1,4 @@
-// 云账号登录/注册页
+﻿// 云账号登录/注册页
 // 支持登录和注册两种模式，使用 cloud-server /api/auth/login + /api/auth/signup
 import React, { useState } from 'react';
 import {
@@ -36,7 +36,7 @@ export default function LoginScreen({ onSuccess, onSwitchToPairing }: { onSucces
     setError('');
 
     // Configure API to use cloud server for auth
-    api.configure({ baseUrl: 'https://ide.zhejiangjinmo.com', token: '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
+    api.configure({ baseUrl: 'https://lingjing.zhejiangjinmo.com', token: '', wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
 
     try {
       const result = mode === 'login'

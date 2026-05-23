@@ -31,6 +31,8 @@ class ApiService {
  private wsSubscriptions: Set<string> = new Set();
  private reconnectTimer: ReturnType<typeof setTimeout>|null = null;
  private heartbeatTimer: ReturnType<typeof setInterval>|null = null;
+ private wsReconnectAttempt = 0;
+ private wsMaxReconnectDelay = 30000;
  public onConnectionChange?: (connected: boolean) => void;
  private _deviceId: string|null = null;
  private _jwtToken: string|null = null;
@@ -123,6 +125,7 @@ class ApiService {
  this.ws.onmessage = (event) => {
  try {
  const msg = JSON.parse(event.data);
+ if (msg.type === 'pong') return;
  if (msg.type === 'push') {
  this.wsCallbacks.forEach(cb => cb(msg));
  } else if (msg.id && this.wsCallbacks.has(msg.id)) {
@@ -143,10 +146,13 @@ class ApiService {
  }
  private scheduleReconnect() {
  if (this.reconnectTimer) return;
+ const delay = Math.min(3000 * Math.pow(2, this.wsReconnectAttempt), this.wsMaxReconnectDelay);
+ this.wsReconnectAttempt++;
+ console.log('[Mobile API] Reconnecting in ' + delay + 'ms (attempt ' + this.wsReconnectAttempt + ')');
  this.reconnectTimer = setTimeout(() => {
  this.reconnectTimer = null;
  this.connectWs();
- }, 3000);
+ }, delay);
  }
 
  disconnectWs() {

@@ -28,11 +28,12 @@ export function useQuestEvents(): void {
       }
 
       // runId epoch filter: discard stale streaming events from old runs.
-      // IMPORTANT: 'done' and 'status_change' are lifecycle events that MUST be
-      // processed even with mismatched runId — they clean up runningTaskIds and
-      // task status. Without this, unmounting QuestView (which sets activeRunId=null)
-      // causes done events to be dropped, leaving stale runningTaskIds.
-      const isLifecycleEvent = event.type === 'done' || event.type === 'status_change';
+      // IMPORTANT: 'done', 'error', and 'status_change' are lifecycle events that MUST be
+      // processed even with mismatched runId — they clean up activeRunId, runningTaskIds,
+      // and task status. Without this, error events from Agent (which carry their runId)
+      // are dropped when activeRunId changes, leaving error messages never shown and
+      // state never cleaned up.
+      const isLifecycleEvent = event.type === 'done' || event.type === 'error' || event.type === 'status_change';
       if (!isLifecycleEvent && event.runId) {
         if (!store.activeRunId || event.runId !== store.activeRunId) {
           return; // Stale streaming event from a previous run – drop it

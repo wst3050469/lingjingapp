@@ -71,6 +71,7 @@ export interface ElectronAPI {
   agent: {
     run: (message: string, options?: AgentRunOptions) => Promise<void>;
     abort: () => Promise<void>;
+    resetConversation: () => Promise<void>;
     onEvent: (callback: (event: AgentEventData) => void) => () => void;
     onAskUser: (callback: (data: AskUserData) => void) => () => void;
     replyAskUser: (requestId: string, answer: string) => Promise<void>;
@@ -104,6 +105,10 @@ export interface ElectronAPI {
   app: {
     getVersion: () => Promise<string>;
     platform: () => Promise<string>;
+    onLog: (callback: (data: any) => void) => () => void;
+    onDbStatus: (callback: (data: any) => void) => () => void;
+    onWindowBeforeClose: (callback: () => void) => () => void;
+    confirmWindowClose: () => void;
   };
   update: {
     check: () => Promise<{ error?: string }>;
@@ -123,6 +128,7 @@ export interface ElectronAPI {
     zoomIn: () => Promise<void>;
     zoomOut: () => Promise<void>;
     zoomReset: () => Promise<void>;
+    openDevTools: () => Promise<void>;
   };
   auth: {
     register: (username: string, password: string, email?: string) => Promise<AuthResult>;
@@ -131,6 +137,7 @@ export interface ElectronAPI {
   };
   conversation: {
     save: (userId: number, conversationId: string, title: string, messages: Array<{ role: string; content: string }>) => Promise<{ success: boolean }>;
+    saveSync: (userId: number, conversationId: string, title: string, messages: any[]) => any;
     list: (userId: number) => Promise<Array<{ id: string; title: string; updatedAt: string }>>;
     load: (conversationId: string) => Promise<Array<{ role: string; content: string }>>;
     delete: (conversationId: string) => Promise<{ success: boolean }>;
@@ -149,16 +156,195 @@ export interface ElectronAPI {
     disconnect: (name: string) => Promise<{ success: boolean }>;
     listServers: () => Promise<Array<{ name: string; tools: Array<{ name: string; description?: string }> }>>;
     listSaved: () => Promise<Array<{ name: string; config: any; connected: boolean }>>;
+    listStates: () => Promise<any[]>;
+    callTool: (serverName: string, toolName: string, args: Record<string, unknown>) => Promise<any>;
+    marketplaceList: () => Promise<any[]>;
+    marketplaceInstall: (id: string, env?: Record<string, string>) => Promise<any>;
+    onChromiumInstallProgress: (callback: (data: any) => void) => () => void;
   };
   ollama: {
     listModels: () => Promise<{ models: Array<{ name: string; size: number; modifiedAt: string }>; error?: string | null }>;
   };
   git: {
+    init: () => Promise<any>;
     status: () => Promise<GitStatus>;
     log: (count?: number) => Promise<Array<{ hash: string; shortHash: string; message: string; author: string; date: string }>>;
+    add: (paths: string[]) => Promise<any>;
+    addAll: () => Promise<any>;
+    commit: (message: string) => Promise<any>;
   };
   tools: {
     list: () => Promise<Array<{ name: string; description: string }>>;
+  };
+  trigger: {
+    create: (type: string, config: any) => Promise<any>;
+    update: (triggerId: string, config: any) => Promise<any>;
+    delete: (triggerId: string) => Promise<any>;
+    enable: (triggerId: string) => Promise<any>;
+    disable: (triggerId: string) => Promise<any>;
+    getStatus: (triggerId: string) => Promise<any>;
+    list: () => Promise<any[]>;
+    getConfig: (triggerId: string) => Promise<any>;
+    onFired: (callback: (data: any) => void) => () => void;
+    onStatusChange: (callback: (data: any) => void) => () => void;
+    onError: (callback: (data: any) => void) => () => void;
+  };
+  githubSkill: {
+    list: () => Promise<any[]>;
+    uninstall: (id: string) => Promise<any>;
+  };
+  github: {
+    search: (query: string, limit?: number) => Promise<any[]>;
+    generateAuthUrl: (scopes?: string[]) => Promise<string>;
+    handleCallback: (code: string, state: string) => Promise<any>;
+    getUser: () => Promise<any>;
+    getRepositories: () => Promise<any[]>;
+    createRepository: (name: string, options?: any) => Promise<any>;
+    getFile: (owner: string, repo: string, path: string, ref?: string) => Promise<any>;
+    putFile: (owner: string, repo: string, path: string, content: string, message: string, sha?: string) => Promise<any>;
+    listAccounts: () => Promise<any[]>;
+    switchAccount: (accountId: string) => Promise<any>;
+    removeAccount: (accountId: string) => Promise<any>;
+    getSavedToken: (accountId: string) => Promise<any>;
+    getRepos: () => Promise<any[]>;
+    getBranches: (repo: string) => Promise<any[]>;
+    createPR: (repo: string, title: string, body: string, head: string, base: string) => Promise<any>;
+    listPRs: (repo: string) => Promise<any[]>;
+    listIssues: (repo: string) => Promise<any[]>;
+  };
+  cloudManagement: {
+    user: {
+      getInfo: () => Promise<any>;
+      update: (params: any) => Promise<any>;
+      changePassword: (params: any) => Promise<any>;
+      getSecuritySettings: () => Promise<any>;
+      updateSecuritySettings: (settings: any) => Promise<any>;
+      enableTwoFactor: (params: any) => Promise<any>;
+      disableTwoFactor: (code: string) => Promise<any>;
+      verifyTwoFactor: (code: string) => Promise<any>;
+      getLoginHistory: (limit?: number, offset?: number) => Promise<any[]>;
+      logoutAllDevices: () => Promise<any>;
+      deleteAccount: (password: string) => Promise<any>;
+      updateAvatar: (avatarData: string) => Promise<any>;
+    };
+    device: {
+      getAll: () => Promise<any[]>;
+      get: (deviceId: string) => Promise<any>;
+      register: (params: any) => Promise<any>;
+      updateName: (deviceId: string, name: string) => Promise<any>;
+      revoke: (deviceId: string) => Promise<any>;
+      delete: (deviceId: string) => Promise<any>;
+      generateAuthCode: () => Promise<string>;
+      authorize: (code: string) => Promise<any>;
+      getCurrent: () => Promise<any>;
+      getOnline: () => Promise<any>;
+    };
+    apiKey: {
+      getAll: (params?: any) => Promise<any[]>;
+      get: (keyId: string) => Promise<any>;
+      create: (params: any) => Promise<any>;
+      update: (keyId: string, params: any) => Promise<any>;
+      delete: (keyId: string) => Promise<any>;
+      regenerate: (keyId: string) => Promise<any>;
+      toggleStatus: (keyId: string) => Promise<any>;
+      getStats: () => Promise<any>;
+      getUsageHistory: (keyId: string, params?: any) => Promise<any[]>;
+      test: (keyId: string) => Promise<any>;
+      getPermissions: () => Promise<any>;
+    };
+    subscription: {
+      get: () => Promise<any>;
+      getPlans: () => Promise<any[]>;
+      getPlan: (planId: string) => Promise<any>;
+      subscribe: (params: any) => Promise<any>;
+      upgrade: (planId: string) => Promise<any>;
+      downgrade: (planId: string) => Promise<any>;
+      cancel: (reason?: string) => Promise<any>;
+      renew: () => Promise<any>;
+      enableAutoRenew: () => Promise<any>;
+      disableAutoRenew: () => Promise<any>;
+      getUsage: () => Promise<any>;
+      comparePlans: () => Promise<any>;
+      getPayments: () => Promise<any[]>;
+      submitOfflinePayment: (params: any) => Promise<any>;
+      getInvoices: () => Promise<any[]>;
+      createInvoice: (params: any) => Promise<any>;
+    };
+    sync: {
+      getStatus: () => Promise<any>;
+      now: (params?: any) => Promise<any>;
+      pause: () => Promise<any>;
+      resume: () => Promise<any>;
+      getHistory: (limit?: number, offset?: number) => Promise<any[]>;
+      getConflicts: () => Promise<any[]>;
+      resolveConflict: (params: any) => Promise<any>;
+      resolveAllConflicts: (resolution: string) => Promise<any>;
+      getSettings: () => Promise<any>;
+      updateSettings: (settings: any) => Promise<any>;
+      getPendingChanges: () => Promise<any>;
+    };
+    storage: {
+      getStats: () => Promise<any>;
+      getFiles: (params?: any) => Promise<any[]>;
+      getFile: (fileId: string) => Promise<any>;
+      deleteFile: (fileId: string) => Promise<any>;
+      deleteFiles: (fileIds: string[]) => Promise<any>;
+      downloadFile: (fileId: string) => Promise<any>;
+      getCleanupSuggestions: () => Promise<any>;
+      performCleanup: (params: any) => Promise<any>;
+      exportData: (dataTypes: string[]) => Promise<any>;
+      importData: (file: any) => Promise<any>;
+      getCategoryStats: () => Promise<any>;
+    };
+  };
+  cloudSync: {
+    init: () => Promise<any>;
+    push: (dataType: string, operation: string, payload: any) => Promise<any>;
+    pull: (dataType: string, dataId: string) => Promise<any>;
+    syncNow: () => Promise<any>;
+    getProgress: () => Promise<any>;
+    subscribe: (channel: string, callback: (data: any) => void) => () => void;
+    onStatus: (callback: (data: any) => void) => () => void;
+    onSyncEvent: (callback: (data: any) => void) => () => void;
+  };
+  batch: {
+    list: () => Promise<any[]>;
+    getStatus: () => Promise<any>;
+    start: (opts: any) => Promise<any>;
+    stop: () => Promise<any>;
+    getResults: () => Promise<any[]>;
+    getResult: (id: string) => Promise<any>;
+    cancel: (id: string) => Promise<any>;
+    pause: (id: string) => Promise<any>;
+    resume: (id: string) => Promise<any>;
+    onProgress: (callback: (data: any) => void) => () => void;
+    onComplete: (callback: (data: any) => void) => () => void;
+    onError: (callback: (data: any) => void) => () => void;
+  };
+  connector: {
+    list: () => Promise<any[]>;
+    get: (id: string) => Promise<any>;
+    connect: (id: string, config?: any) => Promise<any>;
+    disconnect: (id: string) => Promise<any>;
+    test: (id: string) => Promise<any>;
+    configure: (id: string, config: any) => Promise<any>;
+    register: (data: any) => Promise<any>;
+    unregister: (id: string) => Promise<any>;
+    onStatus: (callback: (data: any) => void) => () => void;
+  };
+  workflow: {
+    list: () => Promise<any[]>;
+    get: (id: string) => Promise<any>;
+    create: (data: any) => Promise<any>;
+    update: (id: string, data: any) => Promise<any>;
+    delete: (id: string) => Promise<any>;
+    run: (id: string, inputs?: any) => Promise<any>;
+    stop: (id: string) => Promise<any>;
+    getStatus: (id: string) => Promise<any>;
+    getLogs: (id: string) => Promise<any[]>;
+    onEvent: (callback: (data: any) => void) => () => void;
+    onProgress: (callback: (data: any) => void) => () => void;
+    onLog: (callback: (data: any) => void) => () => void;
   };
   memory: {
     list: (opts?: { scope?: string; projectPath?: string }) => Promise<Array<MemoryRecord>>;
@@ -185,9 +371,12 @@ export interface ElectronAPI {
     build: () => Promise<{ success: boolean; fileCount?: number; error?: string }>;
     getIgnore: () => Promise<{ content: string; exists: boolean }>;
     setIgnore: (content: string) => Promise<{ success: boolean; error?: string }>;
+    liveProgress: () => Promise<any>;
+    onProgress: (handler: (progress: any) => void) => () => void;
   };
   integrations: {
     githubValidate: (token: string) => Promise<{ valid: boolean; username?: string; avatar?: string; error?: string }>;
+    githubGetSavedToken: () => Promise<any>;
     githubConnect: (token: string) => Promise<{ success: boolean; username?: string; error?: string }>;
     githubDisconnect: () => Promise<{ success: boolean; error?: string }>;
     supabaseValidate: (projectUrl: string, anonKey: string) => Promise<{ valid: boolean; error?: string }>;
@@ -197,6 +386,7 @@ export interface ElectronAPI {
   context: {
     searchFiles: (query: string, type: 'file' | 'folder') => Promise<Array<{ name: string; path: string; isDirectory: boolean; size?: number }>>;
     listRules: () => Promise<Array<{ id: string; name: string; type: string; description?: string; filePath?: string; enabled: boolean; source: string }>>;
+    createRule: (name: string, content: string) => Promise<any>;
     parseDocument: (filePath: string) => Promise<{ content: string; type: string }>;
     gitChangedFiles: () => Promise<Array<{ name: string; path: string; status: string }>>;
     recentFiles: (limit?: number) => Promise<Array<{ name: string; path: string }>>;
@@ -227,11 +417,17 @@ export interface ElectronAPI {
   completion: {
     inline: (params: CompletionRequest) => Promise<CompletionResponse>;
     abort: () => Promise<void>;
+    accept: () => void;
+    acceptWord: () => void;
+    reject: () => void;
     crossFile: (params: CrossFileRequest) => Promise<CrossFileResponse>;
   };
   compact: {
     summarize: (messages: Array<{ role: string; content: string }>, language?: string) =>
       Promise<CompactSummarizeResponse>;
+  };
+  prompt: {
+    polish: (text: string) => Promise<{ polished: string; error: string | null }>;
   };
   quest: {
     createTask: (params: { scenario: string; runMode: string; autoMode: string; title?: string }) =>
@@ -240,18 +436,21 @@ export interface ElectronAPI {
     loadTask: (taskId: string) => Promise<QuestMessageRecord[]>;
     deleteTask: (taskId: string) => Promise<{ success: boolean }>;
     renameTask: (taskId: string, title: string) => Promise<{ success: boolean }>;
-    run: (params: { taskId: string; message: string; scenario: string; runMode: string; autoMode: string; contexts?: Array<{ id: string; type: string; label: string; path: string; content?: string }> }) =>
-      Promise<void>;
+    run: (params: any) => Promise<void>;
     abort: (taskId: string) => Promise<void>;
     pause: (taskId: string) => Promise<void>;
-    resume: (taskId: string, message?: string) => Promise<void>;
+    resume: (taskId: string, message?: string, runId?: string) => Promise<void>;
     updateSpec: (taskId: string, content: string) => Promise<{ success: boolean }>;
     confirmReply: (requestId: string, approved: boolean, feedback?: string) => Promise<void>;
     replyAskUser: (requestId: string, answer: string) => Promise<void>;
     sendIntervention: (taskId: string, text: string) => Promise<{ success: boolean }>;
+    saveMessages: (taskId: string) => Promise<any>;
+    stopOnSwitch: (taskId: string, runId?: string) => Promise<any>;
+    cleanup: (taskId: string) => Promise<any>;
     onEvent: (callback: (event: QuestEventData) => void) => () => void;
     onAskUser: (callback: (data: AskUserData) => void) => () => void;
     onConfirmRequest: (callback: (data: ConfirmationRequestData) => void) => () => void;
+    onLog: (callback: (data: any) => void) => () => void;
   };
   wiki: {
     status: () => Promise<WikiStatus>;
@@ -281,6 +480,8 @@ export interface ElectronAPI {
     cancel: (planId: string) => Promise<{ success: boolean; error?: string }>;
     export: (planId: string) => Promise<{ success: boolean; planData?: any; error?: string }>;
     import: (planData: Record<string, unknown>) => Promise<{ success: boolean; plan?: any; error?: string }>;
+    delete: (planId: string, workingDirectory: string) => Promise<any>;
+    load: (planId: string, workingDirectory: string) => Promise<any>;
     templates: () => Promise<{ success: boolean; templates?: Array<{ id: string; name: string; description?: string; goals?: string[]; steps?: any[] }>; error?: string }>;
   };
   ssh: {
@@ -294,7 +495,6 @@ export interface ElectronAPI {
     terminalResize: (sshTerminalId: string, cols: number, rows: number) => Promise<void>;
     onTerminalData: (callback: (data: { sshTerminalId: string; data: string }) => void) => () => void;
     onTerminalClosed: (callback: (data: { sshTerminalId: string }) => void) => () => void;
-    // Remote file operations (SFTP)
     readDir: (sshTerminalId: string, path: string) => Promise<Array<{ name: string; path: string; isDirectory: boolean; size?: number; mtime?: number }>>;
     readFile: (sshTerminalId: string, path: string) => Promise<{ content: string; language: string }>;
     writeFile: (sshTerminalId: string, path: string, content: string) => Promise<void>;
@@ -306,6 +506,21 @@ export interface ElectronAPI {
     getWorkspace: (sshTerminalId: string) => Promise<{ path?: string }>;
     exec: (sshTerminalId: string, command: string, cwd?: string) => Promise<{ stdout: string; stderr: string; exitCode: number | null }>;
   };
+  checkpoint: {
+    create: (files: string[], description: string) => Promise<any>;
+    list: () => Promise<any>;
+    get: (id: string) => Promise<any>;
+    rollback: (checkpointId: string, strategy?: 'force' | 'preserve-manual-edits') => Promise<any>;
+    delete: (id: string) => Promise<any>;
+  };
+  voice: {
+    [key: string]: any;
+    onInterimResult: (callback: (data: any) => void) => () => void;
+    onFinalResult: (callback: (data: any) => void) => () => void;
+    onStatusChange: (callback: (data: any) => void) => () => void;
+    onError: (callback: (data: any) => void) => () => void;
+  };
+  invoke: (channel: string, ...args: any[]) => Promise<any>;
   subscription: {
     status: (token: string) => Promise<{ planId: string; planName: string; status: string; endDate?: string; price?: number }>;
     plans: () => Promise<Array<{ id: string; name: string; price: number; billingCycle: string; features: Array<{ name: string; desc?: string; included: boolean }>; recommended: boolean }>>;
@@ -336,8 +551,12 @@ export interface ElectronAPI {
     pushSession: (session: { id: string; title?: string; messages?: any[]; metadata?: any }) => Promise<{ ok: boolean }>;
     pushMemory: (memory: { title: string; content: string; category?: string; scope?: string }) => Promise<{ ok: boolean }>;
     onStatus: (callback: (data: any) => void) => () => void;
+    saveConfig: (config: { url?: string; apiKey?: string }) => Promise<{ ok: boolean }>;
+    getConfig: () => Promise<{ url?: string; apiKey?: string }>;
     onSyncEvent: (callback: (data: any) => void) => () => void;
     onWebhookEvent: (callback: (data: any) => void) => () => void;
+    api: (opts: { endpoint: string; method?: string; body?: unknown; token?: string; baseUrl?: string }) => Promise<any>;
+    setUserToken: (token: string) => Promise<any>;
   };
 }
 

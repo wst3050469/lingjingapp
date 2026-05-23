@@ -370,9 +370,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       maxTokens?: number;
     }) => ipcRenderer.invoke('completion:inline', params),
     abort: () => ipcRenderer.invoke('completion:abort'),
-    accept: () => {},
-    acceptWord: () => {},
-    reject: () => {},
+    accept: () => ipcRenderer.send('completion:accept'),
+    acceptWord: () => ipcRenderer.send('completion:accept-word'),
+    reject: () => ipcRenderer.send('completion:reject'),
     crossFile: (params: {
       changedFile: string;
       changeDescription: string;

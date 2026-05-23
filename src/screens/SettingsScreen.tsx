@@ -6,6 +6,10 @@ import { useNavigation } from '@react-navigation/native';
 import { api } from '../services/api';
 import { useAppStore } from '../stores/app-store';
 
+// Connection URLs - must match App.tsx
+const FRP_RELAY_URL = 'https://wap.zhejiangjinmo.com';
+const FRP_RELAY_WS = 'wss://wap.zhejiangjinmo.com/ws';
+
 export default function SettingsScreen() {
   const { status, setStatus, connected, mode, baseUrl, token, setToken, lanIp, setLanIp, setConnection, user, setUser, logout } = useAppStore();
   const navigation = useNavigation<any>();
@@ -30,31 +34,44 @@ export default function SettingsScreen() {
   function handleSave() {
     setToken(editingToken);
     setLanIp(editingIp);
-    // Reconnect with new settings — try LAN then Cloud
-    const lanUrl = `http://${editingIp}:3001`;
-    api.configure({ baseUrl: lanUrl, token: editingToken, wsUrl: `ws://${editingIp}:3001/ws` });
-    api.connectWs();
+    // Reconnect — try LAN, then FRP relay, then stay offline
+    const tokenStr = editingToken.trim();
+    const ipStr = editingIp.trim();
+    if (!tokenStr || !ipStr) {
+      Alert.alert('提示', '请输入配对 Token 和桌面 IP');
+      return;
+    }
 
-    // Try LAN first, then Cloud
+    // Try LAN direct
+    const lanUrl = `http://${ipStr}:3001`;
+    api.configure({ baseUrl: lanUrl, token: tokenStr, wsUrl: `ws://${ipStr}:3001/ws` });
+    api.connectWs();
     fetch(`${lanUrl}/api/status`, {
-      headers: { Authorization: `Bearer ${editingToken}` },
-    }).then(res => {
+      headers: { Authorization: `Bearer ${tokenStr}` },
+    }).then(async res => {
       if (res.ok) {
         setConnection(true, 'lan', lanUrl);
-        loadStatus();
+        try { const s = await api.getStatus(); setStatus(s); } catch {}
         return;
       }
       throw new Error('LAN failed');
-    }).catch(() => {
-      // Try Cloud
-      const cloudUrl = 'https://lingjing.zhejiangjinmo.com';
-      api.configure({ baseUrl: cloudUrl, token: editingToken, wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
-      return fetch(`${cloudUrl}/api/health`).then(res => {
-        if (res.ok) {
-          setConnection(true, 'cloud', cloudUrl);
+    }).catch(async () => {
+      // Try FRP relay (cloud tunnel to desktop web-server)
+      api.configure({ baseUrl: FRP_RELAY_URL, token: tokenStr, wsUrl: FRP_RELAY_WS });
+      api.connectWs();
+      try {
+        const frpRes = await fetch(`${FRP_RELAY_URL}/api/sessions?limit=1`, {
+          headers: { Authorization: `Bearer ${tokenStr}` },
+        });
+        if (frpRes.ok) {
+          setConnection(true, 'cloud', FRP_RELAY_URL);
+          return;
         }
-      });
-    }).catch(() => { /* stay offline */ });
+      } catch {}
+      // Both failed — stay offline, notify user
+      setConnection(false, 'lan', '');
+      Alert.alert('连接失败', '无法连接到桌面端。\n请确保：\n1. 桌面端已启动并开启 Web Server\n2. 手机和桌面在同一 WiFi\n3. 配对 Token 正确');
+    });
   }
 
   /** Cloud account login handler */

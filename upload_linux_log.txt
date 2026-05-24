@@ -1,0 +1,29 @@
+Upload Linux artifacts to production
+
+AppImage: 5ba7f00e5aabff4864c7aa9091d79395c11d72d12951f451936c07fad99cbe45  /home/liuhui/lingjing/packages/electron/release/LingJing-1.56.0-linux-x86_64.AppImage
+DEB: not found
+
+Copying AppImage to production...
+  Done
+
+Production files:
+-rwxr-xr-x 1 root root 180613708 May 24 20:56 /var/www/downloads/LingJing-1.56.0-linux-x86_64.AppImage
+AppImage size: 180613708
+Prod SHA256: 5ba7f00e5aabff4864c7aa9091d79395c11d72d12951f451936c07fad99cbe45
+
+--- Writing latest-linux.yml ---
+OK
+Copied to /var/www/html/ as well
+
+--- Updating versions.json ---
+Output: versions.json updated with Linux files, version: 1.56.0
+
+
+--- Final Verification ---
+-rw-rw-rw- 1 root root       324 May 24 20:56 /var/www/downloads/latest-linux.yml
+-rwxr-xr-x 1 root root 180613708 May 24 20:56 /var/www/downloads/LingJing-1.56.0-linux-x86_64.AppImage
+Latest: 1.56.0
+Version: 1.56.0
+Platforms: ['win-x64', 'win-x64-portable', 'win-x64-blockmap', 'android', 'linux-x64', 'linux-deb']
+
+=== DEPLOYMENT COMPLETE ===

@@ -1065,9 +1065,11 @@ async function bootstrap(): Promise<void> {
       console.log('[Main] Cloud IPC registered successfully');
     } catch (err) {
       console.error('[Main] Cloud IPC registration failed:', err);
+      mainWindow?.webContents.send('cloud:status', { connected: false, error: 'Cloud IPC registration failed: ' + String(err) });
     }
     autoConnectCloud().catch((err) => {
       console.error('[Main] autoConnectCloud failed:', err);
+      mainWindow?.webContents.send('cloud:status', { connected: false, error: 'autoConnectCloud failed: ' + String(err) });
     });
 
     // Schedule management

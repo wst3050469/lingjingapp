@@ -87,3 +87,7 @@ scripts/node_modules/
 "*.tar.gz"  
 "tmp_*"  
 "PHASE96_QUEST_LIFECYCLE_FIX.md"  
+
+# Build artifacts - too large for GitHub
+packages/release/
+*.apk

@@ -1,0 +1,19 @@
+Bundled ruby: /home/liuhui/.cache/electron-builder/fpm/fpm-1.9.3-2.3.1-linux-x86_64/lib/ruby/bin.real/ruby
+EXISTS
+System ruby: ruby not in PATH
+Ruby locations:
+/snap/core/17284/etc/apparmor.d/abstractions/ruby
+/snap/core/17292/etc/apparmor.d/abstractions/ruby
+/snap/snapd/26382/usr/lib/snapd/apparmor.d/abstractions/ruby
+/snap/snapd/26865/usr/lib/snapd/apparmor.d/abstractions/ruby
+/snap/core22/2411/etc/apparmor.d/abstractions/ruby
+Ruby version: ruby 2.3.1p112 (2016-04-26 revision 54768) [x86_64-linux]
+
+Building DEB with bundled ruby...
+Output:
+<internal:gem_prelude>:4:in `require': cannot load such file -- rubygems.rb (LoadError)
+	from <internal:gem_prelude>:4:in `<internal:gem_prelude>'
+
+
+DEB:
+  FAILED

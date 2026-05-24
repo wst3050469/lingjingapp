@@ -1062,10 +1062,13 @@ async function bootstrap(): Promise<void> {
     // Cloud sync
     try {
       registerCloudIpc(mainWindow);
-      autoConnectCloud();
+      console.log('[Main] Cloud IPC registered successfully');
     } catch (err) {
       console.error('[Main] Cloud IPC registration failed:', err);
     }
+    autoConnectCloud().catch((err) => {
+      console.error('[Main] autoConnectCloud failed:', err);
+    });
 
     // Schedule management
     try {

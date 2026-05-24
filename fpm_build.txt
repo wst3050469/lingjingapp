@@ -1,0 +1,11 @@
+package.json:
+
+fpm: /home/liuhui/.cache/electron-builder/fpm/fpm-1.9.3-2.3.1-linux-x86_64/lib/app/bin/fpm
+
+Attempting direct fpm DEB creation...
+Output:
+/usr/bin/env: "ruby": 没有那个文件或目录
+
+
+DEB:
+  FAILED

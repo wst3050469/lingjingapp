@@ -1,0 +1,10 @@
+Uploading DEB to production...
+SCP OK
+Size: 135922276 SHA256: 3fd581635fb93949c13b1d682905c66e7264ef90d2490379f3cb2b577efbd031
+
+latest-linux.yml updated
+Verify:
+linux-x64: 180613708
+linux-deb: 0
+
+=== ALL v1.56.0 DEPLOYMENTS COMPLETE ===

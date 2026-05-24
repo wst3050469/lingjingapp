@@ -1,0 +1,15 @@
+All processes killed
+Cleaned old build artifacts
+Build main: [build-main] ⚠️ @codepilot/core dist not found at one of:
+  src: /home/liuhui/lingjing/node_modules/@codepilot/core/dist (exists: false)
+  dst: /home/liuhui/lingjing/packages/electron/node_modules/@co
+Starting full dist:linux...
+Log:
+[build-main] preload.js built successfully
+[build-main] ✅ preload.cjs created (copy of preload.js)
+[build-main] ✅ sql-wasm.wasm copied from /home/liuhui/lingjing/packages/electron/sql-wasm.wasm
+[build-main] ✅ All external deps already present in packages/electron/node_modules/
+[pre-package] ✅ All preparation steps completed (delegated to build-main.mjs)
+  • electron-builder  version=25.1.8 os=6.17.0-29-generic
+  • loaded configuration  file=/home/liuhui/lingjing/packages/electron/electron-builde
+Build PID: 388424

@@ -548,10 +548,9 @@ export function initUpdateIPC(win: BrowserWindow): void {
 
     autoUpdater.on('error', (err: Error) => {
       console.error('[update] Auto-updater error:', err.message);
-      // 降级处理：不发送error，显示"已是最新"
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('update:not-available');
-      }
+      // 降级处理：仅打印日志，不发送 update:not-available
+      // 因为 httpCheckVersion 可能已成功检测到更新并发送了 update:available
+      // 若此处发送 not-available 会覆盖 http 检测结果，导致用户看到"已是最新"实际有更新
 
       updateState.rollbackCount++;
       saveUpdateState(updateState);
@@ -678,10 +677,7 @@ function startAutoCheck(win: BrowserWindow, autoUpdater: any): void {
     console.log('[update] Checking for updates...');
     autoUpdater.checkForUpdates().catch((err: Error) => {
       console.error('[update] Check failed:', err.message);
-      // 降级处理：不发送error
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('update:not-available');
-      }
+      // HTTP fallback 可能已检测到更新，不发送 not-available 以免覆盖
     });
   };
 

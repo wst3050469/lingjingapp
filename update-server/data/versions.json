@@ -1,6 +1,26 @@
 {
-  "latest": "1.51.0",
+  "latest": "1.54.0",
   "versions": [
+    {
+      "version": "1.54.0",
+      "releaseDate": "2026-05-24T03:02:40.565Z",
+      "releaseNotes": "v1.54.0: Agent参数传递修复 + Reflector反思调用修复 + 全量代码审查问题修复 + 文档规格校正",
+      "files": {
+        "installer": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.54.0-win-x64.exe",
+        "portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.54.0-win-x64.exe",
+        "mobile": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.54.0.apk"
+      },
+      "sha512": "o+nR9wlsUho4zUM4CnzS0TSws1j9pwDh2C463PVu+OYNA9AEPZ08vm8t+BMq74wFLgZU5XDBuBAuRO25Cs5Y1g==",
+      "size": 142144475,
+      "features": [
+        "Agent IPC传递enableMemoryNudge/enableReflector/enableSkillHarvest参数修复",
+        "Reflector.reflect()在Agent.run()的finally块中调用修复",
+        "31项规格文档问题全量修复（事实错误/逻辑漏洞/内容遗漏/格式规范/前后不一致）",
+        "验收条件统一中文EARS格式",
+        "Fusion模块标注为现有实现",
+        "补充Quest/cloud-admin/mobile模块覆盖"
+      ]
+    },
     {
       "version": "1.51.0",
       "releaseDate": "2026-05-22T15:00:00.000Z",

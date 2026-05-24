@@ -9,10 +9,10 @@ function isModuleEnabled(config, configName) {
 function safeCheck(fn) {
     try {
         const ok = fn();
-        return { ok, detail: ok ? 'healthy' : 'health check returned false' };
+        return { healthy: ok, details: ok ? 'healthy' : 'health check returned false' };
     }
     catch (err) {
-        return { ok: false, detail: err.message };
+        return { healthy: false, details: err.message };
     }
 }
 export function runFusionHealthCheck(deps) {

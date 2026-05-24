@@ -89,6 +89,12 @@ export function registerCloudIpc(win: BrowserWindow): void {
       cloudClient.on('webhook', (data) => {
         mainWindow?.webContents.send('cloud:webhook-event', data);
       });
+      cloudClient.on('relay:from-mobile', (data) => {
+        mainWindow?.webContents.send('cloud:relay:from-mobile', data);
+      });
+      cloudClient.on('desktop:list', (data) => {
+        mainWindow?.webContents.send('cloud:desktop:list', data);
+      });
 
       const healthy = await cloudClient.healthCheck().catch(e => {
         console.warn('[Cloud] healthCheck failed after WS connected:', e);
@@ -162,6 +168,12 @@ export function registerCloudIpc(win: BrowserWindow): void {
     });
     cloudClient.on('webhook', (data) => {
       mainWindow?.webContents.send('cloud:webhook-event', data);
+    });
+    cloudClient.on('relay:from-mobile', (data) => {
+      mainWindow?.webContents.send('cloud:relay:from-mobile', data);
+    });
+    cloudClient.on('desktop:list', (data) => {
+      mainWindow?.webContents.send('cloud:desktop:list', data);
     });
 
     // Wait briefly for WebSocket to connect
@@ -388,6 +400,12 @@ export async function autoConnectCloud(): Promise<void> {
       });
       cloudClient.on('webhook', (data) => {
         mainWindow?.webContents.send('cloud:webhook-event', data);
+      });
+      cloudClient.on('relay:from-mobile', (data) => {
+        mainWindow?.webContents.send('cloud:relay:from-mobile', data);
+      });
+      cloudClient.on('desktop:list', (data) => {
+        mainWindow?.webContents.send('cloud:desktop:list', data);
       });
 
       // Wait briefly for WebSocket to connect

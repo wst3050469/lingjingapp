@@ -95,10 +95,17 @@ export function QuestConversation() {
       store.setActiveRunId(null);
     }
 
-    // Auto-resume paused task on mount (user just came back)
+    // Auto-resume paused task on mount (user just came back).
+    // Use TWO checks:
+    //   1. Task status is 'paused' (fast path - status_change event already processed)
+    //   2. Task has messages but no active agent in main process (slow path - 
+    //      status_change from stopOnSwitch not yet processed due to race condition)
     if (taskId) {
       const task = store.tasks.find(t => t.id === taskId);
-      if (task?.status === 'paused' && !store.isStreaming) {
+      const shouldResumeBasedOnStatus = task?.status === 'paused' && !store.isStreaming;
+      const hasHistory = store.messages.length > 0;
+
+      if (shouldResumeBasedOnStatus) {
         console.log('[QuestConversation] Mount: auto-resuming paused task:', taskId);
         const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
         store.setStreaming(true);
@@ -112,6 +119,26 @@ export function QuestConversation() {
           store.setActiveRunId(null);
           store.removeRunningTask(taskId);
         });
+      } else if (hasHistory && !store.isStreaming && (task?.status === 'running' || task?.status === 'idle')) {
+        // Check if agent exists in main process - if not, task was stopped
+        // by stopOnSwitch but status_change event hasn't arrived yet (race condition)
+        window.electronAPI.quest.getAgentStatus(taskId).then((status) => {
+          if (!status.hasActiveAgent && !store.isStreaming) {
+            console.log('[QuestConversation] Mount: task has no active agent, auto-resuming from DB:', taskId);
+            const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+            store.setStreaming(true);
+            store.resetStreamText();
+            store.addRunningTask(taskId);
+            store.setActiveRunId(runId);
+            store.setTaskStatus(taskId, 'running');
+            window.electronAPI.quest.resume(taskId, undefined, runId).catch((err) => {
+              console.error('[QuestConversation] Auto-resume (fallback) failed:', err);
+              store.setStreaming(false);
+              store.setActiveRunId(null);
+              store.removeRunningTask(taskId);
+            });
+          }
+        }).catch(() => {});
       }
     }
   }, []);
@@ -194,9 +221,22 @@ export function QuestConversation() {
       // Smart dispatch: if task was paused/interrupted (has history messages and
       // status is paused/idle/failed), use quest:resume to continue from where it
       // stopped. Otherwise start a fresh quest:run.
+      // ALSO: if task status is 'running' but agent is not active (race condition
+      // where stopOnSwitch events haven't been processed), use quest:resume.
       const taskStatus = activeTask?.status;
       const hasHistory = store.messages.length > 0;
-      const shouldResume = hasHistory && (taskStatus === 'paused' || taskStatus === 'idle' || taskStatus === 'failed');
+      let shouldResume = hasHistory && (taskStatus === 'paused' || taskStatus === 'idle' || taskStatus === 'failed');
+
+      // Fallback check: if status is 'running' but agent is gone (race condition)
+      if (!shouldResume && hasHistory && taskStatus === 'running') {
+        try {
+          const agentStatus = await window.electronAPI.quest.getAgentStatus(activeTaskId);
+          if (!agentStatus.hasActiveAgent) {
+            console.log('[QuestConversation] handleSend: task status is running but no active agent, using resume');
+            shouldResume = true;
+          }
+        } catch { /* ignore IPC error, fall through to quest:run */ }
+      }
 
       if (shouldResume) {
         console.log('[QuestConversation] Resuming interrupted task:', { taskId: activeTaskId, taskStatus, msgCount: store.messages.length });

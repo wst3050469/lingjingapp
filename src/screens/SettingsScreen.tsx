@@ -1,17 +1,17 @@
 // 设置页
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { api } from '../services/api';
+import Constants from 'expo-constants';
+import { api, UpdateInfo } from '../services/api';
 import { useAppStore } from '../stores/app-store';
 
-// Connection URLs - must match App.tsx
-const FRP_RELAY_URL = 'https://wap.zhejiangjinmo.com';
-const FRP_RELAY_WS = 'wss://wap.zhejiangjinmo.com/ws';
+// Connection URLs - import from shared constants
+import { CLOUD_SERVER_URL, CLOUD_SERVER_WS, FRP_RELAY_URL, FRP_RELAY_WS } from '../constants';
 
 export default function SettingsScreen() {
-  const { status, setStatus, connected, mode, baseUrl, token, setToken, lanIp, setLanIp, setConnection, user, setUser, logout } = useAppStore();
+  const { status, setStatus, connected, mode, baseUrl, token, setToken, lanIp, setLanIp, setConnection, user, setUser, logout, updateInfo, setUpdateInfo } = useAppStore();
   const navigation = useNavigation<any>();
   const [editingToken, setEditingToken] = useState(token);
   const [editingIp, setEditingIp] = useState(lanIp);
@@ -19,6 +19,8 @@ export default function SettingsScreen() {
   const [cloudPassword, setCloudPassword] = useState('');
   const [cloudLoading, setCloudLoading] = useState(false);
   const [cloudError, setCloudError] = useState('');
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const appVersion = Constants.expoConfig?.version || Constants.manifest?.version || '?';
 
   useEffect(() => {
     loadStatus();
@@ -86,9 +88,9 @@ export default function SettingsScreen() {
         if (cloudUser) {
           setUser({ id: cloudUser.id, username: cloudUser.username, email: cloudUser.email });
           setCloudPassword('');
-          // Switch to cloud account mode
-          const cloudUrl = 'https://lingjing.zhejiangjinmo.com';
-          api.configure({ baseUrl: cloudUrl, token: api.jwtToken || '', wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
+          // Switch to cloud account mode (URL must match App.tsx CLOUD_SERVER_URL)
+          const cloudUrl = 'https://ide.zhejiangjinmo.com';
+          api.configure({ baseUrl: cloudUrl, token: api.jwtToken || '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
           api.connectWs();
           setConnection(true, 'cloud_account', cloudUrl);
         }
@@ -108,9 +110,36 @@ export default function SettingsScreen() {
       { text: '退出', style: 'destructive', onPress: () => {
         api.cloudLogout().catch(() => {});
         logout();
-        // Force reload - App.tsx will detect empty token and show login
       }},
     ]);
+  }
+
+  async function handleCheckUpdate() {
+    setCheckingUpdate(true);
+    setUpdateInfo(null);
+    try {
+      const info = await api.checkForUpdates(appVersion);
+      if (!info) {
+        Alert.alert('检查更新', '无法获取版本信息，请检查网络连接');
+        return;
+      }
+      setUpdateInfo(info);
+      if (!info.hasUpdate) {
+        Alert.alert('检查更新', '当前已是最新版本');
+      }
+    } catch {
+      Alert.alert('检查更新', '检查失败，请稍后重试');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  }
+
+  function handleDownload() {
+    if (updateInfo?.downloadUrl) {
+      Linking.openURL(updateInfo.downloadUrl).catch(() => {
+        Alert.alert('下载失败', '无法打开下载链接');
+      });
+    }
   }
 
   return (
@@ -237,6 +266,39 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Version Check */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>版本信息</Text>
+        <InfoRow icon="logo-android" label="当前版本" value={`v${appVersion}`} />
+        <TouchableOpacity
+          style={[styles.checkUpdateBtn, checkingUpdate && { opacity: 0.5 }]}
+          onPress={handleCheckUpdate}
+          disabled={checkingUpdate}
+        >
+          <Ionicons name="cloud-download-outline" size={16} color="#fff" />
+          <Text style={styles.btnText}>{checkingUpdate ? '检查中...' : '检查更新'}</Text>
+        </TouchableOpacity>
+        {updateInfo && updateInfo.hasUpdate && (
+          <View style={styles.updateCard}>
+            <View style={styles.updateHeader}>
+              <Ionicons name="arrow-up-circle" size={18} color="#3fb950" />
+              <Text style={styles.updateVersion}>发现新版本 v{updateInfo.version}</Text>
+            </View>
+            {updateInfo.releaseNotes ? (
+              <Text style={styles.updateNotes}>{updateInfo.releaseNotes}</Text>
+            ) : null}
+            {updateInfo.downloadUrl && (
+              <TouchableOpacity style={styles.downloadBtn} onPress={handleDownload}>
+                <Ionicons name="download-outline" size={16} color="#fff" />
+                <Text style={styles.downloadBtnText}>
+                  下载安装包{updateInfo.fileSize ? ` (${(updateInfo.fileSize / 1024 / 1024).toFixed(1)}MB)` : ''}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </View>
+
       {/* Refresh */}
       <TouchableOpacity style={styles.btnOutline} onPress={loadStatus}>
         <Ionicons name="refresh" size={16} color="#58a6ff" />
@@ -312,4 +374,22 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(88,166,255,0.2)',
   },
   subManageText: { color: '#58a6ff', fontSize: 14, fontWeight: '500' },
+  checkUpdateBtn: {
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    gap: 6, backgroundColor: '#1f6feb', borderRadius: 6, paddingVertical: 12, marginTop: 10,
+  },
+  updateCard: {
+    backgroundColor: 'rgba(63,185,80,0.06)',
+    borderWidth: 1, borderColor: 'rgba(63,185,80,0.2)',
+    borderRadius: 6, padding: 10, marginTop: 10,
+  },
+  updateHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  updateVersion: { color: '#3fb950', fontSize: 14, fontWeight: '600' },
+  updateNotes: { color: '#8b949e', fontSize: 12, lineHeight: 18, marginBottom: 8 },
+  downloadBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingVertical: 8, borderRadius: 6,
+    backgroundColor: '#238636',
+  },
+  downloadBtnText: { color: '#fff', fontSize: 13, fontWeight: '500' },
 });

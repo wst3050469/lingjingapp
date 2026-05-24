@@ -176,6 +176,10 @@ interface AppState {
   setAuth: (deviceId: string, token: string) => void;
   setUser: (user: UserInfo) => void;
   logout: () => void;
+
+  // Update info
+  updateInfo: import('../services/api').UpdateInfo | null;
+  setUpdateInfo: (info: import('../services/api').UpdateInfo | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -246,6 +250,9 @@ export const useAppStore = create<AppState>((set) => ({
   },
   pairingToken: '',
   pairingLanIp: '',
+
+  updateInfo: null,
+  setUpdateInfo: (updateInfo) => set({ updateInfo }),
 }));
 
 // ── Persistence helpers (AsyncStorage) ──

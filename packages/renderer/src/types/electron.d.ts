@@ -358,6 +358,7 @@ declare interface ElectronAPI {
     sendIntervention: (taskId: string, text: string) => Promise<any>;
     saveMessages: (taskId: string) => Promise<any>;
     stopOnSwitch: (taskId: string, runId?: string) => Promise<any>;
+    getAgentStatus: (taskId: string) => Promise<{ hasActiveAgent: boolean; runId: string | null }>;
     cleanup: (taskId: string) => Promise<any>;
     onEvent: (callback: (event: any) => void) => () => void;
     onAskUser: (callback: (data: any) => void) => () => void;

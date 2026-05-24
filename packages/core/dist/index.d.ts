@@ -65,4 +65,8 @@ export * from './errors/index.js';
 export * from './observability/index.js';
 export * from './lifecycle/index.js';
 export * from './cross-session/index.js';
+export type { AppConfig } from './config/schema.js';
+export type { Message } from './fusion/adapters/types.js';
+export type { Tool } from './tools/types.js';
+export type { AgentEvent } from "./agent/agent.js";
 //# sourceMappingURL=index.d.ts.map

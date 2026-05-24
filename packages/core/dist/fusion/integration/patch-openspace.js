@@ -108,8 +108,8 @@ export function patchOpenSpaceIntegration() {
     const detection = detectOpenSpace();
     return {
         detection,
-        wsBridgeReady: detection.installed && detection.binaryPath !== null,
-        windowEmbedReady: detection.installed,
+        wsBridgeReady: detection.found && detection.path !== null,
+        windowEmbedReady: detection.found
     };
 }
 // ─── Lua 脚本示例 ──────────────────────────────────────────────

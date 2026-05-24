@@ -67,9 +67,8 @@ const AUTO_MODES = [
 export function QuestView() {
   const { tasks, activeTaskId, runningTaskIds } = useQuestStore();
 
-  // Mount: check for paused tasks that should be auto-resumed
-  // When user returns from editor mode, tasks left in 'paused' status by stopOnSwitch
-  // should either auto-resume (if they were running) or show the Resume button.
+  // Mount: reset stale streaming state when re-entering quest mode.
+  // Auto-resume of paused tasks is handled by QuestConversation's mount effect.
   useEffect(() => {
     const store = useQuestStore.getState();
 
@@ -111,16 +110,11 @@ export function QuestView() {
       
       if (ids.length > 0) {
         console.log('[QuestView] Unmounting, pausing running agents:', ids);
-        // Serial await: ensure all stopOnSwitch calls complete before clearing state,
-        // preventing a late stopOnSwitch from killing a newly-started agent after re-mount.
-        const stopAll = async () => {
-          for (const id of ids) {
-            try {
-              await window.electronAPI.quest.stopOnSwitch(id, currentRunId || undefined);
-            } catch { /* ignore */ }
-          }
-        };
-        stopAll();
+        // Fire-and-forget: stop all running agents. We clear state synchronously
+        // and let the IPC calls complete asynchronously.
+        for (const id of ids) {
+          window.electronAPI.quest.stopOnSwitch(id, currentRunId || undefined).catch(() => {});
+        }
       }
       
       // Only reset streaming state, keep runningTaskIds for when we return

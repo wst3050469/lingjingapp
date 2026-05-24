@@ -116,7 +116,7 @@ function looksLikeTaskComplete(text: string): boolean {
     /全部结束[。！]?\s*$/,
     
     // Summary-style completion (model summarizes what was done)
-    /^(?:已完成|已成功|成功完成|顺利完)成[了。]?/m,
+    /^(?:已完成|已成功|成功完成|顺利完成)[了。]?\s*$/m,
   ];
   
   const INCOMPLETE_PATTERNS = [
@@ -155,6 +155,11 @@ function looksLikeTaskComplete(text: string): boolean {
     // "完成" used as future/incomplete ("我会完成这个任务" → NOT done)
     /[会要需][将去].*完成/,
     /还没[有]?完成/,
+
+    // Additional incomplete guards — text contains completion-looking
+    // phrases AND continuation signals → definitely not done
+    /已(?:完成|成功).*(?:接下来|然后|下一步|还需要|将要|即将)/,
+    /完成.*(?:接下来|然后|下一步|还需要|将要|即将)/,
   ];
   
   const textLower = text.toLowerCase();
@@ -337,7 +342,7 @@ export class Agent {
     let turn = 0;
     let hasNudgedForTools = false;
     let noToolRetryCount = 0;
-    const MAX_NO_TOOL_RETRIES = 3;
+    const MAX_NO_TOOL_RETRIES = 5;
 
     // Enhance system prompt with tool-use instructions when tools are available
     const hasTools = this.config.tools.getSchemas().length > 0;
@@ -534,12 +539,12 @@ Technical details: ${err.message}`;
           noToolRetryCount++;
           if (noToolRetryCount > MAX_NO_TOOL_RETRIES) {
             logger.info('No tool calls after ' + MAX_NO_TOOL_RETRIES + ' retries - returning control to user');
-            this.conversation.addUserMessage('我已经尝试多次但未能继续执行新的操作。如果你希望我继续，请提供更具体的指示或说明需要执行什么操作。');
+            this.conversation.addUserMessage('我已经尝试了多次自动继续，但模型没有执行新的操作。请提供更具体的指示或说明需要执行什么操作。');
             if (turnTimer) clearTimeout(turnTimer);
             return responseText;
           }
           logger.info('No tool calls but task seems incomplete - prompting to continue (retry ' + noToolRetryCount + '/' + MAX_NO_TOOL_RETRIES + ')');
-          this.conversation.addUserMessage('请继续完成任务。如果需要执行操作，请调用相应的工具。');
+          this.conversation.addUserMessage('[自动继续] 任务尚未完成，请继续执行。如有需要请调用工具完成操作。');
           if (turnTimer) clearTimeout(turnTimer);
           continue; // Loop back to call LLM again
         }
@@ -598,6 +603,37 @@ Technical details: ${err.message}`;
       clearInterval(heartbeatInterval);
       // ALWAYS emit done so the renderer can reset isStreaming
       this.emit({ type: 'done' });
+
+      // ── Memory Reflector: post-session reflection for memory consolidation ──
+      if (this.reflector && this.reflector.shouldReflect()) {
+        try {
+          const msgs = this.conversation.messages;
+          const memoryRecords: Array<{ id: string; title: string; content: string; category: string; scope: string }> = [];
+          for (let idx = 0; idx < msgs.length; idx++) {
+            const msg = msgs[idx];
+            if (msg.role === 'user' || msg.role === 'assistant') {
+              const text = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+              if (text) {
+                memoryRecords.push({
+                  id: String(idx),
+                  title: text.slice(0, 80),
+                  content: text,
+                  category: 'conversation',
+                  scope: 'session',
+                });
+              }
+            }
+          }
+          if (memoryRecords.length > 0) {
+            const reflectResult = await this.reflector.reflect(memoryRecords);
+            if (reflectResult) {
+              logger.info('[Agent] Reflector produced reflection insights');
+            }
+          }
+        } catch (err) {
+          logger.warn('[Agent] Reflector reflect failed:', (err as Error).message);
+        }
+      }
 
       // ── Skill harvesting (Hermes-inspired): auto-create skills from conversations ──
       if (this.harvester) {

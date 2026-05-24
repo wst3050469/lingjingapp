@@ -6,6 +6,8 @@ export interface CloudSyncClientOptions {
     enabled?: boolean;
     deviceId?: string;
     deviceName?: string;
+    userId?: string;
+    isDesktop?: boolean;
 }
 type EventListener = (data: any) => void;
 export declare class CloudSyncClient {
@@ -15,10 +17,14 @@ export declare class CloudSyncClient {
     token: string | null;
     deviceId: string;
     deviceName: string;
+    userId: string | null;
+    isDesktop: boolean;
     ws: WebSocket | null;
     wsReconnectTimer: ReturnType<typeof setTimeout> | null;
     /** Heartbeat timer: sends ping every 30s to keep WebSocket alive */
     _heartbeatTimer: ReturnType<typeof setInterval> | null;
+    /** Desktop relay heartbeat timer: sends desktop:heartbeat every 60s */
+    _desktopHeartbeatTimer: ReturnType<typeof setInterval> | null;
     syncTimer: ReturnType<typeof setInterval> | null;
     listeners: Map<string, Set<EventListener>>;
     queue: OfflineQueue;
@@ -51,6 +57,10 @@ export declare class CloudSyncClient {
     private _startHeartbeat;
     /** Stop heartbeat timer */
     private _stopHeartbeat;
+    /** Start desktop relay heartbeat: sends desktop:heartbeat every 60s */
+    private _startDesktopHeartbeat;
+    /** Stop desktop relay heartbeat timer */
+    private _stopDesktopHeartbeat;
     connectWebSocket(): void;
     scheduleReconnect(): void;
     disconnectWebSocket(): void;
@@ -66,6 +76,12 @@ export declare class CloudSyncClient {
         failed: number;
     }>;
     isOnline(): Promise<boolean>;
+    /** List online desktop devices for the current user */
+    listDesktops(): void;
+    /** Send relay message to mobile client */
+    sendRelayToMobile(payload: any, correlationId?: string): void;
+    /** Send relay message to a specific desktop device */
+    sendRelayToDesktop(targetDeviceId: string, payload: any, correlationId?: string): void;
     on(event: string, fn: EventListener): void;
     off(event: string, fn: EventListener): void;
     emit(event: string, data: any): void;

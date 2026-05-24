@@ -49,6 +49,12 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
 const JWT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+// Log startup info with secrets redacted
+console.log(`[Config] API_KEY: ${API_KEY.slice(0, 8)}...`);
+console.log(`[Config] JWT_SECRET: ${JWT_SECRET ? JWT_SECRET.slice(0, 8) + '...' : '(not set)'}`);
+console.log(`[Config] DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY ? DEEPSEEK_API_KEY.slice(0, 8) + '...' : '(not set)'}`);
+console.log(`[Config] DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}`);
+
 const app = express();
 app.use(express.json({ limit: '50mb' }));
 

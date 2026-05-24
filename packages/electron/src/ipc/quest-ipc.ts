@@ -2946,6 +2946,16 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
 
 
+  // --- Get agent status (check if a task has an active agent in the main process) ---
+
+  ipcMain.handle('quest:get-agent-status', (_event, { taskId }: { taskId: string }) => {
+    const taskAgent = taskAgents.get(taskId);
+    return {
+      hasActiveAgent: !!taskAgent,
+      runId: taskAgent?.runId || null,
+    };
+  });
+
   // --- Quest Stop on Switch (clean exit without marking failed) ---
 
 

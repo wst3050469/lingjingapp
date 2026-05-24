@@ -707,6 +707,9 @@ Only save genuinely useful, non-trivial information. Do NOT save obvious or temp
       temperature: config!.temperature,
       workingDirectory,
       sshTerminalId: currentSshTerminalId || undefined,
+      enableMemoryNudge: config!.enableMemoryNudge,
+      enableReflector: config!.enableReflector,
+      enableSkillHarvest: config!.enableSkillHarvest,
       onEvent: (event: AgentEvent) => {
         if (!senderWindow.isDestroyed()) {
           senderWindow.webContents.send('agent:event', serializeEvent(event));

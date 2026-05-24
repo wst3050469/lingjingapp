@@ -24,13 +24,8 @@ import ConnectionBanner from './src/components/ConnectionBanner';
 import { loadPersistedAuth, loadPersistedPairing } from './src/stores/app-store';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, Platform } from 'react-native';
 
-// ── Connection Constants ──
-// FRP relay: tunnels to desktop's web-server via cloud relay (optional, desktop must enable FRP)
-const FRP_RELAY_URL = 'https://wap.zhejiangjinmo.com';
-const FRP_RELAY_WS = 'wss://wap.zhejiangjinmo.com/ws';
-// Cloud server: central cloud account service (requires JWT, not pairing token)
-const CLOUD_SERVER_URL = 'https://ide.zhejiangjinmo.com';
-const CLOUD_SERVER_WS = 'wss://ide.zhejiangjinmo.com/ws';
+// ── Connection Constants (from shared constants file) ──
+import { CLOUD_SERVER_URL, CLOUD_SERVER_WS, FRP_RELAY_URL, FRP_RELAY_WS } from './src/constants';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

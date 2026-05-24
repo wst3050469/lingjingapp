@@ -424,6 +424,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('quest:save-messages', { taskId }),
     stopOnSwitch: (taskId: string, runId?: string) =>
       ipcRenderer.invoke('quest:stop-on-switch', { taskId, runId }),
+    getAgentStatus: (taskId: string) =>
+      ipcRenderer.invoke('quest:get-agent-status', { taskId }),
     cleanup: (taskId: string) =>
       ipcRenderer.invoke('quest:cleanup', { taskId }),
     onEvent: (callback: (event: any) => void) => {

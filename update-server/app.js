@@ -11,6 +11,9 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// OSS base URL for download fallback (configurable via env)
+const OSS_BASE_URL = process.env.OSS_BASE_URL || 'https://zhejiangjinmo.oss-cn-shenzhen.aliyuncs.com';
+
 // 版本数据路径
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const VERSIONS_FILE = path.join(DATA_DIR, 'versions.json');
@@ -48,10 +51,10 @@ app.get('/latest.yml', (req, res) => {
   // 生成 latest.yml 格式
   const yml = `version: ${data.latest}
 files:
-  - url: ${latest.files?.installer || `https://zhejiangjinmo.oss-cn-shenzhen.aliyuncs.com/releases/${data.latest}/灵境-Setup-${data.latest}-win-x64.exe`}
+  - url: ${latest.files?.installer || `${OSS_BASE_URL}/releases/${data.latest}/灵境-Setup-${data.latest}-win-x64.exe`}
     sha512: ${latest.sha512 || 'TBD'}
     size: ${latest.size || 0}
-path: ${latest.files?.installer || `https://zhejiangjinmo.oss-cn-shenzhen.aliyuncs.com/releases/${data.latest}/灵境-Setup-${data.latest}-win-x64.exe`}
+path: ${latest.files?.installer || `${OSS_BASE_URL}/releases/${data.latest}/灵境-Setup-${data.latest}-win-x64.exe`}
 releaseDate: ${latest.releaseDate || new Date().toISOString()}
 `;
 
@@ -66,9 +69,10 @@ app.get('/api/versions', (req, res) => {
 
 // 下载重定向
 app.get('/download/:version/*', (req, res) => {
-  const version = req.params[0];
-  const filename = req.params[1];
-  const ossUrl = `https://zhejiangjinmo.oss-cn-shenzhen.aliyuncs.com/releases/${version}/${filename}`;
+  const version = req.params.version;
+  const filename = req.params[0];
+  // Use OSS_BASE_URL for download redirect (configurable via env)
+  const ossUrl = `${OSS_BASE_URL}/releases/${version}/${filename}`;
   res.redirect(302, ossUrl);
 });
 

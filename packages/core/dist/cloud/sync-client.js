@@ -17,10 +17,14 @@ export class CloudSyncClient {
     token = null;
     deviceId;
     deviceName;
+    userId;
+    isDesktop;
     ws = null;
     wsReconnectTimer = null;
     /** Heartbeat timer: sends ping every 30s to keep WebSocket alive */
     _heartbeatTimer = null;
+    /** Desktop relay heartbeat timer: sends desktop:heartbeat every 60s */
+    _desktopHeartbeatTimer = null;
     syncTimer = null;
     listeners = new Map();
     queue;
@@ -31,6 +35,8 @@ export class CloudSyncClient {
         this.enabled = options.enabled !== false;
         this.deviceId = options.deviceId || generateDeviceId();
         this.deviceName = options.deviceName || `LingJing-${typeof process !== 'undefined' ? process.platform : 'web'}-${this.deviceId.slice(0, 6)}`;
+        this.userId = options.userId || null;
+        this.isDesktop = options.isDesktop !== false && (typeof process !== 'undefined' && !!process.platform);
         this.queue = new OfflineQueue({
             onFlush: async (items) => {
                 for (const item of items) {
@@ -219,12 +225,37 @@ export class CloudSyncClient {
             this._heartbeatTimer = null;
         }
     }
+    /** Start desktop relay heartbeat: sends desktop:heartbeat every 60s */
+    _startDesktopHeartbeat() {
+        this._stopDesktopHeartbeat();
+        this._desktopHeartbeatTimer = setInterval(() => {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                try {
+                    this.ws.send(JSON.stringify({ type: 'desktop:heartbeat' }));
+                }
+                catch { /* ignore */ }
+            }
+        }, 60000);
+    }
+    /** Stop desktop relay heartbeat timer */
+    _stopDesktopHeartbeat() {
+        if (this._desktopHeartbeatTimer) {
+            clearInterval(this._desktopHeartbeatTimer);
+            this._desktopHeartbeatTimer = null;
+        }
+    }
     connectWebSocket() {
         if (!this.enabled || this.ws)
             return;
-        const authParam = this.token
-            ? `token=${encodeURIComponent(this.token)}`
-            : `api_key=${encodeURIComponent(this.apiKey)}`;
+        let authParam;
+        if (this.token) {
+            authParam = `token=${encodeURIComponent(this.token)}`;
+            if (this.deviceId)
+                authParam += `&device_id=${encodeURIComponent(this.deviceId)}`;
+        }
+        else {
+            authParam = `api_key=${encodeURIComponent(this.apiKey)}`;
+        }
         const wsUrl = this.url.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws?' + authParam;
         // Browser has global WebSocket; Node.js needs 'ws' package
         const WS = (typeof WebSocket !== 'undefined' ? WebSocket : require('ws'));
@@ -232,6 +263,12 @@ export class CloudSyncClient {
         this.ws.onopen = () => {
             console.info('[CloudSync] WebSocket connected');
             this._startHeartbeat();
+            // Desktop: register as relay node so mobile clients can find us
+            if (this.isDesktop && this.deviceId) {
+                this.ws.send(JSON.stringify({ type: 'desktop:register', deviceId: this.deviceId }));
+                console.info(`[CloudSync] Sent desktop:register (deviceId=${this.deviceId.slice(0, 12)}...)`);
+                this._startDesktopHeartbeat();
+            }
             this.emit('connected', { url: this.url, deviceId: this.deviceId });
         };
         this.ws.onmessage = (event) => {
@@ -239,6 +276,29 @@ export class CloudSyncClient {
                 const data = JSON.parse(event.data);
                 if (data.type === 'pong')
                     return;
+                if (data.type === 'desktop:registered') {
+                    console.info('[CloudSync] Desktop relay registered:', data.ok ? 'success' : data.error);
+                    return;
+                }
+                if (data.type === 'desktop:heartbeat:ack')
+                    return;
+                if (data.type === 'desktop:list') {
+                    this.emit('desktop:list', data);
+                    return;
+                }
+                if (data.type === 'relay:from-mobile') {
+                    console.info('[CloudSync] Relay from mobile:', data.payload?.type || 'message');
+                    this.emit('relay:from-mobile', data);
+                    return;
+                }
+                if (data.type === 'relay:from-desktop') {
+                    this.emit('relay:from-desktop', data);
+                    return;
+                }
+                if (data.type === 'relay:ack') {
+                    this.emit('relay:ack', data);
+                    return;
+                }
                 if (data.type === 'sync') {
                     this.emit('sync', data.payload);
                 }
@@ -250,6 +310,7 @@ export class CloudSyncClient {
         };
         this.ws.onclose = () => {
             this._stopHeartbeat();
+            this._stopDesktopHeartbeat();
             this.ws = null;
             this.emit('disconnected', {});
             this.scheduleReconnect();
@@ -268,6 +329,7 @@ export class CloudSyncClient {
     }
     disconnectWebSocket() {
         this._stopHeartbeat();
+        this._stopDesktopHeartbeat();
         if (this.wsReconnectTimer) {
             clearTimeout(this.wsReconnectTimer);
             this.wsReconnectTimer = null;
@@ -289,6 +351,37 @@ export class CloudSyncClient {
     }
     async isOnline() {
         return this.healthCheck();
+    }
+    // ── Desktop Relay ──
+    /** List online desktop devices for the current user */
+    listDesktops() {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ type: 'desktop:list' }));
+        }
+    }
+    /** Send relay message to mobile client */
+    sendRelayToMobile(payload, correlationId) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({
+                type: 'relay:to-mobile',
+                deviceId: this.deviceId,
+                payload,
+                correlationId: correlationId || `relay-${Date.now()}`,
+                timestamp: new Date().toISOString(),
+            }));
+        }
+    }
+    /** Send relay message to a specific desktop device */
+    sendRelayToDesktop(targetDeviceId, payload, correlationId) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({
+                type: 'relay:to-desktop',
+                targetDeviceId,
+                payload,
+                correlationId: correlationId || `relay-${Date.now()}`,
+                timestamp: new Date().toISOString(),
+            }));
+        }
     }
     // ── Event System ──
     on(event, fn) {
@@ -312,6 +405,7 @@ export class CloudSyncClient {
         this.disconnectWebSocket();
         this.queue.stopPeriodicFlush();
         this._stopHeartbeat();
+        this._stopDesktopHeartbeat();
         if (this.syncTimer) {
             clearInterval(this.syncTimer);
             this.syncTimer = null;

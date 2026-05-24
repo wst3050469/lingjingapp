@@ -18,7 +18,8 @@ const __dirname = path.dirname(__filename);
 
 // Admin credentials (in production, use environment variables)
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const PASSWORD_FILE = '/root/lingjing-cloud/.admin-password.json';
+const ADMIN_HOME = process.env.HOME || process.env.USERPROFILE || '/root';
+const PASSWORD_FILE = process.env.ADMIN_PASSWORD_FILE || path.join(ADMIN_HOME, 'lingjing-cloud', '.admin-password.json');
 const DEFAULT_PASSWORD_HASH = createHash('sha256').update('admin123').digest('hex');
 
 function getAdminPasswordHash() {
@@ -1481,19 +1482,39 @@ export function registerAdminAPI(app, db) {
     return data;
   }
 
+  function findAllVersionsJsonPaths() {
+    const paths = new Set([
+      '/root/lingjing-update/data/versions.json',
+      '/var/www/update-server/data/versions.json',
+      '/opt/lingjing-update/data/versions.json',
+      '/opt/lingjing-update-server/data/versions.json',
+      '/opt/lingjing-cloud-server/versions.json',
+      '/var/www/html/downloads/versions.json',
+      '/var/www/html/versions.json',
+      '/var/www/downloads/versions.json',
+      '/var/www/lingjing/versions.json',
+      path.resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
+      path.resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
+    ]);
+    return [...paths].filter(p => fs.existsSync(p));
+  }
+
   function writeVersionsJson(data) {
-    const apiPath = findVersionsJsonPath();
-    const dlPath = findVersionsJsonDownloadPath();
+    const allPaths = findAllVersionsJsonPaths();
     const json = JSON.stringify(data, null, 2);
-    if (apiPath) {
-      fs.writeFileSync(apiPath, json, 'utf8');
-      console.log('[Admin API] Updated versions.json:', apiPath);
+    let written = 0;
+    for (const p of allPaths) {
+      try {
+        fs.writeFileSync(p, json, 'utf8');
+        written++;
+      } catch (e) {
+        console.warn('[Admin API] Failed to write versions.json:', p, e.message);
+      }
     }
-    if (dlPath) {
-      fs.writeFileSync(dlPath, json, 'utf8');
-      console.log('[Admin API] Updated download versions.json:', dlPath);
+    if (written > 0) {
+      console.log(`[Admin API] Updated ${written}/${allPaths.length} versions.json locations`);
     }
-    return true;
+    return written > 0;
   }
 
   // ====== Storage formatting helper ======

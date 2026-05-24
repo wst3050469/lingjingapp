@@ -6,9 +6,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api';
 import { useAppStore } from '../stores/app-store';
 
-// 与 App.tsx 保持一致的连接常量
-const FRP_RELAY_URL = 'https://wap.zhejiangjinmo.com';
-const FRP_RELAY_WS = 'wss://wap.zhejiangjinmo.com/ws';
+// 与 App.tsx 保持一致的连接常量（从共享常量文件导入）
+import { FRP_RELAY_URL, FRP_RELAY_WS } from '../constants';
 
 type ChannelAttempt = 'idle' | 'trying' | 'success' | 'failed';
 

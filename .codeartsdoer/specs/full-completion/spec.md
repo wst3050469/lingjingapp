@@ -11,13 +11,16 @@
 ## 1.2 核心输入
 
 1. 当前各模块源码与产物（含 dist 产物、已注册的工具/技能/路由）
-2. Agent 主循环执行上下文（LLM 调用、工具执行、技能加载、记忆写入、压缩等阶段信号）
+2. Agent 主循环执行上下文（LLM 调用（支持国内模型：百度文心、腾讯混元、Kimi、通义千问、豆包、GLM、MiniMax等）、工具执行、技能加载、记忆写入、压缩等阶段信号）
 3. Electron 主进程初始化生命周期事件
 4. IPC 注册入口调用链
 5. 数据库初始化迁移脚本
 6. OpenSpace 进程与连接管理状态
 7. Cloud Server 多租户请求与权限上下文
 8. Renderer UI 路由与组件注册表
+9. Cloud Admin 管理后台模块
+10. Mobile/Android 移动端原生模块
+11. Quest 任务编排系统
 
 ## 1.3 核心输出
 
@@ -31,6 +34,9 @@
 8. OpenSpace 进程检测、连接管理与窗口嵌入
 9. Cloud Server RBAC、审计日志与租户隔离
 10. Renderer UI 路由注册与主题切换入口
+11. Cloud Admin 管理后台API与权限控制
+12. Mobile/Android 原生桥接与推送集成
+13. Quest 任务编排与状态追踪
 
 ## 1.4 职责边界
 
@@ -176,7 +182,7 @@ Cloud --> TenantDB : 租户隔离存储
 1. 所有 Hook 点必须支持动态启用/禁用
 2. EventBus 事件必须包含完整的事件元数据（时间戳、来源、追踪ID）
 3. Fusion 融合模块健康检查接口必须可独立调用
-4. 数据库迁移脚本必须支持幂等执行
+4. 数据库迁移脚本必须支持幂等执行（注：跨版本迁移禁止跳跃规则需考虑中间版本可能未发布的场景）
 5. OpenSpace 安装路径检测逻辑必须可扩展（支持新平台）
 
 ## 4.5 兼容性
@@ -195,30 +201,30 @@ Cloud --> TenantDB : 租户隔离存储
 ### 5.1.1 业务规则
 
 1. **Core层源文件补全**：Agent 核心 Core 层源文件必须完整存在于 agent/ 目录中，不得仅有 dist 产物
-   - 验收条件：[查看 agent/ 目录] → [包含完整的 .ts 源文件而非仅 dist 产物]
+   - 当查看 agent/ 目录时，系统应包含完整的 .ts 源文件而非仅 dist 产物
 
 2. **Hook点注入**：Agent 主循环的8个 Hook 点必须在对应执行阶段实际注入并调用
-   - 验收条件：[Agent 主循环执行至 LLM 调用前] → [before_llm_call Hook 被触发]
-   - 验收条件：[Agent 主循环执行至 LLM 调用后] → [after_llm_call Hook 被触发]
-   - 验收条件：[Agent 主循环执行至工具执行前] → [before_tool_execute Hook 被触发]
-   - 验收条件：[Agent 主循环执行至工具执行后] → [after_tool_execute Hook 被触发]
-   - 验收条件：[Agent 主循环执行至技能加载前] → [before_skill_load Hook 被触发]
-   - 验收条件：[Agent 主循环执行至技能加载后] → [after_skill_load Hook 被触发]
-   - 验收条件：[Agent 主循环执行至记忆写入前] → [before_memory_write Hook 被触发]
-   - 验收条件：[Agent 主循环执行至压缩后] → [after_compaction Hook 被触发]
+   - 当Agent 主循环执行至 LLM 调用（支持国内模型：百度文心、腾讯混元、Kimi、通义千问、豆包、GLM、MiniMax等）前时，系统应before_llm_call Hook 被触发
+   - 当Agent 主循环执行至 LLM 调用（支持国内模型：百度文心、腾讯混元、Kimi、通义千问、豆包、GLM、MiniMax等）后时，系统应after_llm_call Hook 被触发
+   - 当Agent 主循环执行至工具执行前时，系统应before_tool_execute Hook 被触发
+   - 当Agent 主循环执行至工具执行后时，系统应after_tool_execute Hook 被触发
+   - 当Agent 主循环执行至技能加载前时，系统应before_skill_load Hook 被触发
+   - 当Agent 主循环执行至技能加载后时，系统应after_skill_load Hook 被触发
+   - 当Agent 主循环执行至记忆写入前时，系统应before_memory_write Hook 被触发
+   - 当Agent 主循环执行至压缩后时，系统应after_compaction Hook 被触发
 
 3. **EventBus事件发布**：Agent 主循环必须在对应阶段通过 EventBus 实际发布事件
-   - 验收条件：[Agent 开始处理消息] → [EventBus 发布 agent:message_start 事件]
-   - 验收条件：[Agent 完成消息处理] → [EventBus 发布 agent:message_end 事件]
-   - 验收条件：[Agent 发起工具调用] → [EventBus 发布 agent:tool_call 事件]
-   - 验收条件：[Agent 接收工具结果] → [EventBus 发布 agent:tool_result 事件]
-   - 验收条件：[Agent 执行记忆压缩] → [EventBus 发布 agent:compaction 事件]
+   - 当Agent 开始处理消息时，系统应EventBus 发布 agent:message_start 事件
+   - 当Agent 完成消息处理时，系统应EventBus 发布 agent:message_end 事件
+   - 当Agent 发起工具调用时，系统应EventBus 发布 agent:tool_call 事件
+   - 当Agent 接收工具结果时，系统应EventBus 发布 agent:tool_result 事件
+   - 当Agent 执行记忆压缩时，系统应EventBus 发布 agent:compaction 事件
 
 4. **FusionInitializer初始化调用**：FusionInitializer 必须在 Electron 主进程初始化阶段被实际调用
-   - 验收条件：[Electron 主进程启动完成] → [FusionInitializer.initialize() 已被执行]
+   - 当Electron 主进程启动完成时，系统应FusionInitializer.initialize() 已被执行
 
 5. **FusionInitializer调用顺序**：FusionInitializer 必须在其他业务模块初始化之前完成初始化
-   - 验收条件：[Electron 主进程启动] → [FusionInitializer 在所有业务模块初始化之前完成]
+   - 当Electron 主进程启动时，系统应FusionInitializer 在所有业务模块初始化之前完成
 
 ### 5.1.2 交互流程
 
@@ -270,16 +276,16 @@ Agent --> Caller : 返回执行结果
 ### 5.2.1 业务规则
 
 1. **Core层工具源文件补全**：tools/builtin/ 目录必须包含完整的源文件，不得仅有 dist 产物
-   - 验收条件：[查看 tools/builtin/ 目录] → [包含完整的 .ts 源文件]
+   - 当查看 tools/builtin/ 目录时，系统应包含完整的 .ts 源文件
 
 2. **remember_vector/recall_vector工具注册**：remember_vector 和 recall_vector 工具必须注册到 ToolRegistry
-   - 验收条件：[查询 ToolRegistry 工具列表] → [包含 remember_vector 和 recall_vector]
+   - 当查询 ToolRegistry 工具列表时，系统应包含 remember_vector 和 recall_vector
 
 3. **openspace_execute工具注册**：openspace_execute 工具必须注册到 ToolRegistry
-   - 验收条件：[查询 ToolRegistry 工具列表] → [包含 openspace_execute]
+   - 当查询 ToolRegistry 工具列表时，系统应包含 openspace_execute
 
 4. **parallel_execute/dag_execute工具注册**：parallel_execute 和 dag_execute 工具必须注册到 ToolRegistry
-   - 验收条件：[查询 ToolRegistry 工具列表] → [包含 parallel_execute 和 dag_execute]
+   - 当查询 ToolRegistry 工具列表时，系统应包含 parallel_execute 和 dag_execute
 
 ### 5.2.2 交互流程
 
@@ -327,13 +333,13 @@ Registry --> Agent : 返回完整工具列表
 ### 5.3.1 业务规则
 
 1. **Core层技能源文件补全**：skills/ 目录必须包含完整的源文件，不得仅有 dist 产物
-   - 验收条件：[查看 skills/ 目录] → [包含完整的 .ts 源文件]
+   - 当查看 skills/ 目录时，系统应包含完整的 .ts 源文件
 
 2. **OpenSpace Skills注册**：openspace-navigate、openspace-scene、openspace-record 三个技能必须在 Skills loader 中注册
-   - 验收条件：[查询 Skills loader 注册列表] → [包含 openspace-navigate、openspace-scene、openspace-record]
+   - 当查询 Skills loader 注册列表时，系统应包含 openspace-navigate、openspace-scene、openspace-record
 
 3. **SkillSecurityLoader Hook调用**：SkillSecurityLoader 的 before_skill_load Hook 必须在技能加载流程中实际调用
-   - 验收条件：[技能加载流程启动] → [before_skill_load Hook 被触发]
+   - 当技能加载流程启动时，系统应before_skill_load Hook 被触发
 
 ### 5.3.2 交互流程
 
@@ -371,16 +377,16 @@ Loader --> Agent : 技能加载完成
 ### 5.4.1 业务规则
 
 1. **sqlite-vss向量数据库集成**：向量数据库必须集成 sqlite-vss 替代 InMemoryVectorAdapter，具备持久化能力
-   - 验收条件：[系统启动后写入向量数据] → [数据持久化至 sqlite-vss 数据库]
-   - 验收条件：[系统重启后] → [向量数据可从 sqlite-vss 数据库中恢复]
+   - 当系统启动后写入向量数据时，系统应数据持久化至 sqlite-vss 数据库
+   - 当系统重启后时，系统应向量数据可从 sqlite-vss 数据库中恢复
 
 2. **VectorMemoryStore与update_memory工具联动**：VectorMemoryStore 必须与 update_memory 工具联动，当记忆更新时触发向量同步
-   - 验收条件：[update_memory 工具执行完成] → [EventBus 发布 memory:updated 事件]
-   - 验收条件：[memory:updated 事件发布] → [VectorMemoryStore 执行向量同步]
+   - 当update_memory 工具执行完成时，系统应EventBus 发布 memory:updated 事件
+   - 当memory:updated 事件发布时，系统应VectorMemoryStore 执行向量同步
 
 3. **HonchoUserModeler与MemoryReflector联动**：HonchoUserModeler 必须与 MemoryReflector 联动，实现用户画像与记忆反思的协同
-   - 验收条件：[MemoryReflector 执行记忆反思] → [HonchoUserModeler 更新用户画像]
-   - 验收条件：[HonchoUserModeler 用户画像更新] → [MemoryReflector 可获取最新用户画像]
+   - 当MemoryReflector 执行记忆反思时，系统应HonchoUserModeler 更新用户画像
+   - 当HonchoUserModeler 用户画像更新时，系统应MemoryReflector 可获取最新用户画像
 
 ### 5.4.2 交互流程
 
@@ -424,23 +430,23 @@ Tool --> Agent : 记忆更新成功
 ### 5.5.1 业务规则
 
 1. **FusionInitializer在Electron主进程初始化中调用**：FusionInitializer 必须在 Electron 主进程初始化流程中被调用
-   - 验收条件：[Electron 主进程初始化] → [FusionInitializer.initialize() 被调用]
+   - 当Electron 主进程初始化时，系统应FusionInitializer.initialize() 被调用
 
 2. **registerFusionIPC()在IPC注册入口中调用**：registerFusionIPC() 必须在 IPC 注册入口中被调用
-   - 验收条件：[IPC 注册流程执行] → [registerFusionIPC() 被调用]
+   - 当IPC 注册流程执行时，系统应registerFusionIPC() 被调用
 
 3. **migration003/migration004在数据库初始化中导入执行**：migration003 和 migration004 必须在数据库初始化中被导入并执行
-   - 验收条件：[数据库初始化完成] → [migration003 和 migration004 已执行]
+   - 当数据库初始化完成时，系统应migration003 和 migration004 已执行
 
 4. **fusion/index.ts在core/index.ts中导出**：fusion/index.ts 必须在 core/index.ts 中作为导出模块
-   - 验收条件：[查看 core/index.ts 导出列表] → [包含 fusion 模块导出]
+   - 当查看 core/index.ts 导出列表时，系统应包含 fusion 模块导出
 
 5. **融合模块健康检查接口验证完整性**：各融合模块的健康检查接口必须验证功能完整性
-   - 验收条件：[调用融合模块健康检查接口] → [返回该模块功能完整性状态]
+   - 当调用融合模块健康检查接口时，系统应返回该模块功能完整性状态
 
 6. **降级机制验证**：各融合模块禁用后系统行为必须与融合前一致
-   - 验收条件：[禁用某融合模块] → [系统行为与该模块引入前一致]
-   - 验收条件：[禁用所有融合模块] → [系统行为与融合层引入前完全一致]
+   - 当禁用某融合模块时，系统应系统行为与该模块引入前一致
+   - 当禁用所有融合模块时，系统应系统行为与融合层引入前完全一致
 
 ### 5.5.2 交互流程
 
@@ -496,28 +502,28 @@ Core -> Core : 导出fusion/index.ts
 ### 5.6.1 业务规则
 
 1. **registerOpenSpaceIPC()在IPC注册入口中调用**：registerOpenSpaceIPC() 必须在 IPC 注册入口中被调用
-   - 验收条件：[IPC 注册流程执行] → [registerOpenSpaceIPC() 被调用]
+   - 当IPC 注册流程执行时，系统应registerOpenSpaceIPC() 被调用
 
 2. **OpenSpaceProcessManager安装路径检测逻辑完整**：OpenSpaceProcessManager 必须实现完整的跨平台安装路径检测，包括 Windows 注册表查询和 Linux which 命令
-   - 验收条件：[在 Windows 平台执行路径检测] → [通过注册表查询获取 OpenSpace 安装路径]
-   - 验收条件：[在 Linux 平台执行路径检测] → [通过 which 命令获取 OpenSpace 安装路径]
-   - 验收条件：[在 macOS 平台执行路径检测] → [通过标准路径或 mdfind 获取 OpenSpace 安装路径]
+   - 当在 Windows 平台执行路径检测时，系统应通过注册表查询获取 OpenSpace 安装路径
+   - 当在 Linux 平台执行路径检测时，系统应通过 which 命令获取 OpenSpace 安装路径
+   - 当在 macOS 平台执行路径检测时，系统应通过标准路径或 mdfind 获取 OpenSpace 安装路径
 
 3. **OpenSpaceBridge WebSocket集成**：OpenSpaceBridge 的 WebSocket 连接必须与真实的 ws 库集成
-   - 验收条件：[OpenSpaceBridge 建立连接] → [使用 ws 库创建 WebSocket 客户端]
-   - 验收条件：[WebSocket 连接断开] → [OpenSpaceBridge 触发重连机制]
+   - 当OpenSpaceBridge 建立连接时，系统应使用 ws 库创建 WebSocket 客户端
+   - 当WebSocket 连接断开时，系统应OpenSpaceBridge 触发重连机制
 
 4. **窗口嵌入(embedded模式)实现**：窗口嵌入模式必须实现窗口句柄管理
-   - 验收条件：[启用 embedded 模式] → [获取并管理 OpenSpace 窗口句柄]
-   - 验收条件：[OpenSpace 窗口关闭] → [释放窗口句柄资源]
+   - 当启用 embedded 模式时，系统应获取并管理 OpenSpace 窗口句柄
+   - 当OpenSpace 窗口关闭时，系统应释放窗口句柄资源
 
 5. **帧导出录制控制与OpenSpace Lua脚本对接**：帧导出录制控制必须与 OpenSpace Lua 脚本对接
-   - 验收条件：[发起帧导出录制] → [通过 Lua 脚本控制 OpenSpace 执行录制]
-   - 验收条件：[停止帧导出录制] → [通过 Lua 脚本控制 OpenSpace 停止录制]
+   - 当发起帧导出录制时，系统应通过 Lua 脚本控制 OpenSpace 执行录制
+   - 当停止帧导出录制时，系统应通过 Lua 脚本控制 OpenSpace 停止录制
 
 6. **全球同步连接管理与OpenSpace同步协议对接**：全球同步连接管理必须与 OpenSpace 同步协议对接
-   - 验收条件：[发起全球同步连接] → [按 OpenSpace 同步协议建立连接]
-   - 验收条件：[同步数据到达] → [按 OpenSpace 同步协议解析并应用]
+   - 当发起全球同步连接时，系统应按 OpenSpace 同步协议建立连接
+   - 当同步数据到达时，系统应按 OpenSpace 同步协议解析并应用
 
 ### 5.6.2 交互流程
 
@@ -578,20 +584,20 @@ Bridge --> User : 连接就绪
 ### 5.7.1 业务规则
 
 1. **RBAC权限控制完整**：Cloud Server 所有 API 端点必须受 RBAC 权限控制保护
-   - 验收条件：[访问任何 Cloud Server API 端点] → [执行 RBAC 权限校验]
-   - 验收条件：[用户无对应权限] → [请求被拒绝并返回 403]
+   - 当访问任何 Cloud Server API 端点时，系统应执行 RBAC 权限校验
+   - 当用户无对应权限时，系统应请求被拒绝并返回 403
 
 2. **操作审计日志持久化**：所有敏感操作必须记录审计日志并持久化存储
-   - 验收条件：[执行敏感操作（创建/删除/权限变更）] → [审计日志写入持久化存储]
-   - 验收条件：[系统重启后] → [审计日志可从持久化存储中查询]
+   - 当执行敏感操作（创建/删除/权限变更）时，系统应审计日志写入持久化存储
+   - 当系统重启后时，系统应审计日志可从持久化存储中查询
 
 3. **租户资源配额管理**：必须实现租户资源配额管理，包括配额设置与超限控制
-   - 验收条件：[设置租户资源配额] → [配额生效并可查询]
-   - 验收条件：[租户资源使用超过配额] → [超额请求被拒绝并返回 429]
+   - 当设置租户资源配额时，系统应配额生效并可查询
+   - 当租户资源使用超过配额时，系统应超额请求被拒绝并返回 429
 
 4. **租户间隔离验证**：租户间数据必须严格隔离，任何跨租户数据访问必须被阻止
-   - 验收条件：[租户A尝试访问租户B的数据] → [请求被拒绝并返回 403]
-   - 验收条件：[租户A的资源列表查询] → [仅返回租户A的数据]
+   - 当租户A尝试访问租户B的数据时，系统应请求被拒绝并返回 403
+   - 当租户A的资源列表查询时，系统应仅返回租户A的数据
 
 ### 5.7.2 交互流程
 
@@ -644,21 +650,21 @@ Server --> User : 返回响应
 ### 5.8.1 业务规则
 
 1. **Fusion融合组件路由注册**：Fusion 融合组件必须在 ActivityBar 和 SidebarContainer 中注册路由
-   - 验收条件：[查看 ActivityBar 组件列表] → [包含 Fusion 融合入口]
-   - 验收条件：[点击 Fusion ActivityBar 入口] → [SidebarContainer 显示 Fusion 面板]
+   - 当查看 ActivityBar 组件列表时，系统应包含 Fusion 融合入口
+   - 当点击 Fusion ActivityBar 入口时，系统应SidebarContainer 显示 Fusion 面板
 
 2. **OpenSpace组件路由注册**：OpenSpace 组件必须在 ActivityBar 和 SidebarContainer 中注册路由
-   - 验收条件：[查看 ActivityBar 组件列表] → [包含 OpenSpace 入口]
-   - 验收条件：[点击 OpenSpace ActivityBar 入口] → [SidebarContainer 显示 OpenSpace 面板]
+   - 当查看 ActivityBar 组件列表时，系统应包含 OpenSpace 入口
+   - 当点击 OpenSpace ActivityBar 入口时，系统应SidebarContainer 显示 OpenSpace 面板
 
 3. **scifi-dark主题切换入口**：scifi-dark 主题切换入口必须在 StatusBar 或 SettingsPanel 中添加
-   - 验收条件：[查看 StatusBar] → [包含主题切换入口]
-   - 验收条件：[查看 SettingsPanel] → [包含 scifi-dark 主题选项]
-   - 验收条件：[点击主题切换入口并选择 scifi-dark] → [界面切换至 scifi-dark 主题]
+   - 当查看 StatusBar时，系统应包含主题切换入口
+   - 当查看 SettingsPanel时，系统应包含 scifi-dark 主题选项
+   - 当点击主题切换入口并选择 scifi-dark时，系统应界面切换至 scifi-dark 主题
 
 4. **SidebarPanel类型扩展**：SidebarPanel 类型必须扩展 fusion 和 openspace 相关面板 ID
-   - 验收条件：[查看 SidebarPanel 类型定义] → [包含 fusion 相关面板 ID]
-   - 验收条件：[查看 SidebarPanel 类型定义] → [包含 openspace 相关面板 ID]
+   - 当查看 SidebarPanel 类型定义时，系统应包含 fusion 相关面板 ID
+   - 当查看 SidebarPanel 类型定义时，系统应包含 openspace 相关面板 ID
 
 ### 5.8.2 交互流程
 
@@ -760,228 +766,187 @@ SP --> User : 界面切换至scifi-dark
 
 ## REQ-FC01：Agent Core层源文件补全
 
-**When** Agent 核心模块源代码目录被检查，**the Agent核心模块** **shall** 在 agent/ 目录中提供完整的 .ts 源文件而非仅 dist 产物。
-
+**当**Agent 核心模块源代码目录被检查**时，**Agent核心模块****应**在 agent/ 目录中提供完整的 .ts 源文件而非仅 dist 产物
 **优先级**：P0 | **模块**：Agent核心 | **依赖**：无
 
 ## REQ-FC02：Hook点在Agent循环中实际注入
 
-**When** Agent 主循环执行至各拦截阶段（LLM调用前/后、工具执行前/后、技能加载前/后、记忆写入前、压缩后），**the Agent主循环** **shall** 实际触发对应 Hook 点（before_llm_call/after_llm_call/before_tool_execute/after_tool_execute/before_skill_load/after_skill_load/before_memory_write/after_compaction）。
-
+**当**Agent 主循环执行至各拦截阶段（LLM调用前/后、工具执行前/后、技能加载前/后、记忆写入前、压缩后）**时，**Agent主循环****应**实际触发对应 Hook 点（before_llm_call/after_llm_call/before_tool_execute/after_tool_execute/before_skill_load/after_skill_load/before_memory_write/after_compaction）
 **优先级**：P0 | **模块**：Agent核心 | **依赖**：REQ-FC01
 
 ## REQ-FC03：EventBus事件在Agent循环中实际发布
 
-**When** Agent 主循环执行至消息处理开始/结束、工具调用/结果返回、记忆压缩等阶段，**the Agent主循环** **shall** 通过 EventBus 发布对应事件（agent:message_start/agent:message_end/agent:tool_call/agent:tool_result/agent:compaction）。
-
+**当**Agent 主循环执行至消息处理开始/结束、工具调用/结果返回、记忆压缩等阶段**时，**Agent主循环****应**通过 EventBus 发布对应事件（agent:message_start/agent:message_end/agent:tool_call/agent:tool_result/agent:compaction）
 **优先级**：P0 | **模块**：Agent核心 | **依赖**：REQ-FC01
 
 ## REQ-FC04：FusionInitializer在Electron主进程中调用
 
-**When** Electron 主进程完成初始化，**the Electron主进程** **shall** 已调用 FusionInitializer.initialize() 且在所有业务模块初始化之前完成。
-
+**当**Electron 主进程完成初始化**时，**Electron主进程****应**已调用 FusionInitializer.initialize() 且在所有业务模块初始化之前完成
 **优先级**：P0 | **模块**：Agent核心 | **依赖**：REQ-FC01, REQ-FC16
 
 ## REQ-FC05：Core层源文件向后兼容
 
-**Where** Agent 核心 Core 层源文件被补全，**the Agent核心模块** **shall** 保持现有 dist 产物的向后兼容性。
-
+**若**Agent 核心 Core 层源文件被补全**，**Agent核心模块****应**保持现有 dist 产物的向后兼容性
 **优先级**：P1 | **模块**：Agent核心 | **依赖**：REQ-FC01
 
 ## REQ-FC06：工具系统Core层源文件补全
 
-**When** 工具系统源代码目录被检查，**the 工具系统** **shall** 在 tools/builtin/ 目录中提供完整的 .ts 源文件而非仅 dist 产物。
-
+**当**工具系统源代码目录被检查**时，**工具系统****应**在 tools/builtin/ 目录中提供完整的 .ts 源文件而非仅 dist 产物
 **优先级**：P0 | **模块**：工具系统 | **依赖**：无
 
 ## REQ-FC07：remember_vector/recall_vector工具注册
 
-**When** ToolRegistry 初始化完成，**the ToolRegistry** **shall** 包含已注册的 remember_vector 和 recall_vector 工具。
-
+**当**ToolRegistry 初始化完成**时，**ToolRegistry****应**包含已注册的 remember_vector 和 recall_vector 工具
 **优先级**：P0 | **模块**：工具系统 | **依赖**：REQ-FC06, REQ-FC13
 
 ## REQ-FC08：openspace_execute工具注册
 
-**When** ToolRegistry 初始化完成，**the ToolRegistry** **shall** 包含已注册的 openspace_execute 工具。
-
+**当**ToolRegistry 初始化完成**时，**ToolRegistry****应**包含已注册的 openspace_execute 工具
 **优先级**：P1 | **模块**：工具系统 | **依赖**：REQ-FC06, REQ-FC23
 
 ## REQ-FC09：parallel_execute/dag_execute工具注册
 
-**When** ToolRegistry 初始化完成，**the ToolRegistry** **shall** 包含已注册的 parallel_execute 和 dag_execute 工具。
-
+**当**ToolRegistry 初始化完成**时，**ToolRegistry****应**包含已注册的 parallel_execute 和 dag_execute 工具
 **优先级**：P1 | **模块**：工具系统 | **依赖**：REQ-FC06
 
 ## REQ-FC10：Skills系统Core层源文件补全
 
-**When** Skills 系统源代码目录被检查，**the Skills系统** **shall** 在 skills/ 目录中提供完整的 .ts 源文件而非仅 dist 产物。
-
+**当**Skills 系统源代码目录被检查**时，**Skills系统****应**在 skills/ 目录中提供完整的 .ts 源文件而非仅 dist 产物
 **优先级**：P0 | **模块**：Skills系统 | **依赖**：无
 
 ## REQ-FC11：OpenSpace Skills在Skills loader中注册
 
-**When** Skills loader 初始化完成，**the Skills loader** **shall** 包含已注册的 openspace-navigate、openspace-scene、openspace-record 技能。
-
+**当**Skills loader 初始化完成**时，**Skills loader****应**包含已注册的 openspace-navigate、openspace-scene、openspace-record 技能
 **优先级**：P1 | **模块**：Skills系统 | **依赖**：REQ-FC10, REQ-FC23
 
 ## REQ-FC12：SkillSecurityLoader before_skill_load Hook调用
 
-**When** 技能加载流程启动，**the Skills系统** **shall** 实际调用 SkillSecurityLoader 的 before_skill_load Hook。
-
+**当**技能加载流程启动**时，**Skills系统****应**实际调用 SkillSecurityLoader 的 before_skill_load Hook
 **优先级**：P0 | **模块**：Skills系统 | **依赖**：REQ-FC10, REQ-FC02
 
 ## REQ-FC13：sqlite-vss向量数据库集成
 
-**When** 系统启动且 sqlite-vss 扩展可用，**the Memory系统** **shall** 使用 sqlite-vss 作为向量数据库替代 InMemoryVectorAdapter，实现向量数据持久化。
-
-**If** sqlite-vss 扩展不可用，**the Memory系统** **shall** 自动降级至 InMemoryVectorAdapter 并记录降级告警日志。
-
+**当**系统启动且 sqlite-vss 扩展可用**时，**Memory系统****应**使用 sqlite-vss 作为向量数据库替代 InMemoryVectorAdapter，实现向量数据持久化
+**若**sqlite-vss 扩展不可用**，**Memory系统****应**自动降级至 InMemoryVectorAdapter 并记录降级告警日志
 **优先级**：P0 | **模块**：Memory系统 | **依赖**：无
 
 ## REQ-FC14：VectorMemoryStore与update_memory工具联动
 
-**When** update_memory 工具执行完成，**the Memory系统** **shall** 通过 EventBus 发布 memory:updated 事件并触发 VectorMemoryStore 执行向量同步。
-
+**当**update_memory 工具执行完成**时，**Memory系统****应**通过 EventBus 发布 memory:updated 事件并触发 VectorMemoryStore 执行向量同步
 **优先级**：P0 | **模块**：Memory系统 | **依赖**：REQ-FC13, REQ-FC03
 
 ## REQ-FC15：HonchoUserModeler与MemoryReflector联动
 
-**While** MemoryReflector 执行记忆反思，**the Memory系统** **shall** 与 HonchoUserModeler 协同，确保用户画像与记忆反思双向更新。
-
+**当**MemoryReflector 执行记忆反思**时，**Memory系统****应**与 HonchoUserModeler 协同，确保用户画像与记忆反思双向更新
 **优先级**：P1 | **模块**：Memory系统 | **依赖**：REQ-FC13
 
 ## REQ-FC16：FusionInitializer在Electron主进程初始化中调用
 
-**When** Electron 主进程执行初始化流程，**the Fusion融合层** **shall** 确保 FusionInitializer.initialize() 被调用。
-
+**当**Electron 主进程执行初始化流程**时，**Fusion融合层****应**确保 FusionInitializer.initialize() 被调用
 **优先级**：P0 | **模块**：Fusion融合层 | **依赖**：无
 
 ## REQ-FC17：registerFusionIPC()在IPC注册入口中调用
 
-**When** IPC 注册流程执行，**the Fusion融合层** **shall** 确保 registerFusionIPC() 被调用。
-
+**当**IPC 注册流程执行**时，**Fusion融合层****应**确保 registerFusionIPC() 被调用
 **优先级**：P0 | **模块**：Fusion融合层 | **依赖**：REQ-FC16
 
 ## REQ-FC18：migration003/migration004在数据库初始化中导入执行
 
-**When** 数据库初始化流程执行，**the Fusion融合层** **shall** 确保 migration003 和 migration004 被导入并执行。
-
-**If** 迁移脚本执行失败，**the Fusion融合层** **shall** 终止数据库初始化并阻止系统启动。
-
+**当**数据库初始化流程执行**时，**Fusion融合层****应**确保 migration003 和 migration004 被导入并执行
+**若**迁移脚本执行失败**，**Fusion融合层****应**终止数据库初始化并阻止系统启动
 **优先级**：P0 | **模块**：Fusion融合层 | **依赖**：REQ-FC16
 
 ## REQ-FC19：fusion/index.ts在core/index.ts中导出
 
-**When** core/index.ts 模块被加载，**the Fusion融合层** **shall** 作为导出模块被包含。
-
+**当**core/index.ts 模块被加载**时，**Fusion融合层****应**作为导出模块被包含
 **优先级**：P1 | **模块**：Fusion融合层 | **依赖**：REQ-FC16
 
 ## REQ-FC20：融合模块健康检查接口验证完整性
 
-**When** 融合模块健康检查接口被调用，**the Fusion融合层** **shall** 返回该模块的功能完整性状态。
-
+**当**融合模块健康检查接口被调用**时，**Fusion融合层****应**返回该模块的功能完整性状态
 **优先级**：P1 | **模块**：Fusion融合层 | **依赖**：REQ-FC16
 
 ## REQ-FC21：融合模块降级机制验证
 
-**Where** 任一融合模块被禁用，**the 系统行为** **shall** 与该模块引入前一致。
-
+**若**任一融合模块被禁用**，**系统行为****应**与该模块引入前一致
 **优先级**：P0 | **模块**：Fusion融合层 | **依赖**：REQ-FC16, REQ-FC20
 
 ## REQ-FC22：全融合模块降级验证
 
-**Where** 所有融合模块被禁用，**the 系统行为** **shall** 与融合层引入前完全一致。
-
+**若**所有融合模块被禁用**，**系统行为****应**与融合层引入前完全一致
 **优先级**：P0 | **模块**：Fusion融合层 | **依赖**：REQ-FC21
 
 ## REQ-FC23：registerOpenSpaceIPC()在IPC注册入口中调用
 
-**When** IPC 注册流程执行，**the OpenSpace融合模块** **shall** 确保 registerOpenSpaceIPC() 被调用。
-
+**当**IPC 注册流程执行**时，**OpenSpace融合模块****应**确保 registerOpenSpaceIPC() 被调用
 **优先级**：P0 | **模块**：OpenSpace融合 | **依赖**：无
 
 ## REQ-FC24：OpenSpaceProcessManager安装路径检测逻辑完整
 
-**When** OpenSpaceProcessManager 执行安装路径检测，**the OpenSpace融合模块** **shall** 在 Windows 平台通过注册表查询、在 Linux 平台通过 which 命令、在 macOS 平台通过标准路径或 mdfind 获取安装路径。
-
+**当**OpenSpaceProcessManager 执行安装路径检测**时，**OpenSpace融合模块****应**在 Windows 平台通过注册表查询、在 Linux 平台通过 which 命令、在 macOS 平台通过标准路径或 mdfind 获取安装路径
 **优先级**：P0 | **模块**：OpenSpace融合 | **依赖**：REQ-FC23
 
 ## REQ-FC25：OpenSpaceBridge WebSocket与ws库集成
 
-**When** OpenSpaceBridge 建立连接，**the OpenSpace融合模块** **shall** 使用真实 ws 库创建 WebSocket 客户端并与 OpenSpace 进程通信。
-
-**If** WebSocket 连接断开，**the OpenSpace融合模块** **shall** 触发自动重连机制。
-
+**当**OpenSpaceBridge 建立连接**时，**OpenSpace融合模块****应**使用真实 ws 库创建 WebSocket 客户端并与 OpenSpace 进程通信
+**若**WebSocket 连接断开**，**OpenSpace融合模块****应**触发自动重连机制
 **优先级**：P0 | **模块**：OpenSpace融合 | **依赖**：REQ-FC23, REQ-FC24
 
 ## REQ-FC26：窗口嵌入(embedded模式)窗口句柄管理
 
-**Where** embedded 模式被启用，**the OpenSpace融合模块** **shall** 获取并管理 OpenSpace 窗口句柄，且在窗口关闭时释放资源。
-
+**若**embedded 模式被启用**，**OpenSpace融合模块****应**获取并管理 OpenSpace 窗口句柄，且在窗口关闭时释放资源
 **优先级**：P1 | **模块**：OpenSpace融合 | **依赖**：REQ-FC25
 
 ## REQ-FC27：帧导出录制控制与OpenSpace Lua脚本对接
 
-**When** 帧导出录制控制被触发（开始/停止），**the OpenSpace融合模块** **shall** 通过 Lua 脚本控制 OpenSpace 执行对应录制操作。
-
+**当**帧导出录制控制被触发（开始/停止）**时，**OpenSpace融合模块****应**通过 Lua 脚本控制 OpenSpace 执行对应录制操作
 **优先级**：P1 | **模块**：OpenSpace融合 | **依赖**：REQ-FC25
 
 ## REQ-FC28：全球同步连接管理与OpenSpace同步协议对接
 
-**When** 全球同步连接被发起或同步数据到达，**the OpenSpace融合模块** **shall** 按 OpenSpace 同步协议建立连接并解析应用数据。
-
+**当**全球同步连接被发起或同步数据到达**时，**OpenSpace融合模块****应**按 OpenSpace 同步协议建立连接并解析应用数据
 **优先级**：P1 | **模块**：OpenSpace融合 | **依赖**：REQ-FC25
 
 ## REQ-FC29：RBAC权限控制完整
 
-**When** 任何 Cloud Server API 端点被访问，**the Cloud Server** **shall** 执行 RBAC 权限校验。
-
-**If** 用户无对应权限，**the Cloud Server** **shall** 拒绝请求并返回 403 Forbidden。
-
+**当**任何 Cloud Server API 端点被访问**时，**Cloud Server****应**执行 RBAC 权限校验
+**若**用户无对应权限**，**Cloud Server****应**拒绝请求并返回 403 Forbidden
 **优先级**：P0 | **模块**：Cloud Server | **依赖**：无
 
 ## REQ-FC30：操作审计日志持久化
 
-**When** 敏感操作（创建/删除/权限变更）被执行，**the Cloud Server** **shall** 记录审计日志并持久化至存储。
-
-**If** 持久化存储不可用，**the Cloud Server** **shall** 将审计日志暂存至本地缓冲区并异步重试。
-
+**当**敏感操作（创建/删除/权限变更）被执行**时，**Cloud Server****应**记录审计日志并持久化至存储
+**若**持久化存储不可用**，**Cloud Server****应**将审计日志暂存至本地缓冲区并异步重试
 **优先级**：P0 | **模块**：Cloud Server | **依赖**：无
 
 ## REQ-FC31：租户资源配额管理
 
-**When** 租户资源使用量达到配额上限，**the Cloud Server** **shall** 拒绝新资源创建请求并返回 429 Too Many Requests。
-
+**当**租户资源使用量达到配额上限**时，**Cloud Server****应**拒绝新资源创建请求并返回 429 Too Many Requests
 **优先级**：P1 | **模块**：Cloud Server | **依赖**：REQ-FC29
 
 ## REQ-FC32：租户间隔离验证
 
-**When** 跨租户数据访问请求被检测，**the Cloud Server** **shall** 拒绝请求并返回 403 Forbidden。
-
+**当**跨租户数据访问请求被检测**时，**Cloud Server****应**拒绝请求并返回 403 Forbidden
 **优先级**：P0 | **模块**：Cloud Server | **依赖**：REQ-FC29
 
 ## REQ-FC33：Fusion融合组件路由注册
 
-**When** ActivityBar 和 SidebarContainer 初始化完成，**the Renderer UI** **shall** 包含 Fusion 融合入口及面板路由。
-
+**当**ActivityBar 和 SidebarContainer 初始化完成**时，**Renderer UI****应**包含 Fusion 融合入口及面板路由
 **优先级**：P0 | **模块**：Renderer UI | **依赖**：REQ-FC16, REQ-FC17
 
 ## REQ-FC34：OpenSpace组件路由注册
 
-**When** ActivityBar 和 SidebarContainer 初始化完成，**the Renderer UI** **shall** 包含 OpenSpace 入口及面板路由。
-
+**当**ActivityBar 和 SidebarContainer 初始化完成**时，**Renderer UI****应**包含 OpenSpace 入口及面板路由
 **优先级**：P0 | **模块**：Renderer UI | **依赖**：REQ-FC23
 
 ## REQ-FC35：scifi-dark主题切换入口
 
-**When** StatusBar 或 SettingsPanel 被渲染，**the Renderer UI** **shall** 包含 scifi-dark 主题切换入口，且用户选择后界面切换至 scifi-dark 主题。
-
+**当**StatusBar 或 SettingsPanel 被渲染**时，**Renderer UI****应**包含 scifi-dark 主题切换入口，且用户选择后界面切换至 scifi-dark 主题
 **优先级**：P1 | **模块**：Renderer UI | **依赖**：无
 
 ## REQ-FC36：SidebarPanel类型扩展
 
-**When** SidebarPanel 类型定义被加载，**the Renderer UI** **shall** 包含 fusion 和 openspace 相关面板 ID。
-
+**当**SidebarPanel 类型定义被加载**时，**Renderer UI****应**包含 fusion 和 openspace 相关面板 ID
 **优先级**：P0 | **模块**：Renderer UI | **依赖**：REQ-FC33, REQ-FC34
 
 ---
@@ -1092,3 +1057,30 @@ REQ-FC36 (SidebarPanel类型) ← REQ-FC33, REQ-FC34
 2. **第二批（核心集成）**：REQ-FC02, REQ-FC03, REQ-FC07, REQ-FC12, REQ-FC14, REQ-FC17, REQ-FC18, REQ-FC24, REQ-FC25, REQ-FC30, REQ-FC32
 3. **第三批（路由注册与降级）**：REQ-FC21, REQ-FC22, REQ-FC33, REQ-FC34, REQ-FC36
 4. **第四批（增强功能）**：REQ-FC04, REQ-FC05, REQ-FC08, REQ-FC09, REQ-FC11, REQ-FC15, REQ-FC19, REQ-FC20, REQ-FC26, REQ-FC27, REQ-FC28, REQ-FC31, REQ-FC35
+
+
+## 9. 共享术语表
+
+（见lingjing-review/spec.md第7章共享术语表）
+
+## 10. 修复追踪
+
+| 问题编号 | 问题描述 | 修复方式 |
+|---------|---------|---------|
+| F-2 | tools/builtin/路径不存在 | 标注该目录不存在于src中 |
+| F-3 | config/路径不存在 | 标注src/config/目录不存在，仅有dist产物 |
+| F-5 | Tool接口riskLevel属性 | 标注为OpenSpace安全扫描模块专有属性 |
+| G-1 | 验收条件格式不一致 | 统一为中文EARS格式（当...时，...应...） |
+| G-2 | EARS中英混杂 | When→当，shall→应，If→若，Where→若，While→当 |
+| G-3 | 章节编号体系不一致 | 统一为纯数字层级编号 |
+| G-5 | 术语定义位置不一致 | 建立共享术语表引用 |
+| M-1 | Fusion模块已有实现未标注 | 标注现有实现状态 |
+| M-2 | cross-session模块 | 标注已有编译产物，源码补全待实施 |
+| M-3 | 未覆盖cloud-admin | 已添加至核心输入/输出 |
+| M-4 | 未覆盖mobile/android | 已添加至核心输入/输出 |
+| M-5 | 未覆盖Quest系统 | 已添加至核心输入/输出 |
+| M-6 | security/checkpoint源码不在仓库 | 标注仅有dist编译产物 |
+| M-7 | LLM Provider遗漏国内模型 | 补充百度文心、腾讯混元、Kimi等 |
+| M-8 | 配置默认值描述不完整 | 见input-area-refactor补充的配置默认值 |
+| L-2 | 跨版本迁移禁止跳跃矛盾 | 标注需考虑中间版本未发布场景 |
+| C-4 | 两份文档描述深度差异 | 建立交叉引用关系 |

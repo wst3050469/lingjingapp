@@ -236,7 +236,7 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
             )}
 
             {isStreaming && <FileEditTracker />}
-            {!isStreaming && <TodoTracker />}
+            <TodoTracker />
             {!isStreaming && isReviewActive && <FileChangeSummary />}
 
             {askUserRequest && (

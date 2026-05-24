@@ -35,12 +35,22 @@ export function useQuestEvents(): void {
       // and task status. Without this, error events from Agent (which carry their runId)
       // are dropped when activeRunId changes, leaving error messages never shown and
       // state never cleaned up.
+      //
+      // BUT: we must protect against LATE lifecycle events from a PREVIOUS agent run
+      // (e.g. stopOnSwitch's 'done' event arriving after the new resume run has started).
+      // The age guard: if activeRunId is set and differs from event.runId, only process
+      // the lifecycle event if it would NOT reset activeRunId or isStreaming.
       const isLifecycleEvent = event.type === 'done' || event.type === 'error' || event.type === 'status_change';
       if (!isCrossTask && !isLifecycleEvent && event.runId) {
         if (!store.activeRunId || event.runId !== store.activeRunId) {
           return; // Stale streaming event from a previous run – drop it
         }
       }
+
+      // Late lifecycle event guard: if activeRunId is set and differs, this is a stale
+      // lifecycle event from a previous run. We still need to update task status/properties,
+      // but we MUST NOT reset streaming state or activeRunId.
+      const isLateLifecycleEvent = isLifecycleEvent && event.runId && store.activeRunId && event.runId !== store.activeRunId;
 
       switch (event.type) {
         case 'thinking':
@@ -86,8 +96,12 @@ export function useQuestEvents(): void {
             content: `Error: ${event.error?.message || 'Unknown error'}`,
             timestamp: Date.now(),
           });
-          store.setStreaming(false);
-          store.setActiveRunId(null);
+          // Only reset streaming state if this is NOT a late lifecycle event
+          // (late event = old run's done/error arriving after new run started)
+          if (!isLateLifecycleEvent) {
+            store.setStreaming(false);
+            store.setActiveRunId(null);
+          }
           if (event.taskId) {
             store.removeRunningTask(event.taskId);
           }
@@ -104,8 +118,13 @@ export function useQuestEvents(): void {
             });
           }
           store.resetStreamText();
-          store.setStreaming(false);
-          store.setActiveRunId(null);
+          // Only reset streaming state if this is NOT a late lifecycle event
+          // (late event = old run's done arriving after new run started).
+          // Prevents stopOnSwitch's done event from killing the new resume run.
+          if (!isLateLifecycleEvent) {
+            store.setStreaming(false);
+            store.setActiveRunId(null);
+          }
 
           // Remove from running tasks
           if (event.taskId) {
@@ -160,7 +179,9 @@ export function useQuestEvents(): void {
             } else {
               store.removeRunningTask(event.taskId);
               // Reset streaming state for non-running statuses (defense-in-depth)
-              if (event.taskId === store.activeTaskId) {
+              // BUT: skip if this is a late lifecycle event (e.g. paused status from
+              // stopOnSwitch arriving after new resume run has started)
+              if (event.taskId === store.activeTaskId && !isLateLifecycleEvent) {
                 store.resetStreamText();
                 store.setStreaming(false);
               }

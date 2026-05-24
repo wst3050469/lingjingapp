@@ -349,8 +349,8 @@ export function QuestConversation() {
         <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
           {/* Task progress and file changes */}
           <div className="space-y-2 sticky top-0 z-10 bg-cp-bg pb-4">
-            <QuestFileChangeSummary />
             <TodoTracker />
+            <QuestFileChangeSummary />
           </div>
 
           {messages.length === 0 && !isStreaming ? (

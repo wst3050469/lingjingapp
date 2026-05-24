@@ -176,7 +176,6 @@ export const useQuestStore = create<QuestState>((set, get) => ({
           updatedAt: result.updatedAt || new Date().toISOString(),
         };
         // Clear per-task state for the new task
-        useTodoStore.getState().clear();
         useQuestDiffStore.getState().clearReview();
         set((s) => ({
           tasks: [task, ...s.tasks],
@@ -241,10 +240,6 @@ export const useQuestStore = create<QuestState>((set, get) => ({
       isStreaming: false,
       activeRunId: null,
     });
-
-    // Clear per-task state when switching tasks
-    useTodoStore.getState().clear();
-    useQuestDiffStore.getState().clearReview();
 
     // Load task messages from DB
     try {

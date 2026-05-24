@@ -114,11 +114,7 @@ export async function loginUser(username: string, password: string): Promise<Aut
       ]);
     } catch (bcryptErr: any) {
       console.error('[Auth] bcrypt.compare failed:', bcryptErr);
-      // Fallback: if bcrypt fails, try direct comparison (for plaintext test passwords)
-      valid = (password === passwordHash);
-      if (!valid) {
-        return { success: false, error: `Authentication service error: ${bcryptErr?.message || 'unknown'}` };
-      }
+      return { success: false, error: `Authentication service error: ${bcryptErr?.message || 'unknown'}` };
     }
 
     if (!valid) {

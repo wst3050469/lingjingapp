@@ -2663,7 +2663,7 @@ console.log('[Cloud Management] API routes initialized');
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`灵境 Cloud Server v3 running on http://0.0.0.0:${PORT}`);
-  console.log(`API Key: ${API_KEY}`);
+  console.log(`API Key: ${API_KEY.slice(0, 8)}...`);
   console.log(`JWT Secret: ${JWT_SECRET.slice(0, 8)}...`);
   console.log(`Webhook forwarding: ${Object.keys(webhookConfig).length} channels configured`);
   console.log(`Scheduler: running (active schedules: ${scheduler.listSchedules('active').length})`);

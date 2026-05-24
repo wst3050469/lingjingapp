@@ -35,8 +35,8 @@ export default function LoginScreen({ onSuccess, onSwitchToPairing }: { onSucces
     setLoading(true);
     setError('');
 
-    // Configure API to use cloud server for auth
-    api.configure({ baseUrl: 'https://lingjing.zhejiangjinmo.com', token: '', wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
+    // Configure API to use cloud server for auth (must match App.tsx CLOUD_SERVER_URL)
+    api.configure({ baseUrl: 'https://ide.zhejiangjinmo.com', token: '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
 
     try {
       const result = mode === 'login'

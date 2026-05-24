@@ -49,6 +49,12 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
 const JWT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+// Log startup info with secrets redacted
+console.log(`[Config] API_KEY: ${API_KEY.slice(0, 8)}...`);
+console.log(`[Config] JWT_SECRET: ${JWT_SECRET ? JWT_SECRET.slice(0, 8) + '...' : '(not set)'}`);
+console.log(`[Config] DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY ? DEEPSEEK_API_KEY.slice(0, 8) + '...' : '(not set)'}`);
+console.log(`[Config] DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}`);
+
 const app = express();
 app.use(express.json({ limit: '50mb' }));
 
@@ -2663,7 +2669,7 @@ console.log('[Cloud Management] API routes initialized');
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`灵境 Cloud Server v3 running on http://0.0.0.0:${PORT}`);
-  console.log(`API Key: ${API_KEY}`);
+  console.log(`API Key: ${API_KEY.slice(0, 8)}...`);
   console.log(`JWT Secret: ${JWT_SECRET.slice(0, 8)}...`);
   console.log(`Webhook forwarding: ${Object.keys(webhookConfig).length} channels configured`);
   console.log(`Scheduler: running (active schedules: ${scheduler.listSchedules('active').length})`);

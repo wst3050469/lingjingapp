@@ -6,9 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import { api } from '../services/api';
 import { useAppStore } from '../stores/app-store';
 
-// Connection URLs - must match App.tsx
-const FRP_RELAY_URL = 'https://wap.zhejiangjinmo.com';
-const FRP_RELAY_WS = 'wss://wap.zhejiangjinmo.com/ws';
+// Connection URLs - import from shared constants
+import { CLOUD_SERVER_URL, CLOUD_SERVER_WS, FRP_RELAY_URL, FRP_RELAY_WS } from '../constants';
 
 export default function SettingsScreen() {
   const { status, setStatus, connected, mode, baseUrl, token, setToken, lanIp, setLanIp, setConnection, user, setUser, logout } = useAppStore();
@@ -86,9 +85,9 @@ export default function SettingsScreen() {
         if (cloudUser) {
           setUser({ id: cloudUser.id, username: cloudUser.username, email: cloudUser.email });
           setCloudPassword('');
-          // Switch to cloud account mode
-          const cloudUrl = 'https://lingjing.zhejiangjinmo.com';
-          api.configure({ baseUrl: cloudUrl, token: api.jwtToken || '', wsUrl: 'wss://lingjing.zhejiangjinmo.com/ws' });
+          // Switch to cloud account mode (URL must match App.tsx CLOUD_SERVER_URL)
+          const cloudUrl = 'https://ide.zhejiangjinmo.com';
+          api.configure({ baseUrl: cloudUrl, token: api.jwtToken || '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
           api.connectWs();
           setConnection(true, 'cloud_account', cloudUrl);
         }

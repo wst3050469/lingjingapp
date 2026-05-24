@@ -36,6 +36,12 @@ export default function ChatListScreen() {
 
   async function createNewSession() {
     if (creating) return;
+    // Check if API is configured (baseUrl must be present)
+    const cfg = api.getConfig();
+    if (!cfg.baseUrl) {
+      console.log('[ChatList] API not configured, cannot create session');
+      return;
+    }
     setCreating(true);
     try {
       const newId = 'chat_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);

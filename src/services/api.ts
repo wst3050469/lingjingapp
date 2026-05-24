@@ -1,4 +1,4 @@
-﻿// LingJing IDE Mobile - API Service Layer
+// LingJing IDE Mobile - API Service Layer
 import { Platform } from 'react-native';
 
 export interface ApiConfig {
@@ -43,24 +43,30 @@ class ApiService {
  configure(config: Partial<ApiConfig>) { this.config = { ...this.config, ...config }; if (config.token) this._jwtToken = config.token; }
  getConfig(): ApiConfig { return { ...this.config }; }
  private get headers(): Record<string, string> {
- var h: Record<string, string> = { 'Content-Type': 'application/json' };
+ const h: Record<string, string> = { 'Content-Type': 'application/json' };
  if (this._jwtToken) h['Authorization'] = 'Bearer ' + this._jwtToken;
  else if (this.config.token) h['Authorization'] = 'Bearer ' + this.config.token;
  else if (this.config.apiKey) h['x-api-key'] = this.config.apiKey;
  return h;
  }
  private async request<T>(path: string, options?: RequestInit): Promise<T> {
- var baseUrl = this.config.baseUrl || 'https://lingjing.zhejiangjinmo.com';
- var url = baseUrl + '/api' + path;
- var res = await fetch(url, { ...options, headers: { ...this.headers, ...options?.headers } });
- var data;
- try { data = await res.json(); } catch { data = {}; }
+ const baseUrl = this.config.baseUrl || 'https://ide.zhejiangjinmo.com';
+ const url = baseUrl + '/api' + path;
+ // 15s timeout using AbortController
+ const controller = new AbortController();
+ const timeoutId = setTimeout(() => controller.abort(), 15000);
+ try {
+ const res = await fetch(url, { ...options, headers: { ...this.headers, ...options?.headers }, signal: controller.signal });
+ const data: any = await res.json().catch(() => ({}));
  if (!res.ok) {
-   var err = new Error(data.error || 'HTTP ' + res.status);
-   (err as any).status = res.status;
+   const err: any = new Error(data.error || 'HTTP ' + res.status);
+   err.status = res.status;
    throw err;
  }
  return data;
+ } finally {
+ clearTimeout(timeoutId);
+ }
  }
  private setCloudUser(result: any) {
  if (result && result.ok && result.token) {
@@ -69,7 +75,7 @@ class ApiService {
  }
  }
  async registerDevice(deviceName?: string): Promise<any> {
- var result: any = await this.request('/auth/register', { method: 'POST', body: JSON.stringify({ deviceId: this._deviceId || undefined, deviceName: deviceName || 'Mobile - ' + Platform.OS, deviceInfo: { platform: Platform.OS, version: Platform.Version }, apiKey: this.config.apiKey || undefined }) });
+ const result: any = await this.request('/auth/register', { method: 'POST', body: JSON.stringify({ deviceId: this._deviceId || undefined, deviceName: deviceName || 'Mobile - ' + Platform.OS, deviceInfo: { platform: Platform.OS, version: Platform.Version }, apiKey: this.config.apiKey || undefined }) });
  this._jwtToken = result.token; this._deviceId = result.deviceId; return result;
  }
  async verifyToken(): Promise<any> {
@@ -79,11 +85,11 @@ class ApiService {
 
  // --- Auth ---
  async login(username: string, password: string): Promise<{ok: boolean; token?: string; user?: any; error?: string}> {
- try { var result = await this.request<any>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }); this.setCloudUser(result); return result; }
+ try { const result = await this.request<any>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }); this.setCloudUser(result); return result; }
  catch (e: any) { return { ok: false, error: e.message }; }
  }
  async signup(username: string, password: string, email?: string): Promise<{ok: boolean; token?: string; user?: any; error?: string}> {
- try { var result = await this.request<any>('/auth/signup', { method: 'POST', body: JSON.stringify({ username, password, email }) }); this.setCloudUser(result); return result; }
+ try { const result = await this.request<any>('/auth/signup', { method: 'POST', body: JSON.stringify({ username, password, email }) }); this.setCloudUser(result); return result; }
  catch (e: any) { return { ok: false, error: e.message }; }
  }
  async cloudLogout(): Promise<void> {
@@ -199,9 +205,9 @@ class ApiService {
  async deleteSession(id: string) { return this.request<any>('/sessions/' + id, { method: 'DELETE' }); }
  async createQuest(message: string, scenario = 'spec') { return this.request<any>('/quest', { method: 'POST', body: JSON.stringify({ message, scenario }) }); }
  async getMemories() { return this.request<any>('/memories'); }
- async searchMemories(query?: string) { var qs = query ? '?action=search&query=' + encodeURIComponent(query) : ''; return this.request<any>('/memories' + qs); }
+ async searchMemories(query?: string) { const qs = query ? '?action=search&query=' + encodeURIComponent(query) : ''; return this.request<any>('/memories' + qs); }
  async saveMemory(memory: any) { return this.request<any>('/memories', { method: 'POST', body: JSON.stringify(memory) }); }
- async listSchedules(status?: string) { var qs = status ? '?status=' + encodeURIComponent(status) : ''; return this.request<any>('/schedules' + qs); }
+ async listSchedules(status?: string) { const qs = status ? '?status=' + encodeURIComponent(status) : ''; return this.request<any>('/schedules' + qs); }
  async createSchedule(params: any) { return this.request<any>('/schedules', { method: 'POST', body: JSON.stringify(params) }); }
  async deleteSchedule(id: string) { return this.request<any>('/schedules/' + id, { method: 'DELETE' }); }
  async triggerSchedule(id: string) { return this.request<any>('/schedules/' + id + '/trigger', { method: 'POST' }); }

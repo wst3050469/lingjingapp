@@ -55,7 +55,12 @@ export default function ChatDetailScreen({ route }: any) {
 
     try {
       if (api.isConnected()) {
-        await api.wsCommand('chat', 'send', { conversationId: sessionId, message: msg });
+        try {
+          await api.wsCommand('chat', 'send', { conversationId: sessionId, message: msg });
+        } catch (wsErr) {
+          console.log('[ChatDetail] WebSocket send failed, falling back to HTTP:', wsErr);
+          await api.sendMessage(sessionId, msg);
+        }
       } else {
         await api.sendMessage(sessionId, msg);
       }

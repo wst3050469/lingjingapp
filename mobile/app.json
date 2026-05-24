@@ -31,5 +31,6 @@
       "cloudUrl": "https://ide.zhejiangjinmo.com",
       "apiKey": ""
     }
-  }
+  },
+  "version": "1.54.0"
 }

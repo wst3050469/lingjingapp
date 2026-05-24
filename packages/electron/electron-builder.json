@@ -9,8 +9,7 @@
     "renderer/**/*",
     "node_modules/**/*",
     "package.json",
-    "assets/**/*",
-    "prompts/**/*"
+    "assets/**/*"
   ],
   "win": {
     "target": [

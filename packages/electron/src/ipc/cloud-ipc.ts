@@ -7,7 +7,13 @@ import { resolve } from 'node:path';
 import https from 'node:https';
 import http from 'node:http';
 import { URL } from 'node:url';
-import { CloudSyncClient, type CloudSyncOptions } from '@codepilot/core';
+import { CloudSyncClient } from '@codepilot/core';
+// CloudSyncOptions type - defined locally as core dist is outdated
+interface CloudSyncOptions {
+  url?: string;
+  apiKey?: string;
+  deviceId?: string;
+}
 // Use console for logging since @codepilot/core logger has compatibility issues with esbuild bundling
 const logger = console;
 
@@ -306,7 +312,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
     id?: string; title: string; content: string; category?: string; scope?: string;
   }) => {
     if (!cloudClient) throw new Error('Cloud not connected');
-    return cloudClient.upsertMemory(memory);
+    return cloudClient.upsertMemory(memory as any);
   });
 
   ipcMain.handle('cloud:memories:delete', async (_event, id: string) => {
@@ -519,7 +525,7 @@ export async function pushMemoryToCloud(memory: {
     return;
   }
   try {
-    await cloudClient.upsertMemory(memory);
+    await cloudClient.upsertMemory(memory as any);
     console.log('[Cloud] Memory pushed successfully:', memory.title);
   } catch (err) {
     console.warn('[Cloud] Failed to push memory to cloud:', (err as Error).message);

@@ -1166,7 +1166,7 @@ async function bootstrap(): Promise<void> {
           try { const th = new ExecutionTraceHarvester(DEFAULT_TRACE_HARVESTER_CONFIG); init.setTraceHarvester(th); modules.traceHarvester = th; console.log('[Main] Fusion TraceHarvester created'); } catch (e) { console.warn('[Main] TraceHarvester failed:', e); }
           try { const ss = new SkillSecurityLoader(DEFAULT_SECURITY_CONFIG); modules.skillSecurity = ss; console.log('[Main] Fusion SkillSecurity created'); } catch (e) { console.warn('[Main] SkillSecurity failed:', e); }
           try { const dag = new DAGOrchestrator(async () => 'no-executor' as any); init.setDAGOrchestrator(dag); modules.dagOrchestrator = dag; console.log('[Main] Fusion DAGOrchestrator created'); } catch (e) { console.warn('[Main] DAGOrchestrator failed:', e); }
-          try { const ma = new MultiAgentExecutor(DEFAULT_MULTI_AGENT_CONFIG, async () => 'no-executor' as any); init.setMultiAgent(ma); modules.multiAgent = ma; console.log('[Main] Fusion MultiAgent created'); } catch (e) { console.warn('[Main] MultiAgent failed:', e); }
+          try { const ma = new MultiAgentExecutor(async () => 'no-executor' as any, DEFAULT_MULTI_AGENT_CONFIG); init.setMultiAgent(ma); modules.multiAgent = ma; console.log('[Main] Fusion MultiAgent created'); } catch (e) { console.warn('[Main] MultiAgent failed:', e); }
           try { const mr = new DynamicModelRouter([], DEFAULT_MODEL_ROUTER_CONFIG); init.setModelRouter(mr); modules.modelRouter = mr; console.log('[Main] Fusion ModelRouter created'); } catch (e) { console.warn('[Main] ModelRouter failed:', e); }
           try { const nc = new NLCronScheduler(DEFAULT_NL_CRON_CONFIG); init.setNLCron(nc); modules.nlCron = nc; console.log('[Main] Fusion NLCronScheduler created'); } catch (e) { console.warn('[Main] NLCronScheduler failed:', e); }
           try { const um = new HonchoUserModeler('default', DEFAULT_USER_MODELER_CONFIG); init.setUserModeler(um); modules.userModeler = um; console.log('[Main] Fusion UserModeler created'); } catch (e) { console.warn('[Main] UserModeler failed:', e); }
@@ -1205,7 +1205,7 @@ async function bootstrap(): Promise<void> {
           try {
             const integ = fusionMod.integration;
             if (integ && integ.setupMemoryLinkages) {
-              integ.setupMemoryLinkages({ db: getDatabase() }, null as any);
+              integ.setupMemoryLinkages({ db: getDatabase() } as any, null as any);
               console.log('[Main] Fusion memory linkages established');
             }
           } catch (e) { console.warn('[Main] Fusion memory:', e); }

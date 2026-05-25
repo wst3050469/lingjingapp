@@ -92,7 +92,8 @@ export function registerFsIpc(mainWindow: BrowserWindow, getWorkspace?: () => st
   });
 
   // Open file dialog - returns selected file path(s)
-  ipcMain.handle('fs:select-file', async (_event, { filters }?: { filters?: Electron.FileFilter[] }) => {
+  ipcMain.handle('fs:select-file', async (_event, options?: { filters?: Electron.FileFilter[] }) => {
+    const { filters } = options || {};
     const defaultPath = getWorkspace?.();
     const result = await dialog.showOpenDialog(mainWindow, {
       properties: ['openFile', 'multiSelections'],

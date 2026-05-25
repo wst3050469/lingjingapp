@@ -162,7 +162,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
   ipcMain.handle('cloud:set-user-token', async (_event, token: string) => {
     if (!cloudClient) {
       const savedConfig = loadCloudConfig();
-      const opts = {};
+      const opts: Record<string, string> = {};
       if (savedConfig?.url) opts.url = savedConfig.url;
       if (savedConfig?.apiKey) opts.apiKey = savedConfig.apiKey;
       cloudClient = new CloudSyncClient(Object.keys(opts).length > 0 ? opts : {});

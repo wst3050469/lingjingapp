@@ -168,11 +168,10 @@ export function registerCloudIpc(win: BrowserWindow): void {
       cloudClient = new CloudSyncClient(Object.keys(opts).length > 0 ? opts : {});
       await cloudClient.autoRegister().catch(() => {});
     }
-    // Set the user JWT - this overrides the device JWT for all API calls
-    cloudClient.setToken(token);
-    logger.info('[Cloud] User JWT bound to sync client');
 
-    // ── Register forwarding event listeners BEFORE connectWebSocket() ──
+    // ── Register forwarding event listeners BEFORE setToken() ──
+    // CRITICAL: setToken() internally calls disconnectWebSocket() + connectWebSocket(),
+    // so listeners must be registered BEFORE it to catch the initial 'connected' event.
     cloudClient.on('connected', (data) => {
       mainWindow?.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: cloudClient?.getDeviceId() });
     });
@@ -191,10 +190,12 @@ export function registerCloudIpc(win: BrowserWindow): void {
     cloudClient.on('desktop:list', (data) => {
       mainWindow?.webContents.send('cloud:desktop:list', data);
     });
-    
-    // Connect WebSocket with user token (event listeners already registered above)
-    cloudClient.connectWebSocket();
-    
+
+    // Set the user JWT - this overrides the device JWT & reconnects WebSocket
+    // (setToken internally calls disconnectWebSocket then connectWebSocket)
+    cloudClient.setToken(token);
+    logger.info('[Cloud] User JWT bound to sync client');
+
     // Wait for WebSocket to connect (max 10s)
     const wsConnected = await Promise.race([
       new Promise<boolean>(resolve => {

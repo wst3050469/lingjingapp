@@ -9,7 +9,7 @@ import type {
 } from './types.js';
 
 const DEFAULT_SERVER = 'https://ide.zhejiangjinmo.com';
-const DEFAULT_API_KEY = '5379dcbe873b356430d84f3f68b0f0c6e96e2afa3b8a9b5441c9e4d7f5a0b1c2';
+const DEFAULT_API_KEY = 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8';
 
 export interface CloudSyncClientOptions {
   url?: string;

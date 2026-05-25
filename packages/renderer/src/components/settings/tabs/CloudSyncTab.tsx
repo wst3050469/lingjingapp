@@ -20,7 +20,7 @@ function isWebMode(): boolean {
 export function CloudSyncTab() {
   const [status, setStatus] = useState<CloudStatus>({ connected: false, healthy: false });
   const [url, setUrl] = useState(() => localStorage.getItem('cloudSyncUrl') || 'https://ide.zhejiangjinmo.com');
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('cloudSyncApiKey') || '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('cloudSyncApiKey') || 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8');
   const [sessions, setSessions] = useState<CloudSession[]>([]);
   const [memories, setMemories] = useState<CloudMemory[]>([]);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);

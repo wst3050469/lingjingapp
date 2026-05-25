@@ -58,10 +58,16 @@ export function registerCloudIpc(win: BrowserWindow): void {
       if (cloudRetryTimer) { clearInterval(cloudRetryTimer); cloudRetryTimer = null; }
       if (cloudClient) cloudClient.disconnect();
       isConnecting = true;
-      cloudClient = new CloudSyncClient(opts || {});
+      // Always use server's default API key - ignore any stale apiKey from localStorage
+      const connectOpts = { ...opts };
+      delete connectOpts.apiKey;
+      cloudClient = new CloudSyncClient(connectOpts);
 
       // Auto-register for JWT
       const registered = await cloudClient.autoRegister();
+      if (!registered) {
+        console.warn('[Cloud] autoRegister failed, will still try WebSocket');
+      }
 
       // Connect WebSocket
       cloudClient.connectWebSocket();
@@ -365,11 +371,10 @@ export async function autoConnectCloud(): Promise<void> {
         cloudClient = null;
       }
 
-      // Read persisted config for custom URL/API Key
+      // Read persisted config for custom URL (ignore apiKey - always use default)
       const savedConfig = loadCloudConfig();
       const connectOpts: any = {};
       if (savedConfig?.url) connectOpts.url = savedConfig.url;
-      if (savedConfig?.apiKey) connectOpts.apiKey = savedConfig.apiKey;
       if (Object.keys(connectOpts).length > 0) {
         console.log('[Cloud] Using saved config:', connectOpts.url ? 'url:' + connectOpts.url : 'default');
       }

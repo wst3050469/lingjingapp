@@ -64,9 +64,8 @@ export function registerCloudIpc(win: BrowserWindow): void {
       if (cloudRetryTimer) { clearInterval(cloudRetryTimer); cloudRetryTimer = null; }
       if (cloudClient) cloudClient.disconnect();
       isConnecting = true;
-      // Always use server's default API key - ignore any stale apiKey from localStorage
-      const connectOpts = { ...opts };
-      delete connectOpts.apiKey;
+      // Use passed API key (falls back to CloudSyncClient default)
+      const connectOpts = opts || {};
       cloudClient = new CloudSyncClient(connectOpts);
 
       // Auto-register for JWT
@@ -156,9 +155,11 @@ export function registerCloudIpc(win: BrowserWindow): void {
   /** Set user JWT token on the sync client (after cloud account login) */
   ipcMain.handle('cloud:set-user-token', async (_event, token: string) => {
     if (!cloudClient) {
-      // Create client first
-      cloudClient = new CloudSyncClient({});
-      // Wait for device registration so we have a fallback
+      const savedConfig = loadCloudConfig();
+      const opts = {};
+      if (savedConfig?.url) opts.url = savedConfig.url;
+      if (savedConfig?.apiKey) opts.apiKey = savedConfig.apiKey;
+      cloudClient = new CloudSyncClient(Object.keys(opts).length > 0 ? opts : {});
       await cloudClient.autoRegister().catch(() => {});
     }
     // Set the user JWT - this overrides the device JWT for all API calls
@@ -188,11 +189,18 @@ export function registerCloudIpc(win: BrowserWindow): void {
       mainWindow?.webContents.send('cloud:desktop:list', data);
     });
 
-    // Wait briefly for WebSocket to connect
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const healthy = await cloudClient.healthCheck().catch(() => false);
-    return { ok: true, connected: true, healthy, deviceId: cloudClient.getDeviceId() };
+    // Wait for WebSocket to connect (max 10s)
+    const wsConnected = await Promise.race([
+      new Promise<boolean>(resolve => {
+        cloudClient!.on("connected", () => resolve(true));
+      }),
+      new Promise<boolean>(resolve =>
+        setTimeout(() => resolve(false), 10000)
+      ),
+    ]);
+
+    const healthy = wsConnected ? await cloudClient!.healthCheck().catch(() => false) : false;
+    return { ok: true, connected: wsConnected, healthy, deviceId: cloudClient!.getDeviceId() };
   });
 
   // ── HTTP Proxy API (bypass CORS for renderer fetch) ──
@@ -377,10 +385,11 @@ export async function autoConnectCloud(): Promise<void> {
         cloudClient = null;
       }
 
-      // Read persisted config for custom URL (ignore apiKey - always use default)
+      // Read persisted config (URL + apiKey)
       const savedConfig = loadCloudConfig();
       const connectOpts: any = {};
       if (savedConfig?.url) connectOpts.url = savedConfig.url;
+      if (savedConfig?.apiKey) connectOpts.apiKey = savedConfig.apiKey;
       if (Object.keys(connectOpts).length > 0) {
         console.log('[Cloud] Using saved config:', connectOpts.url ? 'url:' + connectOpts.url : 'default');
       }

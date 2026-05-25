@@ -946,6 +946,12 @@ async function bootstrap(): Promise<void> {
     ipcMain.handle('multiFileEdit:acceptBlock', async () => ({ success: false, error: 'Not implemented' }));
     ipcMain.handle('multiFileEdit:rejectBlock', async () => ({ success: false, error: 'Not implemented' }));
     ipcMain.handle('multiFileEdit:applyAll', async () => ({ success: false, error: 'Not implemented' }));
+    // Fallback: cloud:connect — real handler registered in Phase B (registerCloudIpc).
+    // This ensures the renderer never gets "No handler registered" even if Phase B
+    // encounters an error before registerCloudIpc() is called.
+    ipcMain.handle('cloud:connect', async () => {
+      return { connected: false, error: 'Cloud IPC not yet initialized (Phase B pending)' };
+    });
     console.log('[Main] Registered fallback IPC handlers');
   } catch (err) {
     console.warn('[Main] Fallback handler registration:', err);
@@ -1033,31 +1039,31 @@ async function bootstrap(): Promise<void> {
   // These handlers require a valid BrowserWindow instance and will be
   // skipped if the window failed to create.
   if (mainWindow) {
-    registerAgentIpc(mainWindow);
-    registerGithubSkillIpc();
-    setGithubSkillDb(getDatabase());
-    registerFsIpc(mainWindow, () => workspacePath);
-    registerTerminalIpc(mainWindow);
-    registerGitIpc(() => workspacePath);
-    registerSkillsIpc(() => workspacePath);
-    registerIndexingIpc(() => workspacePath, mainWindow);
-    registerDiagnosticsIpc(mainWindow, () => workspacePath);
-    console.log('[Main] About to call registerQuestIpc...');
+    // CRITICAL: Each handler registration is wrapped in try-catch to prevent
+    // a single failure from blocking subsequent registrations. If any handler
+    // before registerCloudIpc() throws, the cloud:connect handler would never
+    // register, causing "No handler registered" errors in the renderer.
+    try { registerAgentIpc(mainWindow); } catch (err) { console.error('[Main] registerAgentIpc failed:', err); }
+    try { registerGithubSkillIpc(); } catch (err) { console.error('[Main] registerGithubSkillIpc failed:', err); }
+    try { setGithubSkillDb(getDatabase()); } catch (err) { console.error('[Main] setGithubSkillDb failed:', err); }
+    try { registerFsIpc(mainWindow, () => workspacePath); } catch (err) { console.error('[Main] registerFsIpc failed:', err); }
+    try { registerTerminalIpc(mainWindow); } catch (err) { console.error('[Main] registerTerminalIpc failed:', err); }
+    try { registerGitIpc(() => workspacePath); } catch (err) { console.error('[Main] registerGitIpc failed:', err); }
+    try { registerSkillsIpc(() => workspacePath); } catch (err) { console.error('[Main] registerSkillsIpc failed:', err); }
+    try { registerIndexingIpc(() => workspacePath, mainWindow); } catch (err) { console.error('[Main] registerIndexingIpc failed:', err); }
+    try { registerDiagnosticsIpc(mainWindow, () => workspacePath); } catch (err) { console.error('[Main] registerDiagnosticsIpc failed:', err); }
+    try { registerQuestIpc(mainWindow, () => workspacePath); } catch (err) { console.error('[Main] registerQuestIpc failed:', err); }
+    try { registerWikiIpc(mainWindow, () => workspacePath); } catch (err) { console.error('[Main] registerWikiIpc failed:', err); }
+    try { registerBrowserIpc(mainWindow); } catch (err) { console.error('[Main] registerBrowserIpc failed:', err); }
+    try { registerPlanIpc(mainWindow); } catch (err) { console.error('[Main] registerPlanIpc failed:', err); }
+    try { registerContextIpc(() => workspacePath); } catch (err) { console.error('[Main] registerContextIpc failed:', err); }
     try {
-      registerQuestIpc(mainWindow, () => workspacePath);
-      console.log('[Main] registerQuestIpc completed successfully');
-    } catch (err) {
-      console.error('[Main] registerQuestIpc failed:', err);
-    }
-    registerWikiIpc(mainWindow, () => workspacePath);
-    registerBrowserIpc(mainWindow);
-    registerPlanIpc(mainWindow);
-    registerContextIpc(() => workspacePath);
-    setSshTerminalChangeCallback((sshTerminalId) => {
-      setSshTerminalId(sshTerminalId);
-      setQuestSshTerminalId(sshTerminalId);
-    });
-    registerSshIpc(mainWindow);
+      setSshTerminalChangeCallback((sshTerminalId) => {
+        setSshTerminalId(sshTerminalId);
+        setQuestSshTerminalId(sshTerminalId);
+      });
+    } catch (err) { console.error('[Main] setSshTerminalChangeCallback failed:', err); }
+    try { registerSshIpc(mainWindow); } catch (err) { console.error('[Main] registerSshIpc failed:', err); }
 
     // Cloud sync
     try {

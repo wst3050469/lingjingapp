@@ -72,6 +72,9 @@ dist.bak
 # APK build artifacts (large binary outputs)
 *.apk
 
+# Release build artifacts (large binary outputs - exceed GitHub limit)
+packages/release/
+
 # Auto-build artifacts
 auto-build.sh
 auto-build.log

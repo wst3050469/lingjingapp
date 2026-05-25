@@ -74,20 +74,12 @@ export function registerCloudIpc(win: BrowserWindow): void {
         console.warn('[Cloud] autoRegister failed, will still try WebSocket');
       }
 
-      // Connect WebSocket
-      cloudClient.connectWebSocket();
-
-      // Wait for WebSocket connection to be established
-      const wsConnected = await Promise.race([
-        new Promise(resolve => {
-          cloudClient!.on('connected', () => resolve(true));
-        }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('WebSocket connection timeout after 10s')), 10000)
-        ),
-      ]);
-
-      // Listen for events → push to renderer
+      // ── Register forwarding event listeners BEFORE connectWebSocket() ──
+      // CRITICAL BUG FIX: These must be registered BEFORE connectWebSocket() so
+      // they catch the initial 'connected' event emitted by the WebSocket onopen.
+      // Previously they were placed AFTER the Promise.race, meaning the temporary
+      // race listener consumed the initial event and the forwarding listeners
+      // were never triggered, leaving the renderer with stale connection status.
       cloudClient.on('connected', (data) => {
         mainWindow?.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: cloudClient?.getDeviceId() });
       });
@@ -107,6 +99,19 @@ export function registerCloudIpc(win: BrowserWindow): void {
         mainWindow?.webContents.send('cloud:desktop:list', data);
       });
 
+      // Connect WebSocket (the connected event will be caught by listeners above)
+      cloudClient.connectWebSocket();
+
+      // Wait for WebSocket connection to be established (10s timeout)
+      const wsConnected = await Promise.race([
+        new Promise(resolve => {
+          cloudClient!.on('connected', () => resolve(true));
+        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('WebSocket connection timeout after 10s')), 10000)
+        ),
+      ]);
+
       const healthy = await cloudClient.healthCheck().catch(e => {
         console.warn('[Cloud] healthCheck failed after WS connected:', e);
         return false;
@@ -115,6 +120,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
       return { connected: true, healthy, wsConnected, registered, deviceId: cloudClient.getDeviceId() };
     } catch (err) {
       isConnecting = false;
+      console.error('[Cloud] cloud:connect failed:', err instanceof Error ? (err.stack || err.message) : String(err));
       return { connected: false, error: String(err) };
     }
   });
@@ -165,11 +171,8 @@ export function registerCloudIpc(win: BrowserWindow): void {
     // Set the user JWT - this overrides the device JWT for all API calls
     cloudClient.setToken(token);
     logger.info('[Cloud] User JWT bound to sync client');
-    
-    // Connect WebSocket with user token
-    cloudClient.connectWebSocket();
-    
-    // Set up event listeners
+
+    // ── Register forwarding event listeners BEFORE connectWebSocket() ──
     cloudClient.on('connected', (data) => {
       mainWindow?.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: cloudClient?.getDeviceId() });
     });
@@ -188,7 +191,10 @@ export function registerCloudIpc(win: BrowserWindow): void {
     cloudClient.on('desktop:list', (data) => {
       mainWindow?.webContents.send('cloud:desktop:list', data);
     });
-
+    
+    // Connect WebSocket with user token (event listeners already registered above)
+    cloudClient.connectWebSocket();
+    
     // Wait for WebSocket to connect (max 10s)
     const wsConnected = await Promise.race([
       new Promise<boolean>(resolve => {
@@ -402,11 +408,7 @@ export async function autoConnectCloud(): Promise<void> {
         console.log('[Cloud] Device auto-registered successfully');
       }
 
-      // Try WebSocket directly — don't gate on health check
-      // (health check may fail due to firewall/proxy while WebSocket works)
-      cloudClient.connectWebSocket();
-
-      // Set up event listeners
+      // ── Register forwarding event listeners BEFORE connectWebSocket() ──
       cloudClient.on('connected', (data) => {
         console.log('[Cloud] WebSocket connected');
         mainWindow?.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: cloudClient?.getDeviceId() });
@@ -427,6 +429,10 @@ export async function autoConnectCloud(): Promise<void> {
       cloudClient.on('desktop:list', (data) => {
         mainWindow?.webContents.send('cloud:desktop:list', data);
       });
+
+      // Try WebSocket directly — don't gate on health check
+      // (health check may fail due to firewall/proxy while WebSocket works)
+      cloudClient.connectWebSocket();
 
       // Wait briefly for WebSocket to connect
       await new Promise(resolve => setTimeout(resolve, 2000));

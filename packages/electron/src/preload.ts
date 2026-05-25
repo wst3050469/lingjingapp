@@ -629,6 +629,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on('cloud:webhook-event', handler);
       return () => ipcRenderer.removeListener('cloud:webhook-event', handler);
     },
+    onDesktopList: (callback) => {
+      const handler = (_event, data) => callback(data);
+      ipcRenderer.on('cloud:desktop:list', handler);
+      return () => ipcRenderer.removeListener('cloud:desktop:list', handler);
+    },
+    onRelayFromMobile: (callback) => {
+      const handler = (_event, data) => callback(data);
+      ipcRenderer.on('cloud:relay:from-mobile', handler);
+      return () => ipcRenderer.removeListener('cloud:relay:from-mobile', handler);
+    },
     pushSession: (session) =>
       ipcRenderer.invoke('cloud:push-session', session),
     pushMemory: (memory) =>

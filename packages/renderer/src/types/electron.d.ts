@@ -486,6 +486,8 @@ declare interface ElectronAPI {
     getConfig: () => Promise<{ url?: string; apiKey?: string }>;
     onSyncEvent: (callback: (data: any) => void) => () => void;
     onWebhookEvent: (callback: (data: any) => void) => () => void;
+    onDesktopList: (callback: (data: any) => void) => () => void;
+    onRelayFromMobile: (callback: (data: any) => void) => () => void;
     api: (opts: { endpoint: string; method?: string; body?: unknown; token?: string; baseUrl?: string }) => Promise<any>;
     setUserToken: (token: string) => Promise<any>;
   };

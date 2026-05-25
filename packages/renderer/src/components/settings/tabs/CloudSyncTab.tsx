@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 /* Types */
-interface CloudStatus { connected: boolean; healthy: boolean; url?: string }
+interface CloudStatus { connected: boolean; healthy: boolean; url?: string; error?: string }
 interface CloudSession { id: string; title?: string; created_at?: string; messages?: any[] }
 interface CloudMemory { id: string; title: string; content: string; category: string; scope: string }
 interface SyncLog { time: string; action: string; status: 'ok' | 'fail'; detail?: string }

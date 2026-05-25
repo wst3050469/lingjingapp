@@ -58,6 +58,7 @@ export class SqliteVectorAdapter implements IVectorStoreAdapter {
       if (score > 0) {
         results.push({
           id: entry.id,
+          content: (entry.metadata?.content as string) || '',
           score,
           metadata: entry.metadata,
         });

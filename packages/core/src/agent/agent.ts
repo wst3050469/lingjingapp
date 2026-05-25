@@ -638,11 +638,11 @@ Technical details: ${err.message}`;
       // ── Skill harvesting (Hermes-inspired): auto-create skills from conversations ──
       if (this.harvester) {
         const durationMs = Date.now() - this.runStartedAt;
-        this.harvester.harvest(this.conversation, durationMs).then((skillName) => {
+        this.harvester.harvest(this.conversation, durationMs).then((skillName: string | null) => {
           if (skillName) {
             this.emit({ type: 'intervention_injected', text: `\u{1F4A1} Auto-created skill: ${skillName}` });
           }
-        }).catch((err) => {
+        }).catch((err: Error) => {
           logger.warn('[Harvester] Harvest failed:', err.message);
         });
       }

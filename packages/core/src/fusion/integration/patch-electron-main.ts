@@ -28,7 +28,8 @@
 
 import type { BrowserWindow } from 'electron';
 import { FusionInitializer } from '../fusion-initializer.js';
-import type { FusionConfig, FusionInitResult } from '../types.js';
+import type { FusionConfig } from '../types.js';
+import type { FusionInitResult } from '../fusion-initializer.js';
 import type { IEventBus } from '../event-bus/types.js';
 import type { IHookRegistry } from '../hook-registry/types.js';
 import { logger } from '../../utils/logger.js';

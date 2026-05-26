@@ -1,19 +1,27 @@
-# ACTIVE_TASK -- v1.59.0
+# ACTIVE_TASK -- v1.60.0
 
 ## 状态：✅ 已完成（全平台构建部署）
 
-## v1.59.0 变更内容
+## v1.60.0 变更内容
 
-### P1 严重问题（共1项，已全部修复）
-- ✅ **修复 `cloud:connect` 'No handler registered' 错误**: 
-  - **根因**: `main.ts` Phase B 中 `registerCloudIpc` 之前的 handler 注册未包裹 `try-catch`，导致异常时中断了后续 IPC 注册。
-  - **修复**: 为 Phase B 的所有 handler 注册调用添加了 `try-catch` 保护，并增加了 Phase A 的回退 handler。
+### 系统全面检查 + 7个Bug修复
+- ✅ **Bug 1**: electron/package.json 文件损坏恢复
+- ✅ **Bug 2**: pipeline 源码缺失 — 创建完整源码骨架
+- ✅ **Bug 3**: trigger-ipc.ts TriggerManager API 不匹配 — 重写适配
+- ✅ **Bug 4**: ChatRequest 类型未导出 — 添加导出
+- ✅ **Bug 5**: SkillConfig 类型未导出 — 添加导出
+- ✅ **Bug 6**: agent-ipc.ts Tool 类型不匹配 — 修复返回值
+- ✅ **Bug 7**: versions.json 空条目 + 缺少 status — 修复
+
+### TypeScript
+- electron: **19 → 0** 错误
+- renderer: **0** 错误
 
 ### 构建部署
-- ✅ **全平台构建**: Windows Setup + Portable, Linux AppImage, Android APK
-- ✅ **版本同步**: `versions.json` (latest=1.59.0), `latest.yml`, `latest-linux.yml` 已更新
-- ✅ **部署**: 安装包已上传至 `/var/www/downloads/`
-- ✅ **Git**: 已同步至 GitHub 及生产 bare repo
+- ✅ **Windows**: Setup + Portable + Blockmap
+- ✅ **Linux**: AppImage (176MB)
+- ✅ **API**: /api/latest → v1.60.0, hasUpdate: true
+- ✅ **部署**: 安装包已上传至 120.55.5.220
 
 ## 版本
-1.58.2 → 1.59.0
+1.59.0 → 1.60.0

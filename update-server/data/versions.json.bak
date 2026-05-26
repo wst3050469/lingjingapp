@@ -1,32 +1,8 @@
 {
-  "latest": "1.60.0",
+  "latest": "1.59.0",
   "versions": [
     {
-      "version": "1.60.0",
-      "status": "published",
-      "releaseDate": "2026-05-26T10:00:00.000Z",
-      "releaseNotes": "v1.60.0: 修复7个Bug - package.json恢复 + pipeline源码 + TS 19->0 + 全平台部署",
-      "files": {
-        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.60.0-win-x64.exe",
-        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.60.0-win-x64.exe",
-        "win-x64-blockmap": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.60.0-win-x64.exe.blockmap",
-        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.0-linux-x86_64.AppImage"
-      },
-      "sha512": "wMXlW9m9Lxj5//5rqg+PPOMyTc0n89b/z7hmiJWBJQ2fx5zXMDorqxnOv0gQef3ZkNS+u/mvO6FAPNjLJz/22A==",
-      "size": 142176325,
-      "features": [
-        "修复 electron/package.json 文件损坏",
-        "创建 pipeline 源码骨架",
-        "修复 trigger-ipc.ts API 不匹配",
-        "修复 ChatRequest/SkillConfig 类型导出",
-        "修复 agent-ipc.ts 工具返回类型",
-        "修复 versions.json 空条目",
-        "TypeScript: electron 19->0 错误"
-      ]
-    },
-    {
       "version": "1.59.0",
-      "status": "published",
       "releaseDate": "2026-05-25T10:00:00.000Z",
       "releaseNotes": "v1.59.0: 修复 cloud:connect 处理器注册失败问题 + 全平台构建部署",
       "files": {
@@ -45,7 +21,6 @@
     },
     {
       "version": "1.54.0",
-      "status": "published",
       "releaseDate": "2026-05-24T03:02:40.565Z",
       "releaseNotes": "v1.54.0: Agent参数传递修复 + Reflector反思调用修复 + 全量代码审查问题修复 + 文档规格校正",
       "files": {
@@ -58,12 +33,14 @@
       "features": [
         "Agent IPC传递enableMemoryNudge/enableReflector/enableSkillHarvest参数修复",
         "Reflector.reflect()在Agent.run()的finally块中调用修复",
-        "31项规格文档问题全量修复"
+        "31项规格文档问题全量修复（事实错误/逻辑漏洞/内容遗漏/格式规范/前后不一致）",
+        "验收条件统一中文EARS格式",
+        "Fusion模块标注为现有实现",
+        "补充Quest/cloud-admin/mobile模块覆盖"
       ]
     },
     {
       "version": "1.51.0",
-      "status": "published",
       "releaseDate": "2026-05-22T15:00:00.000Z",
       "releaseNotes": "v1.51.0: 全平台构建迁移到高性能工作站192.168.1.9 + 正式签名 + 类型修复",
       "files": {
@@ -76,9 +53,12 @@
       "sha512": "TBD",
       "size": 0,
       "features": [
-        "全平台构建迁移到192.168.1.9",
+        "全平台构建迁移到192.168.1.9（32核/62GB）",
         "Android APK 正式签名",
-        "Hermes Fusion + OpenSpace 完成"
+        "Hermes Fusion 54项 + OpenSpace 28项全部完成",
+        "Fusion/OpenSpace IPC 通道注册",
+        "TypeScript 类型错误修复（LLM/Workflow/Fusion）",
+        "migration004 数据库迁移导出修复"
       ]
     }
   ]

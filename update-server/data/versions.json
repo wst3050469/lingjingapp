@@ -10,7 +10,8 @@
         "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.60.0-win-x64.exe",
         "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.60.0-win-x64.exe",
         "win-x64-blockmap": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.60.0-win-x64.exe.blockmap",
-        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.0-linux-x86_64.AppImage"
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.0-linux-x86_64.AppImage",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.60.0.apk"
       },
       "sha512": "wMXlW9m9Lxj5//5rqg+PPOMyTc0n89b/z7hmiJWBJQ2fx5zXMDorqxnOv0gQef3ZkNS+u/mvO6FAPNjLJz/22A==",
       "size": 142176325,

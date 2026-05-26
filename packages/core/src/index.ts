@@ -94,6 +94,7 @@ export { RollbackExecutor } from './checkpoint/rollback-executor.js';
 
 // Indexing
 export { PipelineEngine, DslParser, TriggerManager } from './pipeline/index.js';
+export type { PipelineDefinition } from './pipeline/types.js';
 
 // Fusion
 export * as fusion from './fusion/index.js';
@@ -115,6 +116,6 @@ export * from './lifecycle/index.js';
 export * from './cross-session/index.js';
 
 export type { AppConfig } from './config/schema.js';
-export type { Message } from './fusion/adapters/types.js';
+export type { ChatRequest, Message, SkillConfig } from './fusion/adapters/types.js';
 export type { Tool } from './tools/types.js';
 export type { AgentEvent } from "./agent/agent.js";

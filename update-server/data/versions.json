@@ -1,6 +1,24 @@
 {
-  "latest": "1.54.0",
+  "latest": "1.59.0",
   "versions": [
+    {
+      "version": "1.59.0",
+      "releaseDate": "2026-05-25T10:00:00.000Z",
+      "releaseNotes": "v1.59.0: 修复 cloud:connect 处理器注册失败问题 + 全平台构建部署",
+      "files": {
+        "installer": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.59.0-win-x64.exe",
+        "portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.59.0-win-x64.exe",
+        "linux-x86_64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.59.0-linux-x86_64.AppImage",
+        "linux-amd64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.59.0-linux-x86_64.deb",
+        "mobile": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.59.0.apk"
+      },
+      "sha512": "TBD",
+      "size": 0,
+      "features": [
+        "修复 cloud:connect 处理器注册失败问题",
+        "全平台构建部署"
+      ]
+    },
     {
       "version": "1.54.0",
       "releaseDate": "2026-05-24T03:02:40.565Z",

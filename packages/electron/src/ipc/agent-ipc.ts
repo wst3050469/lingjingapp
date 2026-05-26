@@ -570,8 +570,10 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
         const { createRememberVectorTool, createRecallVectorTool } = await import('@codepilot/core/fusion');
         const rememberTool = createRememberVectorTool(vectorMem);
         const recallTool = createRecallVectorTool(vectorMem);
-        runTools.register(rememberTool);
-        runTools.register(recallTool);
+        // Fusion Tool type and core Tool type have slightly different JSONSchema subtypes,
+        // but they are structurally compatible at runtime.
+        runTools.register(rememberTool as any);
+        runTools.register(recallTool as any);
       } catch (e) {
         console.warn('[Agent IPC] Failed to register vector memory tools:', e instanceof Error ? e.message : String(e));
       }
@@ -610,8 +612,10 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
                 fullName: r.full_name, description: r.description, stars: r.stargazers_count,
                 language: r.language, url: r.html_url, topics: r.topics || [],
               }));
-              return { success: true, data: repos };
-            } catch (err: any) { return { success: false, error: err.message }; }
+              return { success: true, data: repos, content: JSON.stringify(repos) };
+            } catch (err: any) {
+              return { success: false, error: err.message, content: 'Error: ' + err.message };
+            }
           },
         };
 
@@ -639,8 +643,10 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
                 id, `https://github.com/${owner}/${repo}`, repo, owner,
                 params.skill_type || 'tool', params.tool_name || id, `Execute ${owner}/${repo} functionality`,
               ]);
-              return { success: true, message: `Skill ${owner}/${repo} installed (id: ${id}). Restart agent to use the new tool.` };
-            } catch (err: any) { return { success: false, error: err.message }; }
+              return { success: true, message: `Skill ${owner}/${repo} installed (id: ${id}). Restart agent to use the new tool.`, content: `Skill ${owner}/${repo} installed (id: ${id}).` };
+            } catch (err: any) {
+              return { success: false, error: err.message, content: 'Error: ' + err.message };
+            }
           },
         };
 
@@ -659,14 +665,16 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
               const { getDatabase } = await import('../db/database.js');
               const db = getDatabase();
               db.run("UPDATE installed_skills SET status = 'uninstalled' WHERE id = ?", [String(params.skill_id)]);
-              return { success: true, message: `Skill ${params.skill_id} has been uninstalled.` };
-            } catch (err: any) { return { success: false, error: err.message }; }
+              return { success: true, message: `Skill ${params.skill_id} has been uninstalled.`, content: `Skill ${params.skill_id} uninstalled.` };
+            } catch (err: any) {
+              return { success: false, error: err.message, content: 'Error: ' + err.message };
+            }
           },
         };
 
-        runTools.register(searchGithubTool);
-        runTools.register(installSkillTool);
-        runTools.register(uninstallSkillTool);
+        runTools.register(searchGithubTool as any);
+        runTools.register(installSkillTool as any);
+        runTools.register(uninstallSkillTool as any);
       } catch (e) {
         console.warn('[Agent IPC] Failed to register GitHub skill tools:', e instanceof Error ? e.message : String(e));
       }

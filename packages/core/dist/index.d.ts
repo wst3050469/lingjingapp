@@ -58,6 +58,7 @@ export { loadAllRules, getManualRules, applyRules } from './rules/index.js';
 export { CheckpointManager } from './checkpoint/manager.js';
 export { RollbackExecutor } from './checkpoint/rollback-executor.js';
 export { PipelineEngine, DslParser, TriggerManager } from './pipeline/index.js';
+export type { PipelineDefinition } from './pipeline/types.js';
 export * as fusion from './fusion/index.js';
 export { DataSanitizer } from './security/data-sanitizer.js';
 export * from './security/index.js';
@@ -66,7 +67,7 @@ export * from './observability/index.js';
 export * from './lifecycle/index.js';
 export * from './cross-session/index.js';
 export type { AppConfig } from './config/schema.js';
-export type { Message } from './fusion/adapters/types.js';
+export type { ChatRequest, Message, SkillConfig } from './fusion/adapters/types.js';
 export type { Tool } from './tools/types.js';
 export type { AgentEvent } from "./agent/agent.js";
 //# sourceMappingURL=index.d.ts.map

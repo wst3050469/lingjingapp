@@ -1,10 +1,14 @@
-import { logger } from '../../utils/logger.js';
-export class LLMAdapter {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LLMAdapter = void 0;
+exports.createLLMAdapter = createLLMAdapter;
+const logger_js_1 = require("../../utils/logger.js");
+class LLMAdapter {
     version = '1.0.0';
     provider = null;
     setProvider(provider) {
         this.provider = provider;
-        logger.info(`[LLMAdapter] provider set: ${provider.name}/${provider.model}`);
+        logger_js_1.logger.info(`[LLMAdapter] provider set: ${provider.name}/${provider.model}`);
     }
     chat(request) {
         if (!this.provider) {
@@ -19,7 +23,8 @@ export class LLMAdapter {
         return this.provider?.name ?? '';
     }
 }
-export function createLLMAdapter(provider) {
+exports.LLMAdapter = LLMAdapter;
+function createLLMAdapter(provider) {
     const adapter = new LLMAdapter();
     if (provider) {
         adapter.setProvider(provider);

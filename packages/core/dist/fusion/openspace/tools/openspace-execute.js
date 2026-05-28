@@ -1,5 +1,8 @@
-import { reviewScript } from '../security-review.js';
-import { logger } from '../../../utils/logger.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OpenSpaceExecuteTool = void 0;
+const security_review_js_1 = require("../security-review.js");
+const logger_js_1 = require("../../../utils/logger.js");
 const PARAMETERS = {
     type: 'object',
     properties: {
@@ -30,7 +33,7 @@ const PARAMETERS = {
     },
     required: ['script', 'language'],
 };
-export class OpenSpaceExecuteTool {
+class OpenSpaceExecuteTool {
     name = 'openspace_execute';
     description = 'Execute OpenSpace script commands to control the universe visualization scene';
     parameters = PARAMETERS;
@@ -64,7 +67,7 @@ export class OpenSpaceExecuteTool {
         if (scripts && scripts.length > 0) {
             return this.executeBatch(scripts, language, timeout);
         }
-        const securityResult = reviewScript(script, language);
+        const securityResult = (0, security_review_js_1.reviewScript)(script, language);
         if (preview) {
             return {
                 content: JSON.stringify({
@@ -93,7 +96,7 @@ export class OpenSpaceExecuteTool {
         try {
             const result = await this.bridge.sendScript({ script, language, timeout });
             if (!result.success) {
-                logger.warn(`[OpenSpaceExecuteTool] execution failed: ${result.error}`);
+                logger_js_1.logger.warn(`[OpenSpaceExecuteTool] execution failed: ${result.error}`);
                 return {
                     content: `Execution failed: ${result.error}`,
                     isError: true,
@@ -124,7 +127,7 @@ export class OpenSpaceExecuteTool {
         }
         const results = [];
         for (const script of scripts) {
-            const securityResult = reviewScript(script, language);
+            const securityResult = (0, security_review_js_1.reviewScript)(script, language);
             if (!securityResult.passed) {
                 results.push({
                     script,
@@ -157,4 +160,5 @@ export class OpenSpaceExecuteTool {
         };
     }
 }
+exports.OpenSpaceExecuteTool = OpenSpaceExecuteTool;
 //# sourceMappingURL=openspace-execute.js.map

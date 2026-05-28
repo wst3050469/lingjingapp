@@ -1,10 +1,13 @@
-import { DEFAULT_SLIDING_WINDOW_CONFIG } from './types.js';
-export class SlidingWindowMemoryManager {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SlidingWindowMemoryManager = void 0;
+const types_js_1 = require("./types.js");
+class SlidingWindowMemoryManager {
     config;
     eventBus = null;
     enabled = true;
     constructor(config) {
-        this.config = { ...DEFAULT_SLIDING_WINDOW_CONFIG, ...config };
+        this.config = { ...types_js_1.DEFAULT_SLIDING_WINDOW_CONFIG, ...config };
         this.enabled = this.config.enabled;
     }
     initialize(eventBus, _hookRegistry) {
@@ -84,4 +87,5 @@ export class SlidingWindowMemoryManager {
         return messages.reduce((sum, m) => sum + this.estimateSingleMessageTokens(m), 0);
     }
 }
+exports.SlidingWindowMemoryManager = SlidingWindowMemoryManager;
 //# sourceMappingURL=sliding-window-manager.js.map

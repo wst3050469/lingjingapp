@@ -1,9 +1,41 @@
+"use strict";
 // Offline queue for cloud sync operations
 // Queues all push operations locally, retries on reconnect
 // Strategy: JSON-file or SQLite persistence, exponential backoff, last-write-wins merge
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
-import { dirname } from 'path';
-export class OfflineQueue {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MergeStrategy = exports.OfflineQueue = void 0;
+const fs_1 = require("fs");
+const path_1 = require("path");
+function stableStringify(obj) {
+    if (obj === null || typeof obj !== 'object')
+        return JSON.stringify(obj);
+    try {
+        const keys = Object.keys(obj).sort();
+        const sorted = {};
+        for (const k of keys)
+            sorted[k] = obj[k];
+        return JSON.stringify(sorted, (_, v) => {
+            if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+                const sk = Object.keys(v).sort();
+                const sv = {};
+                for (const k of sk)
+                    sv[k] = v[k];
+                return sv;
+            }
+            return v;
+        });
+    }
+    catch {
+        return JSON.stringify(obj);
+    }
+}
+function generateId() {
+    const ts = Date.now().toString(36);
+    const rand = Math.random().toString(36).slice(2, 10);
+    const rand2 = Math.random().toString(36).slice(2, 6);
+    return `${ts}-${rand}-${rand2}`;
+}
+class OfflineQueue {
     items = [];
     dbPath;
     db;
@@ -26,7 +58,7 @@ export class OfflineQueue {
         this._load();
     }
     enqueue(type, action, payload) {
-        const id = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const id = generateId();
         const item = {
             id,
             type,
@@ -79,7 +111,7 @@ export class OfflineQueue {
     }
     async flush() {
         if (this.flushing)
-            return { succeeded: 0, failed: 0 };
+            return { succeeded: 0, failed: 0, skipped: true };
         this.flushing = true;
         const pending = this.getPending();
         let succeeded = 0;
@@ -90,11 +122,15 @@ export class OfflineQueue {
                 if (this.onFlush) {
                     await this.onFlush([item]);
                 }
-                this.ack(item.id);
+                if (this.items.some(i => i.id === item.id)) {
+                    this.ack(item.id);
+                }
                 succeeded++;
             }
             catch (err) {
-                this.nack(item.id, err instanceof Error ? err : new Error(String(err)));
+                if (this.items.some(i => i.id === item.id)) {
+                    this.nack(item.id, err instanceof Error ? err : new Error(String(err)));
+                }
                 failed++;
             }
         }
@@ -123,11 +159,13 @@ export class OfflineQueue {
     }
     clearFile() {
         this.clear();
-        if (this.dbPath !== ':memory:' && existsSync(this.dbPath)) {
+        if (this.dbPath !== ':memory:' && (0, fs_1.existsSync)(this.dbPath)) {
             try {
-                writeFileSync(this.dbPath, '[]', 'utf-8');
+                (0, fs_1.writeFileSync)(this.dbPath, '[]', 'utf-8');
             }
-            catch { /* ignore */ }
+            catch (err) {
+                console.warn('[OfflineQueue] Failed to clear file:', err instanceof Error ? err.message : String(err));
+            }
         }
     }
     getStats() {
@@ -145,12 +183,28 @@ export class OfflineQueue {
     }
     _dedupe(items) {
         const seen = new Map();
+        const toRemove = [];
         for (const item of items) {
-            const key = `${item.type}:${item.action}:${JSON.stringify(item.payload)}`;
-            const existing = seen.get(key);
-            if (!existing || item.createdAt > existing.createdAt) {
-                seen.set(key, item);
+            try {
+                const key = `${item.type}:${item.action}:${stableStringify(item.payload)}`;
+                const existing = seen.get(key);
+                if (!existing) {
+                    seen.set(key, item);
+                }
+                else if (item.createdAt > existing.createdAt) {
+                    toRemove.push(existing.id);
+                    seen.set(key, item);
+                }
+                else {
+                    toRemove.push(item.id);
+                }
             }
+            catch {
+                seen.set(item.id, item);
+            }
+        }
+        for (const id of toRemove) {
+            this.ack(id);
         }
         return [...seen.values()];
     }
@@ -185,43 +239,56 @@ export class OfflineQueue {
         if (this.db) {
             this._loadSqlite();
         }
-        else if (this.dbPath !== ':memory:' && existsSync(this.dbPath)) {
+        else if (this.dbPath !== ':memory:' && (0, fs_1.existsSync)(this.dbPath)) {
             this._loadJson();
         }
     }
     _saveJson() {
         try {
-            const dir = dirname(this.dbPath);
-            if (!existsSync(dir)) {
-                mkdirSync(dir, { recursive: true });
+            const dir = (0, path_1.dirname)(this.dbPath);
+            if (!(0, fs_1.existsSync)(dir)) {
+                (0, fs_1.mkdirSync)(dir, { recursive: true });
             }
-            writeFileSync(this.dbPath, JSON.stringify(this.items), 'utf-8');
+            (0, fs_1.writeFileSync)(this.dbPath, JSON.stringify(this.items), 'utf-8');
         }
-        catch { /* ignore */ }
+        catch (err) {
+            console.error('[OfflineQueue] JSON save failed:', err instanceof Error ? err.message : String(err));
+        }
     }
     _loadJson() {
         try {
-            const data = readFileSync(this.dbPath, 'utf-8');
+            const data = (0, fs_1.readFileSync)(this.dbPath, 'utf-8');
             const parsed = JSON.parse(data);
             if (Array.isArray(parsed)) {
                 this.items = parsed;
             }
         }
-        catch { /* ignore */ }
+        catch (err) {
+            console.warn('[OfflineQueue] JSON load failed, starting fresh:', err instanceof Error ? err.message : String(err));
+            this.items = [];
+        }
     }
     _saveSqlite() {
         if (!this.db)
             return;
         try {
             this._initSqlite();
+            this.db.exec('BEGIN TRANSACTION');
             this.db.exec('DELETE FROM offline_queue');
             const stmt = this.db.prepare(`INSERT INTO offline_queue (id, type, action, payload, created_at, retries, max_retries, next_retry_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
             for (const item of this.items) {
                 stmt.run(item.id, item.type, item.action, JSON.stringify(item.payload), item.createdAt, item.retries, item.maxRetries, item.nextRetryAt);
             }
+            this.db.exec('COMMIT');
         }
-        catch { /* ignore */ }
+        catch (err) {
+            try {
+                this.db.exec('ROLLBACK');
+            }
+            catch { /* rollback failed */ }
+            console.error('[OfflineQueue] SQLite save failed:', err instanceof Error ? err.message : String(err));
+        }
     }
     _loadSqlite() {
         if (!this.db)
@@ -240,13 +307,15 @@ export class OfflineQueue {
                 nextRetryAt: row.next_retry_at,
             }));
         }
-        catch {
+        catch (err) {
+            console.warn('[OfflineQueue] SQLite load failed:', err instanceof Error ? err.message : String(err));
             this.items = [];
         }
     }
 }
+exports.OfflineQueue = OfflineQueue;
 /** Conflict resolution strategies */
-export const MergeStrategy = {
+exports.MergeStrategy = {
     lastWriteWins: (local, remote) => {
         const localTime = local.updated_at || local.created_at || '';
         const remoteTime = remote.updated_at || remote.created_at || '';
@@ -258,10 +327,15 @@ export const MergeStrategy = {
         return [...local, ...remoteNew];
     },
     deepMerge: (local, remote) => {
+        if (local === null || typeof local !== 'object' || Array.isArray(local))
+            return remote;
+        if (remote === null || typeof remote !== 'object' || Array.isArray(remote))
+            return remote;
         const result = { ...local };
         for (const key of Object.keys(remote)) {
-            if (typeof remote[key] === 'object' && remote[key] !== null && !Array.isArray(remote[key])) {
-                result[key] = MergeStrategy.deepMerge(local[key] || {}, remote[key]);
+            if (typeof remote[key] === 'object' && remote[key] !== null && !Array.isArray(remote[key])
+                && typeof local[key] === 'object' && local[key] !== null && !Array.isArray(local[key])) {
+                result[key] = exports.MergeStrategy.deepMerge(local[key], remote[key]);
             }
             else {
                 result[key] = remote[key];

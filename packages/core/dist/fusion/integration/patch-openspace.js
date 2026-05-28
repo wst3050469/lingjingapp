@@ -1,3 +1,4 @@
+"use strict";
 /**
  * OpenSpace 集成完善补丁
  *
@@ -8,9 +9,48 @@
  * - 帧导出 Lua 脚本示例
  * - 全球同步连接 Lua 脚本示例
  */
-import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LUA_GLOBE_SYNC = exports.LUA_FRAME_EXPORT = void 0;
+exports.detectOpenSpaceWindows = detectOpenSpaceWindows;
+exports.detectOpenSpaceLinux = detectOpenSpaceLinux;
+exports.detectOpenSpace = detectOpenSpace;
+exports.patchOpenSpaceIntegration = patchOpenSpaceIntegration;
+const child_process_1 = require("child_process");
+const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 const WIN_REGISTRY_QUERY = 'reg query "HKLM\\SOFTWARE\\OpenSpace" /ve 2>nul';
 const WIN_PATH_FALLBACKS = [
     'C:\\Program Files\\OpenSpace',
@@ -36,10 +76,10 @@ function existsFile(p) {
         return false;
     }
 }
-export function detectOpenSpaceWindows() {
+function detectOpenSpaceWindows() {
     // 1. 注册表查询
     try {
-        const output = execSync(WIN_REGISTRY_QUERY, { encoding: 'utf-8', timeout: 5000 });
+        const output = (0, child_process_1.execSync)(WIN_REGISTRY_QUERY, { encoding: 'utf-8', timeout: 5000 });
         const match = output.match(/REG_SZ\s+(.+)/);
         if (match && match[1].trim() && existsDir(match[1].trim())) {
             return { found: true, path: match[1].trim(), method: 'registry' };
@@ -48,7 +88,7 @@ export function detectOpenSpaceWindows() {
     catch { /* ignore */ }
     // 2. PATH 环境变量
     try {
-        const whereOut = execSync('where openspace 2>nul', { encoding: 'utf-8', timeout: 5000 }).trim();
+        const whereOut = (0, child_process_1.execSync)('where openspace 2>nul', { encoding: 'utf-8', timeout: 5000 }).trim();
         if (whereOut) {
             const exePath = whereOut.split('\n')[0].trim();
             return { found: true, path: path.dirname(exePath), method: 'PATH' };
@@ -63,10 +103,10 @@ export function detectOpenSpaceWindows() {
     }
     return { found: false, path: null, method: 'none' };
 }
-export function detectOpenSpaceLinux() {
+function detectOpenSpaceLinux() {
     // 1. which openspace
     try {
-        const whichOut = execSync('which openspace 2>/dev/null', { encoding: 'utf-8', timeout: 5000 }).trim();
+        const whichOut = (0, child_process_1.execSync)('which openspace 2>/dev/null', { encoding: 'utf-8', timeout: 5000 }).trim();
         if (whichOut && existsFile(whichOut)) {
             return { found: true, path: path.dirname(whichOut), method: 'which' };
         }
@@ -80,7 +120,7 @@ export function detectOpenSpaceLinux() {
     }
     return { found: false, path: null, method: 'none' };
 }
-export function detectOpenSpace() {
+function detectOpenSpace() {
     return process.platform === 'win32'
         ? detectOpenSpaceWindows()
         : detectOpenSpaceLinux();
@@ -104,7 +144,7 @@ export function detectOpenSpace() {
  * - 方案B: 子窗口（独立窗口，通过 IPC 通信）
  * - 方案C: 截屏流（适用于远程 OpenSpace，通过 WebSocket 截屏推送）
  */
-export function patchOpenSpaceIntegration() {
+function patchOpenSpaceIntegration() {
     const detection = detectOpenSpace();
     return {
         detection,
@@ -113,7 +153,7 @@ export function patchOpenSpaceIntegration() {
     };
 }
 // ─── Lua 脚本示例 ──────────────────────────────────────────────
-export const LUA_FRAME_EXPORT = `-- OpenSpace 帧导出脚本
+exports.LUA_FRAME_EXPORT = `-- OpenSpace 帧导出脚本
 -- 在 OpenSpace 中执行，将渲染帧推送到灵境
 
 local frameCount = 0
@@ -138,7 +178,7 @@ end
 
 openspace.bindCallback("PostFrame", onFrameCallback)
 `;
-export const LUA_GLOBE_SYNC = `-- OpenSpace 全球同步连接脚本
+exports.LUA_GLOBE_SYNC = `-- OpenSpace 全球同步连接脚本
 -- 用于多节点场景同步（地球/星空协同渲染）
 
 local syncConfig = {

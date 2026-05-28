@@ -1,16 +1,19 @@
-import { logger } from '../utils/logger.js';
-export var CircuitState;
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CircuitBreaker = exports.CircuitState = void 0;
+const logger_js_1 = require("../utils/logger.js");
+var CircuitState;
 (function (CircuitState) {
     CircuitState["Closed"] = "closed";
     CircuitState["Open"] = "open";
     CircuitState["HalfOpen"] = "half-open";
-})(CircuitState || (CircuitState = {}));
+})(CircuitState || (exports.CircuitState = CircuitState = {}));
 const DEFAULT_CONFIG = {
     failureThreshold: 5,
     resetTimeoutMs: 30000,
     halfOpenMaxAttempts: 1,
 };
-export class CircuitBreaker {
+class CircuitBreaker {
     state = CircuitState.Closed;
     failureCount = 0;
     successCount = 0;
@@ -26,7 +29,7 @@ export class CircuitBreaker {
             if (elapsed >= this.config.resetTimeoutMs) {
                 this.state = CircuitState.HalfOpen;
                 this.halfOpenAttempts = 0;
-                logger.info('[CircuitBreaker] state transition: open -> half-open');
+                logger_js_1.logger.info('[CircuitBreaker] state transition: open -> half-open');
             }
         }
         return this.state;
@@ -51,7 +54,7 @@ export class CircuitBreaker {
         if (this.state === CircuitState.HalfOpen) {
             this.state = CircuitState.Closed;
             this.failureCount = 0;
-            logger.info('[CircuitBreaker] state transition: half-open -> closed');
+            logger_js_1.logger.info('[CircuitBreaker] state transition: half-open -> closed');
         }
     }
     recordFailure() {
@@ -59,12 +62,12 @@ export class CircuitBreaker {
         this.lastFailureTime = Date.now();
         if (this.state === CircuitState.HalfOpen) {
             this.state = CircuitState.Open;
-            logger.info('[CircuitBreaker] state transition: half-open -> open');
+            logger_js_1.logger.info('[CircuitBreaker] state transition: half-open -> open');
             return;
         }
         if (this.failureCount >= this.config.failureThreshold) {
             this.state = CircuitState.Open;
-            logger.info(`[CircuitBreaker] state transition: closed -> open (failures: ${this.failureCount})`);
+            logger_js_1.logger.info(`[CircuitBreaker] state transition: closed -> open (failures: ${this.failureCount})`);
         }
     }
     recordHalfOpenAttempt() {
@@ -95,4 +98,5 @@ export class CircuitBreaker {
         }
     }
 }
+exports.CircuitBreaker = CircuitBreaker;
 //# sourceMappingURL=circuit-breaker.js.map

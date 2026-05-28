@@ -16,6 +16,11 @@ export interface CloudAgentSession {
   metadata?: Record<string, any>;
 }
 
+function toError(err: unknown): Error {
+  if (err instanceof Error) return err;
+  return new Error(typeof err === 'string' ? err : JSON.stringify(err));
+}
+
 export class CloudAgentClient {
   config: {
     endpoint: string;
@@ -24,6 +29,7 @@ export class CloudAgentClient {
     maxConcurrent: number;
   };
   sessions: Map<string, CloudAgentSession> = new Map();
+  private _runningCount = 0;
 
   constructor(config: CloudAgentConfig) {
     this.config = {
@@ -34,20 +40,41 @@ export class CloudAgentClient {
     };
   }
 
+  private async _fetch(url: string, opts: RequestInit = {}): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.config.timeout * 1000);
+    try {
+      return await fetch(url, { ...opts, signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async _acquireSlot(): Promise<void> {
+    while (this._runningCount >= this.config.maxConcurrent) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+    this._runningCount++;
+  }
+
+  private _releaseSlot(): void {
+    this._runningCount = Math.max(0, this._runningCount - 1);
+  }
+
   async createSession(options: {
     task: string;
     systemPrompt?: string;
     tools?: string[];
     context?: Record<string, any>;
   }): Promise<string> {
-    const sessionId = `cloud-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const sessionId = `cloud-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
     this.sessions.set(sessionId, {
       sessionId,
       status: 'pending',
       metadata: options.context,
     });
     try {
-      const response = await fetch(`${this.config.endpoint}/api/agent/create`, {
+      const response = await this._fetch(`${this.config.endpoint}/api/agent/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +92,16 @@ export class CloudAgentClient {
         throw new Error(`Failed to create cloud session: ${response.statusText}`);
       }
       const data = await response.json();
-      return data.sessionId || sessionId;
+      const serverSessionId = data.sessionId || sessionId;
+      if (serverSessionId !== sessionId) {
+        this.sessions.delete(sessionId);
+        this.sessions.set(serverSessionId, {
+          sessionId: serverSessionId,
+          status: 'pending',
+          metadata: options.context,
+        });
+      }
+      return serverSessionId;
     } catch (err) {
       this.sessions.delete(sessionId);
       throw err;
@@ -77,9 +113,10 @@ export class CloudAgentClient {
     if (!session) {
       throw new Error(`Session not found: ${sessionId}`);
     }
+    await this._acquireSlot();
     session.status = 'running';
     try {
-      const response = await fetch(`${this.config.endpoint}/api/agent/execute`, {
+      const response = await this._fetch(`${this.config.endpoint}/api/agent/execute`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,8 +133,10 @@ export class CloudAgentClient {
       return session;
     } catch (err) {
       session.status = 'failed';
-      session.error = (err as Error).message;
+      session.error = toError(err).message;
       throw err;
+    } finally {
+      this._releaseSlot();
     }
   }
 
@@ -107,7 +146,7 @@ export class CloudAgentClient {
       throw new Error(`Session not found: ${sessionId}`);
     }
     try {
-      const response = await fetch(`${this.config.endpoint}/api/agent/status/${sessionId}`, {
+      const response = await this._fetch(`${this.config.endpoint}/api/agent/status/${sessionId}`, {
         headers: {
           ...(this.config.apiKey ? { 'Authorization': `Bearer ${this.config.apiKey}` } : {}),
         },
@@ -120,8 +159,8 @@ export class CloudAgentClient {
         session.output = data.output;
         session.error = data.error;
       }
-    } catch {
-      // Return cached session state
+    } catch (err) {
+      console.warn('[CloudAgent] getStatus failed, returning cached state:', toError(err).message);
     }
     return session;
   }
@@ -130,14 +169,14 @@ export class CloudAgentClient {
     const session = this.sessions.get(sessionId);
     if (!session) return;
     try {
-      await fetch(`${this.config.endpoint}/api/agent/cancel/${sessionId}`, {
+      await this._fetch(`${this.config.endpoint}/api/agent/cancel/${sessionId}`, {
         method: 'POST',
         headers: {
           ...(this.config.apiKey ? { 'Authorization': `Bearer ${this.config.apiKey}` } : {}),
         },
       });
-    } catch {
-      // Ignore cancel errors
+    } catch (err) {
+      console.warn('[CloudAgent] cancel request failed:', toError(err).message);
     }
     session.status = 'failed';
     session.error = 'Cancelled by user';
@@ -213,14 +252,16 @@ export function createCloudAgentTool(client: CloudAgentClient) {
           }
           return { output, error: result.status === 'failed' };
         } else {
-          client.execute(sessionId).catch(() => {});
+          client.execute(sessionId).catch(err => {
+            console.error('[CloudAgent] Background execute failed:', toError(err).message);
+          });
           return {
             output: `Cloud agent task started in background.\n\nSession ID: ${sessionId}\n\nUse \`cloud_agent_status\` tool to check progress.`,
             error: false,
           };
         }
       } catch (err) {
-        return { output: `Cloud agent error: ${(err as Error).message}`, error: true };
+        return { output: `Cloud agent error: ${toError(err).message}`, error: true };
       }
     },
   };
@@ -254,7 +295,7 @@ export function createCloudAgentStatusTool(client: CloudAgentClient) {
         }
         return { output, error: false };
       } catch (err) {
-        return { output: `Failed to get status: ${(err as Error).message}`, error: true };
+        return { output: `Failed to get status: ${toError(err).message}`, error: true };
       }
     },
   };

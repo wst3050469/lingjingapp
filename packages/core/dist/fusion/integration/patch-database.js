@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Database Migration Patches for Hermes Fusion
  *
@@ -22,7 +23,10 @@
  *   const { migration004 } = await import('./migrations/migration004_openspace_fusion');
  *   db.run(migration004);
  */
-export function getMigration003SQL() {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getMigration003SQL = getMigration003SQL;
+exports.getMigration004SQL = getMigration004SQL;
+function getMigration003SQL() {
     return `
 CREATE TABLE IF NOT EXISTS vector_memory (
   id TEXT PRIMARY KEY,
@@ -172,7 +176,7 @@ INSERT OR IGNORE INTO fusion_config (module_name, enabled, config_json) VALUES (
 INSERT OR IGNORE INTO fusion_config (module_name, enabled, config_json) VALUES ('circuit_breaker', 0, '{}');
 `;
 }
-export function getMigration004SQL() {
+function getMigration004SQL() {
     return `
 CREATE TABLE IF NOT EXISTS openspace_processes (
   id TEXT PRIMARY KEY,

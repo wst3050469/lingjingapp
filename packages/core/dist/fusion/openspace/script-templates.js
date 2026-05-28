@@ -1,4 +1,9 @@
-export const BUILTIN_TEMPLATES = [
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BUILTIN_TEMPLATES = void 0;
+exports.matchTemplate = matchTemplate;
+exports.fillTemplate = fillTemplate;
+exports.BUILTIN_TEMPLATES = [
     {
         name: 'navigate_to_body',
         category: 'navigation',
@@ -72,12 +77,12 @@ export const BUILTIN_TEMPLATES = [
         language: 'lua',
     },
 ];
-export function matchTemplate(input) {
+function matchTemplate(input) {
     const normalized = input.toLowerCase().trim();
     const inputWords = normalized.split(/\s+/);
     let bestMatch = null;
     let bestScore = 0;
-    for (const template of BUILTIN_TEMPLATES) {
+    for (const template of exports.BUILTIN_TEMPLATES) {
         let score = 0;
         for (const word of inputWords) {
             for (const keyword of template.keywords) {
@@ -98,7 +103,7 @@ export function matchTemplate(input) {
         return null;
     return bestMatch;
 }
-export function fillTemplate(template, params) {
+function fillTemplate(template, params) {
     let script = template.scriptTemplate;
     for (const [key, value] of Object.entries(params)) {
         const placeholder = `\${${key}}`;

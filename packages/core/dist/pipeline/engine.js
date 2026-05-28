@@ -1,4 +1,7 @@
-import { spawn } from 'node:child_process';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PipelineEngine = void 0;
+const node_child_process_1 = require("node:child_process");
 const DANGEROUS_PATTERNS = [
     /rm\s+-rf\s+\//,
     /rm\s+-rf\s+~/,
@@ -10,7 +13,7 @@ const DANGEROUS_PATTERNS = [
 function isDangerousCommand(cmd) {
     return DANGEROUS_PATTERNS.some(p => p.test(cmd));
 }
-export class PipelineEngine {
+class PipelineEngine {
     activeProcesses = new Map();
     callbacks;
     runningPipelines = new Map();
@@ -124,7 +127,7 @@ export class PipelineEngine {
         return new Promise(resolve => {
             const timeout = task.timeout || 300000;
             const cwd = task.workingDirectory || process.cwd();
-            const proc = spawn('sh', ['-c', task.command], {
+            const proc = (0, node_child_process_1.spawn)('sh', ['-c', task.command], {
                 cwd,
                 env: { ...process.env, ...task.env },
             });
@@ -198,4 +201,5 @@ export class PipelineEngine {
         this.runningPipelines.clear();
     }
 }
+exports.PipelineEngine = PipelineEngine;
 //# sourceMappingURL=engine.js.map

@@ -1,3 +1,6 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.logger = void 0;
 const LOG_LEVELS = {
     debug: 0,
     info: 1,
@@ -12,7 +15,7 @@ function formatMessage(level, ...args) {
     const timestamp = new Date().toISOString();
     return `[${timestamp}] [${level.toUpperCase()}] ${args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')}`;
 }
-export const logger = {
+exports.logger = {
     debug(...args) {
         if (shouldLog('debug'))
             console.debug(formatMessage('debug', ...args));

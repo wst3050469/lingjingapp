@@ -35,7 +35,7 @@ export interface WebhookPayload {
     received_at: string;
 }
 export interface CloudSyncEvent {
-    type: 'session_updated' | 'memory_updated' | 'webhook' | 'connected' | 'disconnected';
+    type: 'session_updated' | 'memory_updated' | 'webhook' | 'connected' | 'disconnected' | 'error' | 'desktop:list' | 'relay:from-mobile' | 'relay:from-desktop' | 'relay:ack';
     payload?: any;
     timestamp: string;
 }

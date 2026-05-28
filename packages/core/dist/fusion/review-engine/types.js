@@ -1,4 +1,7 @@
-export const DEFAULT_REVIEW_CONFIG = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEFAULT_REVIEW_CONFIG = void 0;
+exports.DEFAULT_REVIEW_CONFIG = {
     enabled: true,
     reviewModel: 'default',
     maxLLMConcurrency: 1,

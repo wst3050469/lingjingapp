@@ -1,4 +1,7 @@
-export class InMemoryVectorAdapter {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.InMemoryVectorAdapter = void 0;
+class InMemoryVectorAdapter {
     store = new Map();
     async initialize() { }
     async upsert(id, vector, metadata) {
@@ -22,6 +25,7 @@ export class InMemoryVectorAdapter {
         this.store.delete(id);
     }
 }
+exports.InMemoryVectorAdapter = InMemoryVectorAdapter;
 function cosineSimilarity(a, b) {
     let dotProduct = 0;
     let normA = 0;

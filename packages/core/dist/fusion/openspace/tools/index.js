@@ -1,4 +1,9 @@
-import { logger } from '../../../utils/logger.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createOpenSpaceExecuteTool = createOpenSpaceExecuteTool;
+exports.createOpenSpaceQueryTool = createOpenSpaceQueryTool;
+exports.createOpenSpaceToolSet = createOpenSpaceToolSet;
+const logger_js_1 = require("../../../utils/logger.js");
 const executeParams = {
     type: 'object',
     properties: {
@@ -27,7 +32,7 @@ const querySceneParams = {
 /**
  * Create the openspace_execute tool — sends a script to the connected OpenSpace instance.
  */
-export function createOpenSpaceExecuteTool(bridge) {
+function createOpenSpaceExecuteTool(bridge) {
     return {
         name: 'openspace_execute',
         description: 'Execute a Lua/JavaScript/Python script in a running OpenSpace instance',
@@ -40,7 +45,7 @@ export function createOpenSpaceExecuteTool(bridge) {
                 const script = params.script;
                 const language = params.language ?? 'lua';
                 const timeout = params.timeout ?? 30000;
-                logger.info(`[OpenSpaceTool] executing ${language} script (${script.length} chars)`);
+                logger_js_1.logger.info(`[OpenSpaceTool] executing ${language} script (${script.length} chars)`);
                 const result = await bridge.sendScript({ script, language, timeout });
                 if (result.success) {
                     return {
@@ -61,7 +66,7 @@ export function createOpenSpaceExecuteTool(bridge) {
 /**
  * Create the openspace_query tool — queries OpenSpace scene context or process health.
  */
-export function createOpenSpaceQueryTool(bridge, processManager) {
+function createOpenSpaceQueryTool(bridge, processManager) {
     return {
         name: 'openspace_query',
         description: 'Query OpenSpace scene context, process health status, or installation detection',
@@ -102,7 +107,7 @@ export function createOpenSpaceQueryTool(bridge, processManager) {
 /**
  * Create the full OpenSpace tool set.
  */
-export function createOpenSpaceToolSet(bridge, processManager) {
+function createOpenSpaceToolSet(bridge, processManager) {
     return {
         openspace_execute: createOpenSpaceExecuteTool(bridge),
         openspace_query: createOpenSpaceQueryTool(bridge, processManager),

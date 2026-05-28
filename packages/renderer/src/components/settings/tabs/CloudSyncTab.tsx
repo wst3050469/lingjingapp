@@ -28,7 +28,6 @@ export function CloudSyncTab() {
   const [pulling, setPulling] = useState<string | null>(null);
   const [pushedSessionId, setPushedSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState('Manual Push Session');
-  const [connected, setConnected] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [syncStats, setSyncStats] = useState({ pushed: 0, pulled: 0 });
 
@@ -107,8 +106,11 @@ export function CloudSyncTab() {
 
       ws.onclose = () => {
         console.log('[CloudSync-Direct] WebSocket closed');
-        setConnected(false);
         setStatus(prev => ({ ...prev, connected: false }));
+        if ((ws as any).__pingInterval) {
+          clearInterval((ws as any).__pingInterval);
+          (ws as any).__pingInterval = null;
+        }
         wsRef.current = null;
       };
 
@@ -163,7 +165,6 @@ export function CloudSyncTab() {
       }
 
       setStatus(result);
-      setConnected(result.connected);
       // Save config on successful connection
       if (result.connected) {
         localStorage.setItem('cloudSyncUrl', url);
@@ -201,7 +202,6 @@ export function CloudSyncTab() {
       try { await window.electronAPI.cloud.disconnect(); } catch {}
     }
     setStatus({ connected: false, healthy: false });
-    setConnected(false);
     setSessions([]);
     setMemories([]);
     addLog('disconnect', 'ok');
@@ -271,6 +271,7 @@ export function CloudSyncTab() {
 
       if (isWebMode()) {
         // Web mode: use direct API calls
+        // TODO: PUSH currently fetches from cloud then POSTs back to cloud (no-op). Should push local data instead.
         // 1. PUSH: Push local sessions to cloud
         try {
           const localSessions = await cloudApi('/sessions', 'GET', undefined, token);
@@ -387,7 +388,6 @@ export function CloudSyncTab() {
             result = await window.electronAPI.cloud.connect({ url: savedUrl, apiKey: savedKey });
           }
           setStatus(result);
-          setConnected(result.connected);
           addLog('auto-connect', result.connected ? 'ok' : 'fail', result.healthy ? 'healthy' : result.error || 'unreachable');
           if (result.connected) {
             loadCloudData();
@@ -410,13 +410,18 @@ export function CloudSyncTab() {
         clearInterval(autoSyncRef.current);
         autoSyncRef.current = null;
       }
+      if (wsRef.current) {
+        clearInterval((wsRef.current as any).__pingInterval);
+        try { wsRef.current.close(); } catch {}
+        wsRef.current = null;
+      }
     };
   }, [triggerAutoSync, connectDirect]);
 
   // Auto-check status (polling for both Web and Electron mode)
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
-    if (connected) {
+    if (status.connected) {
       timer = setInterval(async () => {
         try {
           if (isWebMode()) {
@@ -439,7 +444,7 @@ export function CloudSyncTab() {
       }, 5000);
     }
     return () => { if (timer) clearInterval(timer); };
-  }, [connected, url]);
+  }, [status.connected, url]);
 
   // Subscribe to cloud events (Electron mode only)
   useEffect(() => {
@@ -448,7 +453,6 @@ export function CloudSyncTab() {
     const unsubs: Array<() => void> = [];
     unsubs.push(window.electronAPI!.cloud.onStatus((data: CloudStatus) => {
       setStatus(data);
-      setConnected(data.connected);
     }));
     unsubs.push(window.electronAPI!.cloud.onSyncEvent((data: any) => {
       addLog('sync-event', 'ok', JSON.stringify(data).slice(0, 100));
@@ -613,7 +617,6 @@ export function CloudSyncTab() {
         // Web mode: after login, connect directly via WebSocket
         const wsResult = await connectDirect(url, apiKey);
         if (wsResult.connected) {
-          setConnected(true);
           setStatus(wsResult);
           loadCloudData();
           addLog('cloud-sync-connect', 'ok', '同步客户端已连接（Web 用户模式）');
@@ -625,7 +628,6 @@ export function CloudSyncTab() {
         try {
           const bindResult = await window.electronAPI!.cloud.setUserToken(data.token);
           if (bindResult.connected) {
-            setConnected(true);
             setStatus(bindResult);
             loadCloudData();
             addLog('cloud-sync-connect', 'ok', '同步客户端已连接（用户模式）');
@@ -664,6 +666,10 @@ export function CloudSyncTab() {
         deviceId: existingId,
       }, token);
       const deviceId = data.id;
+      if (!deviceId) {
+        addLog('device-register', 'fail', '注册返回数据缺少 id');
+        return;
+      }
       localStorage.setItem(CLOUD_DEVICE_ID_KEY, deviceId);
       setCloudDeviceId(deviceId);
       addLog('device-register', 'ok', `${deviceName} (${deviceId.slice(0, 12)}...)`);
@@ -703,6 +709,7 @@ export function CloudSyncTab() {
       }
     } catch { /* ignore */ }
     stopHeartbeat();
+    await handleDisconnect();
     localStorage.removeItem(CLOUD_TOKEN_KEY);
     localStorage.removeItem(CLOUD_USER_KEY);
     localStorage.removeItem(CLOUD_DEVICE_ID_KEY);
@@ -833,21 +840,21 @@ export function CloudSyncTab() {
             {status.url && <span className="text-[10px] text-cp-text-dim/40">{status.url}</span>}
           </div>
           <button
-            onClick={connected ? handleDisconnect : handleConnect}
+            onClick={status.connected ? handleDisconnect : handleConnect}
             disabled={loading}
-            title={connected && autoSyncRef.current ? '自动同步正在运行' : ''}
+            title={status.connected && autoSyncRef.current ? '自动同步正在运行' : ''}
             className={`text-xs px-4 py-1.5 rounded-md transition-colors ${
-              connected
+              status.connected
                 ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                 : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
             } disabled:opacity-50`}
           >
-            {loading ? '···' : connected ? '断开' : '连接'}
+            {loading ? '···' : status.connected ? '断开' : '连接'}
           </button>
         </div>
 
         {/* Auto-sync status indicator */}
-        {connected && (
+        {status.connected && (
           <div className="mb-3 flex items-center gap-3 text-[10px]">
             <div className="flex items-center gap-1.5">
               <span className={`w-1.5 h-1.5 rounded-full ${autoSyncRef.current ? 'bg-green-400 animate-pulse' : 'bg-yellow-500'}`} />
@@ -870,7 +877,7 @@ export function CloudSyncTab() {
               type="text"
               value={url}
               onChange={e => setUrl(e.target.value)}
-              disabled={connected}
+              disabled={status.connected}
               className="w-full bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-1.5 text-xs text-cp-text outline-none focus:border-cp-accent disabled:opacity-50 font-mono"
             />
           </div>
@@ -880,7 +887,7 @@ export function CloudSyncTab() {
               type="password"
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
-              disabled={connected}
+              disabled={status.connected}
               className="w-full bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-1.5 text-xs text-cp-text outline-none focus:border-cp-accent disabled:opacity-50 font-mono"
             />
           </div>
@@ -888,7 +895,7 @@ export function CloudSyncTab() {
       </div>
 
       {/* Actions */}
-      {connected && (
+      {status.connected && (
         <div className="grid grid-cols-2 gap-3">
           {/* Sessions panel */}
           <div className="bg-white/[0.03] border border-cp-border/40 rounded-xl p-4">

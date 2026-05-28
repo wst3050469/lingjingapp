@@ -9,7 +9,7 @@ import type {
 } from './types.js';
 
 const DEFAULT_SERVER = 'https://ide.zhejiangjinmo.com';
-const DEFAULT_API_KEY = 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8';
+const DEFAULT_API_KEY = process.env.LINGJING_API_KEY || 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8';
 
 export interface CloudSyncClientOptions {
   url?: string;
@@ -42,14 +42,12 @@ export class CloudSyncClient {
   isDesktop: boolean;
   ws: WebSocket | null = null;
   wsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Heartbeat timer: sends ping every 30s to keep WebSocket alive */
   _heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-  /** Desktop relay heartbeat timer: sends desktop:heartbeat every 60s */
   _desktopHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
-  syncTimer: ReturnType<typeof setInterval> | null = null;
   listeners: Map<string, Set<EventListener>> = new Map();
   queue: OfflineQueue;
-  private _online = false;
+  private _autoRegisterRetries = 0;
+  private _maxAutoRegisterRetries = 3;
 
   constructor(options: CloudSyncClientOptions = {}) {
     this.url = (options.url || DEFAULT_SERVER).replace(/\/$/, '');
@@ -88,6 +86,7 @@ export class CloudSyncClient {
             this.queue.ack(item.id);
           } catch (err) {
             this.queue.nack(item.id, err instanceof Error ? err : new Error(String(err)));
+            throw err;
           }
         }
       },
@@ -100,7 +99,6 @@ export class CloudSyncClient {
 
   // ── Auth ──
 
-  /** Auto-register device and get JWT token */
   async autoRegister(): Promise<boolean> {
     if (this.token) return true;
     try {
@@ -122,19 +120,30 @@ export class CloudSyncClient {
       if (!res.ok) {
         const text = await res.text().catch(() => 'Unknown');
         console.warn(`[CloudSync] Register failed: ${res.status} ${text}`);
-        return false;
+        return this._retryAutoRegister();
       }
       const data = await res.json();
       if (data.token) {
         this.token = data.token;
+        this._autoRegisterRetries = 0;
         console.info(`[CloudSync] Device registered: ${this.deviceName} (${this.deviceId})`);
         return true;
       }
-      return false;
+      return this._retryAutoRegister();
     } catch (err) {
       console.warn(`[CloudSync] Register error:`, err instanceof Error ? err.message : String(err));
-      return false;
+      return this._retryAutoRegister();
     }
+  }
+
+  private _retryAutoRegister(): boolean {
+    if (this._autoRegisterRetries < this._maxAutoRegisterRetries) {
+      this._autoRegisterRetries++;
+      const delay = Math.min(1000 * Math.pow(2, this._autoRegisterRetries), 10000);
+      console.info(`[CloudSync] Will retry autoRegister in ${delay}ms (attempt ${this._autoRegisterRetries})`);
+      setTimeout(() => this.autoRegister(), delay);
+    }
+    return false;
   }
 
   // ── HTTP Helpers ──
@@ -149,7 +158,6 @@ export class CloudSyncClient {
     return headers;
   }
 
-  /** Direct request without queue */
   async _directRequest(method: string, path: string, body?: any): Promise<any> {
     const res = await fetch(`${this.url}/api${path}`, {
       method,
@@ -169,16 +177,13 @@ export class CloudSyncClient {
 
   // ── Token Management ──
 
-  /** Set a user JWT token directly (overrides device registration token) */
   setToken(token: string): void {
     this.token = token;
     console.info(`[CloudSync] User token set (${token.slice(0, 12)}...)`);
-    // Reconnect WebSocket with new token
     this.disconnectWebSocket();
     this.connectWebSocket();
   }
 
-  /** Clear token (fall back to device registration) */
   clearToken(): void {
     this.token = null;
     this.disconnectWebSocket();
@@ -235,19 +240,18 @@ export class CloudSyncClient {
 
   // ── Health ──
 
-  async healthCheck(): Promise<boolean> {
+  async healthCheck(): Promise<{ ok: boolean; error?: string }> {
     try {
       const res = await fetch(`${this.url}/api/health`);
       const data = await res.json();
-      return data?.status === 'ok';
-    } catch {
-      return false;
+      return { ok: data?.status === 'ok' };
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) };
     }
   }
 
   // ── WebSocket ──
 
-  /** Start heartbeat: sends ping every 30s to keep WebSocket alive */
   private _startHeartbeat(): void {
     this._stopHeartbeat();
     this._heartbeatTimer = setInterval(() => {
@@ -261,7 +265,6 @@ export class CloudSyncClient {
     }, 30000);
   }
 
-  /** Stop heartbeat timer */
   private _stopHeartbeat(): void {
     if (this._heartbeatTimer) {
       clearInterval(this._heartbeatTimer);
@@ -269,7 +272,6 @@ export class CloudSyncClient {
     }
   }
 
-  /** Start desktop relay heartbeat: sends desktop:heartbeat every 60s */
   private _startDesktopHeartbeat(): void {
     this._stopDesktopHeartbeat();
     this._desktopHeartbeatTimer = setInterval(() => {
@@ -281,7 +283,6 @@ export class CloudSyncClient {
     }, 60000);
   }
 
-  /** Stop desktop relay heartbeat timer */
   private _stopDesktopHeartbeat(): void {
     if (this._desktopHeartbeatTimer) {
       clearInterval(this._desktopHeartbeatTimer);
@@ -300,23 +301,35 @@ export class CloudSyncClient {
     }
     const wsUrl = this.url.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws?' + authParam;
 
-    // Browser has global WebSocket; Node.js needs 'ws' package
-    const WS: typeof WebSocket = (typeof WebSocket !== 'undefined' ? WebSocket : require('ws'));
-    this.ws = new WS(wsUrl) as WebSocket;
-    this.ws.onopen = () => {
+    let WS: typeof WebSocket;
+    try {
+      WS = (typeof WebSocket !== 'undefined' ? WebSocket : require('ws'));
+    } catch (err) {
+      console.error('[CloudSync] Cannot load WebSocket implementation:', err instanceof Error ? err.message : String(err));
+      this.scheduleReconnect();
+      return;
+    }
+
+    const ws = new WS(wsUrl) as WebSocket;
+    this.ws = ws;
+
+    ws.onopen = () => {
       console.info('[CloudSync] WebSocket connected');
       this._startHeartbeat();
 
-      // Desktop: register as relay node so mobile clients can find us
       if (this.isDesktop && this.deviceId) {
-        this.ws!.send(JSON.stringify({ type: 'desktop:register', deviceId: this.deviceId }));
-        console.info(`[CloudSync] Sent desktop:register (deviceId=${this.deviceId.slice(0, 12)}...)`);
+        try {
+          ws.send(JSON.stringify({ type: 'desktop:register', deviceId: this.deviceId }));
+          console.info(`[CloudSync] Sent desktop:register (deviceId=${this.deviceId.slice(0, 12)}...)`);
+        } catch (err) {
+          console.warn('[CloudSync] desktop:register send failed:', err instanceof Error ? err.message : String(err));
+        }
         this._startDesktopHeartbeat();
       }
 
       this.emit('connected', { url: this.url, deviceId: this.deviceId });
     };
-    this.ws.onmessage = (event: MessageEvent) => {
+    ws.onmessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data as string);
         if (data.type === 'pong') return;
@@ -346,18 +359,24 @@ export class CloudSyncClient {
           this.emit('sync', data.payload);
         } else if (data.type === 'webhook') {
           this.emit('webhook', data);
+        } else {
+          console.warn('[CloudSync] Unknown WS message type:', data.type);
         }
-      } catch { /* ignore */ }
+      } catch (err) {
+        console.warn('[CloudSync] WS message parse error:', err instanceof Error ? err.message : String(err));
+      }
     };
-    this.ws.onclose = () => {
+    ws.onclose = () => {
+      if (this.ws !== ws) return;
       this._stopHeartbeat();
       this._stopDesktopHeartbeat();
       this.ws = null;
       this.emit('disconnected', {});
       this.scheduleReconnect();
     };
-    this.ws.onerror = (err: any) => {
+    ws.onerror = (err: any) => {
       console.warn('[CloudSync] WebSocket error:', err?.message || err);
+      this.emit('error', err);
     };
   }
 
@@ -377,7 +396,12 @@ export class CloudSyncClient {
       this.wsReconnectTimer = null;
     }
     if (this.ws) {
-      this.ws.close();
+      const ws = this.ws;
+      ws.onopen = null;
+      ws.onmessage = null;
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.close();
       this.ws = null;
     }
   }
@@ -397,41 +421,43 @@ export class CloudSyncClient {
   }
 
   async isOnline(): Promise<boolean> {
-    return this.healthCheck();
+    const result = await this.healthCheck();
+    return result.ok;
   }
 
   // ── Desktop Relay ──
 
-  /** List online desktop devices for the current user */
   listDesktops(): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type: 'desktop:list' }));
+      try { this.ws.send(JSON.stringify({ type: 'desktop:list' })); } catch { /* ws closed */ }
     }
   }
 
-  /** Send relay message to mobile client */
   sendRelayToMobile(payload: any, correlationId?: string): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        type: 'relay:to-mobile',
-        deviceId: this.deviceId,
-        payload,
-        correlationId: correlationId || `relay-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-      }));
+      try {
+        this.ws.send(JSON.stringify({
+          type: 'relay:to-mobile',
+          deviceId: this.deviceId,
+          payload,
+          correlationId: correlationId || `relay-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+        }));
+      } catch { /* ws closed */ }
     }
   }
 
-  /** Send relay message to a specific desktop device */
   sendRelayToDesktop(targetDeviceId: string, payload: any, correlationId?: string): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        type: 'relay:to-desktop',
-        targetDeviceId,
-        payload,
-        correlationId: correlationId || `relay-${Date.now()}`,
-        timestamp: new Date().toISOString(),
-      }));
+      try {
+        this.ws.send(JSON.stringify({
+          type: 'relay:to-desktop',
+          targetDeviceId,
+          payload,
+          correlationId: correlationId || `relay-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+        }));
+      } catch { /* ws closed */ }
     }
   }
 
@@ -446,10 +472,28 @@ export class CloudSyncClient {
     this.listeners.get(event)?.delete(fn);
   }
 
+  once(event: string, fn: EventListener): void {
+    const wrapper = (data: any) => {
+      this.off(event, wrapper);
+      fn(data);
+    };
+    this.on(event, wrapper);
+  }
+
   emit(event: string, data: any): void {
     this.listeners.get(event)?.forEach(fn => {
-      try { fn(data); } catch { /* ignore */ }
+      try { fn(data); } catch (err) {
+        console.warn(`[CloudSync] Listener error on "${event}":`, err instanceof Error ? err.message : String(err));
+      }
     });
+  }
+
+  removeAllListeners(event?: string): void {
+    if (event) {
+      this.listeners.delete(event);
+    } else {
+      this.listeners.clear();
+    }
   }
 
   // ── Lifecycle ──
@@ -459,9 +503,6 @@ export class CloudSyncClient {
     this.queue.stopPeriodicFlush();
     this._stopHeartbeat();
     this._stopDesktopHeartbeat();
-    if (this.syncTimer) {
-      clearInterval(this.syncTimer);
-      this.syncTimer = null;
-    }
+    this.removeAllListeners();
   }
 }

@@ -1,4 +1,7 @@
-import { logger } from '../../utils/logger.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OpenSpaceDatasetBrowser = void 0;
+const logger_js_1 = require("../../utils/logger.js");
 const TYPE_MAPPINGS = [
     { extensions: ['.json', '.scene'], type: 'scene' },
     { extensions: ['.spe', '.speck'], type: 'pointcloud' },
@@ -22,7 +25,7 @@ function inferType(filename) {
 function escapeLuaString(s) {
     return s.replace(/\\/g, '/').replace(/"/g, '\\"');
 }
-export class OpenSpaceDatasetBrowser {
+class OpenSpaceDatasetBrowser {
     fs;
     bridge;
     eventBus;
@@ -46,7 +49,7 @@ export class OpenSpaceDatasetBrowser {
             await this.scanDirectory(dataDir, 0);
         }
         catch (err) {
-            logger.warn(`[DatasetBrowser] scan failed: ${err.message}`);
+            logger_js_1.logger.warn(`[DatasetBrowser] scan failed: ${err.message}`);
         }
         this.lastScanTime = Date.now();
         return [...this.datasetsCache.values()];
@@ -63,7 +66,7 @@ export class OpenSpaceDatasetBrowser {
             throw new Error(`Dataset "${name}" not found`);
         }
         if (entry.status === 'loaded') {
-            logger.info(`[DatasetBrowser] dataset already loaded: ${name}`);
+            logger_js_1.logger.info(`[DatasetBrowser] dataset already loaded: ${name}`);
             return;
         }
         if (!this.bridge || !this.bridge.isConnected) {
@@ -81,11 +84,11 @@ export class OpenSpaceDatasetBrowser {
             if (this.eventBus) {
                 this.eventBus.publish('openspace:dataset_loaded', { name, path: entry.path, type: entry.type }, 'openspace-dataset-browser');
             }
-            logger.info(`[DatasetBrowser] loaded dataset: ${name}`);
+            logger_js_1.logger.info(`[DatasetBrowser] loaded dataset: ${name}`);
         }
         else {
             entry.status = 'error';
-            logger.error(`[DatasetBrowser] failed to load dataset: ${name} - ${result.error}`);
+            logger_js_1.logger.error(`[DatasetBrowser] failed to load dataset: ${name} - ${result.error}`);
             throw new Error(`Failed to load dataset "${name}": ${result.error ?? 'unknown error'}`);
         }
     }
@@ -95,7 +98,7 @@ export class OpenSpaceDatasetBrowser {
             throw new Error(`Dataset "${name}" not found`);
         }
         if (entry.status !== 'loaded') {
-            logger.info(`[DatasetBrowser] dataset not loaded: ${name}`);
+            logger_js_1.logger.info(`[DatasetBrowser] dataset not loaded: ${name}`);
             return;
         }
         if (!this.bridge || !this.bridge.isConnected) {
@@ -112,11 +115,11 @@ export class OpenSpaceDatasetBrowser {
             if (this.eventBus) {
                 this.eventBus.publish('openspace:dataset_unloaded', { name, path: entry.path }, 'openspace-dataset-browser');
             }
-            logger.info(`[DatasetBrowser] unloaded dataset: ${name}`);
+            logger_js_1.logger.info(`[DatasetBrowser] unloaded dataset: ${name}`);
         }
         else {
             entry.status = 'error';
-            logger.error(`[DatasetBrowser] failed to unload dataset: ${name} - ${result.error}`);
+            logger_js_1.logger.error(`[DatasetBrowser] failed to unload dataset: ${name} - ${result.error}`);
             throw new Error(`Failed to unload dataset "${name}": ${result.error ?? 'unknown error'}`);
         }
     }
@@ -217,4 +220,5 @@ export class OpenSpaceDatasetBrowser {
         return segments.join('/').replace(/\/+/g, '/');
     }
 }
+exports.OpenSpaceDatasetBrowser = OpenSpaceDatasetBrowser;
 //# sourceMappingURL=dataset-browser.js.map

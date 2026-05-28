@@ -1,4 +1,7 @@
-export class MetricsCollector {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MetricsCollector = void 0;
+class MetricsCollector {
     _totalPublished = 0;
     _totalDelivered = 0;
     _totalErrors = 0;
@@ -32,4 +35,5 @@ export class MetricsCollector {
         this._startTime = Date.now();
     }
 }
+exports.MetricsCollector = MetricsCollector;
 //# sourceMappingURL=metrics.js.map

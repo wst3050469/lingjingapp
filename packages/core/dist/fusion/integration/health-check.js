@@ -1,8 +1,11 @@
+"use strict";
 /**
  * Fusion Module Health Check — Batch D (P1)
  *
  * Validates all 16 fusion modules and produces FusionHealthReport.
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.runFusionHealthCheck = runFusionHealthCheck;
 function isModuleEnabled(config, configName) {
     return config.modules.some((m) => m.name === configName && m.enabled);
 }
@@ -15,7 +18,7 @@ function safeCheck(fn) {
         return { healthy: false, details: err.message };
     }
 }
-export function runFusionHealthCheck(deps) {
+function runFusionHealthCheck(deps) {
     const { config } = deps;
     const modules = [];
     modules.push({

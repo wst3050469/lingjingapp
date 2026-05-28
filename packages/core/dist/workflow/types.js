@@ -1,5 +1,8 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TriggerStatus = exports.TriggerType = exports.LogLevel = exports.TaskStatus = exports.WorkflowStatus = void 0;
 /** Possible workflow statuses */
-export var WorkflowStatus;
+var WorkflowStatus;
 (function (WorkflowStatus) {
     WorkflowStatus["PENDING"] = "pending";
     WorkflowStatus["RUNNING"] = "running";
@@ -8,38 +11,38 @@ export var WorkflowStatus;
     WorkflowStatus["FAILED"] = "failed";
     WorkflowStatus["CANCELLED"] = "cancelled";
     WorkflowStatus["PARTIAL"] = "partial";
-})(WorkflowStatus || (WorkflowStatus = {}));
+})(WorkflowStatus || (exports.WorkflowStatus = WorkflowStatus = {}));
 /** Task execution status */
-export var TaskStatus;
+var TaskStatus;
 (function (TaskStatus) {
     TaskStatus["PENDING"] = "pending";
     TaskStatus["RUNNING"] = "running";
     TaskStatus["COMPLETED"] = "completed";
     TaskStatus["FAILED"] = "failed";
     TaskStatus["SKIPPED"] = "skipped";
-})(TaskStatus || (TaskStatus = {}));
+})(TaskStatus || (exports.TaskStatus = TaskStatus = {}));
 /** Log level */
-export var LogLevel;
+var LogLevel;
 (function (LogLevel) {
     LogLevel["DEBUG"] = "debug";
     LogLevel["INFO"] = "info";
     LogLevel["WARN"] = "warn";
     LogLevel["ERROR"] = "error";
-})(LogLevel || (LogLevel = {}));
+})(LogLevel || (exports.LogLevel = LogLevel = {}));
 /** Trigger type */
-export var TriggerType;
+var TriggerType;
 (function (TriggerType) {
     TriggerType["MANUAL"] = "manual";
     TriggerType["SCHEDULED"] = "scheduled";
     TriggerType["EVENT"] = "event";
     TriggerType["WEBHOOK"] = "webhook";
-})(TriggerType || (TriggerType = {}));
+})(TriggerType || (exports.TriggerType = TriggerType = {}));
 /** Trigger status */
-export var TriggerStatus;
+var TriggerStatus;
 (function (TriggerStatus) {
     TriggerStatus["ACTIVE"] = "active";
     TriggerStatus["PAUSED"] = "paused";
     TriggerStatus["ERROR"] = "error";
     TriggerStatus["DISABLED"] = "disabled";
-})(TriggerStatus || (TriggerStatus = {}));
+})(TriggerStatus || (exports.TriggerStatus = TriggerStatus = {}));
 //# sourceMappingURL=types.js.map

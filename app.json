@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "灵境IDE",
+    "name": "\u7075\u5883IDE",
     "slug": "lingjing-mobile",
-    "version": "1.57.0",
+    "version": "1.60.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -27,5 +27,5 @@
     },
     "owner": "wst3050469"
   },
-  "version": "1.57.0"
+  "version": "1.60.1"
 }

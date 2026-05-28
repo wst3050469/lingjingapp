@@ -1,18 +1,24 @@
-import YAML from 'yaml';
-import { readFile, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
-import { existsSync } from 'node:fs';
-export class DslParser {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DslParser = void 0;
+const yaml_1 = __importDefault(require("yaml"));
+const promises_1 = require("node:fs/promises");
+const node_path_1 = require("node:path");
+const node_fs_1 = require("node:fs");
+class DslParser {
     async parseDirectory(dir) {
-        if (!existsSync(dir))
+        if (!(0, node_fs_1.existsSync)(dir))
             return [];
-        const files = await readdir(dir);
+        const files = await (0, promises_1.readdir)(dir);
         const yamlFiles = files.filter(f => f.endsWith('.yaml') || f.endsWith('.yml'));
         const results = [];
         for (const file of yamlFiles) {
             try {
-                const content = await readFile(join(dir, file), 'utf-8');
-                const def = this.parseYaml(content, join(dir, file));
+                const content = await (0, promises_1.readFile)((0, node_path_1.join)(dir, file), 'utf-8');
+                const def = this.parseYaml(content, (0, node_path_1.join)(dir, file));
                 if (def)
                     results.push(def);
             }
@@ -23,7 +29,7 @@ export class DslParser {
         return results;
     }
     parseYaml(content, yamlPath = '') {
-        const raw = YAML.parse(content);
+        const raw = yaml_1.default.parse(content);
         if (!raw || !raw.name || !raw.stages || !Array.isArray(raw.stages) || raw.stages.length === 0) {
             throw new Error('Invalid pipeline YAML: missing name or stages');
         }
@@ -97,7 +103,8 @@ export class DslParser {
                 }),
             })),
         };
-        return YAML.stringify(obj);
+        return yaml_1.default.stringify(obj);
     }
 }
+exports.DslParser = DslParser;
 //# sourceMappingURL=dsl-parser.js.map

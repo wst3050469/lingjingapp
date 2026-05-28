@@ -21,24 +21,19 @@ export declare class CloudSyncClient {
     isDesktop: boolean;
     ws: WebSocket | null;
     wsReconnectTimer: ReturnType<typeof setTimeout> | null;
-    /** Heartbeat timer: sends ping every 30s to keep WebSocket alive */
     _heartbeatTimer: ReturnType<typeof setInterval> | null;
-    /** Desktop relay heartbeat timer: sends desktop:heartbeat every 60s */
     _desktopHeartbeatTimer: ReturnType<typeof setInterval> | null;
-    syncTimer: ReturnType<typeof setInterval> | null;
     listeners: Map<string, Set<EventListener>>;
     queue: OfflineQueue;
-    private _online;
+    private _autoRegisterRetries;
+    private _maxAutoRegisterRetries;
     constructor(options?: CloudSyncClientOptions);
-    /** Auto-register device and get JWT token */
     autoRegister(): Promise<boolean>;
+    private _retryAutoRegister;
     authHeaders(): Record<string, string>;
-    /** Direct request without queue */
     _directRequest(method: string, path: string, body?: any): Promise<any>;
     request(method: string, path: string, body?: any): Promise<any>;
-    /** Set a user JWT token directly (overrides device registration token) */
     setToken(token: string): void;
-    /** Clear token (fall back to device registration) */
     clearToken(): void;
     getDeviceId(): string;
     getDeviceName(): string;
@@ -52,14 +47,13 @@ export declare class CloudSyncClient {
     deleteMemory(id: string): Promise<void>;
     triggerWebhook(channel: string, payload: any): Promise<any>;
     getWebhookLogs(channel: string): Promise<any>;
-    healthCheck(): Promise<boolean>;
-    /** Start heartbeat: sends ping every 30s to keep WebSocket alive */
+    healthCheck(): Promise<{
+        ok: boolean;
+        error?: string;
+    }>;
     private _startHeartbeat;
-    /** Stop heartbeat timer */
     private _stopHeartbeat;
-    /** Start desktop relay heartbeat: sends desktop:heartbeat every 60s */
     private _startDesktopHeartbeat;
-    /** Stop desktop relay heartbeat timer */
     private _stopDesktopHeartbeat;
     connectWebSocket(): void;
     scheduleReconnect(): void;
@@ -76,15 +70,14 @@ export declare class CloudSyncClient {
         failed: number;
     }>;
     isOnline(): Promise<boolean>;
-    /** List online desktop devices for the current user */
     listDesktops(): void;
-    /** Send relay message to mobile client */
     sendRelayToMobile(payload: any, correlationId?: string): void;
-    /** Send relay message to a specific desktop device */
     sendRelayToDesktop(targetDeviceId: string, payload: any, correlationId?: string): void;
     on(event: string, fn: EventListener): void;
     off(event: string, fn: EventListener): void;
+    once(event: string, fn: EventListener): void;
     emit(event: string, data: any): void;
+    removeAllListeners(event?: string): void;
     disconnect(): void;
 }
 export {};

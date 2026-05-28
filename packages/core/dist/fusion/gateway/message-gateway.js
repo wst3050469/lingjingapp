@@ -1,5 +1,8 @@
-import { logger } from '../../utils/logger.js';
-export class MessageGateway {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MessageGateway = void 0;
+const logger_js_1 = require("../../utils/logger.js");
+class MessageGateway {
     platforms = new Map();
     globalCallbacks = [];
     async registerPlatform(connector) {
@@ -12,14 +15,14 @@ export class MessageGateway {
                         cb(msg);
                     }
                     catch (err) {
-                        logger.warn(`[MessageGateway] global callback error: ${err.message}`);
+                        logger_js_1.logger.warn(`[MessageGateway] global callback error: ${err.message}`);
                     }
                 }
             });
-            logger.info(`[MessageGateway] platform "${connector.platform}" registered`);
+            logger_js_1.logger.info(`[MessageGateway] platform "${connector.platform}" registered`);
         }
         catch (err) {
-            logger.warn(`[MessageGateway] platform "${connector.platform}" connect failed: ${err.message}`);
+            logger_js_1.logger.warn(`[MessageGateway] platform "${connector.platform}" connect failed: ${err.message}`);
         }
     }
     async sendMessage(message) {
@@ -41,4 +44,5 @@ export class MessageGateway {
             .map(([platform]) => platform);
     }
 }
+exports.MessageGateway = MessageGateway;
 //# sourceMappingURL=message-gateway.js.map

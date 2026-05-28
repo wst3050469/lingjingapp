@@ -55,6 +55,7 @@ import { registerTriggerIPC } from './ipc/trigger-ipc.js';
 const IS_DEV = !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
+let bootstrapped = false;
 
 function buildApplicationMenu(): Menu {
   const isMac = process.platform === 'darwin';
@@ -743,6 +744,8 @@ function registerShortcuts(mainWindow: BrowserWindow): void {
 }
 
 async function bootstrap(): Promise<void> {
+  if (bootstrapped) return;
+  bootstrapped = true;
   // Grant microphone/media permission (must be after app.whenReady)
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, _callback) => {
     const permitted = permission === 'media' || permission === 'mediaKeySystem';

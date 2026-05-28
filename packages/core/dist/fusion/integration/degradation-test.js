@@ -1,12 +1,15 @@
+"use strict";
 /**
  * Degradation Verification — Batch D (P1)
  *
  * Validates that all fusion modules gracefully degrade when disabled or failing.
  */
-import { FusionInitializer } from '../fusion-initializer.js';
-import { EventBus } from '../event-bus/event-bus.js';
-import { HookPoint } from '../hook-registry/types.js';
-import { HookRegistry } from '../hook-registry/hook-registry.js';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.verifyDegradation = verifyDegradation;
+const fusion_initializer_js_1 = require("../fusion-initializer.js");
+const event_bus_js_1 = require("../event-bus/event-bus.js");
+const types_js_1 = require("../hook-registry/types.js");
+const hook_registry_js_1 = require("../hook-registry/hook-registry.js");
 function allDisabledConfig() {
     return {
         enabled: false,
@@ -16,7 +19,7 @@ function allDisabledConfig() {
         retryDelayMs: 1000,
     };
 }
-export function verifyDegradation() {
+function verifyDegradation() {
     const checks = [];
     checks.push(verifyEventBusNoOp());
     checks.push(verifyHookRegistryPassthrough());
@@ -31,7 +34,7 @@ export function verifyDegradation() {
 }
 function verifyEventBusNoOp() {
     try {
-        const bus = new EventBus();
+        const bus = new event_bus_js_1.EventBus();
         let received = false;
         bus.subscribe('agent:message_start', () => { received = true; });
         bus.publish('agent:message_start', { payload: null }, 'degradation-test');
@@ -55,11 +58,11 @@ function verifyEventBusNoOp() {
 }
 function verifyHookRegistryPassthrough() {
     try {
-        const registry = new HookRegistry();
+        const registry = new hook_registry_js_1.HookRegistry();
         const context = { data: 'test' };
         let hookCalled = false;
-        registry.register(HookPoint.BEFORE_LLM_CALL, async (ctx) => { hookCalled = true; return ctx; });
-        void registry.execute(HookPoint.BEFORE_LLM_CALL, context);
+        registry.register(types_js_1.HookPoint.BEFORE_LLM_CALL, async (ctx) => { hookCalled = true; return ctx; });
+        void registry.execute(types_js_1.HookPoint.BEFORE_LLM_CALL, context);
         return {
             name: 'HookRegistry.execute returns original context when disabled',
             passed: true,
@@ -83,7 +86,7 @@ function verifyToolRegistryIsolation() {
 }
 function verifyFusionInitDegradation() {
     try {
-        const initializer = new FusionInitializer();
+        const initializer = new fusion_initializer_js_1.FusionInitializer();
         const config = allDisabledConfig();
         const result = initializer.initialize(config);
         const autoDegraded = !result.success ? result.degraded.length >= 0 : true;

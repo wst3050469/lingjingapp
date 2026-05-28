@@ -33,6 +33,7 @@ class ApiService {
  private heartbeatTimer: ReturnType<typeof setInterval>|null = null;
  private wsReconnectAttempt = 0;
  private wsMaxReconnectDelay = 30000;
+ private intentionalDisconnect = false;
  public onConnectionChange?: (connected: boolean) => void;
  private _deviceId: string|null = null;
  private _jwtToken: string|null = null;
@@ -93,7 +94,7 @@ class ApiService {
  catch (e: any) { return { ok: false, error: e.message }; }
  }
  async cloudLogout(): Promise<void> {
- this._jwtToken = null; this._cloudUser = null; this.disconnectWs();
+ this._jwtToken = null; this._cloudUser = null; this.config.token = ''; this.disconnectWs();
  }
 
  // --- Sessions ---
@@ -114,12 +115,14 @@ class ApiService {
  connectWs() {
  if (this.ws?.readyState === WebSocket.OPEN) return;
  this.disconnectWs();
+ this.intentionalDisconnect = false;
  const token = this._jwtToken || this.config.token;
  const url = `${this.config.wsUrl}?token=${encodeURIComponent(token)}`;
  console.log('[Mobile API] Connecting WebSocket:', url.replace(token, '***'));
  this.ws = new WebSocket(url);
  this.ws.onopen = () => {
  console.log('[Mobile API] WebSocket connected');
+ this.wsReconnectAttempt = 0;
  this.onConnectionChange?.(true);
  this.wsSubscriptions.forEach(ch => this.wsSend({ type: 'cmd', id: `sub-${Date.now()}`, channel: ch as any, action: 'subscribe', payload: {} }));
  this.wsSend({ type: 'desktop:list' });
@@ -153,7 +156,9 @@ class ApiService {
  console.log('[Mobile API] WebSocket disconnected');
  if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
  this.onConnectionChange?.(false);
- this.scheduleReconnect();
+ if (!this.intentionalDisconnect) {
+   this.scheduleReconnect();
+ }
  };
  this.ws.onerror = () => {
  console.log('[Mobile API] WebSocket error');
@@ -171,6 +176,7 @@ class ApiService {
  }
 
  disconnectWs() {
+ this.intentionalDisconnect = true;
  if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
  if (this.heartbeatTimer) { clearInterval(this.heartbeatTimer); this.heartbeatTimer = null; }
  if (this.ws) { this.ws.close(); this.ws = null; }

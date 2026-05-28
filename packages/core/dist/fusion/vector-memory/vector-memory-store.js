@@ -1,14 +1,17 @@
-import { DEFAULT_VECTOR_MEMORY_CONFIG } from './types.js';
-import { InMemoryVectorAdapter } from './adapters/in-memory-adapter.js';
-export class VectorMemoryStore {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.VectorMemoryStore = void 0;
+const types_js_1 = require("./types.js");
+const in_memory_adapter_js_1 = require("./adapters/in-memory-adapter.js");
+class VectorMemoryStore {
     config;
     adapter;
     eventBus = null;
     contentById = new Map();
     embedFn = null;
     constructor(config, adapter) {
-        this.config = { ...DEFAULT_VECTOR_MEMORY_CONFIG, ...config };
-        this.adapter = adapter ?? new InMemoryVectorAdapter();
+        this.config = { ...types_js_1.DEFAULT_VECTOR_MEMORY_CONFIG, ...config };
+        this.adapter = adapter ?? new in_memory_adapter_js_1.InMemoryVectorAdapter();
     }
     setEventBus(eventBus) {
         this.eventBus = eventBus;
@@ -68,6 +71,7 @@ export class VectorMemoryStore {
         return vector;
     }
 }
+exports.VectorMemoryStore = VectorMemoryStore;
 function hashString(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {

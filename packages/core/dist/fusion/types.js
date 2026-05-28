@@ -1,4 +1,7 @@
-export const FUSION_MODULES = [
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DEFAULT_FUSION_CONFIG = exports.FUSION_MODULES = void 0;
+exports.FUSION_MODULES = [
     'event_bus',
     'hook_registry',
     'vector_memory',
@@ -12,9 +15,9 @@ export const FUSION_MODULES = [
     'parallel_executor',
     'circuit_breaker',
 ];
-export const DEFAULT_FUSION_CONFIG = {
+exports.DEFAULT_FUSION_CONFIG = {
     enabled: false,
-    modules: FUSION_MODULES.map((name) => ({ name, enabled: false, config: {} })),
+    modules: exports.FUSION_MODULES.map((name) => ({ name, enabled: false, config: {} })),
     globalTimeout: 100,
     retryAttempts: 3,
     retryDelayMs: 1000,

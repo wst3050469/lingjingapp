@@ -1,8 +1,11 @@
-import { DEFAULT_SECURITY_CONFIG } from './types.js';
-export class SecurityScanner {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SecurityScanner = void 0;
+const types_js_1 = require("./types.js");
+class SecurityScanner {
     config;
     constructor(config) {
-        this.config = { ...DEFAULT_SECURITY_CONFIG, ...config };
+        this.config = { ...types_js_1.DEFAULT_SECURITY_CONFIG, ...config };
     }
     scan(content, skillPath) {
         const findings = [];
@@ -131,4 +134,5 @@ export class SecurityScanner {
         return true;
     }
 }
+exports.SecurityScanner = SecurityScanner;
 //# sourceMappingURL=security-scanner.js.map

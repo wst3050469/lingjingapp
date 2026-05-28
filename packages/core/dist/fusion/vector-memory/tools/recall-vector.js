@@ -1,3 +1,6 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createRecallVectorTool = createRecallVectorTool;
 const parameters = {
     type: 'object',
     properties: {
@@ -6,7 +9,7 @@ const parameters = {
     },
     required: ['query'],
 };
-export function createRecallVectorTool(store) {
+function createRecallVectorTool(store) {
     return {
         name: 'recall_vector',
         description: 'Search vector memory for semantically similar content',

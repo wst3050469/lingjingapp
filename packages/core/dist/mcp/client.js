@@ -1,11 +1,14 @@
+"use strict";
 // MCP Client - manages a single MCP server connection over stdio
 // Implements JSON-RPC 2.0 transport
-import { spawn } from 'node:child_process';
-import { EventEmitter } from 'node:events';
-import { join } from 'node:path';
-import { logger } from '../utils/logger.js';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.McpClient = void 0;
+const node_child_process_1 = require("node:child_process");
+const node_events_1 = require("node:events");
+const node_path_1 = require("node:path");
+const logger_js_1 = require("../utils/logger.js");
 const MCP_PROTOCOL_VERSION = '2024-11-05';
-export class McpClient extends EventEmitter {
+class McpClient extends node_events_1.EventEmitter {
     serverName;
     config;
     process = null;
@@ -44,16 +47,16 @@ export class McpClient extends EventEmitter {
         const spawnEnv = { ...process.env, ...env };
         // Ensure PATH includes common Node.js locations on Windows
         if (process.platform === 'win32') {
-            const nodeDir = process.execPath ? join(process.execPath, '..') : '';
+            const nodeDir = process.execPath ? (0, node_path_1.join)(process.execPath, '..') : '';
             const existingPath = spawnEnv.PATH || spawnEnv.Path || '';
             if (nodeDir && !existingPath.toLowerCase().includes(nodeDir.toLowerCase())) {
                 spawnEnv.PATH = `${nodeDir};${existingPath}`;
             }
             // Also add common Node.js install paths
             const commonPaths = [
-                join(process.env.APPDATA || '', 'npm'),
-                join(process.env.ProgramFiles || 'C:\\Program Files', 'nodejs'),
-                join(process.env.LOCALAPPDATA || '', 'Programs', 'nodejs'),
+                (0, node_path_1.join)(process.env.APPDATA || '', 'npm'),
+                (0, node_path_1.join)(process.env.ProgramFiles || 'C:\\Program Files', 'nodejs'),
+                (0, node_path_1.join)(process.env.LOCALAPPDATA || '', 'Programs', 'nodejs'),
             ];
             for (const p of commonPaths) {
                 if (p && !existingPath.toLowerCase().includes(p.toLowerCase())) {
@@ -61,8 +64,8 @@ export class McpClient extends EventEmitter {
                 }
             }
         }
-        logger.info(`[MCP:${this.serverName}] Spawning: ${command} ${args.join(' ')}`);
-        logger.info(`[MCP:${this.serverName}] Platform: ${process.platform}, cwd: ${cwd || process.cwd()}`);
+        logger_js_1.logger.info(`[MCP:${this.serverName}] Spawning: ${command} ${args.join(' ')}`);
+        logger_js_1.logger.info(`[MCP:${this.serverName}] Platform: ${process.platform}, cwd: ${cwd || process.cwd()}`);
         // 🔴 Fix: Windows paths with spaces (e.g. C:\Program Files\...) cause shell quoting errors
         //   when shell:true is used unconditionally. Resolve 'node'→process.execPath,
         //   use shell:false for direct exe paths, quote args for bare commands.
@@ -75,7 +78,7 @@ export class McpClient extends EventEmitter {
             const isDirectExe = command.includes('\\') || command.includes('/');
             if (isDirectExe) {
                 // Direct executable — no shell needed, avoids all cmd.exe quoting issues
-                this.process = spawn(command, args, {
+                this.process = (0, node_child_process_1.spawn)(command, args, {
                     cwd,
                     stdio: ['pipe', 'pipe', 'pipe'],
                     env: spawnEnv,
@@ -87,7 +90,7 @@ export class McpClient extends EventEmitter {
                 // Bare command ('npx', 'npm') — needs cmd.exe for .cmd script resolution
                 // Quote args containing spaces to prevent shell from splitting on spaces
                 const quotedArgs = args.map(a => a.includes(' ') && !a.startsWith('"') ? `"${a}"` : a);
-                this.process = spawn(command, quotedArgs, {
+                this.process = (0, node_child_process_1.spawn)(command, quotedArgs, {
                     cwd,
                     stdio: ['pipe', 'pipe', 'pipe'],
                     env: spawnEnv,
@@ -98,7 +101,7 @@ export class McpClient extends EventEmitter {
         }
         else {
             // Non-Windows: no special handling needed
-            this.process = spawn(command, args, {
+            this.process = (0, node_child_process_1.spawn)(command, args, {
                 cwd,
                 stdio: ['pipe', 'pipe', 'pipe'],
                 env: spawnEnv,
@@ -111,16 +114,16 @@ export class McpClient extends EventEmitter {
         });
         this.process.stderr.on('data', (data) => {
             const text = data.toString().trim();
-            logger.info(`[MCP:${this.serverName}] stderr: ${text}`);
+            logger_js_1.logger.info(`[MCP:${this.serverName}] stderr: ${text}`);
             // Keep last 1000 chars of stderr for error reporting
             this._stderrBuffer = (this._stderrBuffer + '\n' + text).slice(-1000);
         });
         this.process.on('error', (err) => {
-            logger.error(`[MCP:${this.serverName}] Process error: ${err.message}`);
+            logger_js_1.logger.error(`[MCP:${this.serverName}] Process error: ${err.message}`);
             this.cleanup(err.message);
         });
         this.process.on('exit', (code) => {
-            logger.error(`[MCP:${this.serverName}] Process exited with code ${code}`);
+            logger_js_1.logger.error(`[MCP:${this.serverName}] Process exited with code ${code}`);
             const reason = code !== 0
                 ? `Process exited with code ${code}${this._stderrBuffer ? ': ' + this._stderrBuffer.trim() : ''}`
                 : undefined;
@@ -128,7 +131,7 @@ export class McpClient extends EventEmitter {
         });
         // Initialize the MCP connection with longer timeout for npx downloads
         const initTimeout = 120000; // 2 minutes for first run (npm install)
-        logger.info(`[MCP:${this.serverName}] Sending initialize request...`);
+        logger_js_1.logger.info(`[MCP:${this.serverName}] Sending initialize request...`);
         const result = await this.request('initialize', {
             protocolVersion: MCP_PROTOCOL_VERSION,
             capabilities: {},
@@ -143,10 +146,10 @@ export class McpClient extends EventEmitter {
         this.notify('notifications/initialized', {});
         // Fetch available tools
         if (result.capabilities.tools) {
-            logger.info(`[MCP:${this.serverName}] Fetching tools list...`);
+            logger_js_1.logger.info(`[MCP:${this.serverName}] Fetching tools list...`);
             await this.refreshTools();
         }
-        logger.info(`[MCP:${this.serverName}] Connected to ${result.serverInfo.name} v${result.serverInfo.version}, ${this._tools.length} tools available`);
+        logger_js_1.logger.info(`[MCP:${this.serverName}] Connected to ${result.serverInfo.name} v${result.serverInfo.version}, ${this._tools.length} tools available`);
     }
     async refreshTools() {
         const result = await this.request('tools/list', {});
@@ -234,12 +237,12 @@ export class McpClient extends EventEmitter {
             if (!Number.isFinite(contentLength) || contentLength <= 0) {
                 // Invalid Content-Length, skip this message
                 this.buffer = this.buffer.substring(headerEnd + 4);
-                logger.warn(`[MCP:${this.serverName}] Invalid Content-Length: ${contentLength}, skipping`);
+                logger_js_1.logger.warn(`[MCP:${this.serverName}] Invalid Content-Length: ${contentLength}, skipping`);
                 continue;
             }
             // Prevent unreasonable message sizes (>10MB)
             if (contentLength > 10 * 1024 * 1024) {
-                logger.error(`[MCP:${this.serverName}] Content-Length too large: ${contentLength}, disconnecting`);
+                logger_js_1.logger.error(`[MCP:${this.serverName}] Content-Length too large: ${contentLength}, disconnecting`);
                 this.cleanup(`Message too large: ${contentLength} bytes`);
                 break;
             }
@@ -255,11 +258,11 @@ export class McpClient extends EventEmitter {
                 this.handleMessage(message);
             }
             catch (err) {
-                logger.error(`[MCP:${this.serverName}] Failed to parse message: ${body.substring(0, 200)}`);
+                logger_js_1.logger.error(`[MCP:${this.serverName}] Failed to parse message: ${body.substring(0, 200)}`);
             }
         }
         if (iterations >= MAX_ITERATIONS) {
-            logger.error(`[MCP:${this.serverName}] handleData exceeded max iterations (${MAX_ITERATIONS}), clearing buffer`);
+            logger_js_1.logger.error(`[MCP:${this.serverName}] handleData exceeded max iterations (${MAX_ITERATIONS}), clearing buffer`);
             this.buffer = '';
         }
     }
@@ -303,4 +306,5 @@ export class McpClient extends EventEmitter {
         }
     }
 }
+exports.McpClient = McpClient;
 //# sourceMappingURL=client.js.map

@@ -19,7 +19,11 @@ export declare class CloudAgentClient {
         maxConcurrent: number;
     };
     sessions: Map<string, CloudAgentSession>;
+    private _runningCount;
     constructor(config: CloudAgentConfig);
+    private _fetch;
+    private _acquireSlot;
+    private _releaseSlot;
     createSession(options: {
         task: string;
         systemPrompt?: string;

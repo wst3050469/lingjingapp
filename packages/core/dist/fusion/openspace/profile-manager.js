@@ -1,4 +1,7 @@
-import { logger } from '../../utils/logger.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OpenSpaceProfileManager = void 0;
+const logger_js_1 = require("../../utils/logger.js");
 const PRESET_CONFIGS = [
     {
         name: 'solar_system',
@@ -19,7 +22,7 @@ const PRESET_CONFIGS = [
         sceneContent: '-- Deep Space Profile\nopenspace.setPropertyValue("Modules.MilkyWay.Enabled", true)\nopenspace.setPropertyValue("NavigationHandler.Target", "MilkyWay")\nopenspace.setPropertyValue("NavigationHandler.Distance", 1e10)',
     },
 ];
-export class OpenSpaceProfileManager {
+class OpenSpaceProfileManager {
     fs;
     bridge;
     eventBus;
@@ -62,12 +65,12 @@ export class OpenSpaceProfileManager {
                     }
                 }
                 catch {
-                    logger.warn(`[ProfileManager] failed to read profile dir: ${entry}`);
+                    logger_js_1.logger.warn(`[ProfileManager] failed to read profile dir: ${entry}`);
                 }
             }
         }
         catch (err) {
-            logger.warn(`[ProfileManager] failed to list profiles: ${err.message}`);
+            logger_js_1.logger.warn(`[ProfileManager] failed to list profiles: ${err.message}`);
         }
         return profiles;
     }
@@ -125,7 +128,7 @@ export class OpenSpaceProfileManager {
         }, null, 2);
         await this.fs.writeFile(metaFilePath, metaContent, 'utf-8');
         this.profileCache.set(profile.name, profile);
-        logger.info(`[ProfileManager] saved profile: ${profile.name}`);
+        logger_js_1.logger.info(`[ProfileManager] saved profile: ${profile.name}`);
     }
     async applyProfile(name) {
         const profile = await this.loadProfile(name);
@@ -150,7 +153,7 @@ export class OpenSpaceProfileManager {
                 timestamp: Date.now(),
             }, 'openspace-profile-manager');
         }
-        logger.info(`[ProfileManager] applied profile: ${name}`);
+        logger_js_1.logger.info(`[ProfileManager] applied profile: ${name}`);
     }
     async getAvailableModules(dataDir) {
         const modules = new Set();
@@ -171,7 +174,7 @@ export class OpenSpaceProfileManager {
                 }
             }
             catch {
-                logger.warn(`[ProfileManager] failed to scan modules dir`);
+                logger_js_1.logger.warn(`[ProfileManager] failed to scan modules dir`);
             }
         }
         return [...modules].sort();
@@ -185,7 +188,7 @@ export class OpenSpaceProfileManager {
             await this.applyProfile(this.currentProfile);
         }
         catch (err) {
-            logger.warn(`[ProfileManager] reload failed: ${err.message}`);
+            logger_js_1.logger.warn(`[ProfileManager] reload failed: ${err.message}`);
         }
     }
     getCurrentProfile() {
@@ -221,7 +224,7 @@ export class OpenSpaceProfileManager {
             };
         }
         catch (err) {
-            logger.warn(`[ProfileManager] failed to read profile meta: ${err.message}`);
+            logger_js_1.logger.warn(`[ProfileManager] failed to read profile meta: ${err.message}`);
             return null;
         }
     }
@@ -248,4 +251,5 @@ export class OpenSpaceProfileManager {
         return segments.join('/').replace(/\/+/g, '/');
     }
 }
+exports.OpenSpaceProfileManager = OpenSpaceProfileManager;
 //# sourceMappingURL=profile-manager.js.map

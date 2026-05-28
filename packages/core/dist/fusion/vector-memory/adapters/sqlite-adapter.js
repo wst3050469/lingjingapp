@@ -1,4 +1,7 @@
-export class SqliteVectorAdapter {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SqliteVectorAdapter = void 0;
+class SqliteVectorAdapter {
     db;
     tableName;
     store = new Map();
@@ -92,6 +95,7 @@ export class SqliteVectorAdapter {
         return this.store.size;
     }
 }
+exports.SqliteVectorAdapter = SqliteVectorAdapter;
 function cosineSimilarity(a, b) {
     if (a.length !== b.length)
         return 0;

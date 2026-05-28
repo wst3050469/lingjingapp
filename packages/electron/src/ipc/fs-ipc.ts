@@ -67,19 +67,27 @@ export function registerFsIpc(mainWindow: BrowserWindow, getWorkspace?: () => st
       });
 
       return result;
-    } catch {
-      return [];
+    } catch (err) {
+      return { error: String(err instanceof Error ? err.message : err) };
     }
   });
 
   ipcMain.handle('fs:read-file', async (_event, { path: filePath }: { path: string }) => {
-    const content = await readFile(filePath, 'utf-8');
-    const language = detectLanguage(filePath);
-    return { content, language };
+    try {
+      const content = await readFile(filePath, 'utf-8');
+      const language = detectLanguage(filePath);
+      return { content, language };
+    } catch (err) {
+      return { error: String(err instanceof Error ? err.message : err) };
+    }
   });
 
   ipcMain.handle('fs:write-file', async (_event, { path: filePath, content }: { path: string; content: string }) => {
-    await writeFile(filePath, content, 'utf-8');
+    try {
+      await writeFile(filePath, content, 'utf-8');
+    } catch (err) {
+      return { error: String(err instanceof Error ? err.message : err) };
+    }
   });
 
   ipcMain.handle('fs:select-folder', async () => {

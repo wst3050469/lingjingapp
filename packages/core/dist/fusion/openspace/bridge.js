@@ -1,5 +1,8 @@
-import { CircuitBreaker } from '../circuit-breaker.js';
-import { logger } from '../../utils/logger.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OpenSpaceBridge = void 0;
+const circuit_breaker_js_1 = require("../circuit-breaker.js");
+const logger_js_1 = require("../../utils/logger.js");
 const WS_OPEN = 1;
 const WS_CLOSED = 3;
 const DEFAULT_CONFIG = {
@@ -10,7 +13,7 @@ const DEFAULT_CONFIG = {
     maxRetries: 5,
     retryDelay: 3000,
 };
-export class OpenSpaceBridge {
+class OpenSpaceBridge {
     config;
     ws = null;
     wsFactory;
@@ -28,7 +31,7 @@ export class OpenSpaceBridge {
         this.config = { ...DEFAULT_CONFIG, ...config };
         this.eventBus = eventBus ?? null;
         this.wsFactory = wsFactory ?? null;
-        this.circuitBreaker = new CircuitBreaker({
+        this.circuitBreaker = new circuit_breaker_js_1.CircuitBreaker({
             failureThreshold: 5,
             resetTimeoutMs: 30000,
             halfOpenMaxAttempts: 1,
@@ -47,7 +50,7 @@ export class OpenSpaceBridge {
             throw new Error('WebSocket factory not injected');
         return new Promise((resolve, reject) => {
             const url = `ws://${this.config.wsHost}:${this.config.wsPort}`;
-            logger.info(`[OpenSpaceBridge] connecting to ${url}`);
+            logger_js_1.logger.info(`[OpenSpaceBridge] connecting to ${url}`);
             try {
                 this.ws = this.wsFactory(url);
             }
@@ -64,7 +67,7 @@ export class OpenSpaceBridge {
                 clearTimeout(connectTimer);
                 this.connected = true;
                 this.retryCount = 0;
-                logger.info('[OpenSpaceBridge] connected');
+                logger_js_1.logger.info('[OpenSpaceBridge] connected');
                 resolve();
             });
             ws.on('message', (data) => {
@@ -76,7 +79,7 @@ export class OpenSpaceBridge {
             });
             ws.on('error', (err) => {
                 clearTimeout(connectTimer);
-                logger.error(`[OpenSpaceBridge] ws error: ${err.message}`);
+                logger_js_1.logger.error(`[OpenSpaceBridge] ws error: ${err.message}`);
                 this.handleDisconnect();
             });
         });
@@ -85,7 +88,7 @@ export class OpenSpaceBridge {
         this.stopReconnect();
         this.cleanup();
         this.connected = false;
-        logger.info('[OpenSpaceBridge] disconnected');
+        logger_js_1.logger.info('[OpenSpaceBridge] disconnected');
     }
     cleanup() {
         if (this.ws) {
@@ -111,15 +114,15 @@ export class OpenSpaceBridge {
         }
         if (this.retryCount <= this.config.maxRetries) {
             const delay = this.config.retryDelay * Math.pow(2, this.retryCount - 1);
-            logger.info(`[OpenSpaceBridge] reconnecting in ${delay}ms (attempt ${this.retryCount}/${this.config.maxRetries})`);
+            logger_js_1.logger.info(`[OpenSpaceBridge] reconnecting in ${delay}ms (attempt ${this.retryCount}/${this.config.maxRetries})`);
             this.reconnectTimer = setTimeout(() => {
                 this.connect().catch((err) => {
-                    logger.warn(`[OpenSpaceBridge] reconnect failed: ${err.message}`);
+                    logger_js_1.logger.warn(`[OpenSpaceBridge] reconnect failed: ${err.message}`);
                 });
             }, delay);
         }
         else {
-            logger.error('[OpenSpaceBridge] max retries exceeded');
+            logger_js_1.logger.error('[OpenSpaceBridge] max retries exceeded');
         }
     }
     stopReconnect() {
@@ -215,7 +218,7 @@ export class OpenSpaceBridge {
             message = JSON.parse(text);
         }
         catch {
-            logger.warn('[OpenSpaceBridge] failed to parse message');
+            logger_js_1.logger.warn('[OpenSpaceBridge] failed to parse message');
             return;
         }
         if (message.id !== undefined && this.pendingRequests.has(message.id)) {
@@ -263,7 +266,7 @@ export class OpenSpaceBridge {
             return;
         }
         if (method.startsWith('openspace.event.')) {
-            logger.debug(`[OpenSpaceBridge] event: ${method}`, params);
+            logger_js_1.logger.debug(`[OpenSpaceBridge] event: ${method}`, params);
         }
     }
     subscribeProperty(uri, callback) {
@@ -334,4 +337,5 @@ export class OpenSpaceBridge {
         this.config = { ...this.config, ...config };
     }
 }
+exports.OpenSpaceBridge = OpenSpaceBridge;
 //# sourceMappingURL=bridge.js.map

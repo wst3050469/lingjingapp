@@ -1,7 +1,10 @@
-import { OpenSpaceBridge } from './bridge.js';
-import { OpenSpaceProcessManager } from './process-manager.js';
-import { createOpenSpaceToolSet } from './tools/index.js';
-import { logger } from '../../utils/logger.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OpenSpaceFusionAdapter = void 0;
+const bridge_js_1 = require("./bridge.js");
+const process_manager_js_1 = require("./process-manager.js");
+const index_js_1 = require("./tools/index.js");
+const logger_js_1 = require("../../utils/logger.js");
 const DEFAULT_FUSION_CONFIG = {
     enabled: false,
     autoStart: false,
@@ -27,7 +30,7 @@ const DEFAULT_FUSION_CONFIG = {
  * 3. Register EventBus event handlers for openspace:* events
  * 4. Provide Agent tool set for AI-driven OpenSpace control
  */
-export class OpenSpaceFusionAdapter {
+class OpenSpaceFusionAdapter {
     config;
     eventBus;
     processManager;
@@ -38,8 +41,8 @@ export class OpenSpaceFusionAdapter {
     constructor(eventBus) {
         this.config = { ...DEFAULT_FUSION_CONFIG };
         this.eventBus = eventBus ?? null;
-        this.processManager = new OpenSpaceProcessManager(this.eventBus ?? undefined);
-        this.bridge = new OpenSpaceBridge(this.config.bridgeConfig, this.eventBus ?? undefined);
+        this.processManager = new process_manager_js_1.OpenSpaceProcessManager(this.eventBus ?? undefined);
+        this.bridge = new bridge_js_1.OpenSpaceBridge(this.config.bridgeConfig, this.eventBus ?? undefined);
     }
     get processManagerInstance() {
         return this.processManager;
@@ -73,7 +76,7 @@ export class OpenSpaceFusionAdapter {
         this.unregisterStateChange = this.processManager.onStateChange((state, _prev) => {
             if (state === 'running' && this.config.autoStart) {
                 this.connectBridge().catch((err) => {
-                    logger.warn(`[OpenSpaceFusionAdapter] auto bridge connect failed: ${err.message}`);
+                    logger_js_1.logger.warn(`[OpenSpaceFusionAdapter] auto bridge connect failed: ${err.message}`);
                 });
             }
             if (state === 'stopped') {
@@ -81,9 +84,9 @@ export class OpenSpaceFusionAdapter {
             }
         });
         // Create tool set
-        this.tools = createOpenSpaceToolSet(this.bridge, this.processManager);
+        this.tools = (0, index_js_1.createOpenSpaceToolSet)(this.bridge, this.processManager);
         this.initialized = true;
-        logger.info('[OpenSpaceFusionAdapter] initialized');
+        logger_js_1.logger.info('[OpenSpaceFusionAdapter] initialized');
     }
     /**
      * Start OpenSpace process.
@@ -150,7 +153,8 @@ export class OpenSpaceFusionAdapter {
         }
         this.initialized = false;
         this.tools = null;
-        logger.info('[OpenSpaceFusionAdapter] disposed');
+        logger_js_1.logger.info('[OpenSpaceFusionAdapter] disposed');
     }
 }
+exports.OpenSpaceFusionAdapter = OpenSpaceFusionAdapter;
 //# sourceMappingURL=fusion-adapter.js.map

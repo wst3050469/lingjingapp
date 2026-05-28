@@ -6,7 +6,18 @@ export interface IpcResult<T> {
 
 async function invoke<T>(channel: string, ...args: unknown[]): Promise<IpcResult<T>> {
   try {
-    const result = await window.electronAPI?.invoke?.(channel, ...args);
+    if (!window.electronAPI?.invoke) {
+      return { success: false, error: 'Electron API not available' };
+    }
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const result = await Promise.race([
+      window.electronAPI.invoke(channel, ...args),
+      new Promise((_, reject) => {
+        controller.signal.addEventListener('abort', () => reject(new Error('IPC timeout (30s)')));
+      }),
+    ]);
+    clearTimeout(timeoutId);
     return { success: true, data: result as T };
   } catch (error) {
     return { success: false, error: String(error) };

@@ -1,6 +1,12 @@
-import cronParser from 'cron-parser';
-const { parseExpression } = cronParser;
-export class TriggerManager {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.TriggerManager = void 0;
+const cron_parser_1 = __importDefault(require("cron-parser"));
+const { parseExpression } = cron_parser_1.default;
+class TriggerManager {
     cronTimers = new Map();
     gitListeners = [];
     onTrigger;
@@ -53,4 +59,5 @@ export class TriggerManager {
         this.gitListeners = [];
     }
 }
+exports.TriggerManager = TriggerManager;
 //# sourceMappingURL=trigger-manager.js.map

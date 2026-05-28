@@ -53,7 +53,7 @@ export function registerMemoryIpc(): void {
       return results;
     } catch (err) {
       console.error('memory:list error:', err);
-      return [];
+      return { error: String(err instanceof Error ? err.message : err) };
     }
   });
 
@@ -89,7 +89,7 @@ export function registerMemoryIpc(): void {
       return results;
     } catch (err) {
       console.error('memory:search error:', err);
-      return [];
+      return { error: String(err instanceof Error ? err.message : err) };
     }
   });
 
@@ -113,7 +113,7 @@ export function registerMemoryIpc(): void {
       await saveDatabase();
 
       // Auto-push to cloud
-      pushMemoryToCloud({
+      await pushMemoryToCloud({
         title: mem.title,
         content: mem.content,
         category: mem.category,

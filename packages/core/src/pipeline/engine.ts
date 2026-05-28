@@ -83,6 +83,8 @@ export class PipelineEngine {
         stage: PipelineDefinition['stages'][number],
         runId: string,
     ): Promise<StageResult> {
+        this.emitLog(runId, stage.name, undefined, 'system', `Stage started: ${stage.name}`);
+
         const result: StageResult = {
             stageName: stage.name,
             order: stage.order,
@@ -110,6 +112,8 @@ export class PipelineEngine {
         result.status = hasFailure ? 'failed' : 'success';
         result.finishedAt = new Date().toISOString();
         result.durationMs = Date.now() - new Date(result.startedAt!).getTime();
+
+        this.emitLog(runId, stage.name, undefined, 'system', `Stage finished: ${stage.name} with status ${result.status}`);
         return result;
     }
 
@@ -118,19 +122,51 @@ export class PipelineEngine {
         runId: string,
         stageName: string,
     ): Promise<TaskResult> {
-        if (isDangerousCommand(task.command)) {
-            if (this.callbacks.onDangerousCommand) {
-                const approved = await this.callbacks.onDangerousCommand(task.command);
-                if (!approved) {
-                    return {
-                        taskName: task.name,
-                        status: 'cancelled',
-                        stderr: 'Dangerous command blocked by user',
-                    };
+        const retries = task.retries || 0;
+        const retryDelay = task.retryDelay || 0;
+        let lastResult: TaskResult = {
+            taskName: task.name,
+            status: 'success',
+            startedAt: new Date().toISOString(),
+        };
+
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            if (attempt > 0) {
+                this.emitLog(runId, stageName, task.name, 'system', `Retrying task: ${task.name} (Attempt ${attempt}/${retries}) after ${retryDelay}ms`);
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+            }
+
+            if (isDangerousCommand(task.command)) {
+                if (this.callbacks.onDangerousCommand) {
+                    const approved = await this.callbacks.onDangerousCommand(task.command);
+                    if (!approved) {
+                        return {
+                            taskName: task.name,
+                            status: 'cancelled',
+                            stderr: 'Dangerous command blocked by user',
+                        };
+                    }
                 }
+            }
+
+            const result = await this.runTaskProcess(task, runId, stageName);
+            lastResult = result;
+
+            if (result.status === 'success') {
+                return result;
             }
         }
 
+        return lastResult;
+    }
+
+    private async runTaskProcess(
+        task: PipelineDefinition['stages'][number]['tasks'][
+            number
+        ],
+        runId: string,
+        stageName: string,
+    ): Promise<TaskResult> {
         const result: TaskResult = {
             taskName: task.name,
             status: 'running',

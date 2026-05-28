@@ -7,6 +7,7 @@ export var WorkflowStatus;
     WorkflowStatus["COMPLETED"] = "completed";
     WorkflowStatus["FAILED"] = "failed";
     WorkflowStatus["CANCELLED"] = "cancelled";
+    WorkflowStatus["PARTIAL"] = "partial";
 })(WorkflowStatus || (WorkflowStatus = {}));
 /** Task execution status */
 export var TaskStatus;

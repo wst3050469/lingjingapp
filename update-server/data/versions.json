@@ -1,6 +1,27 @@
 {
-  "latest": "1.60.0",
+  "latest": "1.60.1",
   "versions": [
+    {
+      "version": "1.60.1",
+      "status": "published",
+      "releaseDate": "2026-05-27T14:36:10.000Z",
+      "releaseNotes": "v1.60.1: 修复 PipelineEngine 运行时与语法错误",
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.60.1-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.60.1-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.1-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.1-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.60.1.apk"
+      },
+      "sha512": "TBD",
+      "size": 0,
+      "features": [
+        "修复 engine.ts: runintId -> runId 变量名错误",
+        "修复 engine.ts: runCCId -> runId 变量名错误",
+        "修复 engine.ts: 移除错误的 running 事件监听器",
+        "修复 engine.ts: -int 语法错误修正为 -1"
+      ]
+    },
     {
       "version": "1.60.0",
       "status": "published",

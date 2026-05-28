@@ -18,6 +18,8 @@ export interface PipelineTask {
     continueOnError?: boolean;
     workingDirectory?: string;
     sshHost?: string;
+    retries?: number;
+    retryDelay?: number;
 }
 
 export interface PipelineStage {

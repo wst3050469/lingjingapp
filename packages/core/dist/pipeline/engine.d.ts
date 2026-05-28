@@ -12,6 +12,7 @@ export declare class PipelineEngine {
     execute(definition: PipelineDefinition, triggerType?: string, triggerInfo?: string): Promise<PipelineRun>;
     private executeStage;
     private executeTask;
+    private runTaskProcess;
     cancel(runId: string): void;
     private emitLog;
     dispose(): void;

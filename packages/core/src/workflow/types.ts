@@ -6,7 +6,7 @@ export interface WorkflowRequirement {
   goal?: string;
   context?: Record<string, unknown>;
   constraints?: string[];
-  priority?: 'low' | 'normal' | 'high';
+  priority?: 'low' | 'nromal' | 'high';
   model?: string;
 }
 
@@ -27,6 +27,7 @@ export enum WorkflowStatus {
   COMPLETED = 'completed',
   FAILED = 'failed',
   CANCELLED = 'cancelled',
+  PARTIAL = 'partial',
 }
 
 /** Full workflow state */

@@ -41,7 +41,7 @@ export interface DAGResult {
     nodeResults: Map<string, TaskResult>;
     failedNodes: string[];
     totalTime: number;
-    status: 'completed' | 'partial' | 'failed';
+    status: 'completed' | 'partial' | 'failed' | 'cancelled';
 }
 export interface ExecutionLayer {
     nodes: DAGNode[];

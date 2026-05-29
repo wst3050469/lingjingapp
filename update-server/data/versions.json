@@ -1,108 +1,75 @@
 {
-  "latest": "1.60.1",
+  "latest": "1.62.0",
   "versions": [
     {
-      "version": "1.60.1",
+      "version": "1.62.0",
       "status": "published",
-      "releaseDate": "2026-05-27T14:36:10.000Z",
-      "releaseNotes": "v1.60.1: 修复 PipelineEngine 运行时与语法错误",
-      "files": {
-        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.60.1-win-x64.exe",
-        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.60.1-win-x64.exe",
-        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.1-linux-x86_64.AppImage",
-        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.1-linux-x86_64.deb",
-        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.60.1.apk"
+      "releaseDate": "2026-05-29",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.62.0-win-x64.exe",
+          "size": 142204585
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.62.0-win-x64.exe",
+          "size": 141863065
+        },
+        "win-x64-blockmap": {
+          "url": "/downloads/LingJing-Setup-1.62.0-win-x64.exe.blockmap",
+          "size": 148904
+        },
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.62.0-linux-x86_64.AppImage",
+          "size": 184549376
+        },
+        "linux-deb": {
+          "url": "/downloads/LingJing-1.62.0-linux-x86_64.deb",
+          "size": 212000000
+        }
       },
-      "sha512": "TBD",
-      "size": 0,
+      "releaseNotes": "v1.62.0",
       "features": [
-        "修复 engine.ts: runintId -> runId 变量名错误",
-        "修复 engine.ts: runCCId -> runId 变量名错误",
-        "修复 engine.ts: 移除错误的 running 事件监听器",
-        "修复 engine.ts: -int 语法错误修正为 -1"
+        "Fix A-G: conversation fixes"
       ]
     },
     {
-      "version": "1.60.0",
+      "version": "1.61.1",
       "status": "published",
-      "releaseDate": "2026-05-26T10:00:00.000Z",
-      "releaseNotes": "v1.60.0: 修复7个Bug - package.json恢复 + pipeline源码 + TS 19->0 + 全平台部署",
-      "files": {
-        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.60.0-win-x64.exe",
-        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.60.0-win-x64.exe",
-        "win-x64-blockmap": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.60.0-win-x64.exe.blockmap",
-        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.0-linux-x86_64.AppImage",
-        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.60.0-linux-x86_64.deb",
-        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.60.0.apk"
+      "releaseDate": "2026-05-29",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.61.1-win-x64.exe",
+          "size": 142200287
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.61.1-win-x64.exe",
+          "size": 141858740
+        },
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.61.1-linux-x86_64.AppImage",
+          "size": 183533011
+        }
       },
-      "sha512": "wMXlW9m9Lxj5//5rqg+PPOMyTc0n89b/z7hmiJWBJQ2fx5zXMDorqxnOv0gQef3ZkNS+u/mvO6FAPNjLJz/22A==",
-      "size": 142176325,
-      "features": [
-        "修复 electron/package.json 文件损坏",
-        "创建 pipeline 源码骨架",
-        "修复 trigger-ipc.ts API 不匹配",
-        "修复 ChatRequest/SkillConfig 类型导出",
-        "修复 agent-ipc.ts 工具返回类型",
-        "修复 versions.json 空条目",
-        "TypeScript: electron 19->0 错误"
-      ]
+      "releaseNotes": "v1.61.1: fix blank page"
     },
     {
-      "version": "1.59.0",
+      "version": "1.61.0",
       "status": "published",
-      "releaseDate": "2026-05-25T10:00:00.000Z",
-      "releaseNotes": "v1.59.0: 修复 cloud:connect 处理器注册失败问题 + 全平台构建部署",
-      "files": {
-        "installer": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.59.0-win-x64.exe",
-        "portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.59.0-win-x64.exe",
-        "linux-x86_64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.59.0-linux-x86_64.AppImage",
-        "linux-amd64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.59.0-linux-x86_64.deb",
-        "mobile": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.59.0.apk"
-      },
-      "sha512": "TBD",
-      "size": 0,
-      "features": [
-        "修复 cloud:connect 处理器注册失败问题",
-        "全平台构建部署"
-      ]
-    },
-    {
-      "version": "1.54.0",
-      "status": "published",
-      "releaseDate": "2026-05-24T03:02:40.565Z",
-      "releaseNotes": "v1.54.0: Agent参数传递修复 + Reflector反思调用修复 + 全量代码审查问题修复 + 文档规格校正",
-      "files": {
-        "installer": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.54.0-win-x64.exe",
-        "portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.54.0-win-x64.exe",
-        "mobile": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.54.0.apk"
-      },
-      "sha512": "o+nR9wlsUho4zUM4CnzS0TSws1j9pwDh2C463PVu+OYNA9AEPZ08vm8t+BMq74wFLgZU5XDBuBAuRO25Cs5Y1g==",
-      "size": 142144475,
-      "features": [
-        "Agent IPC传递enableMemoryNudge/enableReflector/enableSkillHarvest参数修复",
-        "Reflector.reflect()在Agent.run()的finally块中调用修复",
-        "31项规格文档问题全量修复"
-      ]
-    },
-    {
-      "version": "1.51.0",
-      "status": "published",
-      "releaseDate": "2026-05-22T15:00:00.000Z",
-      "releaseNotes": "v1.51.0: 全平台构建迁移到高性能工作站192.168.1.9 + 正式签名 + 类型修复",
-      "files": {
-        "installer": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.51.0-win-x64.exe",
-        "portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.51.0-win-x64-portable.exe",
-        "linux-x86_64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.51.0-linux-x86_64.AppImage",
-        "linux-amd64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.51.0-linux-x86_64.deb",
-        "mobile": "https://ide.zhejiangjinmo.com/downloads/lingjing-mobile-v1.51.0.apk"
-      },
-      "sha512": "TBD",
-      "size": 0,
-      "features": [
-        "全平台构建迁移到192.168.1.9",
-        "Android APK 正式签名",
-        "Hermes Fusion + OpenSpace 完成"
-      ]
+      "releaseDate": "2026-05-29",
+      "platforms": {
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.61.0-linux-x86_64.AppImage",
+          "size": 183533038
+        },
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.61.0-win-x64.exe",
+          "size": 142021614
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.61.0-win-x64.exe",
+          "size": 141680103
+        }
+      }
     }
   ]
 }

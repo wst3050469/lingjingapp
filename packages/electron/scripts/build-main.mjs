@@ -141,6 +141,31 @@ if (existsSync(RENDERER_SRC)) {
     ? readdirSync(join(RENDERER_DST, 'assets')).length
     : 0;
   console.log(`[build-main] ✅ Synced renderer dist (${assetCount} assets)`);
+
+  // ─── Integrity Check: Verify renderer main JS entry exists ───
+  // If the main JS chunk referenced in index.html is missing, the app
+  // will show a blank page. This check catches incomplete Vite builds
+  // where index.html was written but the corresponding JS chunk wasn't.
+  const indexPath = join(RENDERER_DST, 'index.html');
+  if (existsSync(indexPath)) {
+    const htmlContent = readFileSync(indexPath, 'utf8');
+    const scriptMatch = htmlContent.match(/<script[^>]+src="\.\/assets\/([^"]+\.js)"[^>]*>/);
+    if (scriptMatch && scriptMatch[1]) {
+      const expectedJs = join(RENDERER_DST, 'assets', scriptMatch[1]);
+      if (!existsSync(expectedJs)) {
+        const errMsg = `[build-main] ❌ INTEGRITY FAILURE: Renderer dist is INCOMPLETE!` +
+          `\n  index.html references: ./assets/${scriptMatch[1]}` +
+          `\n  Expected file: ${expectedJs} (NOT FOUND)` +
+          `\n  This will cause a BLANK PAGE at runtime.` +
+          `\n  Fix: Run 'pnpm --filter @codepilot/renderer build' to regenerate renderer dist.`;
+        console.error(errMsg);
+        process.exit(1);
+      }
+      console.log(`[build-main] ✅ Integrity check passed: ${scriptMatch[1]} exists`);
+    } else {
+      console.warn('[build-main] ⚠️ Could not find script src pattern in index.html (non-fatal)');
+    }
+  }
 } else {
   console.warn('[build-main] ⚠️ Renderer dist not found at:', RENDERER_SRC);
   console.warn('[build-main]   Run: pnpm --filter @codepilot/renderer build first');

@@ -59,6 +59,7 @@ export { CheckpointManager } from './checkpoint/manager.js';
 export { RollbackExecutor } from './checkpoint/rollback-executor.js';
 export { PipelineEngine, DslParser, TriggerManager } from './pipeline/index.js';
 export type { PipelineDefinition } from './pipeline/types.js';
+export type { WatchConfig } from './pipeline/types.js';
 export * as fusion from './fusion/index.js';
 export { DataSanitizer } from './security/data-sanitizer.js';
 export * from './security/index.js';

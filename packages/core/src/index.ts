@@ -95,6 +95,7 @@ export { RollbackExecutor } from './checkpoint/rollback-executor.js';
 // Indexing
 export { PipelineEngine, DslParser, TriggerManager } from './pipeline/index.js';
 export type { PipelineDefinition } from './pipeline/types.js';
+export type { WatchConfig } from './pipeline/types.js';
 
 // Fusion
 export * as fusion from './fusion/index.js';

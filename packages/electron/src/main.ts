@@ -51,6 +51,7 @@ import { verifyIpcRegistrations } from './ipc/ipc-verifier.js';
 import { registerBatchIPC } from './ipc/batch-ipc.js';
 import { registerConnectorIPC } from './ipc/connector-ipc.js';
 import { registerTriggerIPC } from './ipc/trigger-ipc.js';
+import { registerPipelineIPC, getOrCreateService, disposeService } from './pipeline/pipeline-ipc.js';
 
 const IS_DEV = !app.isPackaged;
 
@@ -572,8 +573,11 @@ function registerAppIpc(): void {
         throw new Error(`Insufficient permissions for path: ${path}`);
       }
 
-      // 5. Set working directory
+      // 5. 释放旧工作区的 PipelineService（关闭文件监听器等资源）
       const oldPath = workspacePath;
+      disposeService(oldPath);
+      
+      // 6. Set working directory
       workspacePath = path;
       setWorkingDirectory(path);
 
@@ -1108,14 +1112,28 @@ async function bootstrap(): Promise<void> {
       console.error('[Main] registerConnectorIPC failed:', err);
     }
 
-    // Trigger management
+    // Pipeline + Trigger management — 完整的文件变更自动处理链路
     try {
-      // @ts-ignore - core types available at runtime
-      const { TriggerManager } = require('@codepilot/core');
-      registerTriggerIPC(ipcMain, new TriggerManager());
-      console.log('[Main] Trigger IPC registered');
+      // 1. 创建 PipelineService（内部已连接 TriggerManager → PipelineEngine）
+      const pipelineSvc = getOrCreateService(workspacePath);
+      
+      // 2. 注册 pipeline:* IPC 处理器
+      registerPipelineIPC(mainWindow);
+      console.log('[Main] Pipeline IPC registered');
+      
+      // 3. 注册 trigger:* IPC 处理器（向后兼容，供 preload trigger API 使用）
+      const triggerMgr = pipelineSvc.getTriggerManager();
+      registerTriggerIPC(ipcMain, triggerMgr);
+      console.log('[Main] Trigger IPC registered (backed by PipelineService)');
+
+      // 4. 启动时自动加载 .lingjing/pipelines/*.yaml 并注册触发器
+      pipelineSvc.autoLoadPipelines().then(defs => {
+        console.log(`[Main] Auto-loaded ${defs.length} pipeline(s) from .lingjing/pipelines/`);
+      }).catch(err => {
+        console.error('[Main] Failed to auto-load pipelines:', err);
+      });
     } catch (err) {
-      console.error('[Main] registerTriggerIPC failed:', err);
+      console.error('[Main] Pipeline/Trigger IPC registration failed:', err);
     }
 
     // Fusion IPC + Full Initialization (DEF-002/003 fix) — comprehensive module init

@@ -11,6 +11,7 @@ export type {
     StageResult,
     PipelineRun,
     PipelineLogEvent,
+    WatchConfig,
 } from './types.js';
 export { DslParser } from './dsl-parser.js';
 export { PipelineEngine, type EngineCallbacks } from './engine.js';

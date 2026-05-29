@@ -124,6 +124,22 @@ declare interface ElectronAPI {
     onStatusChange: (callback: (data: any) => void) => () => void;
     onError: (callback: (data: any) => void) => () => void;
   };
+
+  /** Pipeline 管理 API — 含文件变更自动处理 */
+  pipeline: {
+    list: (projectPath: string) => Promise<any[]>;
+    get: (projectPath: string, id: string) => Promise<any>;
+    save: (projectPath: string, definition: any) => Promise<any>;
+    delete: (projectPath: string, id: string) => Promise<any>;
+    trigger: (projectPath: string, pipelineId: string, triggerType?: string) => Promise<any>;
+    cancel: (projectPath: string, runId: string) => Promise<any>;
+    runHistory: (projectPath: string, pipelineId: string, limit?: number) => Promise<any[]>;
+    runDetail: (projectPath: string, runId: string) => Promise<any>;
+    watchStatus: (projectPath: string) => Promise<any[]>;
+    autoLoad: (projectPath: string) => Promise<any>;
+    onAutoTriggered: (callback: (data: any) => void) => () => void;
+    onRunStarted: (callback: (data: any) => void) => () => void;
+  };
   githubSkill: {
     list: () => Promise<any[]>;
     uninstall: (id: string) => Promise<any>;

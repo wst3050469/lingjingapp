@@ -1,5 +1,5 @@
 import cronParser from 'cron-parser';
-import type { PipelineDefinition } from './types.js';
+import type { PipelineDefinition, WatchConfig } from './types.js';
 
 const { parseExpression } = cronParser;
 
@@ -13,11 +13,11 @@ export class TriggerManager {
     private gitListeners: Array<() => void> = [];
     private activePipelines = new Map<string, PipelineDefinition>();
     private enabledPipelines = new Set<string>();
-    private onTrigger?: (pipelineId: string, triggerType: 'push' | 'cron', info: string) => void;
+    private onTrigger?: (pipelineId: string, triggerType: 'push' | 'cron' | 'watch', info: string) => void;
     private onStatusChange?: (pipelineId: string, status: 'enabled' | 'disabled' | 'removed') => void;
 
     constructor(options?: {
-        onTrigger?: (pipelineId: string, triggerType: 'push' | 'cron', info: string) => void;
+        onTrigger?: (pipelineId: string, triggerType: 'push' | 'cron' | 'watch', info: string) => void;
         onStatusChange?: (pipelineId: string, status: 'enabled' | 'disabled' | 'removed') => void;
     }) {
         this.onTrigger = options?.onTrigger;
@@ -78,6 +78,37 @@ export class TriggerManager {
                 this.cronTimers.set(`${definition.id}:${trigger.expression}`, timer);
             } catch (err) {
                 console.error(`[Trigger] Invalid cron expression "${trigger.expression}":`, err);
+            }
+        }
+    }
+
+    /**
+     * 注册文件变更（watch）触发器。
+     * @param onWatchFiles - 调用者提供的文件监听函数，接收 WatchConfig 和回调，
+     *                       返回取消监听的函数。由 electron 层实现具体的 fs.watch。
+     */
+    registerWatchTrigger(
+        definition: PipelineDefinition,
+        onWatchFiles: (config: WatchConfig, cb: (event: { filePath: string; type: 'change' | 'add' | 'unlink' }) => void) => () => void,
+    ): void {
+        this.addPipeline(definition);
+        const watchTriggers = definition.triggers.filter(t => t.type === 'watch' && t.watch);
+        if (watchTriggers.length === 0) return;
+
+        for (const trigger of watchTriggers) {
+            if (!trigger.watch) continue;
+            try {
+                const unregister = onWatchFiles(trigger.watch, (event) => {
+                    if (!this.enabledPipelines.has(definition.id)) return;
+                    this.onTrigger?.(
+                        definition.id,
+                        'watch',
+                        `file=${event.filePath} event=${event.type}`,
+                    );
+                });
+                this.gitListeners.push(unregister);
+            } catch (err) {
+                console.error(`[Trigger] Failed to register watch trigger for "${definition.id}":`, err);
             }
         }
     }

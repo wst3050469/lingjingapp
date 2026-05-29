@@ -59,6 +59,32 @@ export class TriggerManager {
             }
         }
     }
+    /**
+     * 注册文件变更（watch）触发器。
+     * @param onWatchFiles - 调用者提供的文件监听函数，接收 WatchConfig 和回调，
+     *                       返回取消监听的函数。由 electron 层实现具体的 fs.watch。
+     */
+    registerWatchTrigger(definition, onWatchFiles) {
+        this.addPipeline(definition);
+        const watchTriggers = definition.triggers.filter(t => t.type === 'watch' && t.watch);
+        if (watchTriggers.length === 0)
+            return;
+        for (const trigger of watchTriggers) {
+            if (!trigger.watch)
+                continue;
+            try {
+                const unregister = onWatchFiles(trigger.watch, (event) => {
+                    if (!this.enabledPipelines.has(definition.id))
+                        return;
+                    this.onTrigger?.(definition.id, 'watch', `file=${event.filePath} event=${event.type}`);
+                });
+                this.gitListeners.push(unregister);
+            }
+            catch (err) {
+                console.error(`[Trigger] Failed to register watch trigger for "${definition.id}":`, err);
+            }
+        }
+    }
     removePipeline(pipelineId) {
         this.activePipelines.delete(pipelineId);
         this.onStatusChange?.(pipelineId, 'removed');

@@ -750,6 +750,46 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
   },
 
+  /**
+   * Pipeline 管理 API — 用于创建、管理、执行 Pipeline（含文件变更自动处理）
+   */
+  pipeline: {
+    list: (projectPath: string) =>
+      ipcRenderer.invoke('pipeline:list', projectPath),
+    get: (projectPath: string, id: string) =>
+      ipcRenderer.invoke('pipeline:get', projectPath, id),
+    save: (projectPath: string, definition: any) =>
+      ipcRenderer.invoke('pipeline:save', projectPath, definition),
+    delete: (projectPath: string, id: string) =>
+      ipcRenderer.invoke('pipeline:delete', projectPath, id),
+    trigger: (projectPath: string, pipelineId: string, triggerType?: string) =>
+      ipcRenderer.invoke('pipeline:trigger', projectPath, pipelineId, triggerType),
+    cancel: (projectPath: string, runId: string) =>
+      ipcRenderer.invoke('pipeline:cancel', projectPath, runId),
+    runHistory: (projectPath: string, pipelineId: string, limit?: number) =>
+      ipcRenderer.invoke('pipeline:runHistory', projectPath, pipelineId, limit),
+    runDetail: (projectPath: string, runId: string) =>
+      ipcRenderer.invoke('pipeline:runDetail', projectPath, runId),
+    /** 查看文件监听状态 */
+    watchStatus: (projectPath: string) =>
+      ipcRenderer.invoke('pipeline:watchStatus', projectPath),
+    /** 手动触发自动加载 pipelines */
+    autoLoad: (projectPath: string) =>
+      ipcRenderer.invoke('pipeline:autoLoad', projectPath),
+    /** 监听 pipeline 自动触发事件 */
+    onAutoTriggered: (callback: (data: any) => void) => {
+      const handler = (_event: any, data: any) => callback(data);
+      ipcRenderer.on('pipeline:auto-triggered', handler);
+      return () => ipcRenderer.removeListener('pipeline:auto-triggered', handler);
+    },
+    /** 监听 pipeline 执行开始事件 */
+    onRunStarted: (callback: (data: any) => void) => {
+      const handler = (_event: any, data: any) => callback(data);
+      ipcRenderer.on('pipeline:run-started', handler);
+      return () => ipcRenderer.removeListener('pipeline:run-started', handler);
+    },
+  },
+
   batch: {
     submit: (tasks: any[]) =>
       ipcRenderer.invoke('batch:submit', tasks),

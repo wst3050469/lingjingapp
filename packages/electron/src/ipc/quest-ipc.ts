@@ -3452,7 +3452,7 @@ function fixToolCallIds(messages: Message[]): void {
 
 
 
-function saveTaskMessages(taskId: string, agent: Agent): void {
+async function saveTaskMessages(taskId: string, agent: Agent): Promise<void> {
 
   const MAX_RETRIES = 3;
   let lastError: Error | null = null;

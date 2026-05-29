@@ -14,25 +14,26 @@
 
     document.getElementById('versionBadge').textContent = 'v' + latestVer;
 
-    const files = verEntry.files || {};
+    // versions.json 使用 "platforms" 字段，兼容老版本 "files" 字段
+    const platforms = verEntry.platforms || verEntry.files || {};
     const secs = [];
 
     // Windows section
     const winItems = [];
-    if (files['win-x64']) {
+    if (platforms['win-x64']) {
       winItems.push({
-        name: files['win-x64'].url,
+        name: platforms['win-x64'].url,
         label: '安装程序',
-        size: files['win-x64'].size
+        size: platforms['win-x64'].size
       });
     }
-    if (files['win-portable']) {
+    if (platforms['win-x64-portable']) {
       winItems.push({
-        name: files['win-portable'].url,
+        name: platforms['win-x64-portable'].url,
         label: '便携版 (免安装)',
-        size: files['win-portable'].size
+        size: platforms['win-x64-portable'].size
       });
-    } else if (files['win-x64']) {
+    } else if (platforms['win-x64']) {
       // fallback: derive portable filename from setup
       winItems.push({
         name: 'LingJing-Portable-' + latestVer + '-win-x64.exe',
@@ -46,27 +47,28 @@
 
     // Linux section
     const linuxItems = [];
-    if (files['linux-x64']) {
+    if (platforms['linux-x64']) {
       linuxItems.push({
-        name: files['linux-x64'].url,
+        name: platforms['linux-x64'].url,
         label: '通用 Linux 包 (AppImage)',
-        size: files['linux-x64'].size
+        size: platforms['linux-x64'].size
       });
     }
-    if (files['linux-deb']) {
+    if (platforms['linux-deb']) {
       linuxItems.push({
-        name: files['linux-deb'].url,
+        name: platforms['linux-deb'].url,
         label: 'Debian/Ubuntu 安装包',
-        size: files['linux-deb'].size
+        size: platforms['linux-deb'].size
       });
     }
     if (linuxItems.length) {
       secs.push({ title: '🐧 Linux', items: linuxItems });
     }
 
-    // Android section
+    // Android section — check both "android" and "mobile" keys for compatibility
     const androidItems = [];
-    const apkUrl = files['android'] ? files['android'].url : null;
+    const androidPlatform = platforms['android'] || platforms['mobile'] || null;
+    const apkUrl = androidPlatform ? androidPlatform.url : null;
     const apkCandidates = apkUrl ? [apkUrl] : ['lingjing-mobile-v' + latestVer + '.apk'];
     for (const name of apkCandidates) {
       try {
@@ -90,7 +92,9 @@
       html += '<div class=sec><div class=sec-title>' + s.title + '</div>';
       s.items.forEach(f => {
         const sizeStr = f.size ? '(' + (f.size / 1024 / 1024).toFixed(0) + ' MB)' : '';
-        html += '<div class=li><div><div class=ft>' + f.name + '</div><div class=fs>' + f.label + ' ' + sizeStr + '</div></div><a href=/' + f.name + ' class=btn>⬇ 下载</a></div>';
+        // f.name already includes leading "/downloads/" from platforms.url
+        const href = f.name.startsWith('/') ? f.name : '/' + f.name;
+        html += '<div class=li><div><div class=ft>' + f.name + '</div><div class=fs>' + f.label + ' ' + sizeStr + '</div></div><a href=' + href + ' class=btn>⬇ 下载</a></div>';
       });
       html += '</div>';
     });

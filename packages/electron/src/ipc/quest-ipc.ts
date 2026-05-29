@@ -315,7 +315,9 @@ function wrapTodoTool(
 
       const result = await tool.execute(params, context);
 
-      if (params.action === 'set' && !result.isError) {
+      // ★ Fix A: Always emit todo_update after any todo tool action,
+      // not just 'set'. This ensures the renderer always has the latest state.
+      if (!result.isError) {
 
         emitTodoUpdate(getTodoList() as Array<{ content: string; status: string }>);
 
@@ -2288,6 +2290,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       clearPreviewUrlTracker(taskId);
 
+      sendQuestEvent({ type: 'todo_update', items: getTodoList() as Array<{ content: string; status: string }> });
       sendQuestEvent({ type: 'status_change', taskId, status: 'completed', runId });
 
     } catch (error) {
@@ -2337,6 +2340,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
         clearSpecTracker(taskId);
 
+        sendQuestEvent({ type: 'todo_update', items: getTodoList() as Array<{ content: string; status: string }> });
         sendQuestEvent({ type: 'status_change', taskId, status: 'failed', runId });
 
       }
@@ -3007,6 +3011,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
         clearSpecTracker(taskId);
 
+        sendQuestEvent({ type: 'todo_update', items: getTodoList() as Array<{ content: string; status: string }> });
         sendQuestEvent({ type: 'status_change', taskId, status: 'failed', runId });
 
       }

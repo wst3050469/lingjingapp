@@ -271,6 +271,7 @@ export class Agent {
         let turn = 0;
         let hasNudgedForTools = false;
         let noToolRetryCount = 0;
+        let postCompact = false;
         const MAX_NO_TOOL_RETRIES = 5;
         // Enhance system prompt with tool-use instructions when tools are available
         const hasTools = this.config.tools.getSchemas().length > 0;
@@ -288,6 +289,9 @@ export class Agent {
                 const compactionCtxCap = Math.min(this.config.maxContextTokens, COMPACTION_MAX_CONTEXT);
                 if (this.conversation.needsCompaction(compactionCtxCap)) {
                     await this.autoCompact();
+                    // ★ Fix A: Reset retry count after compaction so the model gets fresh retries
+                    noToolRetryCount = 0;
+                    postCompact = true;
                     // ★ After compaction, inject a continuation directive so the LLM
                     // knows the task is still in progress and should continue working.
                     // Without this, the model may interpret the compressed summary as
@@ -434,8 +438,12 @@ Technical details: ${err.message}`;
                             clearTimeout(turnTimer);
                         continue; // Loop back to call LLM again with the nudge
                     }
-                    // Check if task is actually complete or just paused
-                    const isTaskComplete = looksLikeTaskComplete(responseText);
+                    // ★ Fix B: Skip task-complete detection right after compaction.
+                    // The model's first response post-compaction is often a confirmation that
+                    // may look like completion ("已完成"), even though we injected a continuation.
+                    // Skip completion detection until the model calls at least one tool.
+                    const isTaskComplete = postCompact ? false : looksLikeTaskComplete(responseText);
+                    postCompact = false; // Reset after checking regardless
                     if (isTaskComplete) {
                         logger.info('Task marked as complete by model');
                         if (turnTimer)

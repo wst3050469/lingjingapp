@@ -2812,7 +2812,46 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     const resumeMessage = message || 'Continue from where you left off. Review our conversation history and proceed with the next steps.';
 
-
+    // ★ Fix E: Restore previous conversation messages from DB so the agent
+    // has full context of what was done before. Without this, the agent starts
+    // with an empty conversation and loses all prior work context.
+    try {
+      const historyStmt = db.prepare(`SELECT role, content, tool_calls FROM quest_messages WHERE task_id = ? ORDER BY id ASC`);
+      historyStmt.bind([taskId]);
+      const historyMessages: any[] = [];
+      while (historyStmt.step()) {
+        historyMessages.push(historyStmt.getAsObject());
+      }
+      historyStmt.free();
+      if (historyMessages.length > 0) {
+        const conversation = agent.getConversation();
+        for (const hm of historyMessages) {
+          const role = hm.role as string;
+          const content = hm.content as string || '';
+          const toolCallsStr = hm.tool_calls as string | null;
+          let toolCalls: any = undefined;
+          if (toolCallsStr) {
+            try { toolCalls = JSON.parse(toolCallsStr); } catch {}
+          }
+          if (role === 'user') {
+            conversation.addUserMessage(content);
+          } else if (role === 'assistant') {
+            conversation.addAssistantMessage(content, toolCalls);
+          } else if (role === 'tool') {
+            try {
+              const parsed = typeof toolCalls === 'object' && toolCalls?.toolCallId
+                ? { toolCallId: toolCalls.toolCallId }
+                : undefined;
+              conversation.addToolResult(parsed?.toolCallId || String(Date.now()), { content, isError: false });
+            } catch {}
+          }
+        }
+        console.log(`[Quest IPC] Restored ${historyMessages.length} history messages for task ${taskId}`);
+      }
+    } catch (err) {
+      console.error('[Quest IPC] Failed to restore history messages:', err);
+      // Non-fatal - agent can still run with just the new message
+    }
 
     try {
 
@@ -3415,82 +3454,53 @@ function fixToolCallIds(messages: Message[]): void {
 
 function saveTaskMessages(taskId: string, agent: Agent): void {
 
-  try {
-
-    const conversation = agent.getConversation();
-
-    const messages = conversation.messages;
-
-    const db = getDatabase();
-
-
-
-    // Clear existing messages for this task
-
-    db.run(`DELETE FROM quest_messages WHERE task_id = ?`, [taskId]);
-
-
-
-    // Insert all messages
-
-    for (const msg of messages) {
-
-      const role = msg.role;
-
-      let content = '';
-
-      let toolCalls: string | null = null;
-
-
-
-      if (role === 'user') {
-
-        content = (msg as any).content || '';
-
-      } else if (role === 'assistant') {
-
-        content = (msg as any).content || '';
-
-        if ((msg as any).toolCalls && (msg as any).toolCalls.length > 0) {
-
-          toolCalls = JSON.stringify((msg as any).toolCalls);
-
+  const MAX_RETRIES = 3;
+  let lastError: Error | null = null;
+  for (let retry = 0; retry < MAX_RETRIES; retry++) {
+    try {
+      const conversation = agent.getConversation();
+      const messages = conversation.messages;
+      const db = getDatabase();
+      // Clear existing messages for this task
+      db.run(`DELETE FROM quest_messages WHERE task_id = ?`, [taskId]);
+      // Insert all messages
+      for (const msg of messages) {
+        const role = msg.role;
+        let content = '';
+        let toolCalls: string | null = null;
+        if (role === 'user') {
+          content = (msg as any).content || '';
+        } else if (role === 'assistant') {
+          content = (msg as any).content || '';
+          if ((msg as any).toolCalls && (msg as any).toolCalls.length > 0) {
+            toolCalls = JSON.stringify((msg as any).toolCalls);
+          }
+        } else if (role === 'tool') {
+          content = (msg as any).content || '';
+          if ((msg as any).toolCallId) {
+            toolCalls = JSON.stringify({ toolCallId: (msg as any).toolCallId });
+          }
         }
-
-      } else if (role === 'tool') {
-
-        content = (msg as any).content || '';
-
-        // Persist toolCallId so it can be restored on resume
-
-        if ((msg as any).toolCallId) {
-
-          toolCalls = JSON.stringify({ toolCallId: (msg as any).toolCallId });
-
-        }
-
+        db.run(
+          `INSERT INTO quest_messages (task_id, role, content, tool_calls) VALUES (?, ?, ?, ?)`,
+          [taskId, role, content, toolCalls]
+        );
       }
-
-
-
-      db.run(
-
-        `INSERT INTO quest_messages (task_id, role, content, tool_calls) VALUES (?, ?, ?, ?)`,
-
-        [taskId, role, content, toolCalls]
-
-      );
-
+      await saveDatabase();
+      lastError = null;
+      break; // Success - exit retry loop
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.error(`[Quest IPC] saveTaskMessages failed (attempt ${retry + 1}/${MAX_RETRIES}):`, lastError.message);
+      if (retry < MAX_RETRIES - 1) {
+        // Wait briefly before retry
+        const delay = 100 * Math.pow(2, retry);
+        await new Promise(r => setTimeout(r, delay));
+      }
     }
-
-
-
-    saveDatabase().catch(() => {});
-
-  } catch {
-
-    // Silently ignore message save errors
-
+  }
+  if (lastError) {
+    console.error('[Quest IPC] saveTaskMessages failed after', MAX_RETRIES, 'retries:', lastError.message);
   }
 
 }

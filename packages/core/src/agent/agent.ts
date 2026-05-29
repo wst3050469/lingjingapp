@@ -158,8 +158,12 @@ function looksLikeTaskComplete(text: string): boolean {
 
     // Additional incomplete guards — text contains completion-looking
     // phrases AND continuation signals → definitely not done
-    /已(?:完成|成功).*(?:接下来|然后|下一步|还需要|将要|即将)/,
-    /完成.*(?:接下来|然后|下一步|还需要|将要|即将)/,
+    /已(?:完成|成功).*(?:接下来|然后|下一步|还需要|将要|即将|现在|准备|开始)/,
+    /完成.*(?:接下来|然后|下一步|还需要|将要|即将|现在|准备|开始)/,
+    // "已完成xxx" at beginning followed by any future action → not done
+    /^(?:已经|已).{0,10}(?:完成|成功).{0,20}(?:接下来|然后|下一步|还需要|现在|准备|开始|让我|我来)/,
+    // "功能开发已完成" or similar completion statement followed by deployment intent
+    /(?:功能|任务|工作|开发|部署).{0,10}(?:完成|成功|结束).{0,20}(?:接下来|然后|下一步|现在|即将|准备|需要)/,
   ];
   
   const textLower = text.toLowerCase();
@@ -321,6 +325,14 @@ export class Agent {
 
     const abortSignal = signal ?? new AbortController().signal;
 
+    // ★ Fix B: Guard against already-aborted input signals.
+    // If the incoming signal is already aborted (e.g. from a previous run's
+    // AbortController that was reused), create a fresh signal.
+    if (abortSignal.aborted) {
+      logger.warn('[Agent] Input signal already aborted, creating fresh signal');
+    }
+    const safeSignal = abortSignal.aborted ? new AbortController().signal : abortSignal;
+
     // Merge user abort signal + global wall-clock timeout into one controller
     const globalController = new AbortController();
     let globalTimer: ReturnType<typeof setTimeout> | undefined;
@@ -330,7 +342,7 @@ export class Agent {
         globalController.abort(new Error('Agent max duration reached'));
       }, this.config.maxDuration);
     }
-    abortSignal.addEventListener('abort', () => globalController.abort(abortSignal.reason), { once: true });
+    safeSignal.addEventListener('abort', () => globalController.abort(safeSignal.reason), { once: true });
     const mergedSignal = globalController.signal;
 
     // Heartbeat: send a pulse every 5 seconds so the renderer knows the agent is alive
@@ -367,9 +379,19 @@ export class Agent {
 	        // knows the task is still in progress and should continue working.
 	        // Without this, the model may interpret the compressed summary as
 	        // "task complete" and stop executing, requiring a manual nudge.
+	        // ★ Fix D: Include recent context so the LLM knows what was just happening.
+	        const lastMsgs = this.conversation.messages.slice(-3);
+	        const lastCtx = lastMsgs
+	          .filter((m: any) => m.role === 'assistant' || m.role === 'user')
+	          .map((m: any) => {
+	            const txt = typeof m.content === 'string' ? m.content.slice(0, 200) : '(non-text)';
+	            return `[${m.role}]: ${txt}`;
+	          })
+	          .join('\n');
 	        this.conversation.addUserMessage(
 	          '[自动继续] 以上对话已由系统压缩。任务仍在进行中，请继续执行剩余步骤，根据需要调用工具。' +
-	          '不要总结已经完成的工作——立即执行下一步操作。'
+	          '不要总结已经完成的工作——立即执行下一步操作。' +
+	          '\n\n最近操作上下文：\n' + lastCtx
 	        );
 	      }
 
@@ -567,7 +589,18 @@ Technical details: ${err.message}`;
             this.emit({ type: 'tool_progress', name: tc.name, text });
           },
         };
-        const result = await this.executor.execute(tc, toolContext);
+        // ★ Fix A: Wrap tool execution in try-catch to prevent a single tool
+        // crash from killing the entire agent loop. Emit a proper error event
+        // and add a tool result with the error message so the LLM can recover.
+        let result: ToolResult;
+        try {
+          result = await this.executor.execute(tc, toolContext);
+        } catch (execError) {
+          const errMsg = execError instanceof Error ? execError.message : String(execError);
+          logger.error(`[Agent] Tool '${tc.name}' execution failed:`, errMsg);
+          this.emit({ type: 'error', error: new Error(`Tool '${tc.name}' failed: ${errMsg}`) });
+          result = { content: `Error executing tool '${tc.name}': ${errMsg}`, isError: true };
+        }
         this.conversation.addToolResult(tc.id, result);
         this.emit({ type: 'tool_end', name: tc.name, result });
       }

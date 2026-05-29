@@ -4,7 +4,14 @@ import { PipelineService } from './pipeline-service.js';
 const services = new Map<string, PipelineService>();
 
 function getService(projectPath: string): PipelineService {
-  if (!services.has(projectPath)) services.set(projectPath, new PipelineService(projectPath));
+  if (!services.has(projectPath)) {
+    const svc = new PipelineService(projectPath);
+    services.set(projectPath, svc);
+    // 懒创建时自动加载 pipeline 并注册文件监听器
+    svc.autoLoadPipelines().catch(err => {
+      console.error(`[Pipeline] Failed to auto-load for ${projectPath}:`, err);
+    });
+  }
   return services.get(projectPath)!;
 }
 

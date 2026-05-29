@@ -649,23 +649,28 @@ function QuestFileChangeSummary() {
     }).catch(() => {});
   }, []);
 
-  // Auto-collapse when new files appear, and auto-process if configured
+  // Auto-collapse when new files appear
   useEffect(() => {
     if (files.length > 0 && files.length !== countOnAppear) {
       setCollapsed(true);
       setCountOnAppear(files.length);
+    }
+  }, [files.length, countOnAppear]);
 
-      // Auto-process pending files based on config
-      const hasPending = files.some((f) => f.status === 'pending');
-      if (hasPending) {
-        if (fileChangeBehavior === 'auto-accept') {
-          acceptAll();
-        } else if (fileChangeBehavior === 'auto-reject') {
-          rejectAll();
-        }
+  // Auto-process pending files based on config (独立逻辑，不依赖 countOnAppear)
+  // 修复竞态条件：fileChangeBehavior 通过异步 IPC 加载，到达前 countOnAppear 已锁定
+  useEffect(() => {
+    if (fileChangeBehavior === 'ask') return;
+
+    const hasPending = files.some((f) => f.status === 'pending');
+    if (hasPending) {
+      if (fileChangeBehavior === 'auto-accept') {
+        acceptAll();
+      } else if (fileChangeBehavior === 'auto-reject') {
+        rejectAll();
       }
     }
-  }, [files.length, countOnAppear, fileChangeBehavior, acceptAll, rejectAll]);
+  }, [files, fileChangeBehavior, acceptAll, rejectAll]);
 
   if (files.length === 0) return null;
 

@@ -1045,6 +1045,12 @@ async function bootstrap(): Promise<void> {
   // ── Phase B: Register handlers that NEED mainWindow ──
   // These handlers require a valid BrowserWindow instance and will be
   // skipped if the window failed to create.
+
+  // 加载工作区路径（必须在 Phase B 之前，确保 PipelineService 使用正确路径）
+  const loadedWorkspace = await loadWorkspaceFromConfig();
+  workspacePath = loadedWorkspace;
+  setWorkingDirectory(workspacePath);
+
   if (mainWindow) {
     // CRITICAL: Each handler registration is wrapped in try-catch to prevent
     // a single failure from blocking subsequent registrations. If any handler
@@ -1294,29 +1300,14 @@ async function bootstrap(): Promise<void> {
     }
   }
 
-  // Load saved workspace path from config (enhanced validation)
-  // NOTE: This runs AFTER IPC registration so the renderer can safely call
-  // IPC methods (config:set, update:check, etc.) during the async file I/O below.
-  const loadedWorkspace = await loadWorkspaceFromConfig();
-
-  if (loadedWorkspace !== homedir()) {
-    // Successfully restored workspace from config
-    workspacePath = loadedWorkspace;
-    setWorkingDirectory(workspacePath);
-
-    // Notify renderer process that workspace has been restored
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('workspace:restored', {
-        path: workspacePath,
-        timestamp: Date.now(),
-        source: 'config'
-      });
-    }
-  } else {
-    // Using default directory
-    workspacePath = loadedWorkspace;
-    setWorkingDirectory(workspacePath);
-    console.log('[Main] Using default workspace:', workspacePath);
+  // Notify renderer process that workspace has been restored
+  // (workspace was loaded before Phase B; workspacePath is already correct)
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('workspace:restored', {
+      path: workspacePath,
+      timestamp: Date.now(),
+      source: 'config'
+    });
   }
 
   // Initialize the agent core with 15s timeout (load prompts, config, provider)

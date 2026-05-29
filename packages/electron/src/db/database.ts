@@ -251,13 +251,12 @@ export async function initDatabase(): Promise<SqlJsDatabase> {
       created_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (task_id) REFERENCES quest_tasks(id)
     );
+  `);
 
   // Migration: add todo_data column to quest_tasks for existing databases
   try {
     db.run(`ALTER TABLE quest_tasks ADD COLUMN todo_data TEXT`);
   } catch { /* column may already exist in new DBs */ }
-
-  `);
 
   // Planning Agent tables
   db.run(`

@@ -1,11 +1,8 @@
-"use strict";
 // Offline queue for cloud sync operations
 // Queues all push operations locally, retries on reconnect
 // Strategy: JSON-file or SQLite persistence, exponential backoff, last-write-wins merge
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.MergeStrategy = exports.OfflineQueue = void 0;
-const fs_1 = require("fs");
-const path_1 = require("path");
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
+import { dirname } from 'path';
 function stableStringify(obj) {
     if (obj === null || typeof obj !== 'object')
         return JSON.stringify(obj);
@@ -35,7 +32,7 @@ function generateId() {
     const rand2 = Math.random().toString(36).slice(2, 6);
     return `${ts}-${rand}-${rand2}`;
 }
-class OfflineQueue {
+export class OfflineQueue {
     items = [];
     dbPath;
     db;
@@ -159,9 +156,9 @@ class OfflineQueue {
     }
     clearFile() {
         this.clear();
-        if (this.dbPath !== ':memory:' && (0, fs_1.existsSync)(this.dbPath)) {
+        if (this.dbPath !== ':memory:' && existsSync(this.dbPath)) {
             try {
-                (0, fs_1.writeFileSync)(this.dbPath, '[]', 'utf-8');
+                writeFileSync(this.dbPath, '[]', 'utf-8');
             }
             catch (err) {
                 console.warn('[OfflineQueue] Failed to clear file:', err instanceof Error ? err.message : String(err));
@@ -239,17 +236,17 @@ class OfflineQueue {
         if (this.db) {
             this._loadSqlite();
         }
-        else if (this.dbPath !== ':memory:' && (0, fs_1.existsSync)(this.dbPath)) {
+        else if (this.dbPath !== ':memory:' && existsSync(this.dbPath)) {
             this._loadJson();
         }
     }
     _saveJson() {
         try {
-            const dir = (0, path_1.dirname)(this.dbPath);
-            if (!(0, fs_1.existsSync)(dir)) {
-                (0, fs_1.mkdirSync)(dir, { recursive: true });
+            const dir = dirname(this.dbPath);
+            if (!existsSync(dir)) {
+                mkdirSync(dir, { recursive: true });
             }
-            (0, fs_1.writeFileSync)(this.dbPath, JSON.stringify(this.items), 'utf-8');
+            writeFileSync(this.dbPath, JSON.stringify(this.items), 'utf-8');
         }
         catch (err) {
             console.error('[OfflineQueue] JSON save failed:', err instanceof Error ? err.message : String(err));
@@ -257,7 +254,7 @@ class OfflineQueue {
     }
     _loadJson() {
         try {
-            const data = (0, fs_1.readFileSync)(this.dbPath, 'utf-8');
+            const data = readFileSync(this.dbPath, 'utf-8');
             const parsed = JSON.parse(data);
             if (Array.isArray(parsed)) {
                 this.items = parsed;
@@ -313,9 +310,8 @@ class OfflineQueue {
         }
     }
 }
-exports.OfflineQueue = OfflineQueue;
 /** Conflict resolution strategies */
-exports.MergeStrategy = {
+export const MergeStrategy = {
     lastWriteWins: (local, remote) => {
         const localTime = local.updated_at || local.created_at || '';
         const remoteTime = remote.updated_at || remote.created_at || '';
@@ -335,7 +331,7 @@ exports.MergeStrategy = {
         for (const key of Object.keys(remote)) {
             if (typeof remote[key] === 'object' && remote[key] !== null && !Array.isArray(remote[key])
                 && typeof local[key] === 'object' && local[key] !== null && !Array.isArray(local[key])) {
-                result[key] = exports.MergeStrategy.deepMerge(local[key], remote[key]);
+                result[key] = MergeStrategy.deepMerge(local[key], remote[key]);
             }
             else {
                 result[key] = remote[key];

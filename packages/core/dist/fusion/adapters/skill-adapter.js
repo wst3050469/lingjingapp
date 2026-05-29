@@ -1,15 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SkillAdapter = void 0;
-exports.createSkillAdapter = createSkillAdapter;
-const logger_js_1 = require("../../utils/logger.js");
-class SkillAdapter {
+import { logger } from '../../utils/logger.js';
+export class SkillAdapter {
     version = '1.0.0';
     skills = new Map();
     loadHandler = null;
     setLoadHandler(handler) {
         this.loadHandler = handler;
-        logger_js_1.logger.info('[SkillAdapter] load handler set');
+        logger.info('[SkillAdapter] load handler set');
     }
     async load(config) {
         this.skills.set(config.name, config);
@@ -18,7 +14,7 @@ class SkillAdapter {
                 await this.loadHandler(config);
             }
             catch (err) {
-                logger_js_1.logger.warn(`[SkillAdapter] load handler error for "${config.name}": ${err.message}`);
+                logger.warn(`[SkillAdapter] load handler error for "${config.name}": ${err.message}`);
             }
         }
     }
@@ -32,8 +28,7 @@ class SkillAdapter {
         return Array.from(this.skills.values());
     }
 }
-exports.SkillAdapter = SkillAdapter;
-function createSkillAdapter() {
+export function createSkillAdapter() {
     return new SkillAdapter();
 }
 //# sourceMappingURL=skill-adapter.js.map

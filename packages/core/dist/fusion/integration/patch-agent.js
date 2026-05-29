@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Agent Loop Hook Injection Patch
  *
@@ -28,24 +27,22 @@
  *     }
  *   }
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.patchAgentHooks = patchAgentHooks;
-const types_js_1 = require("../hook-registry/types.js");
-const logger_js_1 = require("../../utils/logger.js");
-function patchAgentHooks(hookRegistry, eventBus) {
+import { HookPoint } from '../hook-registry/types.js';
+import { logger } from '../../utils/logger.js';
+export function patchAgentHooks(hookRegistry, eventBus) {
     return {
         async beforeRun(agent, prompt) {
             const agentCtx = extractAgentContext(agent);
             try {
                 if (hookRegistry) {
-                    await hookRegistry.execute(types_js_1.HookPoint.BEFORE_LLM_CALL, {
+                    await hookRegistry.execute(HookPoint.BEFORE_LLM_CALL, {
                         ...agentCtx,
                         prompt,
                     });
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[Fusion:Agent] BEFORE_LLM_CALL hook error: ${err.message}`);
+                logger.warn(`[Fusion:Agent] BEFORE_LLM_CALL hook error: ${err.message}`);
             }
             if (eventBus) {
                 eventBus.publish('agent:message_start', {
@@ -59,14 +56,14 @@ function patchAgentHooks(hookRegistry, eventBus) {
             const agentCtx = extractAgentContext(agent);
             try {
                 if (hookRegistry) {
-                    await hookRegistry.execute(types_js_1.HookPoint.AFTER_LLM_CALL, {
+                    await hookRegistry.execute(HookPoint.AFTER_LLM_CALL, {
                         ...agentCtx,
                         ...response,
                     });
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[Fusion:Agent] AFTER_LLM_CALL hook error: ${err.message}`);
+                logger.warn(`[Fusion:Agent] AFTER_LLM_CALL hook error: ${err.message}`);
             }
             if (eventBus) {
                 eventBus.publish('agent:message_end', {
@@ -81,7 +78,7 @@ function patchAgentHooks(hookRegistry, eventBus) {
             const agentCtx = extractAgentContext(agent);
             try {
                 if (hookRegistry) {
-                    const result = await hookRegistry.execute(types_js_1.HookPoint.BEFORE_TOOL_EXECUTE, {
+                    const result = await hookRegistry.execute(HookPoint.BEFORE_TOOL_EXECUTE, {
                         ...agentCtx,
                         ...ctx,
                     });
@@ -89,7 +86,7 @@ function patchAgentHooks(hookRegistry, eventBus) {
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[Fusion:Agent] BEFORE_TOOL_EXECUTE hook error: ${err.message}`);
+                logger.warn(`[Fusion:Agent] BEFORE_TOOL_EXECUTE hook error: ${err.message}`);
             }
             if (eventBus) {
                 eventBus.publish('agent:tool_call', {
@@ -104,14 +101,14 @@ function patchAgentHooks(hookRegistry, eventBus) {
             const agentCtx = extractAgentContext(agent);
             try {
                 if (hookRegistry) {
-                    await hookRegistry.execute(types_js_1.HookPoint.AFTER_TOOL_EXECUTE, {
+                    await hookRegistry.execute(HookPoint.AFTER_TOOL_EXECUTE, {
                         ...agentCtx,
                         ...ctx,
                     });
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[Fusion:Agent] AFTER_TOOL_EXECUTE hook error: ${err.message}`);
+                logger.warn(`[Fusion:Agent] AFTER_TOOL_EXECUTE hook error: ${err.message}`);
             }
             if (eventBus) {
                 eventBus.publish('agent:tool_result', {
@@ -126,28 +123,28 @@ function patchAgentHooks(hookRegistry, eventBus) {
             const agentCtx = extractAgentContext(agent);
             try {
                 if (hookRegistry) {
-                    await hookRegistry.execute(types_js_1.HookPoint.BEFORE_SKILL_LOAD, {
+                    await hookRegistry.execute(HookPoint.BEFORE_SKILL_LOAD, {
                         ...agentCtx,
                         ...ctx,
                     });
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[Fusion:Agent] BEFORE_SKILL_LOAD hook error: ${err.message}`);
+                logger.warn(`[Fusion:Agent] BEFORE_SKILL_LOAD hook error: ${err.message}`);
             }
         },
         async afterSkillLoad(agent, ctx) {
             const agentCtx = extractAgentContext(agent);
             try {
                 if (hookRegistry) {
-                    await hookRegistry.execute(types_js_1.HookPoint.AFTER_SKILL_LOAD, {
+                    await hookRegistry.execute(HookPoint.AFTER_SKILL_LOAD, {
                         ...agentCtx,
                         ...ctx,
                     });
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[Fusion:Agent] AFTER_SKILL_LOAD hook error: ${err.message}`);
+                logger.warn(`[Fusion:Agent] AFTER_SKILL_LOAD hook error: ${err.message}`);
             }
             if (eventBus) {
                 eventBus.publish('skill:loaded', {
@@ -160,28 +157,28 @@ function patchAgentHooks(hookRegistry, eventBus) {
             const agentCtx = extractAgentContext(agent);
             try {
                 if (hookRegistry) {
-                    await hookRegistry.execute(types_js_1.HookPoint.BEFORE_MEMORY_WRITE, {
+                    await hookRegistry.execute(HookPoint.BEFORE_MEMORY_WRITE, {
                         ...agentCtx,
                         ...ctx,
                     });
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[Fusion:Agent] BEFORE_MEMORY_WRITE hook error: ${err.message}`);
+                logger.warn(`[Fusion:Agent] BEFORE_MEMORY_WRITE hook error: ${err.message}`);
             }
         },
         async afterCompaction(agent, ctx) {
             const agentCtx = extractAgentContext(agent);
             try {
                 if (hookRegistry) {
-                    await hookRegistry.execute(types_js_1.HookPoint.AFTER_COMPACTION, {
+                    await hookRegistry.execute(HookPoint.AFTER_COMPACTION, {
                         ...agentCtx,
                         ...ctx,
                     });
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[Fusion:Agent] AFTER_COMPACTION hook error: ${err.message}`);
+                logger.warn(`[Fusion:Agent] AFTER_COMPACTION hook error: ${err.message}`);
             }
             if (eventBus) {
                 eventBus.publish('agent:compaction', {

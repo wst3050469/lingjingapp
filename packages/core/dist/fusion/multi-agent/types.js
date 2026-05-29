@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_MULTI_AGENT_CONFIG = void 0;
-exports.DEFAULT_MULTI_AGENT_CONFIG = {
+export const DEFAULT_MULTI_AGENT_CONFIG = {
     enabled: true,
     maxConcurrency: 4,
     taskTimeout: 120000,

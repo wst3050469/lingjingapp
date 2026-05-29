@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ExecutionTraceHarvester = void 0;
-const types_js_1 = require("./types.js");
+import { DEFAULT_TRACE_HARVESTER_CONFIG } from './types.js';
 const HARVEST_PROMPT = `Based on the following execution trace of tool calls, generate a reusable SKILL.md definition.
 Identify the workflow pattern, give it a descriptive name, and create skill instructions.
 Format as a SKILL.md with YAML frontmatter containing name, description, triggers, tools, and level fields, followed by instructions in markdown.`;
-class ExecutionTraceHarvester {
+export class ExecutionTraceHarvester {
     config;
     eventBus = null;
     llmAdapter = null;
@@ -14,7 +11,7 @@ class ExecutionTraceHarvester {
     sessionStartTimes = new Map();
     enabled = true;
     constructor(config) {
-        this.config = { ...types_js_1.DEFAULT_TRACE_HARVESTER_CONFIG, ...config };
+        this.config = { ...DEFAULT_TRACE_HARVESTER_CONFIG, ...config };
         this.enabled = this.config.enabled;
     }
     initialize(eventBus, llmAdapter) {
@@ -178,5 +175,4 @@ class ExecutionTraceHarvester {
         return responseText;
     }
 }
-exports.ExecutionTraceHarvester = ExecutionTraceHarvester;
 //# sourceMappingURL=execution-trace-harvester.js.map

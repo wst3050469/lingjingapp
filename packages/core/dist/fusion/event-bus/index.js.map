@@ -1,1 +1,1 @@
-{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../src/fusion/event-bus/index.ts"],"names":[],"mappings":";;;AAAA,+CAA0C;AAAjC,wGAAA,QAAQ,OAAA;AACjB,2CAAgD;AAAvC,8GAAA,gBAAgB,OAAA"}
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../src/fusion/event-bus/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,gBAAgB,CAAC;AAC1C,OAAO,EAAE,gBAAgB,EAAE,MAAM,cAAc,CAAC"}

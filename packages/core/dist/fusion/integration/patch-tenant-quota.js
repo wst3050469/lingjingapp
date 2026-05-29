@@ -1,18 +1,9 @@
-"use strict";
 /**
  * Tenant Resource Quota — Batch D (P1)
  *
  * Per-tenant resource limits for cloud-server multi-tenant scenarios.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_QUOTAS = void 0;
-exports.setTenantQuota = setTenantQuota;
-exports.getTenantQuota = getTenantQuota;
-exports.reportUsage = reportUsage;
-exports.getCurrentUsage = getCurrentUsage;
-exports.checkQuota = checkQuota;
-exports.resetAllQuotas = resetAllQuotas;
-exports.DEFAULT_QUOTAS = {
+export const DEFAULT_QUOTAS = {
     free: {
         tier: 'free',
         maxUsers: 1,
@@ -44,7 +35,7 @@ exports.DEFAULT_QUOTAS = {
 };
 const tenantQuotaStore = new Map();
 const tenantUsageStore = new Map();
-function setTenantQuota(quota) {
+export function setTenantQuota(quota) {
     tenantQuotaStore.set(quota.tenantId, quota);
     if (!tenantUsageStore.has(quota.tenantId)) {
         tenantUsageStore.set(quota.tenantId, {
@@ -55,19 +46,19 @@ function setTenantQuota(quota) {
         });
     }
 }
-function getTenantQuota(tenantId) {
+export function getTenantQuota(tenantId) {
     return tenantQuotaStore.get(tenantId);
 }
-function reportUsage(tenantId, resource, amount) {
+export function reportUsage(tenantId, resource, amount) {
     const usage = tenantUsageStore.get(tenantId);
     if (usage) {
         usage[resource] += amount;
     }
 }
-function getCurrentUsage(tenantId, resource) {
+export function getCurrentUsage(tenantId, resource) {
     return tenantUsageStore.get(tenantId)?.[resource] ?? 0;
 }
-function checkQuota(tenantId, resource) {
+export function checkQuota(tenantId, resource) {
     const quota = tenantQuotaStore.get(tenantId);
     if (!quota)
         return false;
@@ -75,7 +66,7 @@ function checkQuota(tenantId, resource) {
     const usage = getCurrentUsage(tenantId, resource);
     return usage < limit;
 }
-function resetAllQuotas() {
+export function resetAllQuotas() {
     tenantQuotaStore.clear();
     tenantUsageStore.clear();
 }

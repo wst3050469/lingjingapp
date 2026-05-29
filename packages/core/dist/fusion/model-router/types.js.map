@@ -1,1 +1,1 @@
-{"version":3,"file":"types.js","sourceRoot":"","sources":["../../../src/fusion/model-router/types.ts"],"names":[],"mappings":";;;AAmDa,QAAA,2BAA2B,GAAsB;IAC5D,OAAO,EAAE,IAAI;IACb,YAAY,EAAE,SAAS;IACvB,eAAe,EAAE,IAAI;CACtB,CAAC"}
+{"version":3,"file":"types.js","sourceRoot":"","sources":["../../../src/fusion/model-router/types.ts"],"names":[],"mappings":"AAmDA,MAAM,CAAC,MAAM,2BAA2B,GAAsB;IAC5D,OAAO,EAAE,IAAI;IACb,YAAY,EAAE,SAAS;IACvB,eAAe,EAAE,IAAI;CACtB,CAAC"}

@@ -1,10 +1,7 @@
-"use strict";
 // MCP SSE Client - connects to remote MCP servers via Server-Sent Events
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.McpSseClient = void 0;
-const events_1 = require("events");
-const logger_js_1 = require("../utils/logger.js");
-class McpSseClient extends events_1.EventEmitter {
+import { EventEmitter } from 'events';
+import { logger } from '../utils/logger.js';
+export class McpSseClient extends EventEmitter {
     _name;
     _config;
     _tools = [];
@@ -47,7 +44,7 @@ class McpSseClient extends events_1.EventEmitter {
             // Step 3: Fetch available tools
             await this.refreshTools();
             this._connected = true;
-            logger_js_1.logger.info(`[MCP:${this._name}] Connected via SSE to ${this._config.url}`);
+            logger.info(`[MCP:${this._name}] Connected via SSE to ${this._config.url}`);
         }
         catch (error) {
             await this.disconnect();
@@ -70,7 +67,7 @@ class McpSseClient extends events_1.EventEmitter {
         this._pendingRequests.clear();
         this._tools = [];
         this._endpointUrl = null;
-        logger_js_1.logger.info(`[MCP:${this._name}] Disconnected`);
+        logger.info(`[MCP:${this._name}] Disconnected`);
     }
     async callTool(name, args) {
         if (!this._connected) {
@@ -146,7 +143,7 @@ class McpSseClient extends events_1.EventEmitter {
             try {
                 const { done, value } = await reader.read();
                 if (done) {
-                    logger_js_1.logger.debug(`[MCP:${this._name}] SSE stream ended`);
+                    logger.debug(`[MCP:${this._name}] SSE stream ended`);
                     return;
                 }
                 buffer += decoder.decode(value, { stream: true });
@@ -160,14 +157,14 @@ class McpSseClient extends events_1.EventEmitter {
                             this._handleResponse(response);
                         }
                         catch (error) {
-                            logger_js_1.logger.error(`[MCP:${this._name}] Failed to parse SSE message:`, error);
+                            logger.error(`[MCP:${this._name}] Failed to parse SSE message:`, error);
                         }
                     }
                 }
                 readNext();
             }
             catch (error) {
-                logger_js_1.logger.error(`[MCP:${this._name}] SSE stream error:`, error);
+                logger.error(`[MCP:${this._name}] SSE stream error:`, error);
             }
         };
         readNext();
@@ -226,7 +223,7 @@ class McpSseClient extends events_1.EventEmitter {
             body: JSON.stringify(request),
             signal: AbortSignal.timeout(this._config.timeout || 30000),
         }).catch((error) => {
-            logger_js_1.logger.error(`[MCP:${this._name}] Failed to send request:`, error);
+            logger.error(`[MCP:${this._name}] Failed to send request:`, error);
         });
     }
     _handleResponse(response) {
@@ -245,5 +242,4 @@ class McpSseClient extends events_1.EventEmitter {
         }
     }
 }
-exports.McpSseClient = McpSseClient;
 //# sourceMappingURL=sse-client.js.map

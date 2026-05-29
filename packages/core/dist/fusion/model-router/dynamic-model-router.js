@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DynamicModelRouter = void 0;
-const logger_js_1 = require("../../utils/logger.js");
-const types_js_1 = require("./types.js");
-class DynamicModelRouter {
+import { logger } from '../../utils/logger.js';
+import { DEFAULT_MODEL_ROUTER_CONFIG } from './types.js';
+export class DynamicModelRouter {
     config;
     rules = [];
     eventBus = null;
@@ -11,7 +8,7 @@ class DynamicModelRouter {
     availableModels;
     healthy = true;
     constructor(availableModels = [], config, eventBus) {
-        this.config = { ...types_js_1.DEFAULT_MODEL_ROUTER_CONFIG, ...config };
+        this.config = { ...DEFAULT_MODEL_ROUTER_CONFIG, ...config };
         this.availableModels = new Set(availableModels);
         if (eventBus)
             this.eventBus = eventBus;
@@ -103,7 +100,7 @@ class DynamicModelRouter {
             }
             if (fallback) {
                 this.eventBus?.publish('model:fallback', { originalModel: request.model, selectedModel, reason }, 'DynamicModelRouter');
-                logger_js_1.logger.info(`[DynamicModelRouter] model fallback: ${request.model} -> ${selectedModel}`);
+                logger.info(`[DynamicModelRouter] model fallback: ${request.model} -> ${selectedModel}`);
             }
         }
         const decision = {
@@ -116,7 +113,7 @@ class DynamicModelRouter {
             fallback,
         };
         if (this.config.auditLogEnabled) {
-            logger_js_1.logger.info(`[DynamicModelRouter] routing decision: ${JSON.stringify(decision)}`);
+            logger.info(`[DynamicModelRouter] routing decision: ${JSON.stringify(decision)}`);
         }
         return decision;
     }
@@ -143,5 +140,4 @@ class DynamicModelRouter {
         return { healthy: this.healthy, rulesCount: this.rules.length };
     }
 }
-exports.DynamicModelRouter = DynamicModelRouter;
 //# sourceMappingURL=dynamic-model-router.js.map

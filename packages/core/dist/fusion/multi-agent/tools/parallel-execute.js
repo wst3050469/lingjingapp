@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createParallelExecuteTool = createParallelExecuteTool;
-const logger_js_1 = require("../../../utils/logger.js");
+import { logger } from '../../../utils/logger.js';
 const PARAMETERS = {
     type: 'object',
     properties: {
@@ -30,7 +27,7 @@ const PARAMETERS = {
     },
     required: ['tasks'],
 };
-function createParallelExecuteTool(executor) {
+export function createParallelExecuteTool(executor) {
     return {
         name: 'parallel_execute',
         description: 'Execute multiple agent tasks in parallel with configurable concurrency',
@@ -75,7 +72,7 @@ function createParallelExecuteTool(executor) {
                         error: r.error,
                     })),
                 };
-                logger_js_1.logger.info(`[ParallelExecuteTool] ${summary.completed}/${summary.total} completed in ${summary.totalTime}ms`);
+                logger.info(`[ParallelExecuteTool] ${summary.completed}/${summary.total} completed in ${summary.totalTime}ms`);
                 return { content: JSON.stringify(summary, null, 2) };
             }
             catch (err) {

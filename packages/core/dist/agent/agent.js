@@ -1,14 +1,11 @@
-"use strict";
 // Core Agent - the agentic loop that orchestrates LLM + tool calling
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Agent = void 0;
-const conversation_js_1 = require("./conversation.js");
-const executor_js_1 = require("../tools/executor.js");
-const logger_js_1 = require("../utils/logger.js");
-const harvester_js_1 = require("../skills/harvester.js");
-const nudger_js_1 = require("../memory/nudger.js");
-const reflector_js_1 = require("../memory/reflector.js");
-const task_complexity_analyzer_js_1 = require("../workflow/task-complexity-analyzer.js");
+import { Conversation } from './conversation.js';
+import { ToolExecutor } from '../tools/executor.js';
+import { logger } from '../utils/logger.js';
+import { SkillHarvester } from '../skills/harvester.js';
+import { MemoryNudger } from '../memory/nudger.js';
+import { MemoryReflector } from '../memory/reflector.js';
+import { TaskComplexityAnalyzer } from '../workflow/task-complexity-analyzer.js';
 /**
  * Appended to the system prompt when tools are available.
  * Reinforces that the model should use function calling instead of describing actions.
@@ -157,9 +154,9 @@ function looksLikeTaskComplete(text) {
     // or ambiguous response (e.g. after conversation compression).
     return false;
 }
-class Agent {
+export class Agent {
     /** @internal - public for cross-window hydration via IPC */
-    conversation = new conversation_js_1.Conversation();
+    conversation = new Conversation();
     executor;
     config;
     interventionQueue = [];
@@ -178,15 +175,15 @@ class Agent {
             temperature: 0.3,
             ...config,
         };
-        this.executor = new executor_js_1.ToolExecutor(config.tools);
+        this.executor = new ToolExecutor(config.tools);
         this.harvester = config.enableSkillHarvest
-            ? new harvester_js_1.SkillHarvester({ provider: config.provider })
+            ? new SkillHarvester({ provider: config.provider })
             : null;
-        this.nudger = new nudger_js_1.MemoryNudger({
+        this.nudger = new MemoryNudger({
             enabled: config.enableMemoryNudge !== false,
         });
         this.reflector = config.enableReflector
-            ? new reflector_js_1.MemoryReflector({
+            ? new MemoryReflector({
                 enabled: true,
                 intervalMs: 24 * 60 * 60 * 1000, // 24h
                 provider: config.provider,
@@ -211,9 +208,9 @@ class Agent {
     async run(userMessage, signal, images) {
         // ── 工作流集成：分析任务复杂度 ──
         if (this.workflowEngine) {
-            const complexity = task_complexity_analyzer_js_1.TaskComplexityAnalyzer.analyze(userMessage);
+            const complexity = TaskComplexityAnalyzer.analyze(userMessage);
             if (complexity.isComplex && complexity.confidence >= 0.7) {
-                logger_js_1.logger.info('[Agent] Complex task detected, creating workflow:', complexity.featureName);
+                logger.info('[Agent] Complex task detected, creating workflow:', complexity.featureName);
                 try {
                     const workflowId = await this.workflowEngine.startWorkflow({
                         featureName: complexity.featureName || '新功能',
@@ -232,7 +229,7 @@ class Agent {
                     this.conversation.addUserMessage(userMessage, images);
                 }
                 catch (error) {
-                    logger_js_1.logger.error('[Agent] Failed to create workflow:', error);
+                    logger.error('[Agent] Failed to create workflow:', error);
                     // 继续正常执行
                 }
             }
@@ -305,7 +302,7 @@ class Agent {
                 const turnController = new AbortController();
                 const turnTimer = this.config.turnTimeout > 0
                     ? setTimeout(() => {
-                        logger_js_1.logger.warn(`[Agent] Turn ${turn} exceeded timeout (${Math.round(this.config.turnTimeout / 60000)} min), aborting`);
+                        logger.warn(`[Agent] Turn ${turn} exceeded timeout (${Math.round(this.config.turnTimeout / 60000)} min), aborting`);
                         turnController.abort(new Error(`Turn timeout (${Math.round(this.config.turnTimeout / 60000)} min) reached`));
                     }, this.config.turnTimeout)
                     : null;
@@ -350,13 +347,13 @@ class Agent {
                                         args = buf.argsJson ? JSON.parse(buf.argsJson) : {};
                                     }
                                     catch (parseError) {
-                                        logger_js_1.logger.warn(`Failed to parse tool call args for ${buf.name}:`, buf.argsJson);
-                                        logger_js_1.logger.warn(`Parse error:`, parseError);
+                                        logger.warn(`Failed to parse tool call args for ${buf.name}:`, buf.argsJson);
+                                        logger.warn(`Parse error:`, parseError);
                                         // Continue with empty args - the tool itself will validate required parameters
                                     }
                                     // Validate that we have at least some arguments for tools that require them
                                     if (buf.name === 'bash' && (!args.command || typeof args.command !== 'string')) {
-                                        logger_js_1.logger.warn(`Bash tool called without required "command" parameter. Skipping execution.`);
+                                        logger.warn(`Bash tool called without required "command" parameter. Skipping execution.`);
                                         // Skip adding this tool call - it will fail validation in the tool itself
                                         break;
                                     }
@@ -410,7 +407,7 @@ Technical details: ${err.message}`;
                     // If the model described actions without calling tools, retry once with a nudge
                     if (hasTools && !hasNudgedForTools && looksLikeToolIntent(responseText)) {
                         hasNudgedForTools = true;
-                        logger_js_1.logger.info('Model described tool actions without calling tools — injecting nudge and retrying');
+                        logger.info('Model described tool actions without calling tools — injecting nudge and retrying');
                         this.conversation.addUserMessage(TOOL_NUDGE_MESSAGE);
                         if (turnTimer)
                             clearTimeout(turnTimer);
@@ -419,7 +416,7 @@ Technical details: ${err.message}`;
                     // Check if task is actually complete or just paused
                     const isTaskComplete = looksLikeTaskComplete(responseText);
                     if (isTaskComplete) {
-                        logger_js_1.logger.info('Task marked as complete by model');
+                        logger.info('Task marked as complete by model');
                         if (turnTimer)
                             clearTimeout(turnTimer);
                         return responseText;
@@ -430,13 +427,13 @@ Technical details: ${err.message}`;
                     if (shouldContinue) {
                         noToolRetryCount++;
                         if (noToolRetryCount > MAX_NO_TOOL_RETRIES) {
-                            logger_js_1.logger.info('No tool calls after ' + MAX_NO_TOOL_RETRIES + ' retries - returning control to user');
+                            logger.info('No tool calls after ' + MAX_NO_TOOL_RETRIES + ' retries - returning control to user');
                             this.conversation.addUserMessage('我已经尝试了多次自动继续，但模型没有执行新的操作。请提供更具体的指示或说明需要执行什么操作。');
                             if (turnTimer)
                                 clearTimeout(turnTimer);
                             return responseText;
                         }
-                        logger_js_1.logger.info('No tool calls but task seems incomplete - prompting to continue (retry ' + noToolRetryCount + '/' + MAX_NO_TOOL_RETRIES + ')');
+                        logger.info('No tool calls but task seems incomplete - prompting to continue (retry ' + noToolRetryCount + '/' + MAX_NO_TOOL_RETRIES + ')');
                         this.conversation.addUserMessage('[自动继续] 任务尚未完成，请继续执行。如有需要请调用工具完成操作。');
                         if (turnTimer)
                             clearTimeout(turnTimer);
@@ -515,12 +512,12 @@ Technical details: ${err.message}`;
                     if (memoryRecords.length > 0) {
                         const reflectResult = await this.reflector.reflect(memoryRecords);
                         if (reflectResult) {
-                            logger_js_1.logger.info('[Agent] Reflector produced reflection insights');
+                            logger.info('[Agent] Reflector produced reflection insights');
                         }
                     }
                 }
                 catch (err) {
-                    logger_js_1.logger.warn('[Agent] Reflector reflect failed:', err.message);
+                    logger.warn('[Agent] Reflector reflect failed:', err.message);
                 }
             }
             // ── Skill harvesting (Hermes-inspired): auto-create skills from conversations ──
@@ -531,7 +528,7 @@ Technical details: ${err.message}`;
                         this.emit({ type: 'intervention_injected', text: `\u{1F4A1} Auto-created skill: ${skillName}` });
                     }
                 }).catch((err) => {
-                    logger_js_1.logger.warn('[Harvester] Harvest failed:', err.message);
+                    logger.warn('[Harvester] Harvest failed:', err.message);
                 });
             }
         }
@@ -546,7 +543,7 @@ Technical details: ${err.message}`;
         if (!source || source.length < 100)
             return;
         const tokensBefore = this.conversation.estimateTotalTokens();
-        logger_js_1.logger.info(`[Agent] Auto-compacting conversation: ${tokensBefore} tokens, ${this.conversation.messages.length} messages`);
+        logger.info(`[Agent] Auto-compacting conversation: ${tokensBefore} tokens, ${this.conversation.messages.length} messages`);
         // Use an independent AbortController so compaction doesn't get
         // killed by the parent agent's abort signal or global timeout.
         const compactController = new AbortController();
@@ -568,12 +565,12 @@ Technical details: ${err.message}`;
             if (summary && summary.length > 50) {
                 this.conversation.compact(summary, keepRecent);
                 const tokensAfter = this.conversation.estimateTotalTokens();
-                logger_js_1.logger.info(`[Agent] Compaction complete: ${tokensBefore} → ${tokensAfter} tokens (saved ${tokensBefore - tokensAfter})`);
+                logger.info(`[Agent] Compaction complete: ${tokensBefore} → ${tokensAfter} tokens (saved ${tokensBefore - tokensAfter})`);
             }
         }
         catch (err) {
             // Compaction failure is non-fatal — just log and continue
-            logger_js_1.logger.warn(`[Agent] Auto-compaction failed, continuing without compaction:`, err);
+            logger.warn(`[Agent] Auto-compaction failed, continuing without compaction:`, err);
         }
         finally {
             clearTimeout(compactTimeout);
@@ -606,13 +603,12 @@ Technical details: ${err.message}`;
         return this.conversation;
     }
 }
-exports.Agent = Agent;
 function responseText_fallback(conversation) {
     // Return the last assistant message content
     const messages = conversation.messages;
     for (let i = messages.length - 1; i >= 0; i--) {
         if (messages[i].role === 'assistant') {
-            return conversation_js_1.Conversation.contentToText(messages[i].content);
+            return Conversation.contentToText(messages[i].content);
         }
     }
     return '(No response generated)';

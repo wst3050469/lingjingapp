@@ -1,16 +1,13 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventBus = void 0;
-const metrics_js_1 = require("./metrics.js");
-const logger_js_1 = require("../../utils/logger.js");
+import { MetricsCollector } from './metrics.js';
+import { logger } from '../../utils/logger.js';
 const HANDLER_TIMEOUT = 100;
 function generateId() {
     return `evt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
-class EventBus {
+export class EventBus {
     subscribers = new Map();
     globalFilters = [];
-    metrics = new metrics_js_1.MetricsCollector();
+    metrics = new MetricsCollector();
     publish(topic, data, source) {
         const event = {
             topic,
@@ -45,7 +42,7 @@ class EventBus {
                         this.metrics.recordDelivered(Date.now() - startMs);
                     }).catch((err) => {
                         this.metrics.recordError();
-                        logger_js_1.logger.warn(`[EventBus] handler error on "${topic}": ${err.message}`);
+                        logger.warn(`[EventBus] handler error on "${topic}": ${err.message}`);
                     });
                 }
                 else {
@@ -104,5 +101,4 @@ class EventBus {
         };
     }
 }
-exports.EventBus = EventBus;
 //# sourceMappingURL=event-bus.js.map

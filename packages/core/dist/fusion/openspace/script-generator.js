@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.OpenSpaceScriptGenerator = void 0;
-const script_templates_js_1 = require("./script-templates.js");
-const security_review_js_1 = require("./security-review.js");
-const logger_js_1 = require("../../utils/logger.js");
+import { matchTemplate, fillTemplate } from './script-templates.js';
+import { reviewScript } from './security-review.js';
+import { logger } from '../../utils/logger.js';
 const SYSTEM_PROMPT = `You are an expert OpenSpace Lua script generator. Generate only valid Lua code that uses the OpenSpace Lua API.
 
 OpenSpace Lua API Reference (commonly used functions):
@@ -89,7 +86,7 @@ function defaultParamExtractor(input, template) {
     }
     return params;
 }
-class OpenSpaceScriptGenerator {
+export class OpenSpaceScriptGenerator {
     llmClient;
     paramExtractor;
     generationHistory = [];
@@ -99,7 +96,7 @@ class OpenSpaceScriptGenerator {
         this.paramExtractor = paramExtractor ?? defaultParamExtractor;
     }
     async generate(naturalLanguage, sceneContext) {
-        const template = (0, script_templates_js_1.matchTemplate)(naturalLanguage);
+        const template = matchTemplate(naturalLanguage);
         if (template) {
             return this.generateFromTemplate(naturalLanguage, template, sceneContext);
         }
@@ -107,8 +104,8 @@ class OpenSpaceScriptGenerator {
     }
     async generateFromTemplate(input, template, sceneContext) {
         const params = this.paramExtractor(input, template);
-        const script = (0, script_templates_js_1.fillTemplate)(template, params);
-        const reviewResult = (0, security_review_js_1.reviewScript)(script, template.language);
+        const script = fillTemplate(template, params);
+        const reviewResult = reviewScript(script, template.language);
         const result = {
             script,
             language: template.language,
@@ -122,7 +119,7 @@ class OpenSpaceScriptGenerator {
             result.confidence = 0.3;
         }
         this.addToHistory(input, result);
-        logger_js_1.logger.info(`[ScriptGenerator] template match: ${template.name}, confidence: ${result.confidence}`);
+        logger.info(`[ScriptGenerator] template match: ${template.name}, confidence: ${result.confidence}`);
         return result;
     }
     async generateFromLLM(input, sceneContext) {
@@ -142,7 +139,7 @@ class OpenSpaceScriptGenerator {
         try {
             const rawOutput = await this.llmClient.generate(userPrompt, SYSTEM_PROMPT);
             const script = this.sanitizeLLMOutput(rawOutput);
-            const reviewResult = (0, security_review_js_1.reviewScript)(script, 'lua');
+            const reviewResult = reviewScript(script, 'lua');
             const result = {
                 script,
                 language: 'lua',
@@ -166,7 +163,7 @@ class OpenSpaceScriptGenerator {
                 }
             }
             this.addToHistory(input, result);
-            logger_js_1.logger.info(`[ScriptGenerator] LLM generation, confidence: ${result.confidence}`);
+            logger.info(`[ScriptGenerator] LLM generation, confidence: ${result.confidence}`);
             return result;
         }
         catch (err) {
@@ -179,7 +176,7 @@ class OpenSpaceScriptGenerator {
                 error: `LLM generation failed: ${err.message}`,
             };
             this.addToHistory(input, errorResult);
-            logger_js_1.logger.error(`[ScriptGenerator] LLM error: ${err.message}`);
+            logger.error(`[ScriptGenerator] LLM error: ${err.message}`);
             return errorResult;
         }
     }
@@ -226,5 +223,4 @@ class OpenSpaceScriptGenerator {
         this.generationHistory = [];
     }
 }
-exports.OpenSpaceScriptGenerator = OpenSpaceScriptGenerator;
 //# sourceMappingURL=script-generator.js.map

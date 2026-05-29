@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DEFAULT_SECURITY_CONFIG = void 0;
-exports.DEFAULT_SECURITY_CONFIG = {
+export const DEFAULT_SECURITY_CONFIG = {
     enabled: true,
     blockOnHighRisk: true,
     warnOnMediumRisk: true,

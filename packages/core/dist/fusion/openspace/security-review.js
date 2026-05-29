@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.reviewScript = reviewScript;
 const LUA_PATTERNS = [
     { pattern: /\bos\.remove\b/, description: 'File removal via os.remove', riskLevel: 'high' },
     { pattern: /\bos\.execute\b/, description: 'Shell command execution via os.execute', riskLevel: 'critical' },
@@ -46,7 +43,7 @@ function escalateRisk(current, next) {
     const ni = levels.indexOf(next);
     return ci >= ni ? current : next;
 }
-function reviewScript(script, language) {
+export function reviewScript(script, language) {
     const patterns = getPatterns(language);
     const violations = [];
     let riskLevel = 'none';

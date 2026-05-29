@@ -1,15 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.MultiAgentExecutor = void 0;
-const logger_js_1 = require("../../utils/logger.js");
-const types_js_1 = require("./types.js");
-class MultiAgentExecutor {
+import { logger } from '../../utils/logger.js';
+import { DEFAULT_MULTI_AGENT_CONFIG } from './types.js';
+export class MultiAgentExecutor {
     config;
     eventBus = null;
     executeSingleTask;
     healthy = true;
     constructor(executeSingleTask, config, eventBus) {
-        this.config = { ...types_js_1.DEFAULT_MULTI_AGENT_CONFIG, ...config };
+        this.config = { ...DEFAULT_MULTI_AGENT_CONFIG, ...config };
         this.executeSingleTask = executeSingleTask;
         if (eventBus)
             this.eventBus = eventBus;
@@ -68,7 +65,7 @@ class MultiAgentExecutor {
             for (const task of tasks) {
                 const result = await this.executeTask(task, context);
                 results.push(result);
-                logger_js_1.logger.info(`[MultiAgentExecutor] sequential: task ${task.taskId} ${result.status}`);
+                logger.info(`[MultiAgentExecutor] sequential: task ${task.taskId} ${result.status}`);
             }
         }
         else {
@@ -112,5 +109,4 @@ class MultiAgentExecutor {
         return { healthy: this.healthy };
     }
 }
-exports.MultiAgentExecutor = MultiAgentExecutor;
 //# sourceMappingURL=multi-agent-executor.js.map

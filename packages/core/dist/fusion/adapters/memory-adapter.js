@@ -1,15 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.MemoryAdapter = void 0;
-exports.createMemoryAdapter = createMemoryAdapter;
-const logger_js_1 = require("../../utils/logger.js");
-class MemoryAdapter {
+import { logger } from '../../utils/logger.js';
+export class MemoryAdapter {
     version = '1.0.0';
     store = new Map();
     writeHandler = null;
     setWriteHandler(handler) {
         this.writeHandler = handler;
-        logger_js_1.logger.info('[MemoryAdapter] write handler set');
+        logger.info('[MemoryAdapter] write handler set');
     }
     getScope(scope = 'default') {
         if (!this.store.has(scope)) {
@@ -25,7 +21,7 @@ class MemoryAdapter {
                 await this.writeHandler(key, value, scope);
             }
             catch (err) {
-                logger_js_1.logger.warn(`[MemoryAdapter] write handler error: ${err.message}`);
+                logger.warn(`[MemoryAdapter] write handler error: ${err.message}`);
             }
         }
     }
@@ -42,8 +38,7 @@ class MemoryAdapter {
         return Array.from(s.entries()).map(([key, value]) => ({ key, value }));
     }
 }
-exports.MemoryAdapter = MemoryAdapter;
-function createMemoryAdapter() {
+export function createMemoryAdapter() {
     return new MemoryAdapter();
 }
 //# sourceMappingURL=memory-adapter.js.map

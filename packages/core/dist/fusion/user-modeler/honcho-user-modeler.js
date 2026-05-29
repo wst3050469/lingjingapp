@@ -1,9 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.HonchoUserModeler = void 0;
-const logger_js_1 = require("../../utils/logger.js");
-const types_js_1 = require("./types.js");
-class HonchoUserModeler {
+import { logger } from '../../utils/logger.js';
+import { DEFAULT_USER_MODELER_CONFIG, createDefaultProfile } from './types.js';
+export class HonchoUserModeler {
     config;
     currentModel;
     eventBus = null;
@@ -13,8 +10,8 @@ class HonchoUserModeler {
     healthy = true;
     unsubMemory = null;
     constructor(userId, config, eventBus, memoryAdapter) {
-        this.config = { ...types_js_1.DEFAULT_USER_MODELER_CONFIG, ...config };
-        this.currentModel = (0, types_js_1.createDefaultProfile)(userId);
+        this.config = { ...DEFAULT_USER_MODELER_CONFIG, ...config };
+        this.currentModel = createDefaultProfile(userId);
         if (eventBus)
             this.eventBus = eventBus;
         if (memoryAdapter)
@@ -39,7 +36,7 @@ class HonchoUserModeler {
             this.unsubMemory();
         }
         this.unsubMemory = this.eventBus.subscribe('memory:updated', () => {
-            logger_js_1.logger.info('[HonchoUserModeler] memory:updated event received, triggering incremental update');
+            logger.info('[HonchoUserModeler] memory:updated event received, triggering incremental update');
         }, {});
     }
     startPersistInterval() {
@@ -47,7 +44,7 @@ class HonchoUserModeler {
             clearInterval(this.persistTimer);
         this.persistTimer = setInterval(() => {
             this.persist().catch((err) => {
-                logger_js_1.logger.warn(`[HonchoUserModeler] persist failed: ${err.message}`);
+                logger.warn(`[HonchoUserModeler] persist failed: ${err.message}`);
             });
         }, this.config.persistInterval);
     }
@@ -58,7 +55,7 @@ class HonchoUserModeler {
             await this.memoryAdapter.write(`user_profile:${this.currentModel.id}`, this.currentModel, 'user_profiles');
         }
         catch (err) {
-            logger_js_1.logger.warn(`[HonchoUserModeler] persist error: ${err.message}`);
+            logger.warn(`[HonchoUserModeler] persist error: ${err.message}`);
         }
     }
     mergeArray(current, incoming) {
@@ -110,7 +107,7 @@ class HonchoUserModeler {
             return;
         this.mergeIncremental(incremental);
         this.eventBus?.publish('user_model:updated', this.currentModel, 'HonchoUserModeler');
-        logger_js_1.logger.info(`[HonchoUserModeler] user model updated for ${this.currentModel.id}`);
+        logger.info(`[HonchoUserModeler] user model updated for ${this.currentModel.id}`);
     }
     getCurrentModel() {
         return { ...this.currentModel };
@@ -121,10 +118,10 @@ class HonchoUserModeler {
         try {
             const incremental = await this.reflectCallback(this.currentModel);
             this.updateUserModel(incremental);
-            logger_js_1.logger.info('[HonchoUserModeler] reflection completed');
+            logger.info('[HonchoUserModeler] reflection completed');
         }
         catch (err) {
-            logger_js_1.logger.warn(`[HonchoUserModeler] reflection failed: ${err.message}`);
+            logger.warn(`[HonchoUserModeler] reflection failed: ${err.message}`);
         }
     }
     async loadPersistedModel() {
@@ -135,11 +132,11 @@ class HonchoUserModeler {
             if (stored) {
                 const profile = stored;
                 this.currentModel = { ...this.currentModel, ...profile };
-                logger_js_1.logger.info(`[HonchoUserModeler] loaded persisted model for ${this.currentModel.id}`);
+                logger.info(`[HonchoUserModeler] loaded persisted model for ${this.currentModel.id}`);
             }
         }
         catch (err) {
-            logger_js_1.logger.warn(`[HonchoUserModeler] load persisted model failed: ${err.message}`);
+            logger.warn(`[HonchoUserModeler] load persisted model failed: ${err.message}`);
         }
     }
     destroy() {
@@ -156,5 +153,4 @@ class HonchoUserModeler {
         return { healthy: this.healthy };
     }
 }
-exports.HonchoUserModeler = HonchoUserModeler;
 //# sourceMappingURL=honcho-user-modeler.js.map

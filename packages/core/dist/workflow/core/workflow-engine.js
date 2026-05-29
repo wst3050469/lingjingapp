@@ -1,15 +1,12 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.WorkflowEngine = void 0;
-const dag_orchestrator_js_1 = require("../../fusion/dag-orchestrator/dag-orchestrator.js");
-const logger_js_1 = require("../../utils/logger.js");
-const types_js_1 = require("../types.js");
-class WorkflowEngine {
+import { DAGOrchestrator } from '../../fusion/dag-orchestrator/dag-orchestrator.js';
+import { logger } from '../../utils/logger.js';
+import { WorkflowStatus } from '../types.js';
+export class WorkflowEngine {
     orchestrator;
     workflows = new Map();
     listeners = new Map();
     constructor(orchestrator) {
-        this.orchestrator = orchestrator ?? new dag_orchestrator_js_1.DAGOrchestrator(async (taskDef) => {
+        this.orchestrator = orchestrator ?? new DAGOrchestrator(async (taskDef) => {
             return taskDef.prompt;
         });
     }
@@ -34,7 +31,7 @@ class WorkflowEngine {
         const state = {
             id,
             requirement,
-            status: types_js_1.WorkflowStatus.PENDING,
+            status: WorkflowStatus.PENDING,
             createdAt: Date.now(),
             updatedAt: Date.now(),
             progress: 0,
@@ -43,7 +40,7 @@ class WorkflowEngine {
         this.workflows.set(id, pending);
         // Execute asynchronously
         this.executeWorkflow(id).catch((err) => {
-            logger_js_1.logger.error(`[WorkflowEngine] Workflow ${id} execution error: ${err.message}`);
+            logger.error(`[WorkflowEngine] Workflow ${id} execution error: ${err.message}`);
         });
         return id;
     }
@@ -51,7 +48,7 @@ class WorkflowEngine {
         const pending = this.workflows.get(id);
         if (!pending)
             return;
-        pending.state.status = types_js_1.WorkflowStatus.RUNNING;
+        pending.state.status = WorkflowStatus.RUNNING;
         pending.state.updatedAt = Date.now();
         this.emitProgress(id, 'initializing', 0, 'Workflow started');
         try {
@@ -67,20 +64,20 @@ class WorkflowEngine {
             this.emitProgress(id, 'executing', 20, 'Executing workflow steps');
             const result = await this.orchestrator.execute(pending.dag, context);
             if (result.status === 'completed') {
-                pending.state.status = types_js_1.WorkflowStatus.COMPLETED;
+                pending.state.status = WorkflowStatus.COMPLETED;
                 pending.state.progress = 100;
                 pending.state.result = JSON.stringify(result);
                 this.emitProgress(id, 'completed', 100, 'Workflow completed successfully');
             }
             else {
-                pending.state.status = types_js_1.WorkflowStatus.FAILED;
+                pending.state.status = WorkflowStatus.FAILED;
                 pending.state.progress = 50;
                 pending.state.error = `Workflow ${result.status}: ${result.failedNodes.length} nodes failed`;
                 this.emitProgress(id, 'failed', 50, pending.state.error);
             }
         }
         catch (err) {
-            pending.state.status = types_js_1.WorkflowStatus.FAILED;
+            pending.state.status = WorkflowStatus.FAILED;
             pending.state.error = err.message;
             this.emitProgress(id, 'failed', 0, err.message);
         }
@@ -89,8 +86,8 @@ class WorkflowEngine {
     pauseWorkflow() {
         // Pause the most recently running workflow
         for (const [, pending] of this.workflows) {
-            if (pending.state.status === types_js_1.WorkflowStatus.RUNNING) {
-                pending.state.status = types_js_1.WorkflowStatus.PAUSED;
+            if (pending.state.status === WorkflowStatus.RUNNING) {
+                pending.state.status = WorkflowStatus.PAUSED;
                 pending.state.updatedAt = Date.now();
                 this.emitProgress(pending.state.id, 'paused', pending.state.progress, 'Workflow paused');
                 return;
@@ -100,13 +97,13 @@ class WorkflowEngine {
     resumeWorkflow() {
         // Resume the most recently paused workflow
         for (const [, pending] of this.workflows) {
-            if (pending.state.status === types_js_1.WorkflowStatus.PAUSED) {
-                pending.state.status = types_js_1.WorkflowStatus.RUNNING;
+            if (pending.state.status === WorkflowStatus.PAUSED) {
+                pending.state.status = WorkflowStatus.RUNNING;
                 pending.state.updatedAt = Date.now();
                 this.emitProgress(pending.state.id, 'resumed', pending.state.progress, 'Workflow resumed');
                 // Re-trigger execution
                 this.executeWorkflow(pending.state.id).catch((err) => {
-                    logger_js_1.logger.error(`[WorkflowEngine] Resume error: ${err.message}`);
+                    logger.error(`[WorkflowEngine] Resume error: ${err.message}`);
                 });
                 return;
             }
@@ -115,8 +112,8 @@ class WorkflowEngine {
     stopWorkflow() {
         // Stop all running workflows
         for (const [, pending] of this.workflows) {
-            if (pending.state.status === types_js_1.WorkflowStatus.RUNNING || pending.state.status === types_js_1.WorkflowStatus.PAUSED) {
-                pending.state.status = types_js_1.WorkflowStatus.CANCELLED;
+            if (pending.state.status === WorkflowStatus.RUNNING || pending.state.status === WorkflowStatus.PAUSED) {
+                pending.state.status = WorkflowStatus.CANCELLED;
                 pending.state.updatedAt = Date.now();
                 this.emitProgress(pending.state.id, 'cancelled', pending.state.progress, 'Workflow cancelled');
             }
@@ -149,5 +146,4 @@ class WorkflowEngine {
         };
     }
 }
-exports.WorkflowEngine = WorkflowEngine;
 //# sourceMappingURL=workflow-engine.js.map

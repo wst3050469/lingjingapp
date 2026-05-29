@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createDagExecuteTool = createDagExecuteTool;
-const logger_js_1 = require("../../../utils/logger.js");
+import { logger } from '../../../utils/logger.js';
 const PARAMETERS = {
     type: 'object',
     properties: {
@@ -42,7 +39,7 @@ const PARAMETERS = {
     },
     required: ['dag'],
 };
-function createDagExecuteTool(orchestrator) {
+export function createDagExecuteTool(orchestrator) {
     return {
         name: 'dag_execute',
         description: 'Execute a DAG (directed acyclic graph) workflow with dependency-ordered parallel execution',
@@ -77,7 +74,7 @@ function createDagExecuteTool(orchestrator) {
                     totalTime: result.totalTime,
                     nodes: nodeSummaries,
                 };
-                logger_js_1.logger.info(`[DagExecuteTool] DAG ${result.dagId} ${result.status} in ${result.totalTime}ms`);
+                logger.info(`[DagExecuteTool] DAG ${result.dagId} ${result.status} in ${result.totalTime}ms`);
                 return { content: JSON.stringify(summary, null, 2) };
             }
             catch (err) {

@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.NLToCronConverter = void 0;
 const NL_CRON_MAP = [
     { pattern: /每5分钟|every 5 minutes/i, cron: '*/5 * * * *' },
     { pattern: /每10分钟|every 10 minutes/i, cron: '*/10 * * * *' },
@@ -18,7 +15,7 @@ const NL_CRON_MAP = [
     { pattern: /每周|every week|weekly/i, cron: '0 0 * * 1' },
     { pattern: /每月|every month|monthly/i, cron: '0 0 1 * *' },
 ];
-class NLToCronConverter {
+export class NLToCronConverter {
     convert(naturalLanguage, llmProvider) {
         if (llmProvider) {
             return this.tryLLMConversion(naturalLanguage, llmProvider);
@@ -92,5 +89,4 @@ class NLToCronConverter {
         return !isNaN(val) && val >= min && val <= max;
     }
 }
-exports.NLToCronConverter = NLToCronConverter;
 //# sourceMappingURL=nl-to-cron-converter.js.map

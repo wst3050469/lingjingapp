@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.LLMQuotaManager = void 0;
-class LLMQuotaManager {
+export class LLMQuotaManager {
     maxConcurrency;
     currentCount = 0;
     constructor(maxConcurrency) {
@@ -26,5 +23,4 @@ class LLMQuotaManager {
         return this.currentCount;
     }
 }
-exports.LLMQuotaManager = LLMQuotaManager;
 //# sourceMappingURL=llm-quota-manager.js.map

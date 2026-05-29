@@ -1,6 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createRememberVectorTool = createRememberVectorTool;
 const parameters = {
     type: 'object',
     properties: {
@@ -9,7 +6,7 @@ const parameters = {
     },
     required: ['content'],
 };
-function createRememberVectorTool(store) {
+export function createRememberVectorTool(store) {
     return {
         name: 'remember_vector',
         description: 'Store content in vector memory for semantic retrieval',

@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.HookRegistry = void 0;
-const logger_js_1 = require("../../utils/logger.js");
+import { logger } from '../../utils/logger.js';
 const DEFAULT_TIMEOUT = 100;
 function generateHookId() {
     return `hook_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -12,7 +9,7 @@ function withTimeout(promise, ms) {
         new Promise((_, reject) => setTimeout(() => reject(new Error('hook timeout')), ms)),
     ]);
 }
-class HookRegistry {
+export class HookRegistry {
     hooks = new Map();
     hookById = new Map();
     register(point, callback, options) {
@@ -77,7 +74,7 @@ class HookRegistry {
                 }
             }
             catch (err) {
-                logger_js_1.logger.warn(`[HookRegistry] hook "${entry.id}" at "${point}" failed: ${err.message}`);
+                logger.warn(`[HookRegistry] hook "${entry.id}" at "${point}" failed: ${err.message}`);
             }
         }
         return current;
@@ -89,5 +86,4 @@ class HookRegistry {
         };
     }
 }
-exports.HookRegistry = HookRegistry;
 //# sourceMappingURL=hook-registry.js.map

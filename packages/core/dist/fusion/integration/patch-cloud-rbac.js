@@ -1,4 +1,3 @@
-"use strict";
 /**
  * Cloud Server RBAC Patch — Batch D (P1)
  *
@@ -6,12 +5,7 @@
  * Roles: admin → all, developer → read+write+execute,
  *        viewer → read-only, guest → limited.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RBAC_PERMISSIONS = exports.RBAC_ROLES = void 0;
-exports.checkPermission = checkPermission;
-exports.extractRoleFromToken = extractRoleFromToken;
-exports.createRBACMiddleware = createRBACMiddleware;
-exports.RBAC_ROLES = {
+export const RBAC_ROLES = {
     admin: {
         role: 'admin',
         label: 'Administrator',
@@ -39,24 +33,24 @@ const GUEST_ALLOWED_RESOURCES = [
     'version',
     'docs',
 ];
-exports.RBAC_PERMISSIONS = {
+export const RBAC_PERMISSIONS = {
     admin: (_resource, _action) => true,
     developer: (_resource, action) => ['read', 'write', 'execute'].includes(action),
     viewer: (_resource, action) => action === 'read',
     guest: (resource, action) => action === 'read' && GUEST_ALLOWED_RESOURCES.includes(resource),
 };
-function checkPermission(role, resource, action) {
-    const checker = exports.RBAC_PERMISSIONS[role];
+export function checkPermission(role, resource, action) {
+    const checker = RBAC_PERMISSIONS[role];
     if (!checker)
         return false;
     return checker(resource, action);
 }
-function extractRoleFromToken(payload) {
-    if (exports.RBAC_ROLES[payload.role])
+export function extractRoleFromToken(payload) {
+    if (RBAC_ROLES[payload.role])
         return payload.role;
     return 'guest';
 }
-function createRBACMiddleware() {
+export function createRBACMiddleware() {
     return (req, res, next) => {
         if (!req.user) {
             res.status(401).json({ error: 'Unauthorized: no token' });

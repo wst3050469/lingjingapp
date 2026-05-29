@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.NudgeReviewEngine = void 0;
-const types_js_1 = require("./types.js");
-const llm_quota_manager_js_1 = require("./llm-quota-manager.js");
+import { DEFAULT_REVIEW_CONFIG } from './types.js';
+import { LLMQuotaManager } from './llm-quota-manager.js';
 const REVIEW_SYSTEM_PROMPT = `You are a code review assistant. Review the following content and provide:
 1. A quality score from 0 to 10
 2. Specific improvement suggestions
@@ -10,16 +7,16 @@ const REVIEW_SYSTEM_PROMPT = `You are a code review assistant. Review the follow
 
 Respond in this exact JSON format:
 {"score": <number>, "suggestions": [<string>], "riskFlags": [<string>]}`;
-class NudgeReviewEngine {
+export class NudgeReviewEngine {
     config;
     eventBus = null;
     llmAdapter = null;
     quotaManager;
     enabled = true;
     constructor(config) {
-        this.config = { ...types_js_1.DEFAULT_REVIEW_CONFIG, ...config };
+        this.config = { ...DEFAULT_REVIEW_CONFIG, ...config };
         this.enabled = this.config.enabled;
-        this.quotaManager = new llm_quota_manager_js_1.LLMQuotaManager(this.config.maxLLMConcurrency);
+        this.quotaManager = new LLMQuotaManager(this.config.maxLLMConcurrency);
     }
     initialize(eventBus, llmAdapter) {
         this.eventBus = eventBus;
@@ -110,5 +107,4 @@ class NudgeReviewEngine {
         }
     }
 }
-exports.NudgeReviewEngine = NudgeReviewEngine;
 //# sourceMappingURL=nudge-review-engine.js.map

@@ -1,23 +1,34 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.TriggerManager = void 0;
-const cron_parser_1 = __importDefault(require("cron-parser"));
-const { parseExpression } = cron_parser_1.default;
-class TriggerManager {
+import cronParser from 'cron-parser';
+const { parseExpression } = cronParser;
+export class TriggerManager {
     cronTimers = new Map();
     gitListeners = [];
+    activePipelines = new Map();
+    enabledPipelines = new Set();
     onTrigger;
-    constructor(onTrigger) {
-        this.onTrigger = onTrigger;
+    onStatusChange;
+    constructor(options) {
+        this.onTrigger = options?.onTrigger;
+        this.onStatusChange = options?.onStatusChange;
+    }
+    registerAll(definition, onGitPush) {
+        this.addPipeline(definition, onGitPush);
+    }
+    addPipeline(definition, onGitPush) {
+        this.activePipelines.set(definition.id, definition);
+        this.enabledPipelines.add(definition.id);
+        if (onGitPush) {
+            this.registerPushTrigger(definition, onGitPush);
+        }
+        this.registerCronTrigger(definition);
     }
     registerPushTrigger(definition, onGitPush) {
         const pushTriggers = definition.triggers.filter(t => t.type === 'push');
-        if (pushTriggers.length === 0 || !onGitPush)
+        if (pushTriggers.length === 0)
             return;
         const unregister = onGitPush((event) => {
+            if (!this.enabledPipelines.has(definition.id))
+                return;
             for (const trigger of pushTriggers) {
                 if (!trigger.branches ||
                     trigger.branches.length === 0 ||
@@ -36,6 +47,8 @@ class TriggerManager {
             try {
                 const interval = parseExpression(trigger.expression);
                 const timer = setInterval(() => {
+                    if (!this.enabledPipelines.has(definition.id))
+                        return;
                     const next = interval.next();
                     this.onTrigger?.(definition.id, 'cron', `scheduled at ${next.toISOString()}`);
                 }, 60000);
@@ -46,9 +59,38 @@ class TriggerManager {
             }
         }
     }
-    registerAll(definition, onGitPush) {
-        this.registerPushTrigger(definition, onGitPush);
-        this.registerCronTrigger(definition);
+    removePipeline(pipelineId) {
+        this.activePipelines.delete(pipelineId);
+        this.onStatusChange?.(pipelineId, 'removed');
+        for (const [key, timer] of this.cronTimers.entries()) {
+            if (key.startsWith(`${pipelineId}:`)) {
+                clearInterval(timer);
+                this.cronTimers.delete(key);
+            }
+        }
+        this.enabledPipelines.delete(pipelineId);
+    }
+    setPipelineEnabled(pipelineId, enabled) {
+        const pipeline = this.activePipelines.get(pipelineId);
+        if (!pipeline)
+            return;
+        if (enabled) {
+            this.enabledPipelines.add(pipelineId);
+            this.onStatusChange?.(pipelineId, 'enabled');
+        }
+        else {
+            this.enabledPipelines.delete(pipelineId);
+            this.onStatusChange?.(pipelineId, 'disabled');
+        }
+    }
+    getPipelineConfig(pipelineId) {
+        return this.activePipelines.get(pipelineId);
+    }
+    listPipelines() {
+        return Array.from(this.activePipelines.entries()).map(([id, _]) => ({
+            id,
+            enabled: this.enabledPipelines.has(id)
+        }));
     }
     dispose() {
         for (const timer of this.cronTimers.values())
@@ -57,7 +99,8 @@ class TriggerManager {
         for (const unregister of this.gitListeners)
             unregister();
         this.gitListeners = [];
+        this.activePipelines.clear();
+        this.enabledPipelines.clear();
     }
 }
-exports.TriggerManager = TriggerManager;
 //# sourceMappingURL=trigger-manager.js.map

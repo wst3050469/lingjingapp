@@ -1,23 +1,16 @@
-"use strict";
 /**
  * Audit Log Patch — Batch D (P1)
  *
  * Provides audit logging for cloud-server API endpoints.
  * Each API endpoint should wrap with createAuditMiddleware().
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createAuditLog = createAuditLog;
-exports.queryAuditLogs = queryAuditLogs;
-exports.clearAuditLogs = clearAuditLogs;
-exports.getAuditLogCount = getAuditLogCount;
-exports.createAuditMiddleware = createAuditMiddleware;
 const auditStore = [];
 let entryCounter = 0;
 function generateId() {
     entryCounter += 1;
     return `audit-${Date.now()}-${entryCounter.toString(36).padStart(4, '0')}`;
 }
-function createAuditLog(entry) {
+export function createAuditLog(entry) {
     const full = {
         id: generateId(),
         userId: entry.userId,
@@ -30,7 +23,7 @@ function createAuditLog(entry) {
     auditStore.push(full);
     return full;
 }
-function queryAuditLogs(filter = {}) {
+export function queryAuditLogs(filter = {}) {
     let results = auditStore;
     if (filter.userId)
         results = results.filter((e) => e.userId === filter.userId);
@@ -49,14 +42,14 @@ function queryAuditLogs(filter = {}) {
         results = results.slice(0, filter.limit);
     return results;
 }
-function clearAuditLogs() {
+export function clearAuditLogs() {
     auditStore.length = 0;
     entryCounter = 0;
 }
-function getAuditLogCount() {
+export function getAuditLogCount() {
     return auditStore.length;
 }
-function createAuditMiddleware() {
+export function createAuditMiddleware() {
     return (req, res, next) => {
         const startTime = Date.now();
         const userId = req.user?.sub ?? 'anonymous';

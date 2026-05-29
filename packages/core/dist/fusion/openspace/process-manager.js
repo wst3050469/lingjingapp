@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.OpenSpaceProcessManager = void 0;
-const logger_js_1 = require("../../utils/logger.js");
+import { logger } from '../../utils/logger.js';
 const OPENSPACE_MIN_VERSION = '0.19.0';
 const HEALTH_CHECK_INTERVAL = 5000;
 const GRACEFUL_STOP_TIMEOUT = 10000;
@@ -19,7 +16,7 @@ function compareVersions(a, b) {
     }
     return 0;
 }
-class OpenSpaceProcessManager {
+export class OpenSpaceProcessManager {
     _runState = 'stopped';
     processHandle = null;
     healthTimer = null;
@@ -51,7 +48,7 @@ class OpenSpaceProcessManager {
         if (prev === newState)
             return;
         this._runState = newState;
-        logger_js_1.logger.info(`[OpenSpaceProcessManager] state: ${prev} -> ${newState}`);
+        logger.info(`[OpenSpaceProcessManager] state: ${prev} -> ${newState}`);
         for (const cb of this.stateChangeCallbacks) {
             try {
                 cb(newState, prev);
@@ -74,7 +71,7 @@ class OpenSpaceProcessManager {
             }
         }
         catch (err) {
-            logger_js_1.logger.warn(`[OpenSpaceProcessManager] detection failed: ${err.message}`);
+            logger.warn(`[OpenSpaceProcessManager] detection failed: ${err.message}`);
         }
         this.detectedInstallation = { found: false, compatible: false };
         return this.detectedInstallation;
@@ -159,7 +156,7 @@ class OpenSpaceProcessManager {
             }
         }
         if (!this.detectedInstallation.compatible) {
-            logger_js_1.logger.warn(`[OpenSpaceProcessManager] version ${this.detectedInstallation.version} may not be compatible (min: ${OPENSPACE_MIN_VERSION})`);
+            logger.warn(`[OpenSpaceProcessManager] version ${this.detectedInstallation.version} may not be compatible (min: ${OPENSPACE_MIN_VERSION})`);
         }
         this.setState('starting');
         const execPath = this.detectedInstallation.path;
@@ -180,21 +177,21 @@ class OpenSpaceProcessManager {
                 const wsMatch = text.match(/WebSocket.*on.*port\s+(\d+)/i);
                 if (wsMatch) {
                     this.wsPort = parseInt(wsMatch[1], 10);
-                    logger_js_1.logger.info(`[OpenSpaceProcessManager] detected ws port: ${this.wsPort}`);
+                    logger.info(`[OpenSpaceProcessManager] detected ws port: ${this.wsPort}`);
                 }
             });
             this.processHandle.stderr.on('data', (data) => {
-                logger_js_1.logger.warn(`[OpenSpaceProcessManager] stderr: ${data.toString().trim()}`);
+                logger.warn(`[OpenSpaceProcessManager] stderr: ${data.toString().trim()}`);
             });
             this.processHandle.on('exit', (code) => {
-                logger_js_1.logger.info(`[OpenSpaceProcessManager] process exited with code: ${code}`);
+                logger.info(`[OpenSpaceProcessManager] process exited with code: ${code}`);
                 this.stopHealthCheck();
                 this.wsPort = null;
                 this.processHandle = null;
                 this.setState('stopped');
             });
             this.processHandle.on('error', (err) => {
-                logger_js_1.logger.error(`[OpenSpaceProcessManager] process error: ${err.message}`);
+                logger.error(`[OpenSpaceProcessManager] process error: ${err.message}`);
                 this.setState('error');
             });
             this.setState('running');
@@ -218,22 +215,22 @@ class OpenSpaceProcessManager {
             try {
                 const gracefulScript = 'openspace.exit()';
                 if (this.wsPort) {
-                    logger_js_1.logger.info('[OpenSpaceProcessManager] sending graceful exit via Lua script');
+                    logger.info('[OpenSpaceProcessManager] sending graceful exit via Lua script');
                     await this.sendGracefulExit(gracefulScript);
                 }
                 await this.waitForExit(GRACEFUL_STOP_TIMEOUT);
                 if (this.processHandle && this.processHandle.pid) {
-                    logger_js_1.logger.info('[OpenSpaceProcessManager] sending SIGTERM');
+                    logger.info('[OpenSpaceProcessManager] sending SIGTERM');
                     this.processHandle.kill('SIGTERM');
                     await this.waitForExit(FORCE_STOP_TIMEOUT);
                 }
                 if (this.processHandle && this.processHandle.pid) {
-                    logger_js_1.logger.info('[OpenSpaceProcessManager] sending SIGKILL');
+                    logger.info('[OpenSpaceProcessManager] sending SIGKILL');
                     this.processHandle.kill('SIGKILL');
                 }
             }
             catch (err) {
-                logger_js_1.logger.error(`[OpenSpaceProcessManager] stop error: ${err.message}`);
+                logger.error(`[OpenSpaceProcessManager] stop error: ${err.message}`);
             }
         }
         this.processHandle = null;
@@ -304,5 +301,4 @@ class OpenSpaceProcessManager {
         this.wsPort = port;
     }
 }
-exports.OpenSpaceProcessManager = OpenSpaceProcessManager;
 //# sourceMappingURL=process-manager.js.map

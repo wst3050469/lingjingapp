@@ -1,11 +1,8 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.createDefaultProfile = exports.DEFAULT_USER_MODELER_CONFIG = void 0;
-exports.DEFAULT_USER_MODELER_CONFIG = {
+export const DEFAULT_USER_MODELER_CONFIG = {
     enabled: true,
     persistInterval: 60000,
 };
-const createDefaultProfile = (id) => ({
+export const createDefaultProfile = (id) => ({
     id,
     codingStyle: [],
     techStack: [],
@@ -14,5 +11,4 @@ const createDefaultProfile = (id) => ({
     decisionHistory: [],
     lastUpdated: Date.now(),
 });
-exports.createDefaultProfile = createDefaultProfile;
 //# sourceMappingURL=types.js.map

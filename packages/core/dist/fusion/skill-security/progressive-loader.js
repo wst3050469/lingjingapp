@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProgressiveLoader = void 0;
-class ProgressiveLoader {
+export class ProgressiveLoader {
     loadedSkills = new Map();
     async loadMetadata(skillPath) {
         const existing = this.loadedSkills.get(skillPath);
@@ -84,5 +81,4 @@ class ProgressiveLoader {
         };
     }
 }
-exports.ProgressiveLoader = ProgressiveLoader;
 //# sourceMappingURL=progressive-loader.js.map

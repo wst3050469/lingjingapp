@@ -1,19 +1,16 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.SkillSecurityLoader = void 0;
-const types_js_1 = require("./types.js");
-const security_scanner_js_1 = require("./security-scanner.js");
-const progressive_loader_js_1 = require("./progressive-loader.js");
-class SkillSecurityLoader {
+import { DEFAULT_SECURITY_CONFIG } from './types.js';
+import { SecurityScanner } from './security-scanner.js';
+import { ProgressiveLoader } from './progressive-loader.js';
+export class SkillSecurityLoader {
     config;
     scanner;
     loader;
     eventBus = null;
     hookRegistry = null;
     constructor(config) {
-        this.config = { ...types_js_1.DEFAULT_SECURITY_CONFIG, ...config };
-        this.scanner = new security_scanner_js_1.SecurityScanner(this.config);
-        this.loader = new progressive_loader_js_1.ProgressiveLoader();
+        this.config = { ...DEFAULT_SECURITY_CONFIG, ...config };
+        this.scanner = new SecurityScanner(this.config);
+        this.loader = new ProgressiveLoader();
     }
     initialize(eventBus, hookRegistry) {
         this.eventBus = eventBus;
@@ -68,5 +65,4 @@ class SkillSecurityLoader {
         return { healthy: this.config.enabled };
     }
 }
-exports.SkillSecurityLoader = SkillSecurityLoader;
 //# sourceMappingURL=skill-security-loader.js.map

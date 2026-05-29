@@ -176,7 +176,12 @@ export class PipelineEngine {
         return new Promise(resolve => {
             const timeout = task.timeout || 300000;
             const cwd = task.workingDirectory || process.cwd();
-            const proc = spawn('sh', ['-c', task.command], {
+            
+            const isWindows = process.platform === 'win32';
+            const shell = isWindows ? 'cmd.exe' : 'sh';
+            const args = isWindows ? ['/c', task.command] : ['-c', task.command];
+
+            const proc = spawn(shell, args, {
                 cwd,
                 env: { ...process.env, ...task.env },
             });

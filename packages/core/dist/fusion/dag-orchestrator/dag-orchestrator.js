@@ -1,8 +1,5 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DAGOrchestrator = void 0;
-const logger_js_1 = require("../../utils/logger.js");
-class DAGOrchestrator {
+import { logger } from '../../utils/logger.js';
+export class DAGOrchestrator {
     eventBus = null;
     executeNode;
     healthy = true;
@@ -107,7 +104,7 @@ class DAGOrchestrator {
             }
             catch (err) {
                 lastError = err;
-                logger_js_1.logger.warn(`[DAGOrchestrator] node execution attempt ${attempt + 1} failed: ${lastError.message}`);
+                logger.warn(`[DAGOrchestrator] node execution attempt ${attempt + 1} failed: ${lastError.message}`);
                 if (attempt < maxRetries && retryDelay > 0) {
                     await new Promise((resolve) => setTimeout(resolve, retryDelay));
                 }
@@ -215,5 +212,4 @@ class DAGOrchestrator {
         return { healthy: this.healthy };
     }
 }
-exports.DAGOrchestrator = DAGOrchestrator;
 //# sourceMappingURL=dag-orchestrator.js.map

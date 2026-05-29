@@ -1,1 +1,1 @@
-{"version":3,"file":"types.js","sourceRoot":"","sources":["../../../src/fusion/trace-harvester/types.ts"],"names":[],"mappings":";;;AA4Ba,QAAA,8BAA8B,GAAyB;IAClE,OAAO,EAAE,IAAI;IACb,YAAY,EAAE,CAAC;IACf,gBAAgB,EAAE,KAAK;CACxB,CAAC"}
+{"version":3,"file":"types.js","sourceRoot":"","sources":["../../../src/fusion/trace-harvester/types.ts"],"names":[],"mappings":"AA4BA,MAAM,CAAC,MAAM,8BAA8B,GAAyB;IAClE,OAAO,EAAE,IAAI;IACb,YAAY,EAAE,CAAC;IACf,gBAAgB,EAAE,KAAK;CACxB,CAAC"}

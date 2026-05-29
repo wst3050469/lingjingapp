@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.FusionInitializer = void 0;
-const logger_js_1 = require("../utils/logger.js");
+import { logger } from '../utils/logger.js';
 const INIT_ORDER = [
     'eventBus',
     'hookRegistry',
@@ -16,7 +13,7 @@ const INIT_ORDER = [
     'nlCron',
     'userModeler',
 ];
-class FusionInitializer {
+export class FusionInitializer {
     moduleStates = new Map();
     eventBus = null;
     hookRegistry = null;
@@ -57,7 +54,7 @@ class FusionInitializer {
             }
             catch (err) {
                 const errorMsg = err.message;
-                logger_js_1.logger.warn(`[FusionInitializer] module "${moduleName}" init failed: ${errorMsg}`);
+                logger.warn(`[FusionInitializer] module "${moduleName}" init failed: ${errorMsg}`);
                 this.moduleStates.set(moduleName, { enabled: true, healthy: false, initialized: false, error: errorMsg });
                 failed.push({ module: moduleName, error: errorMsg });
                 degraded.push(moduleName);
@@ -132,5 +129,4 @@ class FusionInitializer {
         return map[moduleName];
     }
 }
-exports.FusionInitializer = FusionInitializer;
 //# sourceMappingURL=fusion-initializer.js.map

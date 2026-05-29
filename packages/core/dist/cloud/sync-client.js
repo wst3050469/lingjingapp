@@ -1,9 +1,6 @@
-"use strict";
 // Cloud sync client v2 - 灵境云端同步客户端
 // Uses HTTP REST API + WebSocket + JWT auth for real-time cloud integration
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CloudSyncClient = void 0;
-const offline_queue_js_1 = require("./offline-queue.js");
+import { OfflineQueue } from './offline-queue.js';
 const DEFAULT_SERVER = 'https://ide.zhejiangjinmo.com';
 const DEFAULT_API_KEY = process.env.LINGJING_API_KEY || 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8';
 function generateDeviceId() {
@@ -13,7 +10,7 @@ function generateDeviceId() {
     });
     return hex;
 }
-class CloudSyncClient {
+export class CloudSyncClient {
     url;
     apiKey;
     enabled;
@@ -38,7 +35,7 @@ class CloudSyncClient {
         this.deviceName = options.deviceName || `LingJing-${typeof process !== 'undefined' ? process.platform : 'web'}-${this.deviceId.slice(0, 6)}`;
         this.userId = options.userId || null;
         this.isDesktop = options.isDesktop !== false && (typeof process !== 'undefined' && !!process.platform);
-        this.queue = new offline_queue_js_1.OfflineQueue({
+        this.queue = new OfflineQueue({
             onFlush: async (items) => {
                 for (const item of items) {
                     try {
@@ -461,5 +458,4 @@ class CloudSyncClient {
         this.removeAllListeners();
     }
 }
-exports.CloudSyncClient = CloudSyncClient;
 //# sourceMappingURL=sync-client.js.map

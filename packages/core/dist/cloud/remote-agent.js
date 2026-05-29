@@ -1,16 +1,11 @@
-"use strict";
 // 灵境 Cloud 远程代理客户端
 // CloudAgent client for executing tasks on remote cloud environment
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CloudAgentClient = void 0;
-exports.createCloudAgentTool = createCloudAgentTool;
-exports.createCloudAgentStatusTool = createCloudAgentStatusTool;
 function toError(err) {
     if (err instanceof Error)
         return err;
     return new Error(typeof err === 'string' ? err : JSON.stringify(err));
 }
-class CloudAgentClient {
+export class CloudAgentClient {
     config;
     sessions = new Map();
     _runningCount = 0;
@@ -166,8 +161,7 @@ class CloudAgentClient {
         this.sessions.clear();
     }
 }
-exports.CloudAgentClient = CloudAgentClient;
-function createCloudAgentTool(client) {
+export function createCloudAgentTool(client) {
     return {
         name: 'cloud_agent',
         description: 'Execute agent tasks on a remote cloud environment. Useful for resource-intensive tasks or distributed processing.',
@@ -236,7 +230,7 @@ function createCloudAgentTool(client) {
         },
     };
 }
-function createCloudAgentStatusTool(client) {
+export function createCloudAgentStatusTool(client) {
     return {
         name: 'cloud_agent_status',
         description: 'Check the status of a cloud agent session',

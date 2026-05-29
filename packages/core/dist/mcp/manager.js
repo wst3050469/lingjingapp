@@ -1,10 +1,7 @@
-"use strict";
 // MCP Manager - manages multiple MCP server connections and bridges tools to ToolRegistry
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.McpManager = void 0;
-const client_js_1 = require("./client.js");
-const sse_client_js_1 = require("./sse-client.js");
-const logger_js_1 = require("../utils/logger.js");
+import { McpClient } from './client.js';
+import { McpSseClient } from './sse-client.js';
+import { logger } from '../utils/logger.js';
 function classifyMcpError(err) {
     const msg = err.message.toLowerCase();
     if (msg.includes('spawn') || msg.includes('enoent') || msg.includes('command not found') || msg.includes('process exited')) {
@@ -21,7 +18,7 @@ function classifyMcpError(err) {
     }
     return { errorCategory: 'network', error: err.message };
 }
-class McpManager {
+export class McpManager {
     clients = new Map();
     serverStates = new Map();
     async addServer(name, config) {
@@ -32,16 +29,16 @@ class McpManager {
         let client;
         try {
             if (config.type === 'sse' || config.url) {
-                const sseClient = new sse_client_js_1.McpSseClient(name, config);
+                const sseClient = new McpSseClient(name, config);
                 await sseClient.connect();
                 client = sseClient;
-                logger_js_1.logger.info(`[MCP:${name}] Connected via ${config.type || 'sse'} to ${config.url}`);
+                logger.info(`[MCP:${name}] Connected via ${config.type || 'sse'} to ${config.url}`);
             }
             else {
-                const stdioClient = new client_js_1.McpClient(name, config);
+                const stdioClient = new McpClient(name, config);
                 await stdioClient.connect();
                 client = stdioClient;
-                logger_js_1.logger.info(`[MCP:${name}] Connected via STDIO`);
+                logger.info(`[MCP:${name}] Connected via STDIO`);
             }
             this.clients.set(name, client);
             this.updateServerState(name, config, 'connected', client.serverInfo, client.tools);
@@ -50,7 +47,7 @@ class McpManager {
         catch (err) {
             const classified = classifyMcpError(err instanceof Error ? err : new Error(String(err)));
             this.updateServerState(name, config, 'connect-failed', undefined, undefined, classified.error, classified.errorCategory);
-            logger_js_1.logger.error(`[MCP:${name}] Connection failed: ${classified.error}`);
+            logger.error(`[MCP:${name}] Connection failed: ${classified.error}`);
             return { success: false, error: classified.error, errorCategory: classified.errorCategory };
         }
     }
@@ -114,7 +111,6 @@ class McpManager {
         });
     }
 }
-exports.McpManager = McpManager;
 /**
  * Converts an MCP tool definition into a CodePilot Tool object.
  * The resulting tool delegates execution to the MCP server via the client.
@@ -145,7 +141,7 @@ function createMcpToolAdapter(serverName, mcpTool, client) {
                     .map((c) => c.text)
                     .join('\n');
                 if (result.isError) {
-                    logger_js_1.logger.warn(`[MCP:${serverName}] Tool ${mcpTool.name} returned error: ${text}`);
+                    logger.warn(`[MCP:${serverName}] Tool ${mcpTool.name} returned error: ${text}`);
                 }
                 return {
                     content: text || '(no output)',
@@ -155,7 +151,7 @@ function createMcpToolAdapter(serverName, mcpTool, client) {
             catch (err) {
                 const durationMs = Date.now() - startTime;
                 const message = err instanceof Error ? err.message : String(err);
-                logger_js_1.logger.error(`[MCP:${serverName}] Tool ${mcpTool.name} failed (${durationMs}ms): ${message}`);
+                logger.error(`[MCP:${serverName}] Tool ${mcpTool.name} failed (${durationMs}ms): ${message}`);
                 return {
                     content: `MCP工具错误: ${message}`,
                     isError: true,

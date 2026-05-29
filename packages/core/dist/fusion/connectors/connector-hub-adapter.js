@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ConnectorHubAdapter = void 0;
-class ConnectorHubAdapter {
+export class ConnectorHubAdapter {
     connectors = new Map();
     register(connector) {
         this.connectors.set(connector.name, connector);
@@ -20,5 +17,4 @@ class ConnectorHubAdapter {
         return connector.execute(action, params);
     }
 }
-exports.ConnectorHubAdapter = ConnectorHubAdapter;
 //# sourceMappingURL=connector-hub-adapter.js.map

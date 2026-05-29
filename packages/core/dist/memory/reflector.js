@@ -1,4 +1,3 @@
-"use strict";
 // Memory Reflector — periodic reflection and knowledge synthesis
 //
 // Layer 3 of the 3-layer memory evolution system.
@@ -6,9 +5,7 @@
 // user preferences/project knowledge, and updates the Rules system.
 //
 // Inspired by Hermes Agent's Honcho dialectic user modeling.
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.MemoryReflector = void 0;
-const logger_js_1 = require("../utils/logger.js");
+import { logger } from '../utils/logger.js';
 const REFLECTION_PROMPT = `You are a memory synthesis engine. Given a list of memories from an AI coding assistant's persistent memory, synthesize a concise user profile and project context summary.
 
 Analyze patterns across these memories and extract:
@@ -29,7 +26,7 @@ Analyze patterns across these memories and extract:
    - What was chosen and why
 
 Output in markdown. Keep it actionable — this summary will be injected into future conversations as context.`;
-class MemoryReflector {
+export class MemoryReflector {
     config;
     lastReflection = 0;
     constructor(config) {
@@ -87,14 +84,13 @@ class MemoryReflector {
                 reflectedAt: new Date(),
             };
             this.lastReflection = Date.now();
-            logger_js_1.logger.info(`[MemoryReflector] Synthesized profile from ${memories.length} memories (${synthesis.length} chars)`);
+            logger.info(`[MemoryReflector] Synthesized profile from ${memories.length} memories (${synthesis.length} chars)`);
             return result;
         }
         catch (err) {
-            logger_js_1.logger.warn(`[MemoryReflector] Reflection failed: ${err instanceof Error ? err.message : String(err)}`);
+            logger.warn(`[MemoryReflector] Reflection failed: ${err instanceof Error ? err.message : String(err)}`);
             return null;
         }
     }
 }
-exports.MemoryReflector = MemoryReflector;
 //# sourceMappingURL=reflector.js.map

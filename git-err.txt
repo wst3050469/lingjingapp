@@ -1,0 +1,1 @@
+fatal: unable to access 'https://github.com/wst3050469/lingjing.git/': Failed to connect to github.com port 443 after 21077 ms: Could not connect to server

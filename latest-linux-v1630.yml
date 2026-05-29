@@ -1,0 +1,8 @@
+version: 1.63.0
+files:
+  - url: LingJing-1.63.0-linux-x86_64.AppImage
+    sha512: sHs8+OydLsftKXAtJYG9/qzHpncZO3iyRYt0DRciQx9edLpgpvBmjbrkTMO4S90Q9S/NEjlfTvo7CwiLHgzhMQ==
+    size: 183533943
+path: LingJing-1.63.0-linux-x86_64.AppImage
+sha512: sHs8+OydLsftKXAtJYG9/qzHpncZO3iyRYt0DRciQx9edLpgpvBmjbrkTMO4S90Q9S/NEjlfTvo7CwiLHgzhMQ==
+releaseDate: '2026-05-30T12:00:00.000Z'

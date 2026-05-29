@@ -1,0 +1,11 @@
+version: 1.63.0
+files:
+  - url: LingJing-Setup-1.63.0-win-x64.exe
+    sha512: E7p0VTROKB3XPyrgxV9KI8IYyWzI6yR0yayHJh9F1U/Z4NkA+zF571f5epIv2FaWgvP193jCT1N6ReLUZdXWmg==
+    size: 142209253
+  - url: LingJing-Portable-1.63.0-win-x64.exe
+    sha512: aPXSnAVFi1GCdeyPmsFcAjL1JQa6ElJvLMSK6/QlOoYx8tjzV9yX1iiY/+sFfDyBf5IccNarmgRxbqT3UFrhig==
+    size: 141867721
+path: LingJing-Setup-1.63.0-win-x64.exe
+sha512: E7p0VTROKB3XPyrgxV9KI8IYyWzI6yR0yayHJh9F1U/Z4NkA+zF571f5epIv2FaWgvP193jCT1N6ReLUZdXWmg==
+releaseDate: '2026-05-30T12:00:00.000Z'

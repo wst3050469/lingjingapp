@@ -32,6 +32,12 @@ export declare class CloudSyncClient {
     private _retryAutoRegister;
     authHeaders(): Record<string, string>;
     _directRequest(method: string, path: string, body?: any): Promise<any>;
+    /**
+     * Fallback HTTP request using Node.js native http/https module.
+     * Used when fetch() fails (e.g. in Electron ASAR with proxy/TLS issues).
+     * This is NOT available in browser/Web mode — requires Node.js http/https modules.
+     */
+    private _nativeHttpRequest;
     request(method: string, path: string, body?: any): Promise<any>;
     setToken(token: string): void;
     clearToken(): void;

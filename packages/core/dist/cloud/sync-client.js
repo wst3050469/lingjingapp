@@ -136,16 +136,86 @@ export class CloudSyncClient {
         return headers;
     }
     async _directRequest(method, path, body) {
-        const res = await fetch(`${this.url}/api${path}`, {
-            method,
-            headers: this.authHeaders(),
-            body: body ? JSON.stringify(body) : undefined,
-        });
-        if (!res.ok) {
-            const text = await res.text().catch(() => 'Unknown');
-            throw new Error(`Cloud API ${res.status}: ${text}`);
+        // Primary: use fetch (works in modern Node.js and browsers)
+        const fetchFn = async () => {
+            const res = await fetch(`${this.url}/api${path}`, {
+                method,
+                headers: this.authHeaders(),
+                body: body ? JSON.stringify(body) : undefined,
+            });
+            if (!res.ok) {
+                const text = await res.text().catch(() => 'Unknown');
+                throw new Error(`Cloud API ${res.status}: ${text}`);
+            }
+            return res.json();
+        };
+        try {
+            return await fetchFn();
         }
-        return res.json();
+        catch (fetchErr) {
+            // Fallback: try native http/https module for ASAR/proxy compatibility (Bug 8 fix)
+            try {
+                return await this._nativeHttpRequest(method, path, body);
+            }
+            catch {
+                // Throw the original fetch error, it's more descriptive
+                throw fetchErr;
+            }
+        }
+    }
+    /**
+     * Fallback HTTP request using Node.js native http/https module.
+     * Used when fetch() fails (e.g. in Electron ASAR with proxy/TLS issues).
+     * This is NOT available in browser/Web mode — requires Node.js http/https modules.
+     */
+    async _nativeHttpRequest(method, path, body) {
+        let httpModule, httpsModule, urlModule;
+        try {
+            httpModule = require('http');
+            httpsModule = require('https');
+            urlModule = require('url');
+        }
+        catch {
+            throw new Error('Native HTTP modules not available (not running in Node.js)');
+        }
+        const url = `${this.url}/api${path}`;
+        const parsedUrl = new urlModule.URL(url);
+        const lib = parsedUrl.protocol === 'https:' ? httpsModule : httpModule;
+        const headers = this.authHeaders();
+        return new Promise((resolve, reject) => {
+            const bodyData = body ? JSON.stringify(body) : undefined;
+            if (bodyData)
+                headers['Content-Length'] = Buffer.byteLength(bodyData).toString();
+            const req = lib.request(parsedUrl, { method, headers, timeout: 15000 }, (res) => {
+                const chunks = [];
+                res.on('data', (chunk) => chunks.push(chunk));
+                res.on('end', () => {
+                    const raw = Buffer.concat(chunks).toString('utf8');
+                    try {
+                        const parsed = JSON.parse(raw);
+                        if (res.statusCode >= 200 && res.statusCode < 300) {
+                            resolve(parsed);
+                        }
+                        else {
+                            reject(new Error(parsed.error || `HTTP ${res.statusCode}`));
+                        }
+                    }
+                    catch {
+                        if (res.statusCode >= 200 && res.statusCode < 300) {
+                            resolve(raw);
+                        }
+                        else {
+                            reject(new Error(`HTTP ${res.statusCode}: ${raw.slice(0, 200)}`));
+                        }
+                    }
+                });
+            });
+            req.on('error', (err) => reject(err));
+            req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });
+            if (bodyData)
+                req.write(bodyData);
+            req.end();
+        });
     }
     async request(method, path, body) {
         return this._directRequest(method, path, body);
@@ -203,8 +273,15 @@ export class CloudSyncClient {
             const data = await res.json();
             return { ok: data?.status === 'ok' };
         }
-        catch (err) {
-            return { ok: false, error: err instanceof Error ? err.message : String(err) };
+        catch (fetchErr) {
+            // Fallback: try native http/https module (Bug 8 fix)
+            try {
+                const result = await this._nativeHttpRequest('GET', '/health');
+                return { ok: result?.status === 'ok' };
+            }
+            catch {
+                return { ok: false, error: fetchErr instanceof Error ? fetchErr.message : String(fetchErr) };
+            }
         }
     }
     // ── WebSocket ──

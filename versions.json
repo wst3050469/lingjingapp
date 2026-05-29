@@ -1,0 +1,100 @@
+{
+  "latest": "1.62.3",
+  "versions": [
+    {
+      "version": "1.62.3",
+      "status": "published",
+      "releaseDate": "2026-05-30",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.62.3-win-x64.exe",
+          "size": 142204523
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.62.3-win-x64.exe",
+          "size": 141863003
+        },
+        "win-x64-blockmap": {
+          "url": "/downloads/LingJing-Setup-1.62.3-win-x64.exe.blockmap",
+          "size": 148752
+        }
+      },
+      "releaseNotes": "v1.62.3",
+      "features": [
+        "Fix: TodoTracker missing in streaming responses",
+        "Fix: Todo persistence across task switches",
+        "Fix: Empty todo list now shows placeholder"
+      ]
+    },
+    {
+      "version": "1.62.0",
+      "status": "published",
+      "releaseDate": "2026-05-29",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.62.0-win-x64.exe",
+          "size": 142204585
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.62.0-win-x64.exe",
+          "size": 141863065
+        },
+        "win-x64-blockmap": {
+          "url": "/downloads/LingJing-Setup-1.62.0-win-x64.exe.blockmap",
+          "size": 148904
+        },
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.62.0-linux-x86_64.AppImage",
+          "size": 184549376
+        },
+        "linux-deb": {
+          "url": "/downloads/LingJing-1.62.0-linux-x86_64.deb",
+          "size": 212000000
+        }
+      },
+      "releaseNotes": "v1.62.0",
+      "features": [
+        "Fix A-G: conversation fixes"
+      ]
+    },
+    {
+      "version": "1.61.1",
+      "status": "published",
+      "releaseDate": "2026-05-29",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.61.1-win-x64.exe",
+          "size": 142200287
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.61.1-win-x64.exe",
+          "size": 141858740
+        },
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.61.1-linux-x86_64.AppImage",
+          "size": 183533011
+        }
+      },
+      "releaseNotes": "v1.61.1: fix blank page"
+    },
+    {
+      "version": "1.61.0",
+      "status": "published",
+      "releaseDate": "2026-05-29",
+      "platforms": {
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.61.0-linux-x86_64.AppImage",
+          "size": 183533038
+        },
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.61.0-win-x64.exe",
+          "size": 142021614
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.61.0-win-x64.exe",
+          "size": 141680103
+        }
+      }
+    }
+  ]
+}

@@ -926,3 +926,32 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
 });
+
+// ── 兼容层：暴露 window.electron.ipcRenderer ──
+// 部分代码（useWorkspace, pipeline-store, pm-store, review-store, security-store, AdminPanel）
+// 使用 window.electron.ipcRenderer，但 contextBridge 只暴露了 window.electronAPI。
+// 此处补充暴露 window.electron，避免 "Cannot read properties of undefined (reading 'ipcRenderer')"
+const listenerMap = new Map<(...args: any[]) => void, (...args: any[]) => void>();
+
+contextBridge.exposeInMainWorld('electron', {
+  ipcRenderer: {
+    invoke: (channel: string, ...args: unknown[]) => ipcRenderer.invoke(channel, ...args),
+    send: (channel: string, ...args: unknown[]) => ipcRenderer.send(channel, ...args),
+    sendSync: (channel: string, ...args: unknown[]) => ipcRenderer.sendSync(channel, ...args),
+    on: (channel: string, listener: (...args: any[]) => void) => {
+      const wrapped = (_event: Electron.IpcRendererEvent, ...args: any[]) => listener(...args);
+      listenerMap.set(listener, wrapped);
+      ipcRenderer.on(channel, wrapped);
+    },
+    removeListener: (channel: string, listener: (...args: any[]) => void) => {
+      const wrapped = listenerMap.get(listener);
+      if (wrapped) {
+        ipcRenderer.removeListener(channel, wrapped);
+        listenerMap.delete(listener);
+      }
+    },
+    removeAllListeners: (channel: string) => {
+      ipcRenderer.removeAllListeners(channel);
+    },
+  },
+});

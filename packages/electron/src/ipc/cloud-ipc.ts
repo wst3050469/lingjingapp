@@ -20,7 +20,8 @@ const logger = console;
 let cloudClient: CloudSyncClient | null = null;
 let mainWindow: BrowserWindow | null = null;
 let cloudRetryTimer: ReturnType<typeof setInterval> | null = null;
-let isConnecting = false; // Prevents dual client creation during auto-connect
+let isConnecting = false; // Prevents dual client creation during manual connect
+let isAutoConnecting = false; // Separate flag for auto-connect (Bug 4 fix)
 
 // ── Config Persistence ──
 
@@ -113,12 +114,22 @@ export function registerCloudIpc(win: BrowserWindow): void {
       ]);
       if (wsTimeout) clearTimeout(wsTimeout);
 
-      const healthy = await cloudClient.healthCheck().catch(e => {
-        console.warn('[Cloud] healthCheck failed after WS connected:', e);
-        return false;
-      });
+      let healthy = false;
+      if (wsConnected) {
+        healthy = await cloudClient.healthCheck().catch(e => {
+          console.warn('[Cloud] healthCheck failed after WS connected:', e);
+          return false;
+        });
+      } else {
+        console.warn('[Cloud] WebSocket did not connect within timeout');
+      }
       isConnecting = false;
-      return { connected: true, healthy, wsConnected, registered, deviceId: cloudClient.getDeviceId() };
+      const isConnected = wsConnected && healthy;
+      // Notify renderer if connection failed (Bug 1 fix)
+      if (!isConnected) {
+        win.webContents.send('cloud:status', { connected: false, healthy: false, error: wsConnected ? 'healthCheck failed' : 'WebSocket connection timeout' });
+      }
+      return { connected: isConnected, healthy, wsConnected, registered, deviceId: cloudClient.getDeviceId() };
     } catch (err) {
       isConnecting = false;
       console.error('[Cloud] cloud:connect failed:', err instanceof Error ? (err.stack || err.message) : String(err));
@@ -138,6 +149,12 @@ export function registerCloudIpc(win: BrowserWindow): void {
 
   ipcMain.handle('cloud:status', async () => {
     if (!cloudClient) return { connected: false, healthy: false };
+    // Check actual WebSocket readyState (Bug 2+5 fix)
+    const ws = (cloudClient as any).ws as WebSocket | null;
+    const wsOpen = ws !== null && ws.readyState === WebSocket.OPEN;
+    if (!wsOpen) {
+      return { connected: false, healthy: false, error: 'WebSocket not open (readyState=' + (ws?.readyState ?? -1) + ')' };
+    }
     // Use Node http for healthCheck (fetch may fail in ASAR environment)
     let healthy = false;
     try {
@@ -156,7 +173,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
         req.on('timeout', () => { req.destroy(); resolve(false); });
       });
     } catch { healthy = false; }
-    return { connected: true, healthy };
+    return { connected: wsOpen && healthy, healthy };
   });
 
   /** Set user JWT token on the sync client (after cloud account login) */
@@ -351,12 +368,12 @@ export function registerCloudIpc(win: BrowserWindow): void {
 
 /** Auto-connect to cloud on app start (if configured). Retries persistently. */
 export async function autoConnectCloud(): Promise<void> {
-  // Prevent dual client creation when cloud:connect is also being called
-  if (isConnecting) {
-    console.log('[Cloud] Already connecting, skipping auto-connect');
+  // Prevent dual auto-connect attempts (Bug 4 fix: separate flag from manual connect)
+  if (isAutoConnecting) {
+    console.log('[Cloud] Already auto-connecting, skipping');
     return;
   }
-  isConnecting = true;
+  isAutoConnecting = true;
 
   // Helper: attempt a single connection
   const tryConnect = async (): Promise<boolean> => {
@@ -429,12 +446,15 @@ export async function autoConnectCloud(): Promise<void> {
         console.log('[Cloud] Auto-connected to cloud server successfully');
         return true;
       } else {
-        // WebSocket might still connect later via its own reconnect logic
-        console.log('[Cloud] WebSocket connecting, health check pending...');
-        return true; // Don't retry — WebSocket will handle reconnection
+        // WebSocket connected but health check failed — meaningful failure, should retry
+        console.log('[Cloud] WebSocket connected but health check failed');
+        mainWindow?.webContents.send('cloud:status', { connected: false, healthy: false, error: 'healthCheck failed' });
+        return false; // Will trigger retry loop
       }
     } catch (err) {
       console.log('[Cloud] Auto-connect failed:', (err as Error).message);
+      // Notify renderer that connection failed
+      mainWindow?.webContents.send('cloud:status', { connected: false, healthy: false, error: 'Auto-connect failed: ' + (err as Error).message });
       return false;
     }
   };
@@ -476,7 +496,7 @@ export async function autoConnectCloud(): Promise<void> {
     console.log('[Cloud] Initial connect failed, starting persistent retry loop');
     startRetryLoop();
   }
-  isConnecting = false;
+  isAutoConnecting = false;
 
   // Also schedule quick retries at 10s and 30s before falling back to 60s interval
   setTimeout(async () => {

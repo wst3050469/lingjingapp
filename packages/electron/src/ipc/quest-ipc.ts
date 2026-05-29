@@ -1268,6 +1268,39 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
   }
 
+  /** Persist current todo list to the database for a task */
+  function saveTodoList(taskId: string): void {
+    try {
+      const todoItems = getTodoList();
+      const db = getDatabase();
+      const json = JSON.stringify(todoItems);
+      db.run(`UPDATE quest_tasks SET todo_data = ?, updated_at = datetime('now') WHERE id = ?`, [json, taskId]);
+    } catch { /* non-critical */ }
+  }
+
+  /** Restore todo list from the database into the in-memory todo store */
+  function restoreTodoList(taskId: string): void {
+    try {
+      const db = getDatabase();
+      const stmt = db.prepare(`SELECT todo_data FROM quest_tasks WHERE id = ?`);
+      stmt.bind([taskId]);
+      if (stmt.step()) {
+        const row = stmt.getAsObject() as Record<string, unknown>;
+        const json = row.todo_data as string;
+        if (json) {
+          const items = JSON.parse(json);
+          if (Array.isArray(items) && items.length > 0) {
+            const current = getTodoList();
+            current.length = 0;
+            current.push(...items);
+          }
+        }
+      }
+      stmt.free();
+    } catch { /* non-critical */ }
+  }
+
+
 
 
   function emitFileSnapshot(data: {
@@ -2184,6 +2217,10 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     sendQuestEvent({ type: 'status_change', taskId, status: 'running', runId });
 
+    // Sync current todo list state to renderer when agent starts
+    restoreTodoList(taskId);
+    emitTodoUpdate(getTodoList() as Array<{ content: string; status: string }>);
+
 
 
     try {
@@ -2240,6 +2277,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
         const db = getDatabase();
 
+      saveTodoList(taskId);
         db.run(`UPDATE quest_tasks SET status = 'completed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
         saveDatabase().catch(() => {});
@@ -2290,6 +2328,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
           const db = getDatabase();
 
+      saveTodoList(taskId);
           db.run(`UPDATE quest_tasks SET status = 'failed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
           await saveDatabase();
@@ -2366,6 +2405,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       const db = getDatabase();
 
+      saveTodoList(taskId);
       db.run(`UPDATE quest_tasks SET status = 'failed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
       await saveDatabase();
@@ -2404,6 +2444,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       const db = getDatabase();
 
+      saveTodoList(taskId);
       db.run(`UPDATE quest_tasks SET status = 'paused', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
       await saveDatabase();
@@ -2808,6 +2849,10 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     sendQuestEvent({ type: 'status_change', taskId, status: 'running', runId });
 
+    // Sync current todo list state to renderer when resuming
+    restoreTodoList(taskId);
+    emitTodoUpdate(getTodoList() as Array<{ content: string; status: string }>);
+
 
 
     const resumeMessage = message || 'Continue from where you left off. Review our conversation history and proceed with the next steps.';
@@ -2906,7 +2951,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
       try {
 
         const db2 = getDatabase();
-
+        saveTodoList(taskId);
         db2.run(`UPDATE quest_tasks SET status = 'completed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
         saveDatabase().catch(() => {});
@@ -2953,6 +2998,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
           const db2 = getDatabase();
 
+      saveTodoList(taskId);
           db2.run(`UPDATE quest_tasks SET status = 'failed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
           await saveDatabase();
@@ -3053,6 +3099,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       const db = getDatabase();
 
+      saveTodoList(taskId);
       db.run(`UPDATE quest_tasks SET status = 'paused', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
       await saveDatabase();

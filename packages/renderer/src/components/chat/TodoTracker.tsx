@@ -5,13 +5,12 @@ export function TodoTracker() {
   const items = useTodoStore((s) => s.items);
   const [collapsed, setCollapsed] = useState(false);
 
-  if (items.length === 0) return null;
-
   const completed = items.filter((i) => i.status === 'completed').length;
   const total = items.length;
+  const isEmpty = items.length === 0;
 
   return (
-    <div className="bg-white/[0.02] border border-cp-border/40 rounded-lg overflow-hidden">
+    <div className={`bg-white/[0.02] border rounded-lg overflow-hidden ${isEmpty ? 'border-cp-border/20 opacity-60' : 'border-cp-border/40'}`}>
       {/* Header */}
       <button
         onClick={() => setCollapsed(!collapsed)}
@@ -29,15 +28,22 @@ export function TodoTracker() {
           </svg>
           <span className="text-cp-text font-medium">待办</span>
         </div>
-        <span className="text-cp-text-dim/60">{completed}/{total} 已完成</span>
+        <span className="text-cp-text-dim/60">{isEmpty ? '暂无任务' : `${completed}/${total} 已完成`}</span>
       </button>
 
-      {/* Items */}
+      {/* Items or empty placeholder */}
       {!collapsed && (
         <div className="border-t border-cp-border/30 divide-y divide-cp-border/20">
-          {items.map((item, i) => (
-            <TodoItemRow key={i} item={item} />
-          ))}
+          {isEmpty ? (
+            <div className="px-3 py-3 flex flex-col items-center gap-1.5">
+              <span className="text-cp-text-dim/40 text-[10px]">暂无待办事项</span>
+              <span className="text-cp-text-dim/30 text-[9px]">AI 执行任务时将自动生成待办列表</span>
+            </div>
+          ) : (
+            items.map((item, i) => (
+              <TodoItemRow key={i} item={item} />
+            ))
+          )}
         </div>
       )}
     </div>

@@ -354,7 +354,7 @@ export function ChatSidebar() {
           {isStreaming && <FileEditTracker />}
 
           {/* Todo tracker */}
-          {!isStreaming && <TodoTracker />}
+          <TodoTracker />
 
           {/* Diff review: file change summary after agent completes */}
           {!isStreaming && isReviewActive && <FileChangeSummary />}

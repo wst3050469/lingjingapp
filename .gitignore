@@ -85,3 +85,7 @@ server/tts_cache/
 # Local dev scripts
 scripts/codeserver-info.txt
 scripts/tunnel-codeserver.bat
+downloads/*.AppImage
+downloads/*.deb
+downloads/*.exe
+downloads/*.blockmap

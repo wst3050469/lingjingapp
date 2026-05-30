@@ -233,7 +233,7 @@ export class Agent {
     this.config = {
       maxTurns: 500,
       maxDuration: 0,              // no limit by default (config can override)
-      turnTimeout: 600_000,    // 10 minutes per turn
+      turnTimeout: 1_200_000,    // 20 minutes per turn (was 10 min - too short for complex tools)
       maxContextTokens: 128000,
       maxResponseTokens: 4096,
       temperature: 0.3,
@@ -465,7 +465,16 @@ export class Agent {
         }
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
-        
+
+        // Turn timeout: emit Chinese-friendly message to notify the user (NOT silently swallowed)
+        const isTurnTimeout = err.message.includes('Turn timeout');
+        if (isTurnTimeout) {
+          const turnTimeoutMin = Math.round(this.config.turnTimeout / 60000);
+          const friendlyMsg = `⏱️ 单轮超时：当前操作执行超过${turnTimeoutMin}分钟被自动中止。\n\n可能原因：\n- 命令执行时间过长\n- 网络请求等待过久\n- 模型思考时间过长\n\n建议：检查上方最后执行的操作，确认是否需要重新执行或调整参数。`;
+          this.emit({ type: 'error', error: new Error(friendlyMsg) });
+          throw err;
+        }
+
         // Don't emit error event for normal aborts
         const isAbortError = err.name === 'AbortError' || 
                              err.name === 'TimeoutError' ||

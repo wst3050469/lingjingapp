@@ -1,6 +1,39 @@
 // Anthropic Claude API provider implementation
 import { parseSSEStream } from './sse-parser.js';
 import { logger } from '../utils/logger.js';
+/**
+ * Check if an error is a transient network error that can be retried.
+ */
+function isRecoverableNetworkError(err) {
+    const msg = (err?.message || '').toLowerCase();
+    const name = (err?.name || '').toLowerCase();
+    if (name === 'aborterror' || name === 'timeouterror' || msg.includes('abort') || msg.includes('timeout')) return false;
+    return msg.includes('fetch failed') || msg.includes('econnreset') || msg.includes('econnrefused') ||
+        msg.includes('enotfound') || msg.includes('etimedout') || msg.includes('network') ||
+        msg.includes('dns') || msg.includes('eai_again') || msg.includes('socket') ||
+        msg.includes('tls') || msg.includes('ssl') || msg.includes('unable to connect');
+}
+async function fetchWithRetry(url, options = {}, maxRetries = 2) {
+    let lastError;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.status >= 500 && attempt < maxRetries) {
+                logger.warn(`[Anthropic] HTTP ${response.status} on attempt ${attempt+1}/${maxRetries+1}, retrying...`);
+                await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+                continue;
+            }
+            return response;
+        } catch (err) {
+            lastError = err;
+            if (!isRecoverableNetworkError(err) || attempt >= maxRetries) throw err;
+            const delay = Math.pow(2, attempt) * 1000;
+            logger.warn(`[Anthropic] Fetch failed attempt ${attempt+1}/${maxRetries+1}: ${err.message}. Retrying in ${delay}ms...`);
+            await new Promise(r => setTimeout(r, delay));
+        }
+    }
+    throw lastError;
+}
 export class AnthropicProvider {
     name = 'anthropic';
     model;
@@ -30,7 +63,7 @@ export class AnthropicProvider {
             body.temperature = request.temperature;
         }
         logger.debug('Anthropic request:', JSON.stringify(body, null, 2).slice(0, 500));
-        const response = await fetch(`${this.baseUrl}/v1/messages`, {
+        const response = await fetchWithRetry(`${this.baseUrl}/v1/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

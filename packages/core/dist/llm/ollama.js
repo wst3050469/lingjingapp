@@ -24,6 +24,40 @@ function signalWithTimeout(originalSignal, timeoutMs) {
             clearTimeout(timer); if (originalSignal)
             originalSignal.removeEventListener('abort', onOriginalAbort); } };
 }
+/**
+ * Check if an error is a transient network error that can be retried.
+ */
+function isRecoverableNetworkError(err) {
+    const msg = (err?.message || '').toLowerCase();
+    const name = (err?.name || '').toLowerCase();
+    if (name === 'aborterror' || name === 'timeouterror' || msg.includes('abort') || msg.includes('timeout')) return false;
+    return msg.includes('fetch failed') || msg.includes('econnreset') || msg.includes('econnrefused') ||
+        msg.includes('enotfound') || msg.includes('etimedout') || msg.includes('network') ||
+        msg.includes('dns') || msg.includes('eai_again') || msg.includes('socket') ||
+        msg.includes('tls') || msg.includes('ssl') || msg.includes('unable to connect') ||
+        msg.includes('could not connect');
+}
+async function fetchWithRetry(url, options = {}, maxRetries = 2) {
+    let lastError;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.status >= 500 && attempt < maxRetries) {
+                logger.warn(`[Ollama] HTTP ${response.status} on attempt ${attempt+1}/${maxRetries+1}, retrying...`);
+                await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+                continue;
+            }
+            return response;
+        } catch (err) {
+            lastError = err;
+            if (!isRecoverableNetworkError(err) || attempt >= maxRetries) throw err;
+            const delay = Math.pow(2, attempt) * 1000;
+            logger.warn(`[Ollama] Fetch failed attempt ${attempt+1}/${maxRetries+1}: ${err.message}. Retrying in ${delay}ms...`);
+            await new Promise(r => setTimeout(r, delay));
+        }
+    }
+    throw lastError;
+}
 export class OllamaProvider {
     name = 'ollama';
     model;
@@ -63,7 +97,7 @@ export class OllamaProvider {
             headers['Authorization'] = `Bearer ${this.apiKey}`;
         }
         logger.info(`[Ollama Native] model=${this.model}, msgs=${messages.length}, tools=${tools ? tools.length : 0}, endpoint=${this.baseUrl}/api/chat`);
-        const response = await fetch(`${this.baseUrl}/api/chat`, {
+        const response = await fetchWithRetry(`${this.baseUrl}/api/chat`, {
             method: 'POST',
             headers,
             body: JSON.stringify(body),

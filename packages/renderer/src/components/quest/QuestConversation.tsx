@@ -6,8 +6,8 @@ import { useQuestStore, generateQuestMessageId, type QuestMessage } from '../../
 import { useModelStore } from '../../stores/model-store';
 import { useTodoStore } from '../../stores/todo-store';
 import { useEditTrackerStore } from '../../stores/edit-tracker-store';
-import { useFileAttachments } from '../../hooks/useFileAttachments';
-import type { FileAttachment } from '../../hooks/useFileAttachments';
+import { useImageAttachments } from '../../hooks/useImageAttachments';
+import { useFileMentions } from '../../hooks/useFileMentions';
 import { useContextSelector } from '../../hooks/useContextSelector';
 import { useDragDropFiles } from '../../hooks/useDragDropFiles';
 import { usePromptPolish } from '../../hooks/usePromptPolish';
@@ -52,7 +52,9 @@ export function QuestConversation() {
   const { currentModel } = useModelStore();
   const { chatMode, setChatMode } = useChatStore();
 
-  const { attachments, images, documents, addFiles, addFileFromFile, removeAttachment, clearAttachments, triggerFileInput, totalSize } = useFileAttachments();
+  // 添加附件相关的 hooks
+  const { images, addImages, removeImage, triggerFileInput } = useImageAttachments();
+  const { mentionedFiles, addMention, removeMention } = useFileMentions();
   const {
     showSelector,
     selectorType,
@@ -72,7 +74,13 @@ export function QuestConversation() {
   } = useContextSelector('quest');
 
   const { isDragging, dragHandlers, pasteHandler } = useDragDropFiles('quest', {
-    onFileAdd: addFileFromFile,
+    onImageAdd: (file: File) => {
+      // Convert file to image attachment flow
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const fakeEvent = { target: { files: dt.files } } as unknown as React.ChangeEvent<HTMLInputElement>;
+      addImages(fakeEvent);
+    },
   });
   const { isPolishing, polish } = usePromptPolish();
 
@@ -82,64 +90,15 @@ export function QuestConversation() {
   // 语音输入处理
   const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setText(newText), []));
 
-  // On mount: if active task is paused (e.g. returning from editor), auto-resume it.
-  // If isStreaming is stale, clear it.
+  // Defensive reset: if the store still thinks we're streaming after mount
+  // (e.g. returning from editor mode), clear it so send is not blocked.
   useEffect(() => {
     const store = useQuestStore.getState();
-    const taskId = store.activeTaskId;
-
-    if (store.isStreaming && !taskId) {
+    if (store.isStreaming) {
       console.log('[QuestConversation] Mount: resetting stale isStreaming');
       store.resetStreamText();
       store.setStreaming(false);
       store.setActiveRunId(null);
-    }
-
-    // Auto-resume paused task on mount (user just came back).
-    // Use TWO checks:
-    //   1. Task status is 'paused' (fast path - status_change event already processed)
-    //   2. Task has messages but no active agent in main process (slow path - 
-    //      status_change from stopOnSwitch not yet processed due to race condition)
-    if (taskId) {
-      const task = store.tasks.find(t => t.id === taskId);
-      const shouldResumeBasedOnStatus = task?.status === 'paused' && !store.isStreaming;
-      const hasHistory = store.messages.length > 0;
-
-      if (shouldResumeBasedOnStatus) {
-        console.log('[QuestConversation] Mount: auto-resuming paused task:', taskId);
-        const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-        store.setStreaming(true);
-        store.resetStreamText();
-        store.addRunningTask(taskId);
-        store.setActiveRunId(runId);
-        store.setTaskStatus(taskId, 'running');
-        window.electronAPI.quest.resume(taskId, undefined, runId).catch((err) => {
-          console.error('[QuestConversation] Auto-resume failed:', err);
-          store.setStreaming(false);
-          store.setActiveRunId(null);
-          store.removeRunningTask(taskId);
-        });
-      } else if (hasHistory && !store.isStreaming && (task?.status === 'running' || task?.status === 'idle')) {
-        // Check if agent exists in main process - if not, task was stopped
-        // by stopOnSwitch but status_change event hasn't arrived yet (race condition)
-        window.electronAPI.quest.getAgentStatus(taskId).then((status) => {
-          if (!status.hasActiveAgent && !store.isStreaming) {
-            console.log('[QuestConversation] Mount: task has no active agent, auto-resuming from DB:', taskId);
-            const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-            store.setStreaming(true);
-            store.resetStreamText();
-            store.addRunningTask(taskId);
-            store.setActiveRunId(runId);
-            store.setTaskStatus(taskId, 'running');
-            window.electronAPI.quest.resume(taskId, undefined, runId).catch((err) => {
-              console.error('[QuestConversation] Auto-resume (fallback) failed:', err);
-              store.setStreaming(false);
-              store.setActiveRunId(null);
-              store.removeRunningTask(taskId);
-            });
-          }
-        }).catch(() => {});
-      }
     }
   }, []);
 
@@ -158,15 +117,13 @@ export function QuestConversation() {
 
   const handleSend = useCallback(async () => {
     const hasText = !!text.trim();
-    const hasAttachments = attachments.length > 0;
-    if ((!hasText && !hasAttachments) || isStreaming || !activeTaskId) return;
+    const hasImages = images.length > 0;
+    if ((!hasText && !hasImages) || isStreaming || !activeTaskId) return;
 
     // Capture values before clearing
     const messageText = text;
     const contexts = selectedContexts;
-    const currentAttachments = [...attachments];
-    const currentImages = images;
-    const currentDocuments = documents;
+    const currentImages = [...images];
 
     // Clear input immediately - before any store operations
     setText('');
@@ -176,13 +133,14 @@ export function QuestConversation() {
     }
     clearContexts();
     dismissSelector();
-    clearAttachments();
+    // Clear attached images after capture
+    currentImages.forEach((_, i) => removeImage(i));
 
     const store = useQuestStore.getState();
 
-    // Build display content (text + attachment indicator)
-    const displayContent = hasAttachments && !hasText
-      ? `[Attachment${currentAttachments.length > 1 ? 's' : ''}]`
+    // Build display content (text + image indicator)
+    const displayContent = hasImages && !hasText
+      ? `[Image${currentImages.length > 1 ? 's' : ''}]`
       : messageText;
 
     // Add user message
@@ -205,61 +163,30 @@ export function QuestConversation() {
     const autoMode = activeTask?.autoMode || 'auto';
 
     // Prepare images for IPC (base64 payload)
-    const imagePayload = currentImages.length > 0
+    const imagePayload = hasImages
       ? currentImages.map(img => {
-          const m = img.dataUrl?.match(/^data:(image\/\w+);base64,(.+)$/);
+          const m = img.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
           return m ? { data: m[2], mediaType: m[1] } : null;
         }).filter(Boolean) as Array<{ data: string; mediaType: string }>
       : undefined;
 
-    // Prepare documents for IPC (text content payload)
-    const documentPayload = currentDocuments
-      .filter(d => d.parseStatus === 'success' && d.content)
-      .map(d => ({ name: d.name, content: d.content!, ext: d.ext }));
-
     try {
-      // Smart dispatch: if task was paused/interrupted (has history messages and
-      // status is paused/idle/failed), use quest:resume to continue from where it
-      // stopped. Otherwise start a fresh quest:run.
-      // ALSO: if task status is 'running' but agent is not active (race condition
-      // where stopOnSwitch events haven't been processed), use quest:resume.
-      const taskStatus = activeTask?.status;
-      const hasHistory = store.messages.length > 0;
-      let shouldResume = hasHistory && (taskStatus === 'paused' || taskStatus === 'idle' || taskStatus === 'failed');
-
-      // Fallback check: if status is 'running' but agent is gone (race condition)
-      if (!shouldResume && hasHistory && taskStatus === 'running') {
-        try {
-          const agentStatus = await window.electronAPI.quest.getAgentStatus(activeTaskId);
-          if (!agentStatus.hasActiveAgent) {
-            console.log('[QuestConversation] handleSend: task status is running but no active agent, using resume');
-            shouldResume = true;
-          }
-        } catch { /* ignore IPC error, fall through to quest:run */ }
-      }
-
-      if (shouldResume) {
-        console.log('[QuestConversation] Resuming interrupted task:', { taskId: activeTaskId, taskStatus, msgCount: store.messages.length });
-        await window.electronAPI.quest.resume(activeTaskId, messageText || undefined, runId);
-      } else {
-        await window.electronAPI.quest.run({
-          taskId: activeTaskId,
-          message: messageText || 'Please analyze this.',
-          scenario,
-          runMode,
-          autoMode,
-          chatMode,
-          runId,
-          images: imagePayload,
-          documents: documentPayload.length > 0 ? documentPayload : undefined,
-          contexts: contexts.map(ctx => ({
-            id: ctx.id,
-            type: ctx.type,
-            label: ctx.label,
-            path: ctx.path,
-          })),
-        } as any);
-      }
+      await window.electronAPI.quest.run({
+        taskId: activeTaskId,
+        message: messageText || 'Please analyze this image.',
+        scenario,
+        runMode,
+        autoMode,
+        chatMode,
+        runId,
+        images: imagePayload,
+        contexts: contexts.map(ctx => ({
+          id: ctx.id,
+          type: ctx.type,
+          label: ctx.label,
+          path: ctx.path,
+        })),
+      } as any);
     } catch (err) {
       store.addMessage({
         id: generateQuestMessageId(),
@@ -271,7 +198,7 @@ export function QuestConversation() {
       store.setActiveRunId(null);
       if (activeTaskId) store.removeRunningTask(activeTaskId);
     }
-  }, [text, attachments, images, documents, isStreaming, activeTaskId, activeTask, selectedContexts, clearContexts, dismissSelector, clearAttachments]);
+  }, [text, images, isStreaming, activeTaskId, activeTask, selectedContexts, clearContexts, dismissSelector, removeImage]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // If context selector is showing, let it handle keyboard events
@@ -368,7 +295,7 @@ export function QuestConversation() {
               Pause
             </button>
           )}
-          {(activeTask?.status === 'paused' || activeTask?.status === 'idle') && !isStreaming && (
+          {activeTask?.status === 'paused' && !isStreaming && (
             <button
               onClick={handleResume}
               className="text-[10px] px-2 py-0.5 rounded-md bg-green-500/10 text-green-400 hover:bg-green-500/20 transition-colors"
@@ -389,8 +316,8 @@ export function QuestConversation() {
         <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
           {/* Task progress and file changes */}
           <div className="space-y-2 sticky top-0 z-10 bg-cp-bg pb-4">
-            <TodoTracker />
             <QuestFileChangeSummary />
+            <TodoTracker />
           </div>
 
           {messages.length === 0 && !isStreaming ? (
@@ -477,13 +404,15 @@ export function QuestConversation() {
               </div>
             )}
 
-            {/* Context chips - 显示已添加的附件和上下文 */}
-            {(attachments.length > 0 || selectedContexts.length > 0) && (
+            {/* Context chips - 显示已添加的图片和文件 */}
+            {(images.length > 0 || mentionedFiles.length > 0 || selectedContexts.length > 0) && (
               <div className="pt-1.5">
                 <ContextChips
-                  attachments={attachments}
+                  images={images}
+                  files={mentionedFiles}
                   contexts={selectedContexts}
-                  onRemoveAttachment={removeAttachment}
+                  onRemoveImage={removeImage}
+                  onRemoveFile={removeMention}
                   onRemoveContext={removeContext}
                 />
               </div>
@@ -508,7 +437,7 @@ export function QuestConversation() {
                   handleTextChange(text, cursorPos);
                 }
               }}
-              placeholder={chatMode === 'ask' ? '提问或粘贴代码... (Enter 发送, @ 添加上下文)' : '发送消息... (Enter 发送, @ 添加上下文)'}
+              placeholder={chatMode === 'ask' ? '提问或粘贴代码... (@ 添加上下文, Enter 发送)' : '发送消息... (@ 添加上下文, Enter 发送)'}
               rows={1}
               className="w-full bg-transparent px-3 pt-2 pb-1 text-sm text-cp-text outline-none resize-none min-h-[40px] placeholder:text-cp-text-dim/40 leading-relaxed"
             />
@@ -535,7 +464,8 @@ export function QuestConversation() {
               
               {/* Input toolbar */}
               <InputToolbar
-                onFile={triggerFileInput}
+                onMention={() => openViaButton('file')}
+                onImage={triggerFileInput}
                 onVoice={() => toggleRecording(text)}
                 onPolish={async () => {
                   if (text.trim()) {
@@ -543,12 +473,12 @@ export function QuestConversation() {
                     setText(polished);
                   }
                 }}
-                onSend={() => { if (text.trim() || attachments.length > 0) handleSend(); }}
+                onSend={() => { if (text.trim() || images.length > 0) handleSend(); }}
                 onStop={handleStop}
                 isStreaming={isStreaming}
                 isRecording={isRecording}
                 isPolishing={isPolishing}
-                canSend={!!text.trim() || attachments.length > 0}
+                canSend={!!text.trim() || images.length > 0}
               />
             </div>
           </div>
@@ -557,10 +487,10 @@ export function QuestConversation() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,.pdf,.txt,.md,.doc,.docx,.xls,.xlsx"
+            accept="image/*"
             multiple
             className="hidden"
-            onChange={addFiles}
+            onChange={addImages}
           />
         </div>
       </div>
@@ -649,28 +579,23 @@ function QuestFileChangeSummary() {
     }).catch(() => {});
   }, []);
 
-  // Auto-collapse when new files appear
+  // Auto-collapse when new files appear, and auto-process if configured
   useEffect(() => {
     if (files.length > 0 && files.length !== countOnAppear) {
       setCollapsed(true);
       setCountOnAppear(files.length);
-    }
-  }, [files.length, countOnAppear]);
 
-  // Auto-process pending files based on config (独立逻辑，不依赖 countOnAppear)
-  // 修复竞态条件：fileChangeBehavior 通过异步 IPC 加载，到达前 countOnAppear 已锁定
-  useEffect(() => {
-    if (fileChangeBehavior === 'ask') return;
-
-    const hasPending = files.some((f) => f.status === 'pending');
-    if (hasPending) {
-      if (fileChangeBehavior === 'auto-accept') {
-        acceptAll();
-      } else if (fileChangeBehavior === 'auto-reject') {
-        rejectAll();
+      // Auto-process pending files based on config
+      const hasPending = files.some((f) => f.status === 'pending');
+      if (hasPending) {
+        if (fileChangeBehavior === 'auto-accept') {
+          acceptAll();
+        } else if (fileChangeBehavior === 'auto-reject') {
+          rejectAll();
+        }
       }
     }
-  }, [files, fileChangeBehavior, acceptAll, rejectAll]);
+  }, [files.length, countOnAppear, fileChangeBehavior, acceptAll, rejectAll]);
 
   if (files.length === 0) return null;
 

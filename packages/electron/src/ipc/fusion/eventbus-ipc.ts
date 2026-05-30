@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
-import type { IEventBus } from '@codepilot/core/fusion';
+// @ts-ignore - relative path to core src
+import type { IEventBus } from '../../../core/src/fusion/event-bus/types.js';
 
 let eventBus: IEventBus | null = null;
 

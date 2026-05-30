@@ -6,33 +6,36 @@ import { ContextSelector } from '../context/ContextSelector';
 import { ContextChips } from '../context/ContextChips';
 import { InputToolbar } from './InputToolbar';
 import type { MentionItem } from '../../types/mention';
-import type { FileAttachment } from '../../hooks/useFileAttachments';
+import type { AttachedImage } from '../../stores/chat-store';
 
 interface ChatInputProps {
-  onSend: (text: string, contexts?: MentionItem[], attachments?: FileAttachment[]) => void;
+  onSend: (text: string, contexts?: MentionItem[], images?: AttachedImage[]) => void;
   onStop?: () => void;
   disabled?: boolean;
   isStreaming?: boolean;
   interventionMode?: boolean;
   onIntervention?: (text: string) => void;
-  onFileAdd?: (file: File) => void;
-  attachments?: FileAttachment[];
-  onRemoveAttachment?: (id: string) => void;
-  onFile?: () => void;
+  onImageAdd?: (file: File) => void;
+  images?: AttachedImage[];
+  onRemoveImage?: (index: number) => void;
+  // InputToolbar props
+  onMention?: () => void;
+  onImage?: () => void;
   onVoice?: () => void;
   onPolish?: () => void;
   isRecording?: boolean;
   isPolishing?: boolean;
   canSend?: boolean;
   fileInputRef?: React.RefObject<HTMLInputElement>;
+  // Controlled mode: external parent can drive the input
   value?: string;
   onChange?: (text: string) => void;
 }
 
 export function ChatInput({
   onSend, onStop, disabled, isStreaming, interventionMode, onIntervention,
-  onFileAdd, attachments, onRemoveAttachment,
-  onFile, onVoice, onPolish,
+  onImageAdd, images, onRemoveImage,
+  onMention, onImage, onVoice, onPolish,
   isRecording = false, isPolishing = false, canSend: canSendProp,
   fileInputRef: externalFileInputRef,
   value: externalValue,
@@ -55,7 +58,7 @@ export function ChatInput({
     clearContexts,
   } = useContextSelector('chat');
 
-  const { isDragging, dragHandlers, pasteHandler } = useDragDropFiles('chat', { onFileAdd });
+  const { isDragging, dragHandlers, pasteHandler } = useDragDropFiles('chat', { onImageAdd });
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -64,6 +67,7 @@ export function ChatInput({
     }
   }, [text]);
 
+  // Sync external value -> internal text (controlled mode)
   useEffect(() => {
     if (externalValue !== undefined && externalValue !== text) {
       setText(externalValue);
@@ -71,15 +75,15 @@ export function ChatInput({
   }, [externalValue]);
 
   const handleSubmit = () => {
-    if (!text.trim() && (!attachments || attachments.length === 0)) return;
+    if (!text.trim() && (!images || images.length === 0)) return;
 
     if (interventionMode && onIntervention) {
       onIntervention(text.trim());
       setText('');
     } else if (!disabled) {
       const contexts = selectedContexts.length > 0 ? [...selectedContexts] : undefined;
-      const attachedFiles = attachments && attachments.length > 0 ? [...attachments] : undefined;
-      onSend(text.trim(), contexts, attachedFiles);
+      const attachedImages = images && images.length > 0 ? [...images] : undefined;
+      onSend(text.trim(), contexts, attachedImages);
       setText('');
       clearContexts();
       dismissSelector();
@@ -94,6 +98,7 @@ export function ChatInput({
     }
   };
 
+  // In intervention mode, the input is always enabled (even while streaming)
   const inputDisabled = interventionMode ? false : disabled;
 
   const modelShort = currentModel
@@ -126,13 +131,20 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Attachment chips */}
-        {attachments && attachments.length > 0 && (
-          <div className="pt-1.5">
-            <ContextChips
-              attachments={attachments}
-              onRemoveAttachment={onRemoveAttachment}
-            />
+        {/* Image thumbnails */}
+        {images && images.length > 0 && (
+          <div className="pt-2 px-2 flex flex-wrap gap-2">
+            {images.map((img, i) => (
+              <div key={`img-${i}`} className="relative group w-16 h-16 rounded-lg overflow-hidden border border-white/10">
+                <img src={img.dataUrl} alt={img.name} className="w-full h-full object-cover" />
+                <button
+                  onClick={() => onRemoveImage?.(i)}
+                  className="absolute top-0 right-0 w-5 h-5 flex items-center justify-center bg-black/60 text-white/80 rounded-bl-lg text-xs hover:bg-red-600/80 transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -169,7 +181,7 @@ export function ChatInput({
               ? '\u8f93\u5165\u5e72\u9884\u6307\u4ee4\uff0c\u5c06\u5728\u4e0b\u4e00\u8f6e\u6ce8\u5165 Team Lead... (Enter \u53d1\u9001)'
               : disabled
                 ? '\u7b49\u5f85\u56de\u590d\u4e2d...'
-                : '\u7ed9\u7075\u5883\u53d1\u6d88\u606f... (Enter \u53d1\u9001, @ \u6dfb\u52a0\u4e0a\u4e0b\u6587)'
+                : '\u7ed9\u7075\u5883\u53d1\u6d88\u606f... (@ \u6dfb\u52a0\u4e0a\u4e0b\u6587, Enter \u53d1\u9001)'
           }
           disabled={inputDisabled}
           rows={1}
@@ -213,21 +225,38 @@ export function ChatInput({
             )}
             <div className="flex-1" />
             <InputToolbar
-              onFile={() => {
-                if (onFile) {
-                  onFile();
+              onMention={() => {
+                console.log('[ChatInput] onMention called, onMention exists:', !!onMention);
+                if (onMention) {
+                  onMention();
                 } else {
+                  openViaButton('file');
+                }
+              }}
+              onImage={() => {
+                console.log('[ChatInput] onImage called, onImage exists:', !!onImage, 'externalFileInputRef exists:', !!externalFileInputRef?.current);
+                if (onImage) {
+                  onImage();
+                } else {
+                  // Fallback: directly trigger the internal file input
+                  console.log('[ChatInput] No onImage callback, using internal file input directly');
                   externalFileInputRef?.current?.click();
                 }
               }}
               onVoice={() => {
+                console.log('[ChatInput] onVoice called, onVoice exists:', !!onVoice);
                 if (onVoice) {
                   onVoice();
+                } else {
+                  console.error('[ChatInput] No onVoice callback provided');
                 }
               }}
               onPolish={() => {
+                console.log('[ChatInput] onPolish called, onPolish exists:', !!onPolish);
                 if (onPolish) {
                   onPolish();
+                } else {
+                  console.error('[ChatInput] No onPolish callback provided');
                 }
               }}
               onSend={handleSubmit}
@@ -235,23 +264,24 @@ export function ChatInput({
               isStreaming={!!isStreaming}
               isRecording={isRecording}
               isPolishing={isPolishing}
-              canSend={typeof canSendProp === 'boolean' ? canSendProp : (!!text.trim() || (!!attachments && attachments.length > 0))}
+              canSend={typeof canSendProp === 'boolean' ? canSendProp : (!!text.trim() || (!!images && images.length > 0))}
             />
           </div>
         )}
 
-        {/* Hidden file input */}
+        {/* Hidden file input for image upload */}
         <input
           ref={externalFileInputRef}
           type="file"
-          accept="image/*,.pdf,.txt,.md,.doc,.docx,.xls,.xlsx"
+          accept="image/*"
           multiple
           className="hidden"
           onChange={(e) => {
             const files = e.target.files;
-            if (files && onFileAdd) {
+            if (files && onImageAdd) {
               Array.from(files).forEach((file) => {
-                onFileAdd(file);
+                console.log('[ChatInput] Processing image upload:', file.name);
+                onImageAdd(file);
               });
             }
             e.target.value = '';

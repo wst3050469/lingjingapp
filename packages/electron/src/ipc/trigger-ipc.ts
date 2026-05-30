@@ -1,22 +1,8 @@
 import { IpcMain, IpcMainInvokeEvent, BrowserWindow } from 'electron';
+// @ts-ignore
 import { TriggerManager } from '@codepilot/core';
-import type { PipelineDefinition } from '@codepilot/core';
-
-// ⚠️ TriggerConfig / TriggerStatus are from workflow types (awaiting pipeline integration)
-// These IPC handlers expose CRUD operations for triggers; currently stubbed
-// because TriggerManager only supports registerPushTrigger / registerCronTrigger / registerAll / dispose.
-
-interface TriggerConfig {
-  id?: string;
-  type: string;
-  name: string;
-  branches?: string[];
-  expression?: string;
-  enabled?: boolean;
-  [key: string]: unknown;
-}
-
-type TriggerStatus = 'active' | 'inactive' | 'error';
+// @ts-ignore
+import { TriggerConfig, TriggerStatus } from '@codepilot/core';
 
 export class TriggerIPCHandler {
   private ipcMain: IpcMain;
@@ -39,76 +25,85 @@ export class TriggerIPCHandler {
   }
 
   private async handleCreate(
-    _event: IpcMainInvokeEvent,
+    event: IpcMainInvokeEvent,
     type: string,
-    config: TriggerConfig,
+    config: TriggerConfig
   ): Promise<{ success: boolean; triggerId?: string; error?: string }> {
     try {
-      // NOTE: TriggerManager doesn't yet support dynamic trigger registration.
-      // This is a forward-looking API. When implemented, register via registerAll().
-      const def: PipelineDefinition = {
-        id: config.id || `trigger_${Date.now()}`,
-        name: config.name || type,
-        triggers: [{ type: type as 'push' | 'cron', branches: config.branches, expression: config.expression }],
-        stages: [],
-      };
-      this.manager.registerAll(def);
-      return { success: true, triggerId: def.id };
+      const triggerId = await this.manager.registerTrigger(type, config);
+      return { success: true, triggerId };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
   }
 
   private async handleUpdate(
-    _event: IpcMainInvokeEvent,
-    _triggerId: string,
-    _config: Partial<TriggerConfig>,
+    event: IpcMainInvokeEvent,
+    triggerId: string,
+    config: Partial<TriggerConfig>
   ): Promise<{ success: boolean; error?: string }> {
-    // Stub: TriggerManager doesn't support update. Dispose + re-register pattern would be needed.
-    return { success: false, error: 'Trigger update not yet supported by the pipeline engine' };
+    try {
+      await this.manager.updateTrigger(triggerId, config);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 
   private async handleDelete(
-    _event: IpcMainInvokeEvent,
-    _triggerId: string,
+    event: IpcMainInvokeEvent,
+    triggerId: string
   ): Promise<{ success: boolean; error?: string }> {
-    // Stub: Call dispose() to clean up all triggers.
-    this.manager.dispose();
-    return { success: true };
+    try {
+      await this.manager.unregisterTrigger(triggerId);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 
   private async handleEnable(
-    _event: IpcMainInvokeEvent,
-    _triggerId: string,
+    event: IpcMainInvokeEvent,
+    triggerId: string
   ): Promise<{ success: boolean; error?: string }> {
-    return { success: false, error: 'Trigger enable/disable not yet supported by the pipeline engine' };
+    try {
+      await this.manager.enableTrigger(triggerId);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 
   private async handleDisable(
-    _event: IpcMainInvokeEvent,
-    _triggerId: string,
+    event: IpcMainInvokeEvent,
+    triggerId: string
   ): Promise<{ success: boolean; error?: string }> {
-    return { success: false, error: 'Trigger enable/disable not yet supported by the pipeline engine' };
+    try {
+      await this.manager.disableTrigger(triggerId);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
   }
 
   private async handleGetStatus(
-    _event: IpcMainInvokeEvent,
-    _triggerId: string,
+    event: IpcMainInvokeEvent,
+    triggerId: string
   ): Promise<TriggerStatus | null> {
-    return null; // Stub
+    return this.manager.getTriggerStatus(triggerId);
   }
 
   private async handleList(
-    _event: IpcMainInvokeEvent,
+    event: IpcMainInvokeEvent
   ): Promise<Array<{ id: string; type: string; status: TriggerStatus }>> {
-    return []; // Stub
+    return this.manager.listTriggers();
   }
 
   private async handleGetConfig(
-    _event: IpcMainInvokeEvent,
-    _triggerId: string,
+    event: IpcMainInvokeEvent,
+    triggerId: string
   ): Promise<TriggerConfig | null> {
-    return null; // Stub
+    return this.manager.getTriggerConfig(triggerId);
   }
 
   notifyTrigger(triggerId: string, data: any): void {

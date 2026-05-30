@@ -1,8 +1,8 @@
-﻿// 灵境IDE 移动端 - Push Notifications 服务 (Expo)
+// 灵境IDE 移动端 - Push Notifications 服务 (Expo)
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-const CLOUD_SERVER = 'https://lingjing.zhejiangjinmo.com';
+const CLOUD_SERVER = 'https://ide.zhejiangjinmo.com';
 
 // Configure how notifications appear when app is foregrounded
 Notifications.setNotificationHandler({

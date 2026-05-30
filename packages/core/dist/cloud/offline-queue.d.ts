@@ -41,7 +41,6 @@ export declare class OfflineQueue {
     flush(): Promise<{
         succeeded: number;
         failed: number;
-        skipped?: boolean;
     }>;
     startPeriodicFlush(intervalMs?: number): void;
     stopPeriodicFlush(): void;

@@ -2,13 +2,14 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release"
+    "output": "release-v1560"
   },
   "files": [
     "dist/**/*",
     "renderer/**/*",
     "node_modules/**/*",
-    "package.json"
+    "package.json",
+    "prompts/**/*"
   ],
   "win": {
     "target": [
@@ -52,7 +53,18 @@
     "artifactName": "LingJing-${version}-linux-x86_64.${ext}"
   },
 
-  "extraResources": [],
+  "extraResources": [
+    {
+      "from": "prompts",
+      "to": "prompts",
+      "filter": ["**/*"]
+    },
+    {
+      "from": "skills",
+      "to": "skills",
+      "filter": ["**/*"]
+    }
+  ],
   "publish": {
     "provider": "generic",
     "url": "https://ide.zhejiangjinmo.com/downloads/"

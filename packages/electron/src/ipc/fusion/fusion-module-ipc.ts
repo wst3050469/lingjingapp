@@ -1,14 +1,24 @@
 import { ipcMain } from 'electron';
-import type { FusionInitializer } from '@codepilot/core/fusion';
-import type { INLCronScheduler } from '@codepilot/core/fusion';
-import type { IDynamicModelRouter } from '@codepilot/core/fusion';
-import type { IVectorMemoryStore } from '@codepilot/core/fusion';
-import type { INudgeReviewEngine } from '@codepilot/core/fusion';
-import type { ExecutionTraceHarvester } from '@codepilot/core/fusion';
-import type { SkillSecurityLoader } from '@codepilot/core/fusion';
-import type { IDAGOrchestrator } from '@codepilot/core/fusion';
-import type { IMultiAgentExecutor } from '@codepilot/core/fusion';
-import type { IHonchoUserModeler } from '@codepilot/core/fusion';
+// @ts-ignore - relative path to core src
+import type { FusionInitializer } from '../../../core/src/fusion/fusion-initializer.js';
+// @ts-ignore - relative path to core src
+import type { INLCronScheduler } from '../../../core/src/fusion/nl-cron/types.js';
+// @ts-ignore - relative path to core src
+import type { IDynamicModelRouter } from '../../../core/src/fusion/model-router/types.js';
+// @ts-ignore - relative path to core src
+import type { IVectorMemoryStore } from '../../../core/src/fusion/vector-memory/types.js';
+// @ts-ignore - relative path to core src
+import type { INudgeReviewEngine } from '../../../core/src/fusion/review-engine/types.js';
+// @ts-ignore - relative path to core src
+import type { ExecutionTraceHarvester } from '../../../core/src/fusion/trace-harvester/execution-trace-harvester.js';
+// @ts-ignore - relative path to core src
+import type { SkillSecurityLoader } from '../../../core/src/fusion/skill-security/skill-security-loader.js';
+// @ts-ignore - relative path to core src
+import type { IDAGOrchestrator } from '../../../core/src/fusion/dag-orchestrator/types.js';
+// @ts-ignore - relative path to core src
+import type { IMultiAgentExecutor } from '../../../core/src/fusion/multi-agent/types.js';
+// @ts-ignore - relative path to core src
+import type { IHonchoUserModeler } from '../../../core/src/fusion/user-modeler/types.js';
 
 let fusionInitializer: FusionInitializer | null = null;
 let nlCron: INLCronScheduler | null = null;
@@ -179,15 +189,8 @@ export function registerFusionModuleIpc(): void {
   });
 
   ipcMain.handle('fusion:health:check', async () => {
-    if (!fusionInitializer) {
-      return { healthy: false, error: 'FusionInitializer not initialized' };
-    }
-    try {
-      const result = fusionInitializer.healthCheck();
-      return Object.fromEntries(result);
-    } catch (err) {
-      return { healthy: false, error: (err as Error).message };
-    }
+    if (!fusionInitializer) throw new Error('FusionInitializer not initialized');
+    return Object.fromEntries(fusionInitializer.healthCheck());
   });
   ipcMain.handle('fusion:config:get', async () => {
     return {};

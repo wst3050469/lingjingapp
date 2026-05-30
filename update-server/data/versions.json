@@ -1,6 +1,172 @@
 {
-  "latest": "1.62.0",
+  "latest": "1.64.2",
   "versions": [
+    {
+      "version": "1.64.2",
+      "status": "published",
+      "releaseDate": "2026-05-30",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.64.2-win-x64.exe",
+          "size": 142209962
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.64.2-win-x64.exe",
+          "size": 141868430
+        },
+        "win-x64-blockmap": {
+          "url": "/downloads/LingJing-Setup-1.64.2-win-x64.exe.blockmap",
+          "size": 160729
+        },
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.64.2-linux-x86_64.AppImage",
+          "size": 158000000
+        },
+        "mobile": {
+          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "size": 39044682
+        }
+      },
+      "releaseNotes": "v1.64.2 - Fix 4 issues",
+      "features": [
+        "Fix: Downloads page shows all platforms (was only Android)",
+        "Fix: Auto-compaction no longer interrupts running tasks",
+        "Fix: Cannot read properties of undefined (reading 'map') error",
+        "Fix: Todo list always shows empty placeholder"
+      ]
+    },
+    {
+      "version": "1.64.1",
+      "status": "published",
+      "releaseDate": "2026-05-30",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.64.1-win-x64.exe",
+          "size": 142211624
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.64.1-win-x64.exe",
+          "size": 141870121
+        },
+        "win-x64-blockmap": {
+          "url": "/downloads/LingJing-Setup-1.64.1-win-x64.exe.blockmap",
+          "size": 148665
+        },
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.64.1-linux-x86_64.AppImage",
+          "size": 155978785
+        },
+        "linux-deb": {
+          "url": "/downloads/LingJing-1.64.1-linux-x86_64.deb",
+          "size": 110990662
+        },
+        "mobile": {
+          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "size": 39044682
+        }
+      },
+      "releaseNotes": "v1.64.1 - Fix Cannot read properties of undefined (reading 'ipcRenderer')",
+      "features": [
+        "Fix: Expose window.electron.ipcRenderer compatibility layer"
+      ]
+    },
+    {
+      "version": "1.64.0",
+      "status": "published",
+      "releaseDate": "2026-05-30",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.64.0-win-x64.exe",
+          "size": 142208922
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.64.0-win-x64.exe",
+          "size": 141867366
+        },
+        "win-x64-blockmap": {
+          "url": "/downloads/LingJing-Setup-1.64.0-win-x64.exe.blockmap",
+          "size": 149744
+        },
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.64.0-linux-x86_64.AppImage",
+          "size": 183533834
+        },
+        "linux-deb": {
+          "url": "/downloads/LingJing-1.64.0-linux-x86_64.deb",
+          "size": 110968034
+        },
+        "mobile": {
+          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "size": 39044682
+        }
+      },
+      "releaseNotes": "v1.64.0 - Fix file auto-processing not working (3 root causes)",
+      "features": [
+        "Fix: QuestConversation race condition auto-accept/reject not working",
+        "Fix: PipelineService using wrong directory to init",
+        "Fix: Switch workspace PipelineService not auto-loading pipelines"
+      ]
+    },
+    {
+      "version": "1.63.0",
+      "status": "published",
+      "releaseDate": "2026-05-30",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.63.0-win-x64.exe",
+          "size": 142209253
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.63.0-win-x64.exe",
+          "size": 141867721
+        },
+        "win-x64-blockmap": {
+          "url": "/downloads/LingJing-Setup-1.63.0-win-x64.exe.blockmap",
+          "size": 148752
+        },
+        "linux-x64": {
+          "url": "/downloads/LingJing-1.63.0-linux-x86_64.AppImage",
+          "size": 183533943
+        },
+        "mobile": {
+          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "size": 39044682
+        }
+      },
+      "releaseNotes": "v1.63.0",
+      "features": [
+        "Fix: File auto-processing (Pipeline Watch Trigger)",
+        "Fix: registerPipelineIPC not registered",
+        "Fix: TriggerManager not linked to PipelineService",
+        "New: Add watch file auto-processing support",
+        "New: Auto-load .lingjing/pipelines/*.yaml"
+      ]
+    },
+    {
+      "version": "1.62.3",
+      "status": "published",
+      "releaseDate": "2026-05-30",
+      "platforms": {
+        "win-x64": {
+          "url": "/downloads/LingJing-Setup-1.62.3-win-x64.exe",
+          "size": 142204523
+        },
+        "win-x64-portable": {
+          "url": "/downloads/LingJing-Portable-1.62.3-win-x64.exe",
+          "size": 141863003
+        },
+        "win-x64-blockmap": {
+          "url": "/downloads/LingJing-Setup-1.62.3-win-x64.exe.blockmap",
+          "size": 148752
+        }
+      },
+      "releaseNotes": "v1.62.3",
+      "features": [
+        "Fix: TodoTracker missing in streaming responses",
+        "Fix: Todo persistence across task switches",
+        "Fix: Empty todo list now shows placeholder"
+      ]
+    },
     {
       "version": "1.62.0",
       "status": "published",
@@ -25,6 +191,10 @@
         "linux-deb": {
           "url": "/downloads/LingJing-1.62.0-linux-x86_64.deb",
           "size": 212000000
+        },
+        "mobile": {
+          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "size": 39044682
         }
       },
       "releaseNotes": "v1.62.0",
@@ -48,6 +218,10 @@
         "linux-x64": {
           "url": "/downloads/LingJing-1.61.1-linux-x86_64.AppImage",
           "size": 183533011
+        },
+        "mobile": {
+          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "size": 39044682
         }
       },
       "releaseNotes": "v1.61.1: fix blank page"
@@ -68,6 +242,10 @@
         "win-x64-portable": {
           "url": "/downloads/LingJing-Portable-1.61.0-win-x64.exe",
           "size": 141680103
+        },
+        "mobile": {
+          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "size": 39044682
         }
       }
     }

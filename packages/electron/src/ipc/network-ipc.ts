@@ -55,22 +55,19 @@ export function registerNetworkIpc(): void {
     const results: DiagResult[] = [];
     const logs: string[] = [];
 
-    // 1. DNS check (GitHub + Cloud server)
-    const dnsTargets = ['api.github.com', 'ide.zhejiangjinmo.com'];
-    for (const dnsTarget of dnsTargets) {
-      logs.push(`[DNS] Resolving ${dnsTarget} ...`);
-      try {
-        const start = Date.now();
-        const addresses = await dns.resolve4(dnsTarget);
-        const latency = Date.now() - start;
-        const detail = `Resolved to ${addresses.join(', ')} in ${latency}ms`;
-        logs.push(`[DNS] ${detail}`);
-        results.push({ name: `DNS(${dnsTarget})`, ok: true, latency, detail });
-      } catch (err: any) {
-        const detail = `DNS resolution failed: ${err.message}`;
-        logs.push(`[DNS] ${detail}`);
-        results.push({ name: `DNS(${dnsTarget})`, ok: false, latency: 0, detail });
-      }
+    // 1. DNS check
+    logs.push('[DNS] Resolving api.github.com ...');
+    try {
+      const start = Date.now();
+      const addresses = await dns.resolve4('api.github.com');
+      const latency = Date.now() - start;
+      const detail = `Resolved to ${addresses.join(', ')} in ${latency}ms`;
+      logs.push(`[DNS] ${detail}`);
+      results.push({ name: 'DNS', ok: true, latency, detail });
+    } catch (err: any) {
+      const detail = `DNS resolution failed: ${err.message}`;
+      logs.push(`[DNS] ${detail}`);
+      results.push({ name: 'DNS', ok: false, latency: 0, detail });
     }
 
     // 2. HTTP check

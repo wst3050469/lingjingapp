@@ -55,12 +55,12 @@ function isModuleEnabled(config: FusionConfig, configName: string): boolean {
   return config.modules.some((m) => m.name === configName && m.enabled);
 }
 
-function safeCheck(fn: () => boolean): { healthy: boolean; details: string } {
+function safeCheck(fn: () => boolean): { ok: boolean; detail: string } {
   try {
     const ok = fn();
-    return { healthy: ok, details: ok ? 'healthy' : 'health check returned false' };
+    return { ok, detail: ok ? 'healthy' : 'health check returned false' };
   } catch (err) {
-    return { healthy: false, details: (err as Error).message };
+    return { ok: false, detail: (err as Error).message };
   }
 }
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useChatStore, generateMessageId, type ChatMessage } from '../../stores/chat-store';
+import { useChatStore, generateMessageId, type ChatMessage, type AttachedImage } from '../../stores/chat-store';
 import { useAuthStore } from '../../stores/auth-store';
 import { useUIStore } from '../../stores/ui-store';
 import { useDiffReviewStore } from '../../stores/diff-review-store';
@@ -18,8 +18,8 @@ import { FileChangeSummary } from './FileChangeSummary';
 import { TodoTracker } from './TodoTracker';
 import { ContextMeter } from './ContextMeter';
 import { RecommendationCards } from './RecommendationCards';
-import { useFileAttachments } from '../../hooks/useFileAttachments';
-import type { FileAttachment } from '../../hooks/useFileAttachments';
+import { useImageAttachments } from '../../hooks/useImageAttachments';
+import { useFileMentions } from '../../hooks/useFileMentions';
 import { usePromptPolish } from '../../hooks/usePromptPolish';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { QuestSpecTab } from '../quest/QuestSpecTab';
@@ -47,7 +47,8 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { attachments, images, documents, addFiles, addFileFromFile, removeAttachment, clearAttachments, fileInputRef, triggerFileInput, totalSize } = useFileAttachments();
+  const { images, addImages, addImageFromFile, removeImage, fileInputRef, clearImages } = useImageAttachments();
+  const { mentionedFiles, addMention, removeMention, clearMentions } = useFileMentions();
   const { isPolishing, polish } = usePromptPolish();
   const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setInputText(newText), []));
 
@@ -76,8 +77,8 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, currentStreamText]);
 
-  const handleSend = useCallback(async (text: string, _contexts?: any[], attachedFiles?: FileAttachment[]) => {
-    if ((!text.trim() && attachments.length === 0) || isStreaming) return;
+  const handleSend = useCallback(async (text: string, _contexts?: any[], attachedImages?: AttachedImage[]) => {
+    if ((!text.trim() && images.length === 0) || isStreaming) return;
 
     let finalPrompt = text;
 
@@ -91,24 +92,21 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
       finalPrompt = `[Code from ${fileName}${lineInfo}]\n\`\`\`${codeContext.language}\n${codeContext.code}\n\`\`\`\n\n${finalPrompt}`;
     }
 
-    if (images.length > 0) {
-      finalPrompt = `[${images.length} image(s) attached]\n\n${finalPrompt}`;
+    if (mentionedFiles.length > 0) {
+      finalPrompt = `[Referenced files: ${mentionedFiles.join(', ')}]\n\n${finalPrompt}`;
     }
-    const currentDocuments = documents.filter(d => d.parseStatus === 'success' && d.content);
-    if (currentDocuments.length > 0) {
-      finalPrompt = `[${currentDocuments.length} document(s) attached]\n\n${finalPrompt}`;
+    if (attachedImages && attachedImages.length > 0) {
+      finalPrompt = `[${attachedImages.length} image(s) attached]\n\n${finalPrompt}`;
+    } else if (images.length > 0) {
+      finalPrompt = `[${images.length} image(s) attached]\n\n${finalPrompt}`;
     }
 
     const userMsg: ChatMessage = {
       id: generateMessageId(),
       role: 'user',
       content: finalPrompt,
-      attachments: attachments.length > 0
-        ? {
-            images: images.length > 0 ? images.filter(img => img.dataUrl).map(img => ({ name: img.name, dataUrl: img.dataUrl! })) : undefined,
-            files: currentDocuments.map(d => d.name),
-            documents: currentDocuments.length > 0 ? currentDocuments : undefined,
-          }
+      attachments: (images.length > 0 || mentionedFiles.length > 0)
+        ? { images: images.length > 0 ? [...images] : undefined, files: mentionedFiles.length > 0 ? [...mentionedFiles] : undefined }
         : undefined,
       timestamp: Date.now(),
     };
@@ -118,7 +116,8 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
     setLastUsage(null);
     setCodeContext(null);
     setInputText('');
-    clearAttachments();
+    clearImages();
+    clearMentions();
 
     try {
       let agentPrompt = finalPrompt;
@@ -130,14 +129,10 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
       const convId = useChatStore.getState().currentConversationId;
       const imagePayload = images.length > 0
         ? images.map(img => {
-            const m = img.dataUrl?.match(/^data:(image\/\w+);base64,(.+)$/);
+            const m = img.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
             return m ? { data: m[2], mediaType: m[1] } : null;
           }).filter(Boolean) as Array<{ data: string; mediaType: string }>
         : undefined;
-
-      const documentPayload = documents
-        .filter(d => d.parseStatus === 'success' && d.content)
-        .map(d => ({ name: d.name, content: d.content!, ext: d.ext }));
 
       // Pass the full conversation messages so the agent can hydrate its context
       const storeMessages = useChatStore.getState().messages;
@@ -151,7 +146,6 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
         mode: chatMode,
         conversationId: convId || undefined,
         images: imagePayload,
-        documents: documentPayload.length > 0 ? documentPayload : undefined,
         conversationMessages: convMessages,
       });
     } catch (err) {
@@ -159,7 +153,7 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
     } finally {
       useChatStore.getState().setStreaming(false);
     }
-  }, [isStreaming, codeContext, attachments, images, documents, chatMode, messages, addMessage, setStreaming, resetStreamText, setLastUsage, setCodeContext, setConversationSummary, createNewConversation, clearAttachments]);
+  }, [isStreaming, codeContext, mentionedFiles, images, chatMode, messages, addMessage, setStreaming, resetStreamText, setLastUsage, setCodeContext, setConversationSummary, createNewConversation, clearImages, clearMentions]);
 
   const handleStop = useCallback(async () => {
     try { await window.electronAPI.agent.abort(); } catch { /* ignore */ }
@@ -175,9 +169,9 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
     addIntervention(text);
   }, [addIntervention]);
 
-  const handleFileAdd = useCallback((file: File) => {
-    addFileFromFile(file);
-  }, [addFileFromFile]);
+  const handleImageAdd = useCallback((file: File) => {
+    addImageFromFile(file);
+  }, [addImageFromFile]);
 
   return (
     <div className="h-full flex bg-cp-bg">
@@ -236,7 +230,7 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
             )}
 
             {isStreaming && <FileEditTracker />}
-            <TodoTracker />
+            {!isStreaming && <TodoTracker />}
             {!isStreaming && isReviewActive && <FileChangeSummary />}
 
             {askUserRequest && (
@@ -290,15 +284,16 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
               isStreaming={isStreaming}
               interventionMode={chatMode === 'experts' && expertPhase === 'dispatching'}
               onIntervention={handleIntervention}
-              onFileAdd={handleFileAdd}
-              attachments={attachments}
-              onRemoveAttachment={removeAttachment}
-              onFile={() => fileInputRef.current?.click()}
+              onImageAdd={handleImageAdd}
+              images={images}
+              onRemoveImage={removeImage}
+              onMention={addMention}
+              onImage={() => fileInputRef.current?.click()}
               onVoice={() => toggleRecording(inputText)}
               onPolish={handlePolish}
               isRecording={isRecording}
               isPolishing={isPolishing}
-              canSend={!!inputText.trim() || attachments.length > 0}
+              canSend={!!inputText.trim() || images.length > 0}
               fileInputRef={fileInputRef}
               value={inputText}
               onChange={setInputText}

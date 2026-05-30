@@ -243,7 +243,7 @@ function ToolCallView({ message }: { message: ChatMessage }) {
     : '';
 
   // Format arguments as compact string for preview
-  const argsPreview = Object.entries((tc && tc.args) || {})
+  const argsPreview = Object.entries(tc.args || {})
     .map(([k, v]) => {
       const val = typeof v === 'string' ? (v.length > 60 ? v.slice(0, 60) + '...' : v) : JSON.stringify(v);
       return `${k}: ${val}`;

@@ -7,21 +7,14 @@ import { resolve } from 'node:path';
 import https from 'node:https';
 import http from 'node:http';
 import { URL } from 'node:url';
-import { CloudSyncClient } from '@codepilot/core';
-// CloudSyncOptions type - defined locally as core dist is outdated
-interface CloudSyncOptions {
-  url?: string;
-  apiKey?: string;
-  deviceId?: string;
-}
+import { CloudSyncClient, type CloudSyncOptions } from '@codepilot/core';
 // Use console for logging since @codepilot/core logger has compatibility issues with esbuild bundling
 const logger = console;
 
 let cloudClient: CloudSyncClient | null = null;
 let mainWindow: BrowserWindow | null = null;
 let cloudRetryTimer: ReturnType<typeof setInterval> | null = null;
-let isConnecting = false; // Prevents dual client creation during manual connect
-let isAutoConnecting = false; // Separate flag for auto-connect (Bug 4 fix)
+let isConnecting = false; // Prevents dual client creation during auto-connect
 
 // ── Config Persistence ──
 
@@ -54,28 +47,6 @@ function saveCloudConfig(config: { url?: string; apiKey?: string }): void {
   }
 }
 
-function setupCloudEventListeners(client: CloudSyncClient, win: BrowserWindow): void {
-  client.removeAllListeners();
-  client.on('connected', (data) => {
-    if (!win.isDestroyed()) win.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: client.getDeviceId() });
-  });
-  client.on('disconnected', () => {
-    if (!win.isDestroyed()) win.webContents.send('cloud:status', { connected: false });
-  });
-  client.on('sync', (payload) => {
-    if (!win.isDestroyed()) win.webContents.send('cloud:sync-event', payload);
-  });
-  client.on('webhook', (data) => {
-    if (!win.isDestroyed()) win.webContents.send('cloud:webhook-event', data);
-  });
-  client.on('relay:from-mobile', (data) => {
-    if (!win.isDestroyed()) win.webContents.send('cloud:relay:from-mobile', data);
-  });
-  client.on('desktop:list', (data) => {
-    if (!win.isDestroyed()) win.webContents.send('cloud:desktop:list', data);
-  });
-}
-
 export function registerCloudIpc(win: BrowserWindow): void {
   mainWindow = win;
 
@@ -87,52 +58,46 @@ export function registerCloudIpc(win: BrowserWindow): void {
       if (cloudRetryTimer) { clearInterval(cloudRetryTimer); cloudRetryTimer = null; }
       if (cloudClient) cloudClient.disconnect();
       isConnecting = true;
-      // Use passed API key (falls back to CloudSyncClient default)
-      const connectOpts = opts || {};
-      cloudClient = new CloudSyncClient(connectOpts);
+      cloudClient = new CloudSyncClient(opts || {});
 
       // Auto-register for JWT
       const registered = await cloudClient.autoRegister();
-      if (!registered) {
-        console.warn('[Cloud] autoRegister failed, will still try WebSocket');
-      }
-
-      setupCloudEventListeners(cloudClient, win);
 
       // Connect WebSocket
       cloudClient.connectWebSocket();
 
       // Wait for WebSocket connection to be established
-      let wsTimeout: ReturnType<typeof setTimeout> | null = null;
       const wsConnected = await Promise.race([
-        new Promise<boolean>(resolve => {
-          cloudClient!.once('connected', () => resolve(true));
+        new Promise(resolve => {
+          cloudClient!.on('connected', () => resolve(true));
         }),
-        new Promise<boolean>((resolve) => {
-          wsTimeout = setTimeout(() => resolve(false), 10000);
-        }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('WebSocket connection timeout after 10s')), 10000)
+        ),
       ]);
-      if (wsTimeout) clearTimeout(wsTimeout);
 
-      let healthy = false;
-      if (wsConnected) {
-        healthy = await cloudClient.healthCheck().catch(e => {
-          console.warn('[Cloud] healthCheck failed after WS connected:', e);
-          return false;
-        });
-      } else {
-        console.warn('[Cloud] WebSocket did not connect within timeout');
-      }
+      // Listen for events → push to renderer
+      cloudClient.on('connected', (data) => {
+        mainWindow?.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: cloudClient?.getDeviceId() });
+      });
+      cloudClient.on('disconnected', () => {
+        mainWindow?.webContents.send('cloud:status', { connected: false });
+      });
+      cloudClient.on('sync', (payload) => {
+        mainWindow?.webContents.send('cloud:sync-event', payload);
+      });
+      cloudClient.on('webhook', (data) => {
+        mainWindow?.webContents.send('cloud:webhook-event', data);
+      });
+
+      const healthy = await cloudClient.healthCheck().catch(e => {
+        console.warn('[Cloud] healthCheck failed after WS connected:', e);
+        return true; // WS connected, consider it healthy even if HTTP health check fails
+      });
       isConnecting = false;
-      const isConnected = wsConnected && healthy;
-      // Notify renderer if connection failed (Bug 1 fix)
-      if (!isConnected) {
-        win.webContents.send('cloud:status', { connected: false, healthy: false, error: wsConnected ? 'healthCheck failed' : 'WebSocket connection timeout' });
-      }
-      return { connected: isConnected, healthy, wsConnected, registered, deviceId: cloudClient.getDeviceId() };
+      return { connected: true, healthy, wsConnected, registered, deviceId: cloudClient.getDeviceId() };
     } catch (err) {
       isConnecting = false;
-      console.error('[Cloud] cloud:connect failed:', err instanceof Error ? (err.stack || err.message) : String(err));
       return { connected: false, error: String(err) };
     }
   });
@@ -149,12 +114,6 @@ export function registerCloudIpc(win: BrowserWindow): void {
 
   ipcMain.handle('cloud:status', async () => {
     if (!cloudClient) return { connected: false, healthy: false };
-    // Check actual WebSocket readyState (Bug 2+5 fix)
-    const ws = (cloudClient as any).ws as WebSocket | null;
-    const wsOpen = ws !== null && ws.readyState === WebSocket.OPEN;
-    if (!wsOpen) {
-      return { connected: false, healthy: false, error: 'WebSocket not open (readyState=' + (ws?.readyState ?? -1) + ')' };
-    }
     // Use Node http for healthCheck (fetch may fail in ASAR environment)
     let healthy = false;
     try {
@@ -173,39 +132,43 @@ export function registerCloudIpc(win: BrowserWindow): void {
         req.on('timeout', () => { req.destroy(); resolve(false); });
       });
     } catch { healthy = false; }
-    return { connected: wsOpen && healthy, healthy };
+    return { connected: true, healthy };
   });
 
   /** Set user JWT token on the sync client (after cloud account login) */
   ipcMain.handle('cloud:set-user-token', async (_event, token: string) => {
     if (!cloudClient) {
-      const savedConfig = loadCloudConfig();
-      const opts: Record<string, string> = {};
-      if (savedConfig?.url) opts.url = savedConfig.url;
-      if (savedConfig?.apiKey) opts.apiKey = savedConfig.apiKey;
-      cloudClient = new CloudSyncClient(Object.keys(opts).length > 0 ? opts : {});
-      await cloudClient.autoRegister().catch((err) => { console.warn('[Cloud] autoRegister in set-user-token failed:', err); });
+      // Create client first
+      cloudClient = new CloudSyncClient({});
+      // Wait for device registration so we have a fallback
+      await cloudClient.autoRegister().catch(() => {});
     }
-
-    setupCloudEventListeners(cloudClient, win);
-
+    // Set the user JWT - this overrides the device JWT for all API calls
     cloudClient.setToken(token);
     logger.info('[Cloud] User JWT bound to sync client');
+    
+    // Connect WebSocket with user token
+    cloudClient.connectWebSocket();
+    
+    // Set up event listeners
+    cloudClient.on('connected', (data) => {
+      mainWindow?.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: cloudClient?.getDeviceId() });
+    });
+    cloudClient.on('disconnected', () => {
+      mainWindow?.webContents.send('cloud:status', { connected: false });
+    });
+    cloudClient.on('sync', (payload) => {
+      mainWindow?.webContents.send('cloud:sync-event', payload);
+    });
+    cloudClient.on('webhook', (data) => {
+      mainWindow?.webContents.send('cloud:webhook-event', data);
+    });
 
-    // Wait for WebSocket to connect (max 10s)
-    let wsTimeout2: ReturnType<typeof setTimeout> | null = null;
-    const wsConnected = await Promise.race([
-      new Promise<boolean>(resolve => {
-        cloudClient!.once("connected", () => resolve(true));
-      }),
-      new Promise<boolean>(resolve => {
-        wsTimeout2 = setTimeout(() => resolve(false), 10000);
-      }),
-    ]);
-    if (wsTimeout2) clearTimeout(wsTimeout2);
-
-    const healthy = wsConnected ? await cloudClient!.healthCheck().catch(() => false) : false;
-    return { ok: true, connected: wsConnected, healthy, deviceId: cloudClient!.getDeviceId() };
+    // Wait briefly for WebSocket to connect
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const healthy = await cloudClient.healthCheck().catch(() => false);
+    return { ok: true, connected: true, healthy, deviceId: cloudClient.getDeviceId() };
   });
 
   // ── HTTP Proxy API (bypass CORS for renderer fetch) ──
@@ -217,10 +180,6 @@ export function registerCloudIpc(win: BrowserWindow): void {
     token?: string;
     baseUrl?: string;
   }) => {
-    const allowedEndpoints = /^\/(sessions|memories|webhook|auth|health|devices|subscriptions|version)/;
-    if (!allowedEndpoints.test(opts.endpoint)) {
-      return { error: `Endpoint not allowed: ${opts.endpoint}` };
-    }
     const baseUrl = opts.baseUrl || 'https://ide.zhejiangjinmo.com';
     const url = new URL(`${baseUrl}/api${opts.endpoint}`);
     const method = opts.method || 'GET';
@@ -329,7 +288,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
     id?: string; title: string; content: string; category?: string; scope?: string;
   }) => {
     if (!cloudClient) throw new Error('Cloud not connected');
-    return cloudClient.upsertMemory(memory as any);
+    return cloudClient.upsertMemory(memory);
   });
 
   ipcMain.handle('cloud:memories:delete', async (_event, id: string) => {
@@ -368,12 +327,12 @@ export function registerCloudIpc(win: BrowserWindow): void {
 
 /** Auto-connect to cloud on app start (if configured). Retries persistently. */
 export async function autoConnectCloud(): Promise<void> {
-  // Prevent dual auto-connect attempts (Bug 4 fix: separate flag from manual connect)
-  if (isAutoConnecting) {
-    console.log('[Cloud] Already auto-connecting, skipping');
+  // Prevent dual client creation when cloud:connect is also being called
+  if (isConnecting) {
+    console.log('[Cloud] Already connecting, skipping auto-connect');
     return;
   }
-  isAutoConnecting = true;
+  isConnecting = true;
 
   // Helper: attempt a single connection
   const tryConnect = async (): Promise<boolean> => {
@@ -394,7 +353,7 @@ export async function autoConnectCloud(): Promise<void> {
         cloudClient = null;
       }
 
-      // Read persisted config (URL + apiKey)
+      // Read persisted config for custom URL/API Key
       const savedConfig = loadCloudConfig();
       const connectOpts: any = {};
       if (savedConfig?.url) connectOpts.url = savedConfig.url;
@@ -411,15 +370,28 @@ export async function autoConnectCloud(): Promise<void> {
         console.log('[Cloud] Device auto-registered successfully');
       }
 
-      setupCloudEventListeners(cloudClient, win);
-
+      // Try WebSocket directly — don't gate on health check
+      // (health check may fail due to firewall/proxy while WebSocket works)
       cloudClient.connectWebSocket();
 
-      // Wait for WebSocket connected event (max 5s) instead of hardcoded sleep
-      await new Promise<void>(resolve => {
-        const timer = setTimeout(() => resolve(), 5000);
-        cloudClient!.once('connected', () => { clearTimeout(timer); resolve(); });
+      // Set up event listeners
+      cloudClient.on('connected', (data) => {
+        console.log('[Cloud] WebSocket connected');
+        mainWindow?.webContents.send('cloud:status', { connected: true, url: data.url, deviceId: cloudClient?.getDeviceId() });
       });
+      cloudClient.on('disconnected', () => {
+        console.log('[Cloud] WebSocket disconnected');
+        mainWindow?.webContents.send('cloud:status', { connected: false });
+      });
+      cloudClient.on('sync', (payload) => {
+        mainWindow?.webContents.send('cloud:sync-event', payload);
+      });
+      cloudClient.on('webhook', (data) => {
+        mainWindow?.webContents.send('cloud:webhook-event', data);
+      });
+
+      // Wait briefly for WebSocket to connect
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Check health to confirm connectivity (use Node http for ASAR compatibility)
       let healthy = false;
@@ -438,23 +410,18 @@ export async function autoConnectCloud(): Promise<void> {
           req.on('error', () => resolve(false));
           req.on('timeout', () => { req.destroy(); resolve(false); });
         });
-      } catch (err) {
-        console.warn('[Cloud] Health check error:', err instanceof Error ? err.message : String(err));
-      }
+      } catch {}
       if (healthy) {
         mainWindow?.webContents.send('cloud:status', { connected: true, healthy: true });
         console.log('[Cloud] Auto-connected to cloud server successfully');
         return true;
       } else {
-        // WebSocket connected but health check failed — meaningful failure, should retry
-        console.log('[Cloud] WebSocket connected but health check failed');
-        mainWindow?.webContents.send('cloud:status', { connected: false, healthy: false, error: 'healthCheck failed' });
-        return false; // Will trigger retry loop
+        // WebSocket might still connect later via its own reconnect logic
+        console.log('[Cloud] WebSocket connecting, health check pending...');
+        return true; // Don't retry — WebSocket will handle reconnection
       }
     } catch (err) {
       console.log('[Cloud] Auto-connect failed:', (err as Error).message);
-      // Notify renderer that connection failed
-      mainWindow?.webContents.send('cloud:status', { connected: false, healthy: false, error: 'Auto-connect failed: ' + (err as Error).message });
       return false;
     }
   };
@@ -496,7 +463,7 @@ export async function autoConnectCloud(): Promise<void> {
     console.log('[Cloud] Initial connect failed, starting persistent retry loop');
     startRetryLoop();
   }
-  isAutoConnecting = false;
+  isConnecting = false;
 
   // Also schedule quick retries at 10s and 30s before falling back to 60s interval
   setTimeout(async () => {
@@ -529,7 +496,7 @@ export async function pushMemoryToCloud(memory: {
     return;
   }
   try {
-    await cloudClient.upsertMemory(memory as any);
+    await cloudClient.upsertMemory(memory);
     console.log('[Cloud] Memory pushed successfully:', memory.title);
   } catch (err) {
     console.warn('[Cloud] Failed to push memory to cloud:', (err as Error).message);

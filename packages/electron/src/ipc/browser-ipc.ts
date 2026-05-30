@@ -20,27 +20,21 @@ export function registerBrowserIpc(mainWindow: BrowserWindow): void {
       const result = await browserService.execute(operation as any, params);
 
       if (result.screenshot) {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('browser:screenshot', {
-            image: result.screenshot,
-            url: browserService.getState().currentUrl,
-            title: browserService.getState().pageTitle,
-            timestamp: Date.now(),
-          });
-        }
+        mainWindow.webContents.send('browser:screenshot', {
+          image: result.screenshot,
+          url: browserService.getState().currentUrl,
+          title: browserService.getState().pageTitle,
+          timestamp: Date.now(),
+        });
       }
 
       const state = browserService.getState();
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('browser:status', state);
-      }
+      mainWindow.webContents.send('browser:status', state);
 
       return result;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send('browser:error', { error: msg, timestamp: Date.now() });
-      }
+      mainWindow.webContents.send('browser:error', { error: msg, timestamp: Date.now() });
       return { success: false, error: msg };
     }
   });

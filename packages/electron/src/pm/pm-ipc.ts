@@ -13,20 +13,7 @@ export function registerPMIPC(): void {
     return getService(projectPath).listWorkItems(filter);
   });
   ipcMain.handle('pm:createWorkItem', async (_e, projectPath: string, input: any) => {
-    try {
-      if (!input || !input.title) {
-        return { success: false, error: 'title is required' };
-      }
-      if (!input.id) {
-        input.id = `wi_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-      }
-      if (!input.type) input.type = 'task';
-      if (!input.status) input.status = 'todo';
-      if (!input.priority) input.priority = 'medium';
-      return await getService(projectPath).createWorkItem(input);
-    } catch (err: any) {
-      return { success: false, error: err.message || String(err) };
-    }
+    return getService(projectPath).createWorkItem(input);
   });
   ipcMain.handle('pm:updateWorkItem', async (_e, projectPath: string, id: string, input: any) => {
     return getService(projectPath).updateWorkItem(id, input);

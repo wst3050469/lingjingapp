@@ -1,6 +1,26 @@
 {
-  "latest": "1.64.3",
+  "latest": "1.64.9",
   "versions": [
+    {
+      "version": "1.64.9",
+      "status": "published",
+      "releaseDate": "2026-05-30",
+      "platforms": {
+        "server": {
+          "version": "1.64.3",
+          "notes": "语音对话延迟优化hotfix"
+        }
+      },
+      "releaseNotes": "v1.64.9 - 语音对话延迟优化全链路部署",
+      "features": [
+        "Fix: faster-whisper tiny int8 STT推理加速(5s音频<0.5s, 原3-6s)",
+        "Fix: 每阶段超时保护(STT 10s/AI 15s/TTS 8s)",
+        "Fix: TTS缓存预热6条高频短语(启动即就绪)",
+        "Fix: 流式ASR滑动窗口3s→2s, interim间隔1s→0.5s",
+        "Fix: 移除faster-whisper不兼容参数(logprob_threshold/no_speech_threshold)",
+        "Fix: 生产服务器PostgreSQL+TTS预热(ffmpeg)配置"
+      ]
+    },
     {
       "version": "1.64.3",
       "status": "published",

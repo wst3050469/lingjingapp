@@ -72,6 +72,16 @@ post-deploy.sh
 # Downloaded packages (not part of the project)
 code-server.deb
 
+# Python server artifacts
+server/venv/
+server/app/__pycache__/
+server/app/ai/__pycache__/
+server/app/routers/__pycache__/
+server/app/services/__pycache__/
+**/__pycache__/
+*.pyc
+server/tts_cache/
+
 # Local dev scripts
 scripts/codeserver-info.txt
 scripts/tunnel-codeserver.bat

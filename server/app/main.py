@@ -44,6 +44,7 @@ async def lifespan(app: FastAPI):
     import asyncio as _asyncio
     _asyncio.create_task(_preload_whisper())
     _asyncio.create_task(_preload_ollama())
+    _asyncio.create_task(_preload_tts())
     # 启动 AI 主动提醒引擎 + 自动化任务引擎 + 个人成长报告调度器 + 背景思考引擎 + 自动同步引擎
     from services.ai_reminder import start_reminder_scheduler, stop_reminder_scheduler
     from services.automation_engine import start_automation_engine, stop_automation_engine
@@ -109,10 +110,19 @@ async def _preload_ollama():
         logger.warning(f"Ollama 模型预热失败: {e}（首次聊天可能较慢）")
 
 
+async def _preload_tts():
+    """预合成TTS高频短语到缓存"""
+    try:
+        from services.tts_service import warmup_tts_cache
+        await warmup_tts_cache()
+    except Exception as e:
+        logger.warning(f"TTS 缓存预热失败: {e}")
+
+
 app = FastAPI(
     title="灵境 - 企业数字大脑",
     description="基于AI的企业管理系统",
-    version="1.64.1",
+    version="1.64.2",
     lifespan=lifespan,
 )
 
@@ -195,7 +205,7 @@ async def wecom_verify():
     
 @app.get("/")
 async def root():
-    return {"name": "灵境 - 企业数字大脑", "version": "1.64.1"}
+    return {"name": "灵境 - 企业数字大脑", "version": "1.64.2"}
 
 if __name__ == "__main__":
     import uvicorn

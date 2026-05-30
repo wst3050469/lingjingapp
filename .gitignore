@@ -89,3 +89,7 @@ downloads/*.AppImage
 downloads/*.deb
 downloads/*.exe
 downloads/*.blockmap
+# Electron build artifacts
+packages/electron/build_output/
+packages/electron/build_portable/
+packages/release/

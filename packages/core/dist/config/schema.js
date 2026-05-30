@@ -40,7 +40,7 @@ export const AppConfigSchema = z.object({
     temperature: z.number().min(0).max(2).default(0.3),
     maxResponseTokens: z.number().default(4096),
     maxContextTokens: z.number().default(128000),
-    maxTurns: z.number().min(500).max(2000).default(500),
+    maxTurns: z.number().min(1).max(2000).default(500),
     maxDuration: z.number().min(0).default(0),
     turnTimeout: z.number().min(30000).default(600000),
     autoMemory: z.boolean().default(true),

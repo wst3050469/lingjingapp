@@ -419,6 +419,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('quest:stop-on-switch', { taskId, runId }),
     cleanup: (taskId: string) =>
       ipcRenderer.invoke('quest:cleanup', { taskId }),
+    revertFile: (filePath: string, beforeContent: string | null) =>
+      ipcRenderer.invoke('quest:revert-file', { filePath, beforeContent }),
     onEvent: (callback: (event: any) => void) => {
       const handler = (_event: any, data: any) => callback(data);
       ipcRenderer.on('quest:event', handler);

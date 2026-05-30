@@ -87,5 +87,9 @@ scripts/codeserver-info.txt
 scripts/tunnel-codeserver.bat
 downloads/*.AppImage
 downloads/*.deb
+# Electron build artifacts
+packages/electron/build_output/
+packages/electron/build_portable/
+packages/release/
 downloads/*.exe
 downloads/*.blockmap

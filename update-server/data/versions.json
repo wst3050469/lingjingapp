@@ -1,6 +1,25 @@
 {
-  "latest": "1.64.2",
+  "latest": "1.64.3",
   "versions": [
+    {
+      "version": "1.64.3",
+      "status": "published",
+      "releaseDate": "2026-05-30",
+      "platforms": {
+        "server": {
+          "version": "1.64.3",
+          "notes": "hotfix: 移除faster-whisper不兼容参数 + 生产环境配置"
+        }
+      },
+      "releaseNotes": "v1.64.3 - 语音对话延迟优化hotfix",
+      "features": [
+        "Fix: 移除faster-whisper不兼容参数 (logprob_threshold/no_speech_threshold)",
+        "Fix: 生产服务器PostgreSQL安装配置 + 服务启动",
+        "Fix: 生产服务器TTS预热(安装ffmpeg)",
+        "Fix: 前端TS类型修复(revertFile)",
+        "New: faster-whisper tiny int8 推理<0.5s/5s音频"
+      ]
+    },
     {
       "version": "1.64.2",
       "status": "published",

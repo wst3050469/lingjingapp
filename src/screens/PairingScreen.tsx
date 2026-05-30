@@ -61,9 +61,8 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
     try {
       const cloudUrl = 'https://ide.zhejiangjinmo.com';
       api.configure({ baseUrl: cloudUrl, token: tokenStr, wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
-      const res = await fetch(`${cloudUrl}/api/status`, {
-        headers: { Authorization: `Bearer ${tokenStr}` },
-      });
+      // Use /api/health (public endpoint) instead of /api/status (which doesn't exist on cloud server)
+      const res = await fetch(`${cloudUrl}/api/health`);
       if (res.ok) {
         setCloudAttempt('success');
         setConnectedChannel('cloud');

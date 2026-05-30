@@ -274,7 +274,6 @@ declare interface ElectronAPI {
     onEvent: (callback: (data: any) => void) => () => void;
     onProgress: (callback: (data: any) => void) => () => void;
     onLog: (callback: (data: any) => void) => () => void;
-    revertFile: (filePath: string, beforeContent: string | null) => Promise<{ success: boolean; error?: string }>;
   };
   memory: {
     list: (opts?: { scope?: string; projectPath?: string }) => Promise<any[]>;
@@ -353,6 +352,7 @@ declare interface ElectronAPI {
     saveMessages: (taskId: string) => Promise<any>;
     stopOnSwitch: (taskId: string, runId?: string) => Promise<any>;
     cleanup: (taskId: string) => Promise<any>;
+    revertFile: (filePath: string, beforeContent: string | null) => Promise<{ success: boolean; error?: string }>;
     onEvent: (callback: (event: any) => void) => () => void;
     onAskUser: (callback: (data: any) => void) => () => void;
     onConfirmRequest: (callback: (data: any) => void) => () => void;

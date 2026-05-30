@@ -19,7 +19,6 @@ interface ChatInputProps {
   images?: AttachedImage[];
   onRemoveImage?: (index: number) => void;
   // InputToolbar props
-  onMention?: () => void;
   onImage?: () => void;
   onVoice?: () => void;
   onPolish?: () => void;
@@ -35,7 +34,7 @@ interface ChatInputProps {
 export function ChatInput({
   onSend, onStop, disabled, isStreaming, interventionMode, onIntervention,
   onImageAdd, images, onRemoveImage,
-  onMention, onImage, onVoice, onPolish,
+  onImage, onVoice, onPolish,
   isRecording = false, isPolishing = false, canSend: canSendProp,
   fileInputRef: externalFileInputRef,
   value: externalValue,
@@ -225,14 +224,6 @@ export function ChatInput({
             )}
             <div className="flex-1" />
             <InputToolbar
-              onMention={() => {
-                console.log('[ChatInput] onMention called, onMention exists:', !!onMention);
-                if (onMention) {
-                  onMention();
-                } else {
-                  openViaButton('file');
-                }
-              }}
               onImage={() => {
                 console.log('[ChatInput] onImage called, onImage exists:', !!onImage, 'externalFileInputRef exists:', !!externalFileInputRef?.current);
                 if (onImage) {
@@ -273,7 +264,7 @@ export function ChatInput({
         <input
           ref={externalFileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.pdf,.txt,.md,.doc,.docx,.xls,.xlsx"
           multiple
           className="hidden"
           onChange={(e) => {

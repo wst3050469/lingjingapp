@@ -123,25 +123,12 @@ async def download_version(version_name: str, request: Request = None):
         logger.warning(f"本地APK不存在: {local_path}，走公网通道: {public_url}")
         return RedirectResponse(url=public_url, status_code=302)
     
-    # 检测是否为本地/LAN请求
-    forwarded = ""
-    if request and request.headers:
-        forwarded = request.headers.get("x-forwarded-for", "")
-    is_local = (not forwarded or forwarded.strip() in ("", "127.0.0.1", "::1"))
-    if not is_local:
-        for prefix in ("192.168.", "10.", "172.16.", "172.17.", "172.18.", "172.19.",
-                       "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.",
-                       "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31."):
-            if forwarded.startswith(prefix):
-                is_local = True
-                break
-    if is_local:
-        logger.info(f"本地下载: {local_path}")
-        return FileResponse(
-            path=str(local_path),
-            media_type="application/vnd.android.package-archive",
-            filename=local_path.name,
-        )
-    # 公网请求 → 302重定向到CDN域名nginx静态文件(不走HK SSH隧道)
-    logger.info(f"公网下载重定向(CDN): {public_url}")
-    return RedirectResponse(url=public_url, status_code=302)
+    # 直接返回APK文件 — 对所有请求都流式传输，不再做公网302重定向
+    # 原因: CDN WAF 拦截 /api/v1/app/apk/ 路径 (HTTP 403)
+    # 直接通过 /api/v1/app/download/{version} 端点流式返回，CDN会代理并缓存
+    logger.info(f"流式下载APK: {local_path.name} ({local_path.stat().st_size} bytes)")
+    return FileResponse(
+        path=str(local_path),
+        media_type="application/vnd.android.package-archive",
+        filename=local_path.name,
+    )

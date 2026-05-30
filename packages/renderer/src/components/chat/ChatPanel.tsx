@@ -19,7 +19,6 @@ import { TodoTracker } from './TodoTracker';
 import { ContextMeter } from './ContextMeter';
 import { RecommendationCards } from './RecommendationCards';
 import { useImageAttachments } from '../../hooks/useImageAttachments';
-import { useFileMentions } from '../../hooks/useFileMentions';
 import { usePromptPolish } from '../../hooks/usePromptPolish';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { QuestSpecTab } from '../quest/QuestSpecTab';
@@ -48,7 +47,6 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { images, addImages, addImageFromFile, removeImage, fileInputRef, clearImages } = useImageAttachments();
-  const { mentionedFiles, addMention, removeMention, clearMentions } = useFileMentions();
   const { isPolishing, polish } = usePromptPolish();
   const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setInputText(newText), []));
 
@@ -92,9 +90,6 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
       finalPrompt = `[Code from ${fileName}${lineInfo}]\n\`\`\`${codeContext.language}\n${codeContext.code}\n\`\`\`\n\n${finalPrompt}`;
     }
 
-    if (mentionedFiles.length > 0) {
-      finalPrompt = `[Referenced files: ${mentionedFiles.join(', ')}]\n\n${finalPrompt}`;
-    }
     if (attachedImages && attachedImages.length > 0) {
       finalPrompt = `[${attachedImages.length} image(s) attached]\n\n${finalPrompt}`;
     } else if (images.length > 0) {
@@ -105,8 +100,8 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
       id: generateMessageId(),
       role: 'user',
       content: finalPrompt,
-      attachments: (images.length > 0 || mentionedFiles.length > 0)
-        ? { images: images.length > 0 ? [...images] : undefined, files: mentionedFiles.length > 0 ? [...mentionedFiles] : undefined }
+      attachments: images.length > 0
+        ? { images: [...images] }
         : undefined,
       timestamp: Date.now(),
     };
@@ -117,7 +112,6 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
     setCodeContext(null);
     setInputText('');
     clearImages();
-    clearMentions();
 
     try {
       let agentPrompt = finalPrompt;
@@ -153,7 +147,7 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
     } finally {
       useChatStore.getState().setStreaming(false);
     }
-  }, [isStreaming, codeContext, mentionedFiles, images, chatMode, messages, addMessage, setStreaming, resetStreamText, setLastUsage, setCodeContext, setConversationSummary, createNewConversation, clearImages, clearMentions]);
+  }, [isStreaming, codeContext, images, chatMode, messages, addMessage, setStreaming, resetStreamText, setLastUsage, setCodeContext, setConversationSummary, createNewConversation, clearImages]);
 
   const handleStop = useCallback(async () => {
     try { await window.electronAPI.agent.abort(); } catch { /* ignore */ }
@@ -287,7 +281,6 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
               onImageAdd={handleImageAdd}
               images={images}
               onRemoveImage={removeImage}
-              onMention={addMention}
               onImage={() => fileInputRef.current?.click()}
               onVoice={() => toggleRecording(inputText)}
               onPolish={handlePolish}

@@ -72,6 +72,20 @@ app.get('/download/:version/*', (req, res) => {
   res.redirect(302, ossUrl);
 });
 
+// 静态文件下载 — 提供APK/安装包直接从本地文件系统服务
+app.get('/downloads/:filename', (req, res) => {
+  const filename = req.params.filename;
+  // 安全校验：防止路径穿越
+  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    return res.status(400).json({ error: 'invalid_filename' });
+  }
+  const filepath = path.join('/var/www/html/downloads', filename);
+  if (!fs.existsSync(filepath)) {
+    return res.status(404).json({ error: 'file_not_found' });
+  }
+  res.download(filepath, filename);
+});
+
 // 健康检查
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'update-server', version: '1.0.0' });

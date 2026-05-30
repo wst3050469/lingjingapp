@@ -9,6 +9,10 @@
         "server": {
           "version": "1.64.3",
           "notes": "语音对话延迟优化hotfix"
+        },
+        "mobile": {
+          "url": "https://ide.zhejiangjinmo.com/api/v1/app/download/v1.64.1",
+          "size": 82567535
         }
       },
       "releaseNotes": "v1.64.9 - 语音对话延迟优化全链路部署",
@@ -62,7 +66,7 @@
           "size": 158000000
         },
         "mobile": {
-          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "url": "https://ide.zhejiangjinmo.com/api/v1/app/download/v1.64.1",
           "size": 39044682
         }
       },
@@ -100,7 +104,7 @@
           "size": 110990662
         },
         "mobile": {
-          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "url": "https://ide.zhejiangjinmo.com/api/v1/app/download/v1.64.1",
           "size": 39044682
         }
       },
@@ -135,7 +139,7 @@
           "size": 110968034
         },
         "mobile": {
-          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "url": "https://ide.zhejiangjinmo.com/api/v1/app/download/v1.64.1",
           "size": 39044682
         }
       },
@@ -168,7 +172,7 @@
           "size": 183533943
         },
         "mobile": {
-          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "url": "https://ide.zhejiangjinmo.com/api/v1/app/download/v1.64.1",
           "size": 39044682
         }
       },
@@ -232,7 +236,7 @@
           "size": 212000000
         },
         "mobile": {
-          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "url": "https://ide.zhejiangjinmo.com/api/v1/app/download/v1.64.1",
           "size": 39044682
         }
       },
@@ -259,7 +263,7 @@
           "size": 183533011
         },
         "mobile": {
-          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "url": "https://ide.zhejiangjinmo.com/api/v1/app/download/v1.64.1",
           "size": 39044682
         }
       },
@@ -283,7 +287,7 @@
           "size": 141680103
         },
         "mobile": {
-          "url": "/downloads/lingjing-mobile-v1.60.1.apk",
+          "url": "https://ide.zhejiangjinmo.com/api/v1/app/download/v1.64.1",
           "size": 39044682
         }
       }

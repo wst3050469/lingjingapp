@@ -175,7 +175,7 @@ async def asr_stream(websocket: WebSocket):
         logger.error(f"ASR 流异常 [{session_id}]: {e}", exc_info=True)
         error_occurred = True
         try:
-            await websocket.send_json({"type": "error", "code": "internal", "message": f"服务器内部错误: {str(e)[:50]}"})
+            await websocket.send_json({"type": "error", "code": "internal", "message": "服务器内部错误，请稍后重试"})
         except Exception:
             pass
     finally:

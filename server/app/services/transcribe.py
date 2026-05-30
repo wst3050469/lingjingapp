@@ -161,8 +161,6 @@ def transcribe_audio_bytes(audio_bytes: bytes, filename: str = "audio.m4a") -> s
             ),
             temperature=0.0,
             compression_ratio_threshold=2.4,
-            logprob_threshold=-1.0,
-            no_speech_threshold=0.6,
             initial_prompt="以下是普通话的句子：简体中文",
         )
         elapsed = time.time() - t0

@@ -1,0 +1,13 @@
+灵境 IDE 下载地址
+=================
+
+下载页面: https://ide.zhejiangjinmo.com/downloads/
+
+Windows 安装版:
+  https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.64.5-win-x64.exe
+
+Windows 便携版:
+  https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.64.5-win-x64.exe
+
+Linux DEB 安装包:
+  https://ide.zhejiangjinmo.com/downloads/LingJing-1.64.5-linux-x86_64.deb

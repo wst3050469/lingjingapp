@@ -649,6 +649,18 @@ function QuestFileChangeSummary() {
     }).catch(() => {});
   }, []);
 
+  // Listen for real-time fileChangeBehavior changes from settings panel
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.behavior) {
+        setFileChangeBehavior(detail.behavior);
+      }
+    };
+    window.addEventListener('quest:file-behavior-changed', handler);
+    return () => window.removeEventListener('quest:file-behavior-changed', handler);
+  }, []);
+
   // Auto-collapse when new files appear
   useEffect(() => {
     if (files.length > 0 && files.length !== countOnAppear) {

@@ -1,11 +1,11 @@
-version: 1.62.3
+version: 1.64.7
 files:
-  - url: LingJing-Setup-1.62.3-win-x64.exe
-    sha512: PRNTcBkuHHrMEpZNShAZI2/Hd4diLvadEG9L6PT62Suop1Be1wDT4gfhOdJE8YPj/nM55lPMokEuz077RSaWtA==
-    size: 142204523
-  - url: LingJing-Portable-1.62.3-win-x64.exe
-    sha512: DmDvogjXs8xjwucrsEp//qA6KJ0cppLIMK1d0yjLMEQMgtdUqQBGi+G1fXngUmd1zaufnWHf2AVjMI1fYNXMuA==
-    size: 141863003
-path: LingJing-Setup-1.62.3-win-x64.exe
-sha512: PRNTcBkuHHrMEpZNShAZI2/Hd4diLvadEG9L6PT62Suop1Be1wDT4gfhOdJE8YPj/nM55lPMokEuz077RSaWtA==
-releaseDate: '2026-05-29T10:07:08.302Z'
+  - url: LingJing-Setup-1.64.7-win-x64.exe
+    sha512: 657b2c9117b374b2cf801662a5d77ee8c6dda1c02540f3eb6e0eedb40443a11a0cbb4b0ac5d11dc863c4b49c3ef16b66b2f5f6ff145aaf8b0d6029de08a21d0f
+    size: 142207147
+  - url: LingJing-Portable-1.64.7-win-x64.exe
+    sha512: c60edd3fc85fe448646255adea88a22d52efff5b8bdd48908c5bff0097b87d7ea945ee41a6395f482bdaaac51307139f5851221eda433d29765a5f30b82cfdfc
+    size: 141865637
+path: LingJing-Setup-1.64.7-win-x64.exe
+sha512: 657b2c9117b374b2cf801662a5d77ee8c6dda1c02540f3eb6e0eedb40443a11a0cbb4b0ac5d11dc863c4b49c3ef16b66b2f5f6ff145aaf8b0d6029de08a21d0f
+releaseDate: '2026-05-31T00:30:00.000Z'

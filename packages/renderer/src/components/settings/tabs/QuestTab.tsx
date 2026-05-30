@@ -54,6 +54,7 @@ export function QuestTab({ config, saveKey }: QuestTabProps) {
 
   // File change behavior
   const [fileChangeBehavior, setFileChangeBehavior] = useState<string>(q.fileChangeBehavior ?? 'ask');
+  const [fcbDirty, setFcbDirty] = useState(false);
 
   const handleSaveWorktreeScript = () => {
     saveKey('quest.worktreeScript', worktreeScript);
@@ -94,6 +95,14 @@ export function QuestTab({ config, saveKey }: QuestTabProps) {
   const handleSaveInstallScript = () => {
     saveKey('quest.remote.installScript', installScript);
     setInstallDirty(false);
+  };
+
+  const handleSaveFileChangeBehavior = async () => {
+    await saveKey('quest.fileChangeBehavior', fileChangeBehavior);
+    setFcbDirty(false);
+    window.dispatchEvent(new CustomEvent('quest:file-behavior-changed', {
+      detail: { behavior: fileChangeBehavior },
+    }));
   };
 
   return (
@@ -339,8 +348,10 @@ export function QuestTab({ config, saveKey }: QuestTabProps) {
                     : 'border-cp-border/30 hover:bg-white/[0.03]'
                 }`}
                 onClick={() => {
-                  setFileChangeBehavior(opt.value);
-                  saveKey('quest.fileChangeBehavior', opt.value);
+                  if (fileChangeBehavior !== opt.value) {
+                    setFileChangeBehavior(opt.value);
+                    setFcbDirty(true);
+                  }
                 }}
               >
                 <div className={`w-4 h-4 mt-0.5 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -359,6 +370,16 @@ export function QuestTab({ config, saveKey }: QuestTabProps) {
               </label>
             ))}
           </div>
+          {fcbDirty && (
+            <div className="flex justify-end mt-3">
+              <button
+                onClick={handleSaveFileChangeBehavior}
+                className="text-xs px-3 py-1 rounded-md bg-cp-accent/20 text-cp-accent hover:bg-cp-accent/30 transition-colors"
+              >
+                保存配置
+              </button>
+            </div>
+          )}
         </Card>
       </div>
     </div>

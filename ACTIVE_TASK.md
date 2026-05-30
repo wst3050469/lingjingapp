@@ -8,7 +8,7 @@
 | 🖥️ Server API (localhost) | ✅ active | v1.64.3 |
 | 🖥️ Server API (43.103.5.36) | ✅ active | v1.64.3 |
 | 🎤 STT (faster-whisper tiny) | ✅ 正常运行 | 推理 <0.5s/5s音频 |
-| 🗣️ TTS (warmup cache) | ✅ 6/6 已预热 | - |
+| 🗣️ TTS (warmup cache) | ✅ 6/6 已预热 | 本地+生产均正常 |
 | 📡 WebSocket 通知 | ✅ 运行中 | - |
 | 🗄️ PostgreSQL (生产) | ✅ active | 已配置授权 |
 

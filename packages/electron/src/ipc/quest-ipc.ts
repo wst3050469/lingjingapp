@@ -1282,11 +1282,13 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     isNewFile: boolean;
 
-  }): void {
+  }, taskId?: string): void {
 
     sendQuestEvent({
 
       type: 'file_snapshot',
+
+      taskId,
 
       filePath: data.filePath,
 
@@ -1533,6 +1535,25 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
   });
 
 
+
+  // --- Quest File Revert ---
+
+  ipcMain.handle('quest:revert-file', async (_event, { filePath, beforeContent }: { filePath: string; beforeContent: string | null }) => {
+    try {
+      if (beforeContent === null) {
+        // New file: delete it
+        await unlinkFS(filePath);
+      } else {
+        // Edited file: restore original content
+        await writeFileFS(filePath, beforeContent, 'utf-8');
+      }
+      return { success: true };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      sendLog(`[Quest IPC] revert-file failed: ${message}`);
+      return { success: false, error: message };
+    }
+  });
 
   // --- Quest Run ---
 
@@ -1808,7 +1829,9 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       if (tool.name === 'file_edit' || tool.name === 'file_write') {
 
-        wrapped = wrapFileToolWithSnapshot(wrapped, workDir, emitFileSnapshot);
+        const emitSnapshotWithTaskId = (data: Parameters<typeof emitFileSnapshot>[0]) => emitFileSnapshot(data, taskId);
+
+        wrapped = wrapFileToolWithSnapshot(wrapped, workDir, emitSnapshotWithTaskId);
 
       }
 
@@ -2614,7 +2637,9 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       if (tool.name === 'file_edit' || tool.name === 'file_write') {
 
-        wrapped = wrapFileToolWithSnapshot(wrapped, workDir, emitFileSnapshot);
+        const emitSnapshotWithTaskId = (data: Parameters<typeof emitFileSnapshot>[0]) => emitFileSnapshot(data, taskId);
+
+        wrapped = wrapFileToolWithSnapshot(wrapped, workDir, emitSnapshotWithTaskId);
 
       }
 

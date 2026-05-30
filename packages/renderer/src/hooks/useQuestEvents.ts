@@ -9,11 +9,13 @@ import { useTodoStore } from '../stores/todo-store';
 
 export function useQuestEvents(): void {
   useEffect(() => {
-    // Load maxContextTokens from config for context meter + auto-compact
+    // Load config values used during event processing
+    let cachedFileChangeBehavior = 'ask';
     window.electronAPI.config.get().then((cfg: any) => {
       if (cfg?.maxContextTokens) {
         useQuestStore.getState().setMaxContextTokens(cfg.maxContextTokens);
       }
+      cachedFileChangeBehavior = cfg?.quest?.fileChangeBehavior ?? 'ask';
     }).catch(() => { /* ignore */ });
 
     const unsubEvent = window.electronAPI.quest.onEvent((event: any) => {
@@ -170,12 +172,15 @@ export function useQuestEvents(): void {
               event.isNewFile ?? false
             );
 
-            // Auto-accept file changes when task is in auto mode
-            if (event.taskId) {
-              const currentTask = useQuestStore.getState().tasks.find((t) => t.id === event.taskId);
-              if (currentTask?.autoMode === 'auto') {
-                useQuestDiffStore.getState().acceptFile(event.filePath);
-              }
+            // Auto-process based on quest.fileChangeBehavior config
+            const behavior = cachedFileChangeBehavior;
+            if (behavior === 'auto-accept') {
+              useQuestDiffStore.getState().acceptFile(event.filePath);
+            } else if (behavior === 'auto-reject') {
+              // Immediately reject (mark in store) + request file rollback
+              useQuestDiffStore.getState().rejectFile(event.filePath);
+              // Async file revert: rollback file content on disk
+              window.electronAPI.quest.revertFile(event.filePath, event.beforeContent ?? null).catch(() => {});
             }
           }
           break;

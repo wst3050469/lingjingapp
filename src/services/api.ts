@@ -179,21 +179,69 @@ class ApiService {
  async triggerWebhook(channel: string, payload: any) { return this.request<any>('/webhook/' + encodeURIComponent(channel), { method: 'POST', body: JSON.stringify(payload) }); }
  async getSubscription() {
   var data = await this.request<any>('/subscriptions/mine');
-  // Server returns subscription object directly; wrap it for screen compatibility
-  return { subscription: data };
+  // Transform server camelCase + flat response → client snake_case + nested usage
+  // Server: { planId, planName, startDate, endDate, limits, features, ... }
+  // Client: { plan_id, plan_name, started_at, expires_at, usage: { limits, apiCalls, ... }, ... }
+  var limits = data?.limits || {};
+  var subscription: any = {
+   id: data?.id,
+   plan_id: data?.planId || 'free',
+   plan_name: data?.planName || '免费版',
+   status: data?.status || 'active',
+   started_at: data?.startDate || null,
+   expires_at: data?.endDate || null,
+   // Build nested usage object from flat limits
+   usage: {
+    apiCalls: 0,
+    sessions: 0,
+    memories: 0,
+    storageFiles: 0,
+    apiKeys: 0,
+    limits: limits,
+   },
+  };
+  return { subscription };
  }
  async getPlans2() {
   var data = await this.request<any>('/plans');
-  // Server returns a plain array; wrap it for screen compatibility
-  return { plans: Array.isArray(data) ? data : [] };
+  // Server returns array with { billingCycle, recommended: bool }
+  // Transform: billingCycle → billing_cycle, recommended: bool → number (0/1)
+  var plans = Array.isArray(data) ? data.map(function(p: any) {
+   return {
+    id: p.id,
+    name: p.name,
+    price: p.price,
+    billing_cycle: p.billingCycle || 'monthly',
+    features: Array.isArray(p.features) ? p.features : [],
+    limits: p.limits || {},
+    recommended: p.recommended ? 1 : 0,
+   };
+  }) : [];
+  return { plans };
  }
  async createPayment(channel: string, amount: number, planId: string) { return this.request<any>('/payments/create', { method: 'POST', body: JSON.stringify({ channel, amount, planId }) }); }
  async confirmPayment(orderId: string) { return this.request<any>('/payments/confirm/' + orderId, { method: 'POST' }); }
  async queryPayment(orderId: string) { return this.request<any>('/payments/query/' + orderId); }
  async getPayments() {
   var data = await this.request<any>('/payments');
-  // Server returns a plain array; wrap for screen compatibility
-  return Array.isArray(data) ? { payments: data } : data;
+  // Transform camelCase → snake_case for screen compatibility
+  // Server: { createdAt, subscriptionId, paymentMethod, paidAt, ... }
+  // Client: { created_at, plan_id, planName, status, amount, ... }
+  if (Array.isArray(data)) {
+   var payments = data.map(function(p: any) {
+    return {
+     id: p.id,
+     plan_id: p.planId || '',
+     planName: p.planName || '',
+     amount: p.amount,
+     status: p.status || 'pending',
+     created_at: p.createdAt || p.created_at || null,
+     paidAt: p.paidAt || null,
+    };
+   });
+   return { payments };
+  }
+  return data;
  }
  async upgrade(planId: string) { return this.request<any>('/subscriptions/upgrade', { method: 'POST', body: JSON.stringify({ planId }) }); }
  async downgrade(planId: string) { return this.request<any>('/subscriptions/downgrade', { method: 'POST', body: JSON.stringify({ planId }) }); }

@@ -15,7 +15,6 @@ import { TodoTracker } from '../chat/TodoTracker';
 import { CodeContextPanel } from '../chat/CodeContextPanel';
 import { ContextMeter } from '../chat/ContextMeter';
 import { useImageAttachments } from '../../hooks/useImageAttachments';
-import { useFileMentions } from '../../hooks/useFileMentions';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { usePromptPolish } from '../../hooks/usePromptPolish';
 
@@ -38,7 +37,6 @@ export function ChatSidebar() {
 
   // Shared hooks for attachments & input enhancements
   const { images, addImages, addImageFromFile, removeImage, fileInputRef, triggerFileInput, clearImages } = useImageAttachments();
-  const { mentionedFiles, addMention, removeMention, clearMentions } = useFileMentions();
   const { isRecording, toggleRecording } = useVoiceInput(useCallback((text: string) => setInputText(text), []));
   const { isPolishing, polish } = usePromptPolish();
 
@@ -133,9 +131,6 @@ export function ChatSidebar() {
       finalPrompt = `[Code from ${fileName}${lineInfo}]\n\`\`\`${codeContext.language}\n${codeContext.code}\n\`\`\`\n\n${finalPrompt}`;
     }
 
-    if (mentionedFiles.length > 0) {
-      finalPrompt = `[Referenced files: ${mentionedFiles.join(', ')}]\n\n${finalPrompt}`;
-    }
     if (images.length > 0) {
       finalPrompt = `[${images.length} image(s) attached]\n\n${finalPrompt}`;
     }
@@ -144,8 +139,8 @@ export function ChatSidebar() {
       id: generateMessageId(),
       role: 'user',
       content: finalPrompt,
-      attachments: (images.length > 0 || mentionedFiles.length > 0)
-        ? { images: images.length > 0 ? [...images] : undefined, files: mentionedFiles.length > 0 ? [...mentionedFiles] : undefined }
+      attachments: images.length > 0
+        ? { images: [...images] }
         : undefined,
       timestamp: Date.now(),
     };
@@ -156,7 +151,6 @@ export function ChatSidebar() {
     useChatStore.getState().setCodeContext(null);
     setInputText('');
     clearImages();
-    clearMentions();
     setShowConvList(false);
     try {
       // Inject conversation summary if available (for LLM context, not shown in UI)
@@ -400,13 +394,11 @@ export function ChatSidebar() {
             )}
 
             {/* Context chips */}
-            {(images.length > 0 || mentionedFiles.length > 0) && (
+            {images.length > 0 && (
               <div className="pt-1.5">
                 <ContextChips
                   images={images}
-                  files={mentionedFiles}
                   onRemoveImage={removeImage}
-                  onRemoveFile={removeMention}
                 />
               </div>
             )}
@@ -444,7 +436,6 @@ export function ChatSidebar() {
               <ChatModeSelector />
               <div className="flex-1" />
               <InputToolbar
-                onMention={addMention}
                 onImage={triggerFileInput}
                 onVoice={() => toggleRecording(inputText)}
                 onPolish={handlePolish}
@@ -464,7 +455,7 @@ export function ChatSidebar() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,.pdf,.txt,.md,.doc,.docx,.xls,.xlsx"
         multiple
         className="hidden"
         onChange={addImages}

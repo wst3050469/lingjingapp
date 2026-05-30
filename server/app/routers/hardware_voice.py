@@ -189,7 +189,7 @@ async def hardware_voice(
         audio_bytes = _truncate_audio_if_needed(audio_bytes)
     except Exception as e:
         logger.error(f"读取音频失败: {e}")
-        return JSONResponse(status_code=400, content={"error": f"读取音频失败: {str(e)}"})
+        return JSONResponse(status_code=400, content={"error": "读取音频失败，请检查音频文件格式"})
 
     # 3. faster-whisper 转写 (STT) — 主加速点
     try:
@@ -208,7 +208,7 @@ async def hardware_voice(
         return JSONResponse(status_code=500, content={"error": "语音转写超时, 请缩短录音"})
     except Exception as e:
         logger.error(f"STT 转写失败: {e}")
-        return JSONResponse(status_code=500, content={"error": f"语音转写失败: {str(e)}"})
+        return JSONResponse(status_code=500, content={"error": "语音转写失败，请稍后重试"})
 
     # 4. AI 对话 — 用更短的 max_tokens 加速
     try:

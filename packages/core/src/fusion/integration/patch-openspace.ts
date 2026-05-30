@@ -55,7 +55,7 @@ export function detectOpenSpaceWindows(): OpenSpaceDetectionResult {
     const output = execSync(WIN_REGISTRY_QUERY, { encoding: 'utf-8', timeout: 5000 });
     const match = output.match(/REG_SZ\s+(.+)/);
     if (match && match[1].trim() && existsDir(match[1].trim())) {
-      return { found: true, path: match[1].trim(), method: 'registry'  };
+      return { found: true, path: match[1].trim(), method: 'registry' };
     }
   } catch { /* ignore */ }
 
@@ -64,7 +64,7 @@ export function detectOpenSpaceWindows(): OpenSpaceDetectionResult {
     const whereOut = execSync('where openspace 2>nul', { encoding: 'utf-8', timeout: 5000 }).trim();
     if (whereOut) {
       const exePath = whereOut.split('\n')[0].trim();
-      return { found: true, path: path.dirname(exePath), method: 'PATH'  };
+      return { found: true, path: path.dirname(exePath), method: 'PATH' };
     }
   } catch { /* ignore */ }
 
@@ -75,7 +75,7 @@ export function detectOpenSpaceWindows(): OpenSpaceDetectionResult {
     }
   }
 
-  return { found: false, path: null, method: 'none'  };
+  return { found: false, path: null, method: 'none' };
 }
 
 export function detectOpenSpaceLinux(): OpenSpaceDetectionResult {
@@ -83,7 +83,7 @@ export function detectOpenSpaceLinux(): OpenSpaceDetectionResult {
   try {
     const whichOut = execSync('which openspace 2>/dev/null', { encoding: 'utf-8', timeout: 5000 }).trim();
     if (whichOut && existsFile(whichOut)) {
-      return { found: true, path: path.dirname(whichOut), method: 'which'  };
+      return { found: true, path: path.dirname(whichOut), method: 'which' };
     }
   } catch { /* ignore */ }
 
@@ -94,7 +94,7 @@ export function detectOpenSpaceLinux(): OpenSpaceDetectionResult {
     }
   }
 
-  return { found: false, path: null, method: 'none'  };
+  return { found: false, path: null, method: 'none' };
 }
 
 export function detectOpenSpace(): OpenSpaceDetectionResult {
@@ -136,9 +136,9 @@ export function patchOpenSpaceIntegration(): OpenSpacePatchResult {
   const detection = detectOpenSpace();
   return {
     detection,
-    wsBridgeReady: detection.found && detection.path !== null,
-    windowEmbedReady: detection.found
-};
+    wsBridgeReady: detection.installed && detection.binaryPath !== null,
+    windowEmbedReady: detection.installed,
+  };
 }
 
 // ─── Lua 脚本示例 ──────────────────────────────────────────────

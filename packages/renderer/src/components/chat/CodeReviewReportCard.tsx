@@ -157,7 +157,7 @@ export function CodeReviewReportCard({ report }: CodeReviewReportCardProps) {
             }`}
           >
             <div className="text-lg font-bold text-cp-text">
-              {(report.severity_counts || {})[severity] || 0}
+              {report.severity_counts[severity]}
             </div>
             <div className="text-xs text-gray-400">{severityLabels[severity]}</div>
           </div>
@@ -167,7 +167,7 @@ export function CodeReviewReportCard({ report }: CodeReviewReportCardProps) {
       {/* Issues by Severity */}
       <div className="max-h-96 overflow-y-auto px-4 py-3">
         {severityOrder.map((severity) => {
-          const issues = (report.issues || []).filter((i) => i.severity === severity);
+          const issues = report.issues.filter((i) => i.severity === severity);
           if (issues.length === 0) return null;
 
           return (
@@ -193,7 +193,7 @@ export function CodeReviewReportCard({ report }: CodeReviewReportCardProps) {
           );
         })}
 
-        {(report.issues || []).length === 0 && (
+        {report.issues.length === 0 && (
           <div className="text-center py-8 text-gray-400">
             <div className="text-3xl mb-2">✅</div>
             <div>No issues found. Great job!</div>
@@ -208,7 +208,7 @@ export function CodeReviewReportCard({ report }: CodeReviewReportCardProps) {
             ✅ Positives
           </h4>
           <ul className="space-y-1">
-            {(report.positives || []).map((positive, idx) => (
+            {report.positives.map((positive, idx) => (
               <li key={idx} className="text-xs text-gray-300 flex items-start gap-2">
                 <span className="text-green-500 mt-0.5">•</span>
                 <span>{positive}</span>

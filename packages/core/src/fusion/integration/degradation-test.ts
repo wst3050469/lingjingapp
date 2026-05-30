@@ -7,9 +7,6 @@
 import type { FusionConfig } from '../types.js';
 import { FusionInitializer } from '../fusion-initializer.js';
 import { EventBus } from '../event-bus/event-bus.js';
-import { HookPoint } from '../hook-registry/types.js';
-
-
 import { HookRegistry } from '../hook-registry/hook-registry.js';
 
 export interface DegradationCheck {
@@ -27,9 +24,6 @@ function allDisabledConfig(): FusionConfig {
   return {
     enabled: false,
     modules: [],
-    globalTimeout: 100,
-    retryAttempts: 3,
-    retryDelayMs: 1000,
   };
 }
 
@@ -53,10 +47,10 @@ function verifyEventBusNoOp(): DegradationCheck {
   try {
     const bus = new EventBus();
     let received = false;
-    bus.subscribe('agent:message_start', () => { received = true; });
-    bus.publish('agent:message_start', { payload: null }, 'degradation-test');
+    bus.subscribe('test.topic', () => { received = true; });
+    bus.publish('test.topic', { payload: null });
     const works = received;
-    ;
+    bus.removeAllHandlers();
     return {
       name: 'EventBus.publish is no-op when disabled',
       passed: true,
@@ -78,8 +72,8 @@ function verifyHookRegistryPassthrough(): DegradationCheck {
     const registry = new HookRegistry();
     const context = { data: 'test' };
     let hookCalled = false;
-    registry.register(HookPoint.BEFORE_LLM_CALL, async (ctx) => { hookCalled = true; return ctx; });
-    void registry.execute(HookPoint.BEFORE_LLM_CALL, context);
+    registry.register('test.point', async (ctx) => { hookCalled = true; return ctx; });
+    void registry.execute('test.point', context);
     return {
       name: 'HookRegistry.execute returns original context when disabled',
       passed: true,

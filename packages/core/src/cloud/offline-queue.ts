@@ -26,33 +26,6 @@ export interface OfflineQueueOptions {
   onError?: (item: OfflineQueueItem, error: Error) => void;
 }
 
-function stableStringify(obj: any): string {
-  if (obj === null || typeof obj !== 'object') return JSON.stringify(obj);
-  try {
-    const keys = Object.keys(obj).sort();
-    const sorted: any = {};
-    for (const k of keys) sorted[k] = obj[k];
-    return JSON.stringify(sorted, (_, v) => {
-      if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
-        const sk = Object.keys(v).sort();
-        const sv: any = {};
-        for (const k of sk) sv[k] = v[k];
-        return sv;
-      }
-      return v;
-    });
-  } catch {
-    return JSON.stringify(obj);
-  }
-}
-
-function generateId(): string {
-  const ts = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 10);
-  const rand2 = Math.random().toString(36).slice(2, 6);
-  return `${ts}-${rand}-${rand2}`;
-}
-
 export class OfflineQueue {
   items: OfflineQueueItem[] = [];
   dbPath: string;
@@ -78,7 +51,7 @@ export class OfflineQueue {
   }
 
   enqueue(type: string, action: string, payload: any): string {
-    const id = generateId();
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const item: OfflineQueueItem = {
       id,
       type,
@@ -136,8 +109,8 @@ export class OfflineQueue {
     this.onError = fn;
   }
 
-  async flush(): Promise<{ succeeded: number; failed: number; skipped?: boolean }> {
-    if (this.flushing) return { succeeded: 0, failed: 0, skipped: true };
+  async flush(): Promise<{ succeeded: number; failed: number }> {
+    if (this.flushing) return { succeeded: 0, failed: 0 };
     this.flushing = true;
     const pending = this.getPending();
     let succeeded = 0;
@@ -148,14 +121,10 @@ export class OfflineQueue {
         if (this.onFlush) {
           await this.onFlush([item]);
         }
-        if (this.items.some(i => i.id === item.id)) {
-          this.ack(item.id);
-        }
+        this.ack(item.id);
         succeeded++;
       } catch (err) {
-        if (this.items.some(i => i.id === item.id)) {
-          this.nack(item.id, err instanceof Error ? err : new Error(String(err)));
-        }
+        this.nack(item.id, err instanceof Error ? err : new Error(String(err)));
         failed++;
       }
     }
@@ -189,9 +158,7 @@ export class OfflineQueue {
   clearFile(): void {
     this.clear();
     if (this.dbPath !== ':memory:' && existsSync(this.dbPath)) {
-      try { writeFileSync(this.dbPath, '[]', 'utf-8'); } catch (err) {
-        console.warn('[OfflineQueue] Failed to clear file:', err instanceof Error ? err.message : String(err));
-      }
+      try { writeFileSync(this.dbPath, '[]', 'utf-8'); } catch { /* ignore */ }
     }
   }
 
@@ -211,25 +178,12 @@ export class OfflineQueue {
 
   private _dedupe(items: OfflineQueueItem[]): OfflineQueueItem[] {
     const seen = new Map<string, OfflineQueueItem>();
-    const toRemove: string[] = [];
     for (const item of items) {
-      try {
-        const key = `${item.type}:${item.action}:${stableStringify(item.payload)}`;
-        const existing = seen.get(key);
-        if (!existing) {
-          seen.set(key, item);
-        } else if (item.createdAt > existing.createdAt) {
-          toRemove.push(existing.id);
-          seen.set(key, item);
-        } else {
-          toRemove.push(item.id);
-        }
-      } catch {
-        seen.set(item.id, item);
+      const key = `${item.type}:${item.action}:${JSON.stringify(item.payload)}`;
+      const existing = seen.get(key);
+      if (!existing || item.createdAt > existing.createdAt) {
+        seen.set(key, item);
       }
-    }
-    for (const id of toRemove) {
-      this.ack(id);
     }
     return [...seen.values()];
   }
@@ -276,9 +230,7 @@ export class OfflineQueue {
         mkdirSync(dir, { recursive: true });
       }
       writeFileSync(this.dbPath, JSON.stringify(this.items), 'utf-8');
-    } catch (err) {
-      console.error('[OfflineQueue] JSON save failed:', err instanceof Error ? err.message : String(err));
-    }
+    } catch { /* ignore */ }
   }
 
   private _loadJson(): void {
@@ -288,17 +240,13 @@ export class OfflineQueue {
       if (Array.isArray(parsed)) {
         this.items = parsed;
       }
-    } catch (err) {
-      console.warn('[OfflineQueue] JSON load failed, starting fresh:', err instanceof Error ? err.message : String(err));
-      this.items = [];
-    }
+    } catch { /* ignore */ }
   }
 
   private _saveSqlite(): void {
     if (!this.db) return;
     try {
       this._initSqlite();
-      this.db.exec('BEGIN TRANSACTION');
       this.db.exec('DELETE FROM offline_queue');
       const stmt = this.db.prepare(
         `INSERT INTO offline_queue (id, type, action, payload, created_at, retries, max_retries, next_retry_at)
@@ -308,11 +256,7 @@ export class OfflineQueue {
         stmt.run(item.id, item.type, item.action, JSON.stringify(item.payload),
           item.createdAt, item.retries, item.maxRetries, item.nextRetryAt);
       }
-      this.db.exec('COMMIT');
-    } catch (err) {
-      try { this.db.exec('ROLLBACK'); } catch { /* rollback failed */ }
-      console.error('[OfflineQueue] SQLite save failed:', err instanceof Error ? err.message : String(err));
-    }
+    } catch { /* ignore */ }
   }
 
   private _loadSqlite(): void {
@@ -330,8 +274,7 @@ export class OfflineQueue {
         maxRetries: row.max_retries,
         nextRetryAt: row.next_retry_at,
       }));
-    } catch (err) {
-      console.warn('[OfflineQueue] SQLite load failed:', err instanceof Error ? err.message : String(err));
+    } catch {
       this.items = [];
     }
   }
@@ -350,13 +293,10 @@ export const MergeStrategy = {
     return [...local, ...remoteNew];
   },
   deepMerge: (local: any, remote: any): any => {
-    if (local === null || typeof local !== 'object' || Array.isArray(local)) return remote;
-    if (remote === null || typeof remote !== 'object' || Array.isArray(remote)) return remote;
     const result = { ...local };
     for (const key of Object.keys(remote)) {
-      if (typeof remote[key] === 'object' && remote[key] !== null && !Array.isArray(remote[key])
-          && typeof local[key] === 'object' && local[key] !== null && !Array.isArray(local[key])) {
-        result[key] = MergeStrategy.deepMerge(local[key], remote[key]);
+      if (typeof remote[key] === 'object' && remote[key] !== null && !Array.isArray(remote[key])) {
+        result[key] = MergeStrategy.deepMerge(local[key] || {}, remote[key]);
       } else {
         result[key] = remote[key];
       }

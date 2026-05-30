@@ -315,9 +315,7 @@ function wrapTodoTool(
 
       const result = await tool.execute(params, context);
 
-      // ★ Fix A: Always emit todo_update after any todo tool action,
-      // not just 'set'. This ensures the renderer always has the latest state.
-      if (!result.isError) {
+      if (params.action === 'set' && !result.isError) {
 
         emitTodoUpdate(getTodoList() as Array<{ content: string; status: string }>);
 
@@ -1270,39 +1268,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
   }
 
-  /** Persist current todo list to the database for a task */
-  function saveTodoList(taskId: string): void {
-    try {
-      const todoItems = getTodoList();
-      const db = getDatabase();
-      const json = JSON.stringify(todoItems);
-      db.run(`UPDATE quest_tasks SET todo_data = ?, updated_at = datetime('now') WHERE id = ?`, [json, taskId]);
-    } catch { /* non-critical */ }
-  }
-
-  /** Restore todo list from the database into the in-memory todo store */
-  function restoreTodoList(taskId: string): void {
-    try {
-      const db = getDatabase();
-      const stmt = db.prepare(`SELECT todo_data FROM quest_tasks WHERE id = ?`);
-      stmt.bind([taskId]);
-      if (stmt.step()) {
-        const row = stmt.getAsObject() as Record<string, unknown>;
-        const json = row.todo_data as string;
-        if (json) {
-          const items = JSON.parse(json);
-          if (Array.isArray(items) && items.length > 0) {
-            const current = getTodoList();
-            current.length = 0;
-            current.push(...items);
-          }
-        }
-      }
-      stmt.free();
-    } catch { /* non-critical */ }
-  }
-
-
 
 
   function emitFileSnapshot(data: {
@@ -2219,10 +2184,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     sendQuestEvent({ type: 'status_change', taskId, status: 'running', runId });
 
-    // Sync current todo list state to renderer when agent starts
-    restoreTodoList(taskId);
-    emitTodoUpdate(getTodoList() as Array<{ content: string; status: string }>);
-
 
 
     try {
@@ -2279,7 +2240,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
         const db = getDatabase();
 
-      saveTodoList(taskId);
         db.run(`UPDATE quest_tasks SET status = 'completed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
         saveDatabase().catch(() => {});
@@ -2290,7 +2250,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       clearPreviewUrlTracker(taskId);
 
-      sendQuestEvent({ type: 'todo_update', items: getTodoList() as Array<{ content: string; status: string }> });
       sendQuestEvent({ type: 'status_change', taskId, status: 'completed', runId });
 
     } catch (error) {
@@ -2331,7 +2290,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
           const db = getDatabase();
 
-      saveTodoList(taskId);
           db.run(`UPDATE quest_tasks SET status = 'failed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
           await saveDatabase();
@@ -2340,7 +2298,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
         clearSpecTracker(taskId);
 
-        sendQuestEvent({ type: 'todo_update', items: getTodoList() as Array<{ content: string; status: string }> });
         sendQuestEvent({ type: 'status_change', taskId, status: 'failed', runId });
 
       }
@@ -2409,7 +2366,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       const db = getDatabase();
 
-      saveTodoList(taskId);
       db.run(`UPDATE quest_tasks SET status = 'failed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
       await saveDatabase();
@@ -2448,7 +2404,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       const db = getDatabase();
 
-      saveTodoList(taskId);
       db.run(`UPDATE quest_tasks SET status = 'paused', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
       await saveDatabase();
@@ -2853,54 +2808,11 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     sendQuestEvent({ type: 'status_change', taskId, status: 'running', runId });
 
-    // Sync current todo list state to renderer when resuming
-    restoreTodoList(taskId);
-    emitTodoUpdate(getTodoList() as Array<{ content: string; status: string }>);
-
 
 
     const resumeMessage = message || 'Continue from where you left off. Review our conversation history and proceed with the next steps.';
 
-    // ★ Fix E: Restore previous conversation messages from DB so the agent
-    // has full context of what was done before. Without this, the agent starts
-    // with an empty conversation and loses all prior work context.
-    try {
-      const historyStmt = db.prepare(`SELECT role, content, tool_calls FROM quest_messages WHERE task_id = ? ORDER BY id ASC`);
-      historyStmt.bind([taskId]);
-      const historyMessages: any[] = [];
-      while (historyStmt.step()) {
-        historyMessages.push(historyStmt.getAsObject());
-      }
-      historyStmt.free();
-      if (historyMessages.length > 0) {
-        const conversation = agent.getConversation();
-        for (const hm of historyMessages) {
-          const role = hm.role as string;
-          const content = hm.content as string || '';
-          const toolCallsStr = hm.tool_calls as string | null;
-          let toolCalls: any = undefined;
-          if (toolCallsStr) {
-            try { toolCalls = JSON.parse(toolCallsStr); } catch {}
-          }
-          if (role === 'user') {
-            conversation.addUserMessage(content);
-          } else if (role === 'assistant') {
-            conversation.addAssistantMessage(content, toolCalls);
-          } else if (role === 'tool') {
-            try {
-              const parsed = typeof toolCalls === 'object' && toolCalls?.toolCallId
-                ? { toolCallId: toolCalls.toolCallId }
-                : undefined;
-              conversation.addToolResult(parsed?.toolCallId || String(Date.now()), { content, isError: false });
-            } catch {}
-          }
-        }
-        console.log(`[Quest IPC] Restored ${historyMessages.length} history messages for task ${taskId}`);
-      }
-    } catch (err) {
-      console.error('[Quest IPC] Failed to restore history messages:', err);
-      // Non-fatal - agent can still run with just the new message
-    }
+
 
     try {
 
@@ -2955,7 +2867,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
       try {
 
         const db2 = getDatabase();
-        saveTodoList(taskId);
+
         db2.run(`UPDATE quest_tasks SET status = 'completed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
         saveDatabase().catch(() => {});
@@ -3002,7 +2914,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
           const db2 = getDatabase();
 
-      saveTodoList(taskId);
           db2.run(`UPDATE quest_tasks SET status = 'failed', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
           await saveDatabase();
@@ -3011,7 +2922,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
         clearSpecTracker(taskId);
 
-        sendQuestEvent({ type: 'todo_update', items: getTodoList() as Array<{ content: string; status: string }> });
         sendQuestEvent({ type: 'status_change', taskId, status: 'failed', runId });
 
       }
@@ -3035,16 +2945,6 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
   });
 
 
-
-  // --- Get agent status (check if a task has an active agent in the main process) ---
-
-  ipcMain.handle('quest:get-agent-status', (_event, { taskId }: { taskId: string }) => {
-    const taskAgent = taskAgents.get(taskId);
-    return {
-      hasActiveAgent: !!taskAgent,
-      runId: taskAgent?.runId || null,
-    };
-  });
 
   // --- Quest Stop on Switch (clean exit without marking failed) ---
 
@@ -3098,14 +2998,13 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
 
 
-    // Set status to paused (not idle) so the Resume button appears when user returns
+    // Set status to idle (not failed — user just switched away)
 
     try {
 
       const db = getDatabase();
 
-      saveTodoList(taskId);
-      db.run(`UPDATE quest_tasks SET status = 'paused', updated_at = datetime('now') WHERE id = ?`, [taskId]);
+      db.run(`UPDATE quest_tasks SET status = 'idle', updated_at = datetime('now') WHERE id = ?`, [taskId]);
 
       await saveDatabase();
 
@@ -3115,7 +3014,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     sendQuestEvent({ type: 'done', taskId, runId });
 
-    sendQuestEvent({ type: 'status_change', taskId, status: 'paused', runId });
+    sendQuestEvent({ type: 'status_change', taskId, status: 'idle', runId });
 
 
 
@@ -3504,55 +3403,84 @@ function fixToolCallIds(messages: Message[]): void {
 
 
 
-async function saveTaskMessages(taskId: string, agent: Agent): Promise<void> {
+function saveTaskMessages(taskId: string, agent: Agent): void {
 
-  const MAX_RETRIES = 3;
-  let lastError: Error | null = null;
-  for (let retry = 0; retry < MAX_RETRIES; retry++) {
-    try {
-      const conversation = agent.getConversation();
-      const messages = conversation.messages;
-      const db = getDatabase();
-      // Clear existing messages for this task
-      db.run(`DELETE FROM quest_messages WHERE task_id = ?`, [taskId]);
-      // Insert all messages
-      for (const msg of messages) {
-        const role = msg.role;
-        let content = '';
-        let toolCalls: string | null = null;
-        if (role === 'user') {
-          content = (msg as any).content || '';
-        } else if (role === 'assistant') {
-          content = (msg as any).content || '';
-          if ((msg as any).toolCalls && (msg as any).toolCalls.length > 0) {
-            toolCalls = JSON.stringify((msg as any).toolCalls);
-          }
-        } else if (role === 'tool') {
-          content = (msg as any).content || '';
-          if ((msg as any).toolCallId) {
-            toolCalls = JSON.stringify({ toolCallId: (msg as any).toolCallId });
-          }
+  try {
+
+    const conversation = agent.getConversation();
+
+    const messages = conversation.messages;
+
+    const db = getDatabase();
+
+
+
+    // Clear existing messages for this task
+
+    db.run(`DELETE FROM quest_messages WHERE task_id = ?`, [taskId]);
+
+
+
+    // Insert all messages
+
+    for (const msg of messages) {
+
+      const role = msg.role;
+
+      let content = '';
+
+      let toolCalls: string | null = null;
+
+
+
+      if (role === 'user') {
+
+        content = (msg as any).content || '';
+
+      } else if (role === 'assistant') {
+
+        content = (msg as any).content || '';
+
+        if ((msg as any).toolCalls && (msg as any).toolCalls.length > 0) {
+
+          toolCalls = JSON.stringify((msg as any).toolCalls);
+
         }
-        db.run(
-          `INSERT INTO quest_messages (task_id, role, content, tool_calls) VALUES (?, ?, ?, ?)`,
-          [taskId, role, content, toolCalls]
-        );
+
+      } else if (role === 'tool') {
+
+        content = (msg as any).content || '';
+
+        // Persist toolCallId so it can be restored on resume
+
+        if ((msg as any).toolCallId) {
+
+          toolCalls = JSON.stringify({ toolCallId: (msg as any).toolCallId });
+
+        }
+
       }
-      await saveDatabase();
-      lastError = null;
-      break; // Success - exit retry loop
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      console.error(`[Quest IPC] saveTaskMessages failed (attempt ${retry + 1}/${MAX_RETRIES}):`, lastError.message);
-      if (retry < MAX_RETRIES - 1) {
-        // Wait briefly before retry
-        const delay = 100 * Math.pow(2, retry);
-        await new Promise(r => setTimeout(r, delay));
-      }
+
+
+
+      db.run(
+
+        `INSERT INTO quest_messages (task_id, role, content, tool_calls) VALUES (?, ?, ?, ?)`,
+
+        [taskId, role, content, toolCalls]
+
+      );
+
     }
-  }
-  if (lastError) {
-    console.error('[Quest IPC] saveTaskMessages failed after', MAX_RETRIES, 'retries:', lastError.message);
+
+
+
+    saveDatabase().catch(() => {});
+
+  } catch {
+
+    // Silently ignore message save errors
+
   }
 
 }

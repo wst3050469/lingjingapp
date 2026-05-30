@@ -176,6 +176,7 @@ export const useQuestStore = create<QuestState>((set, get) => ({
           updatedAt: result.updatedAt || new Date().toISOString(),
         };
         // Clear per-task state for the new task
+        useTodoStore.getState().clear();
         useQuestDiffStore.getState().clearReview();
         set((s) => ({
           tasks: [task, ...s.tasks],
@@ -227,25 +228,6 @@ export const useQuestStore = create<QuestState>((set, get) => ({
       return;
     }
 
-    // ★ Fix H: Save current streaming text before switching
-    const currentState = get();
-    if (currentState.currentStreamText && activeTaskId) {
-      // Flush the stream text to messages first
-      set((s) => ({
-        messages: [...s.messages, {
-          id: generateQuestMessageId(),
-          role: 'assistant' as const,
-          content: s.currentStreamText,
-          timestamp: Date.now(),
-        }],
-        currentStreamText: '',
-      }));
-      // Save immediately
-      try {
-        await window.electronAPI.quest.saveMessages(activeTaskId);
-      } catch {}
-    }
-
     // If the current task has a running agent, stop it cleanly before switching
     if (activeTaskId && runningTaskIds.includes(activeTaskId)) {
       try {
@@ -260,17 +242,17 @@ export const useQuestStore = create<QuestState>((set, get) => ({
       activeRunId: null,
     });
 
-    // Load task messages from DB with timeout
-    const loadMessages = async (): Promise<QuestMessage[]> => {
-      const TIMEOUT_MS = 10000;
-      const result = await Promise.race([
-        window.electronAPI.quest.loadTask(taskId),
-        new Promise<null>((_, reject) =>
-          setTimeout(() => reject(new Error('loadTask timeout')), TIMEOUT_MS)
-        ),
-      ]);
-      if (!result) return [];
-      return (result as any[]).map((m: any, i: number) => ({
+    // Clear per-task state when switching tasks
+    useTodoStore.getState().clear();
+    useQuestDiffStore.getState().clearReview();
+
+    // Load task messages from DB
+    try {
+      const rawMessages = await window.electronAPI.quest.loadTask(taskId);
+      if (!rawMessages || rawMessages.length === 0) {
+        console.warn(`No messages found for quest task ${taskId}`);
+      }
+      const messages: QuestMessage[] = (rawMessages || []).map((m: any, i: number) => ({
         id: `qloaded-${i}`,
         role: m.role,
         content: m.content,
@@ -278,26 +260,17 @@ export const useQuestStore = create<QuestState>((set, get) => ({
         metadata: safeJsonParse(m.metadata, undefined),
         timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now(),
       }));
-    };
 
-    try {
-      const messages = await loadMessages();
       // Find task to load spec
       const task = get().tasks.find((t) => t.id === taskId);
+
       set({
         messages,
         specContent: task?.specContent || null,
         specStatus: 'none' as SpecStatus,
       });
-      if (messages.length === 0) {
-        console.warn(`No messages found for quest task ${taskId}`);
-      }
     } catch (err) {
       console.error(`Failed to load quest task ${taskId}:`, err);
-      // Set empty messages on failure so UI is not stuck
-      if (get().activeTaskId === taskId) {
-        set({ messages: [] });
-      }
     }
   },
 
@@ -347,21 +320,9 @@ export const useQuestStore = create<QuestState>((set, get) => ({
     }
   },
 
-  appendStreamText: (text) => {
-    set((s) => ({
-      currentStreamText: s.currentStreamText + text,
-    }));
-    // ★ Fix G: Real-time streaming persistence - periodically flush streaming
-    // text to prevent data loss on crash. Only save every ~200 chars to avoid
-    // excessive DB writes during fast streaming.
-    const store = get();
-    if (store.currentStreamText.length > 0 && store.currentStreamText.length % 200 < 20) {
-      const taskId = store.activeTaskId;
-      if (taskId) {
-        window.electronAPI.quest.saveMessages(taskId).catch(() => {});
-      }
-    }
-  },
+  appendStreamText: (text) => set((s) => ({
+    currentStreamText: s.currentStreamText + text,
+  })),
 
   flushStreamText: () => {
     const { currentStreamText } = get();

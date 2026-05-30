@@ -25,12 +25,6 @@ keystore.properties
 
 # electron-builder release output
 packages/electron/release-*/
-packages/electron/release*/
-
-# Build artifacts (large binary outputs)
-packages/electron/build_output/
-packages/electron/build_portable/
-packages/electron/*.log
 
 # Local fix scripts
 packages/electron/_*.cjs
@@ -81,13 +75,3 @@ code-server.deb
 # Local dev scripts
 scripts/codeserver-info.txt
 scripts/tunnel-codeserver.bat
-  
-# Scripts node_modules (not tracked)  
-scripts/node_modules/ 
-"*.tar.gz"  
-"tmp_*"  
-"PHASE96_QUEST_LIFECYCLE_FIX.md"  
-
-# Build artifacts - too large for GitHub
-packages/release/
-*.apk

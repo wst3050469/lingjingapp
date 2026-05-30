@@ -57,59 +57,34 @@ export function registerAuthIpc(): void {
     title: string;
     messages: Array<{ role: string; content: string; toolCalls?: unknown }>;
   }) => {
-    try {
-      await saveConversation(userId, conversationId, title, messages);
+    await saveConversation(userId, conversationId, title, messages);
 
-      // Auto-push to cloud
-      await pushSessionToCloud({
-        id: conversationId,
-        title,
-        messages,
-      });
+    // Auto-push to cloud
+    pushSessionToCloud({
+      id: conversationId,
+      title,
+      messages,
+    });
 
-      return { success: true };
-    } catch (err) {
-      console.error('conversation:save error:', err);
-      return { success: false, error: String(err instanceof Error ? err.message : err) };
-    }
+    return { success: true };
   });
 
   ipcMain.handle('conversation:list', async (_event, { userId }: { userId: number }) => {
-    try {
-      return await loadConversations(userId);
-    } catch (err) {
-      console.error('conversation:list error:', err);
-      return { error: String(err instanceof Error ? err.message : err) };
-    }
+    return loadConversations(userId);
   });
 
   ipcMain.handle('conversation:load', async (_event, { conversationId }: { conversationId: string }) => {
-    try {
-      return await loadConversationMessages(conversationId);
-    } catch (err) {
-      console.error('conversation:load error:', err);
-      return { error: String(err instanceof Error ? err.message : err) };
-    }
+    return loadConversationMessages(conversationId);
   });
 
   ipcMain.handle('conversation:delete', async (_event, { conversationId }: { conversationId: string }) => {
-    try {
-      await deleteConversation(conversationId);
-      return { success: true };
-    } catch (err) {
-      console.error('conversation:delete error:', err);
-      return { success: false, error: String(err instanceof Error ? err.message : err) };
-    }
+    await deleteConversation(conversationId);
+    return { success: true };
   });
 
   ipcMain.handle('conversation:rename', async (_event, { conversationId, newTitle }: { conversationId: string; newTitle: string }) => {
-    try {
-      await renameConversation(conversationId, newTitle);
-      return { success: true };
-    } catch (err) {
-      console.error('conversation:rename error:', err);
-      return { success: false, error: String(err instanceof Error ? err.message : err) };
-    }
+    await renameConversation(conversationId, newTitle);
+    return { success: true };
   });
 
   ipcMain.on('conversation:save-sync', (event, { userId, conversationId, title, messages }: {

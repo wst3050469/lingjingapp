@@ -2,7 +2,7 @@
 // Uses HTTP REST API + WebSocket + JWT auth for real-time cloud integration
 import { OfflineQueue } from './offline-queue.js';
 const DEFAULT_SERVER = 'https://ide.zhejiangjinmo.com';
-const DEFAULT_API_KEY = process.env.LINGJING_API_KEY || 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8';
+const DEFAULT_API_KEY = '5379dcbe873b356430d84f3f68b0f0c6e96e2afa3b8a9b5441c9e4d7f5a0b1c2';
 function generateDeviceId() {
     const hex = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
         const r = Math.random() * 16 | 0;
@@ -17,24 +17,20 @@ export class CloudSyncClient {
     token = null;
     deviceId;
     deviceName;
-    userId;
-    isDesktop;
     ws = null;
     wsReconnectTimer = null;
+    /** Heartbeat timer: sends ping every 30s to keep WebSocket alive */
     _heartbeatTimer = null;
-    _desktopHeartbeatTimer = null;
+    syncTimer = null;
     listeners = new Map();
     queue;
-    _autoRegisterRetries = 0;
-    _maxAutoRegisterRetries = 3;
+    _online = false;
     constructor(options = {}) {
         this.url = (options.url || DEFAULT_SERVER).replace(/\/$/, '');
         this.apiKey = options.apiKey || DEFAULT_API_KEY;
         this.enabled = options.enabled !== false;
         this.deviceId = options.deviceId || generateDeviceId();
         this.deviceName = options.deviceName || `LingJing-${typeof process !== 'undefined' ? process.platform : 'web'}-${this.deviceId.slice(0, 6)}`;
-        this.userId = options.userId || null;
-        this.isDesktop = options.isDesktop !== false && (typeof process !== 'undefined' && !!process.platform);
         this.queue = new OfflineQueue({
             onFlush: async (items) => {
                 for (const item of items) {
@@ -66,7 +62,6 @@ export class CloudSyncClient {
                     }
                     catch (err) {
                         this.queue.nack(item.id, err instanceof Error ? err : new Error(String(err)));
-                        throw err;
                     }
                 }
             },
@@ -77,6 +72,7 @@ export class CloudSyncClient {
         this.queue.startPeriodicFlush(5000);
     }
     // ── Auth ──
+    /** Auto-register device and get JWT token */
     async autoRegister() {
         if (this.token)
             return true;
@@ -99,30 +95,20 @@ export class CloudSyncClient {
             if (!res.ok) {
                 const text = await res.text().catch(() => 'Unknown');
                 console.warn(`[CloudSync] Register failed: ${res.status} ${text}`);
-                return this._retryAutoRegister();
+                return false;
             }
             const data = await res.json();
             if (data.token) {
                 this.token = data.token;
-                this._autoRegisterRetries = 0;
                 console.info(`[CloudSync] Device registered: ${this.deviceName} (${this.deviceId})`);
                 return true;
             }
-            return this._retryAutoRegister();
+            return false;
         }
         catch (err) {
             console.warn(`[CloudSync] Register error:`, err instanceof Error ? err.message : String(err));
-            return this._retryAutoRegister();
+            return false;
         }
-    }
-    _retryAutoRegister() {
-        if (this._autoRegisterRetries < this._maxAutoRegisterRetries) {
-            this._autoRegisterRetries++;
-            const delay = Math.min(1000 * Math.pow(2, this._autoRegisterRetries), 10000);
-            console.info(`[CloudSync] Will retry autoRegister in ${delay}ms (attempt ${this._autoRegisterRetries})`);
-            setTimeout(() => this.autoRegister(), delay);
-        }
-        return false;
     }
     // ── HTTP Helpers ──
     authHeaders() {
@@ -135,98 +121,32 @@ export class CloudSyncClient {
         }
         return headers;
     }
+    /** Direct request without queue */
     async _directRequest(method, path, body) {
-        // Primary: use fetch (works in modern Node.js and browsers)
-        const fetchFn = async () => {
-            const res = await fetch(`${this.url}/api${path}`, {
-                method,
-                headers: this.authHeaders(),
-                body: body ? JSON.stringify(body) : undefined,
-            });
-            if (!res.ok) {
-                const text = await res.text().catch(() => 'Unknown');
-                throw new Error(`Cloud API ${res.status}: ${text}`);
-            }
-            return res.json();
-        };
-        try {
-            return await fetchFn();
-        }
-        catch (fetchErr) {
-            // Fallback: try native http/https module for ASAR/proxy compatibility (Bug 8 fix)
-            try {
-                return await this._nativeHttpRequest(method, path, body);
-            }
-            catch {
-                // Throw the original fetch error, it's more descriptive
-                throw fetchErr;
-            }
-        }
-    }
-    /**
-     * Fallback HTTP request using Node.js native http/https module.
-     * Used when fetch() fails (e.g. in Electron ASAR with proxy/TLS issues).
-     * This is NOT available in browser/Web mode — requires Node.js http/https modules.
-     */
-    async _nativeHttpRequest(method, path, body) {
-        let httpModule, httpsModule, urlModule;
-        try {
-            httpModule = require('http');
-            httpsModule = require('https');
-            urlModule = require('url');
-        }
-        catch {
-            throw new Error('Native HTTP modules not available (not running in Node.js)');
-        }
-        const url = `${this.url}/api${path}`;
-        const parsedUrl = new urlModule.URL(url);
-        const lib = parsedUrl.protocol === 'https:' ? httpsModule : httpModule;
-        const headers = this.authHeaders();
-        return new Promise((resolve, reject) => {
-            const bodyData = body ? JSON.stringify(body) : undefined;
-            if (bodyData)
-                headers['Content-Length'] = Buffer.byteLength(bodyData).toString();
-            const req = lib.request(parsedUrl, { method, headers, timeout: 15000 }, (res) => {
-                const chunks = [];
-                res.on('data', (chunk) => chunks.push(chunk));
-                res.on('end', () => {
-                    const raw = Buffer.concat(chunks).toString('utf8');
-                    try {
-                        const parsed = JSON.parse(raw);
-                        if (res.statusCode >= 200 && res.statusCode < 300) {
-                            resolve(parsed);
-                        }
-                        else {
-                            reject(new Error(parsed.error || `HTTP ${res.statusCode}`));
-                        }
-                    }
-                    catch {
-                        if (res.statusCode >= 200 && res.statusCode < 300) {
-                            resolve(raw);
-                        }
-                        else {
-                            reject(new Error(`HTTP ${res.statusCode}: ${raw.slice(0, 200)}`));
-                        }
-                    }
-                });
-            });
-            req.on('error', (err) => reject(err));
-            req.on('timeout', () => { req.destroy(); reject(new Error('Request timeout')); });
-            if (bodyData)
-                req.write(bodyData);
-            req.end();
+        const res = await fetch(`${this.url}/api${path}`, {
+            method,
+            headers: this.authHeaders(),
+            body: body ? JSON.stringify(body) : undefined,
         });
+        if (!res.ok) {
+            const text = await res.text().catch(() => 'Unknown');
+            throw new Error(`Cloud API ${res.status}: ${text}`);
+        }
+        return res.json();
     }
     async request(method, path, body) {
         return this._directRequest(method, path, body);
     }
     // ── Token Management ──
+    /** Set a user JWT token directly (overrides device registration token) */
     setToken(token) {
         this.token = token;
         console.info(`[CloudSync] User token set (${token.slice(0, 12)}...)`);
+        // Reconnect WebSocket with new token
         this.disconnectWebSocket();
         this.connectWebSocket();
     }
+    /** Clear token (fall back to device registration) */
     clearToken() {
         this.token = null;
         this.disconnectWebSocket();
@@ -271,20 +191,14 @@ export class CloudSyncClient {
         try {
             const res = await fetch(`${this.url}/api/health`);
             const data = await res.json();
-            return { ok: data?.status === 'ok' };
+            return data?.status === 'ok';
         }
-        catch (fetchErr) {
-            // Fallback: try native http/https module (Bug 8 fix)
-            try {
-                const result = await this._nativeHttpRequest('GET', '/health');
-                return { ok: result?.status === 'ok' };
-            }
-            catch {
-                return { ok: false, error: fetchErr instanceof Error ? fetchErr.message : String(fetchErr) };
-            }
+        catch {
+            return false;
         }
     }
     // ── WebSocket ──
+    /** Start heartbeat: sends ping every 30s to keep WebSocket alive */
     _startHeartbeat() {
         this._stopHeartbeat();
         this._heartbeatTimer = setInterval(() => {
@@ -298,122 +212,50 @@ export class CloudSyncClient {
             }
         }, 30000);
     }
+    /** Stop heartbeat timer */
     _stopHeartbeat() {
         if (this._heartbeatTimer) {
             clearInterval(this._heartbeatTimer);
             this._heartbeatTimer = null;
         }
     }
-    _startDesktopHeartbeat() {
-        this._stopDesktopHeartbeat();
-        this._desktopHeartbeatTimer = setInterval(() => {
-            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                try {
-                    this.ws.send(JSON.stringify({ type: 'desktop:heartbeat' }));
-                }
-                catch { /* ignore */ }
-            }
-        }, 60000);
-    }
-    _stopDesktopHeartbeat() {
-        if (this._desktopHeartbeatTimer) {
-            clearInterval(this._desktopHeartbeatTimer);
-            this._desktopHeartbeatTimer = null;
-        }
-    }
     connectWebSocket() {
         if (!this.enabled || this.ws)
             return;
-        let authParam;
-        if (this.token) {
-            authParam = `token=${encodeURIComponent(this.token)}`;
-            if (this.deviceId)
-                authParam += `&device_id=${encodeURIComponent(this.deviceId)}`;
-        }
-        else {
-            authParam = `api_key=${encodeURIComponent(this.apiKey)}`;
-        }
+        const authParam = this.token
+            ? `token=${encodeURIComponent(this.token)}`
+            : `api_key=${encodeURIComponent(this.apiKey)}`;
         const wsUrl = this.url.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws?' + authParam;
-        let WS;
-        try {
-            WS = (typeof WebSocket !== 'undefined' ? WebSocket : require('ws'));
-        }
-        catch (err) {
-            console.error('[CloudSync] Cannot load WebSocket implementation:', err instanceof Error ? err.message : String(err));
-            this.scheduleReconnect();
-            return;
-        }
-        const ws = new WS(wsUrl);
-        this.ws = ws;
-        ws.onopen = () => {
+        // Browser has global WebSocket; Node.js needs 'ws' package
+        const WS = (typeof WebSocket !== 'undefined' ? WebSocket : require('ws'));
+        this.ws = new WS(wsUrl);
+        this.ws.onopen = () => {
             console.info('[CloudSync] WebSocket connected');
             this._startHeartbeat();
-            if (this.isDesktop && this.deviceId) {
-                try {
-                    ws.send(JSON.stringify({ type: 'desktop:register', deviceId: this.deviceId }));
-                    console.info(`[CloudSync] Sent desktop:register (deviceId=${this.deviceId.slice(0, 12)}...)`);
-                }
-                catch (err) {
-                    console.warn('[CloudSync] desktop:register send failed:', err instanceof Error ? err.message : String(err));
-                }
-                this._startDesktopHeartbeat();
-            }
             this.emit('connected', { url: this.url, deviceId: this.deviceId });
         };
-        ws.onmessage = (event) => {
+        this.ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
                 if (data.type === 'pong')
                     return;
-                if (data.type === 'desktop:registered') {
-                    console.info('[CloudSync] Desktop relay registered:', data.ok ? 'success' : data.error);
-                    return;
-                }
-                if (data.type === 'desktop:heartbeat:ack')
-                    return;
-                if (data.type === 'desktop:list') {
-                    this.emit('desktop:list', data);
-                    return;
-                }
-                if (data.type === 'relay:from-mobile') {
-                    console.info('[CloudSync] Relay from mobile:', data.payload?.type || 'message');
-                    this.emit('relay:from-mobile', data);
-                    return;
-                }
-                if (data.type === 'relay:from-desktop') {
-                    this.emit('relay:from-desktop', data);
-                    return;
-                }
-                if (data.type === 'relay:ack') {
-                    this.emit('relay:ack', data);
-                    return;
-                }
                 if (data.type === 'sync') {
                     this.emit('sync', data.payload);
                 }
                 else if (data.type === 'webhook') {
                     this.emit('webhook', data);
                 }
-                else {
-                    console.warn('[CloudSync] Unknown WS message type:', data.type);
-                }
             }
-            catch (err) {
-                console.warn('[CloudSync] WS message parse error:', err instanceof Error ? err.message : String(err));
-            }
+            catch { /* ignore */ }
         };
-        ws.onclose = () => {
-            if (this.ws !== ws)
-                return;
+        this.ws.onclose = () => {
             this._stopHeartbeat();
-            this._stopDesktopHeartbeat();
             this.ws = null;
             this.emit('disconnected', {});
             this.scheduleReconnect();
         };
-        ws.onerror = (err) => {
+        this.ws.onerror = (err) => {
             console.warn('[CloudSync] WebSocket error:', err?.message || err);
-            this.emit('error', err);
         };
     }
     scheduleReconnect() {
@@ -426,18 +268,12 @@ export class CloudSyncClient {
     }
     disconnectWebSocket() {
         this._stopHeartbeat();
-        this._stopDesktopHeartbeat();
         if (this.wsReconnectTimer) {
             clearTimeout(this.wsReconnectTimer);
             this.wsReconnectTimer = null;
         }
         if (this.ws) {
-            const ws = this.ws;
-            ws.onopen = null;
-            ws.onmessage = null;
-            ws.onclose = null;
-            ws.onerror = null;
-            ws.close();
+            this.ws.close();
             this.ws = null;
         }
     }
@@ -452,45 +288,7 @@ export class CloudSyncClient {
         return this.queue.flush();
     }
     async isOnline() {
-        const result = await this.healthCheck();
-        return result.ok;
-    }
-    // ── Desktop Relay ──
-    listDesktops() {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            try {
-                this.ws.send(JSON.stringify({ type: 'desktop:list' }));
-            }
-            catch { /* ws closed */ }
-        }
-    }
-    sendRelayToMobile(payload, correlationId) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            try {
-                this.ws.send(JSON.stringify({
-                    type: 'relay:to-mobile',
-                    deviceId: this.deviceId,
-                    payload,
-                    correlationId: correlationId || `relay-${Date.now()}`,
-                    timestamp: new Date().toISOString(),
-                }));
-            }
-            catch { /* ws closed */ }
-        }
-    }
-    sendRelayToDesktop(targetDeviceId, payload, correlationId) {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            try {
-                this.ws.send(JSON.stringify({
-                    type: 'relay:to-desktop',
-                    targetDeviceId,
-                    payload,
-                    correlationId: correlationId || `relay-${Date.now()}`,
-                    timestamp: new Date().toISOString(),
-                }));
-            }
-            catch { /* ws closed */ }
-        }
+        return this.healthCheck();
     }
     // ── Event System ──
     on(event, fn) {
@@ -501,38 +299,23 @@ export class CloudSyncClient {
     off(event, fn) {
         this.listeners.get(event)?.delete(fn);
     }
-    once(event, fn) {
-        const wrapper = (data) => {
-            this.off(event, wrapper);
-            fn(data);
-        };
-        this.on(event, wrapper);
-    }
     emit(event, data) {
         this.listeners.get(event)?.forEach(fn => {
             try {
                 fn(data);
             }
-            catch (err) {
-                console.warn(`[CloudSync] Listener error on "${event}":`, err instanceof Error ? err.message : String(err));
-            }
+            catch { /* ignore */ }
         });
-    }
-    removeAllListeners(event) {
-        if (event) {
-            this.listeners.delete(event);
-        }
-        else {
-            this.listeners.clear();
-        }
     }
     // ── Lifecycle ──
     disconnect() {
         this.disconnectWebSocket();
         this.queue.stopPeriodicFlush();
         this._stopHeartbeat();
-        this._stopDesktopHeartbeat();
-        this.removeAllListeners();
+        if (this.syncTimer) {
+            clearInterval(this.syncTimer);
+            this.syncTimer = null;
+        }
     }
 }
 //# sourceMappingURL=sync-client.js.map

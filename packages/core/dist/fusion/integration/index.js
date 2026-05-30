@@ -18,11 +18,12 @@ export { registerFusionTools } from './patch-tools.js';
 export { registerFusionSkills } from './patch-skills.js';
 export { setupMemoryLinkages } from './patch-memory.js';
 /**
- * Batch C (P1 Renderer UI路由注册 + scifi-dark主题切换 + OpenSpace集成完善):
- * - patch-renderer.tsx     → Fusion/OpenSpace 侧栏面板注册 + 懒加载组件映射
- * - patch-theme-switch.tsx → scifi-dark 主题选项 + CSS变量 + 主题选择菜单
+ * Batch C (P1 Renderer UI):
+ *  * - patch-theme-switch.tsx → scifi-dark 主题选项 + CSS变量 + 主题选择菜单
  * - patch-openspace.ts     → OpenSpace 路径检测 + WebSocket/窗口嵌入说明 + Lua脚本
+ * NOTE: patch-renderer excluded (imports react, crashes Electron main process)
  */
+export { SCIFI_THEME_OPTION, SCIFI_DARK_CSS_VARS, THEME_OPTIONS, } from './patch-theme-switch.js';
 export { detectOpenSpace, detectOpenSpaceWindows, detectOpenSpaceLinux, patchOpenSpaceIntegration, LUA_FRAME_EXPORT, LUA_GLOBE_SYNC, } from './patch-openspace.js';
 /**
  * Batch D (P1 Cloud Server RBAC + Audit Log + Health Check + Degradation Test + Tenant Quota):

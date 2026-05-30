@@ -67,27 +67,19 @@ export function registerFsIpc(mainWindow: BrowserWindow, getWorkspace?: () => st
       });
 
       return result;
-    } catch (err) {
-      return { error: String(err instanceof Error ? err.message : err) };
+    } catch {
+      return [];
     }
   });
 
   ipcMain.handle('fs:read-file', async (_event, { path: filePath }: { path: string }) => {
-    try {
-      const content = await readFile(filePath, 'utf-8');
-      const language = detectLanguage(filePath);
-      return { content, language };
-    } catch (err) {
-      return { error: String(err instanceof Error ? err.message : err) };
-    }
+    const content = await readFile(filePath, 'utf-8');
+    const language = detectLanguage(filePath);
+    return { content, language };
   });
 
   ipcMain.handle('fs:write-file', async (_event, { path: filePath, content }: { path: string; content: string }) => {
-    try {
-      await writeFile(filePath, content, 'utf-8');
-    } catch (err) {
-      return { error: String(err instanceof Error ? err.message : err) };
-    }
+    await writeFile(filePath, content, 'utf-8');
   });
 
   ipcMain.handle('fs:select-folder', async () => {
@@ -100,20 +92,13 @@ export function registerFsIpc(mainWindow: BrowserWindow, getWorkspace?: () => st
   });
 
   // Open file dialog - returns selected file path(s)
-  ipcMain.handle('fs:select-file', async (_event, options?: { filters?: Electron.FileFilter[] }) => {
-    const { filters } = options || {};
+  ipcMain.handle('fs:select-file', async () => {
     const defaultPath = getWorkspace?.();
     const result = await dialog.showOpenDialog(mainWindow, {
-      properties: ['openFile', 'multiSelections'],
+      properties: ['openFile'],
       defaultPath: defaultPath || undefined,
-      filters: filters || [
-        { name: '所有支持的文件', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'pdf', 'txt', 'md', 'doc', 'docx', 'xls', 'xlsx'] },
-        { name: '图片', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'] },
-        { name: '文档', extensions: ['pdf', 'txt', 'md', 'doc', 'docx', 'xls', 'xlsx'] },
-        { name: '所有文件', extensions: ['*'] },
-      ],
     });
-    return result.canceled ? null : result.filePaths;
+    return result.canceled ? null : result.filePaths[0];
   });
 
   // Save-as dialog - returns selected save path

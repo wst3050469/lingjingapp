@@ -1,12 +1,11 @@
 // CodePilot Electron main process entry point
 
-import { app, BrowserWindow, ipcMain, shell, Menu, dialog, globalShortcut, session, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Menu, dialog, globalShortcut, session } from 'electron';
 import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { registerAgentIpc, initAgent, setWorkingDirectory, setSshTerminalId, reinitProvider } from './ipc/agent-ipc.js';
-import { registerGithubSkillIpc, setGithubSkillDb } from './ipc/github-skill-ipc.js';
 import { registerFsIpc } from './ipc/fs-ipc.js';
 import { registerTerminalIpc, destroyAllTerminals } from './ipc/terminal-ipc.js';
 import { registerMcpIpc, autoConnectMcpServers } from './ipc/mcp-ipc.js';
@@ -51,12 +50,10 @@ import { verifyIpcRegistrations } from './ipc/ipc-verifier.js';
 import { registerBatchIPC } from './ipc/batch-ipc.js';
 import { registerConnectorIPC } from './ipc/connector-ipc.js';
 import { registerTriggerIPC } from './ipc/trigger-ipc.js';
-import { registerPipelineIPC, getOrCreateService, disposeService } from './pipeline/pipeline-ipc.js';
 
 const IS_DEV = !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
-let bootstrapped = false;
 
 function buildApplicationMenu(): Menu {
   const isMac = process.platform === 'darwin';
@@ -299,69 +296,14 @@ async function loadWorkspaceFromConfig(): Promise<string> {
   }
 }
 
-/**
- * Calculate a safe window size that fits within the primary display's work area.
- * Supports CLI overrides via --width=N and --height=N (e.g. --width=1024 --height=768).
- * Falls back to a percentage of the work area if the default size exceeds available space.
- */
-function getSafeWindowSize(defaultWidth: number, defaultHeight: number): { width: number; height: number } {
-  // 1. CLI user overrides
-  const cliWidthIdx = process.argv.findIndex(a => a.startsWith('--width='));
-  const cliHeightIdx = process.argv.findIndex(a => a.startsWith('--height='));
-  const cliWidth = cliWidthIdx !== -1 ? parseInt(process.argv[cliWidthIdx].split('=')[1], 10) : NaN;
-  const cliHeight = cliHeightIdx !== -1 ? parseInt(process.argv[cliHeightIdx].split('=')[1], 10) : NaN;
-  if (!isNaN(cliWidth) && !isNaN(cliHeight)) {
-    console.log(`[Main] Using CLI override: ${cliWidth}x${cliHeight}`);
-    return { width: cliWidth, height: cliHeight };
-  }
-
-  // 2. Get primary display's work area (excludes taskbar/docks)
-  try {
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const { width: maxW, height: maxH } = primaryDisplay.workAreaSize;
-    const scaleFactor = primaryDisplay.scaleFactor || 1;
-    const margin = 60; // 30px margin on each side
-
-    // Adjust for DPI scaling: ensure effective physical size doesn't exceed screen.
-    // On Linux with 200% scaling, workAreaSize reports logical pixels (e.g. 960x540 for 1920x1080).
-    // We use logical pixels but reduce default if it would exceed physical bounds.
-    const effectiveDefaultW = Math.round(defaultWidth / scaleFactor);
-    const effectiveDefaultH = Math.round(defaultHeight / scaleFactor);
-
-    let w = effectiveDefaultW;
-    let h = effectiveDefaultH;
-
-    // If defaults fit with margin, use them (in logical pixels)
-    if (w + margin <= maxW && h + margin <= maxH) {
-      return { width: w, height: h };
-    }
-
-    // Otherwise fill available area (up to 95% to leave some breathing room)
-    const availableW = maxW - margin;
-    const availableH = maxH - margin;
-    const scale = Math.min(availableW / w, availableH / h, 0.95);
-    w = Math.max(Math.floor(w * scale), 640); // never go below 640
-    h = Math.max(Math.floor(h * scale), 480); // never go below 480
-    console.log(`[Main] Window size constrained: ${defaultWidth}x${defaultHeight} → ${w}x${h} (display: ${maxW}x${maxH}, scale: ${scaleFactor})`);
-    return { width: w, height: h };
-  } catch (err) {
-    console.error('[Main] Failed to get display info, using conservative defaults:', err);
-    return { width: 800, height: 600 };
-  }
-}
-
 function createWindow(): void {
   Menu.setApplicationMenu(buildApplicationMenu());
 
-  const winSize = getSafeWindowSize(1400, 900);
-  const isLinux = process.platform === 'linux';
-  // Allow window to be resized smaller for Linux small screens / HiDPI.
-  // min size should be small enough to fit any display but not too small to be unusable.
   mainWindow = new BrowserWindow({
-    width: winSize.width,
-    height: winSize.height,
-    minWidth: 400,
-    minHeight: 300,
+    width: 1400,
+    height: 900,
+    minWidth: 800,
+    minHeight: 600,
     title: '灵境',
     backgroundColor: '#1e1e1e',
     show: false,
@@ -400,23 +342,6 @@ function createWindow(): void {
   mainWindow.once('ready-to-show', () => {
     clearTimeout(showTimeout);
     mainWindow?.show();
-
-    // On Linux, adjust content zoom to match display scale factor
-    // Electron's webContents zoom does not auto-scale on all Linux DEs
-    if (isLinux && mainWindow && !mainWindow.isDestroyed()) {
-      try {
-        const primaryDisplay = screen.getPrimaryDisplay();
-        const sf = primaryDisplay.scaleFactor || 1;
-        if (sf > 1 && sf !== 2) {
-          // Only adjust for non-standard scaling (e.g. 1.5, 1.75)
-          // Standard 2x Retina is usually handled by the renderer
-          mainWindow.webContents.setZoomFactor(1 / sf);
-          console.log(`[Main] Linux zoom adjusted: scaleFactor=${sf}, zoomFactor=${1 / sf}`);
-        }
-      } catch (err) {
-        console.warn('[Main] Failed to adjust Linux zoom:', err);
-      }
-    }
   });
 
   // ── Renderer failure protection layer 2: did-fail-load ──
@@ -573,11 +498,8 @@ function registerAppIpc(): void {
         throw new Error(`Insufficient permissions for path: ${path}`);
       }
 
-      // 5. 释放旧工作区的 PipelineService（关闭文件监听器等资源）
+      // 5. Set working directory
       const oldPath = workspacePath;
-      disposeService(oldPath);
-      
-      // 6. Set working directory
       workspacePath = path;
       setWorkingDirectory(path);
 
@@ -664,10 +586,9 @@ function registerAppIpc(): void {
 
   // Window management IPC
   ipcMain.handle('window:new', async () => {
-    const childSize = getSafeWindowSize(1400, 900);
     const child = new BrowserWindow({
-      width: childSize.width,
-      height: childSize.height,
+      width: 1400,
+      height: 900,
       minWidth: 800,
       minHeight: 600,
       title: '灵境',
@@ -748,8 +669,6 @@ function registerShortcuts(mainWindow: BrowserWindow): void {
 }
 
 async function bootstrap(): Promise<void> {
-  if (bootstrapped) return;
-  bootstrapped = true;
   // Grant microphone/media permission (must be after app.whenReady)
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, _callback) => {
     const permitted = permission === 'media' || permission === 'mediaKeySystem';
@@ -953,12 +872,6 @@ async function bootstrap(): Promise<void> {
     ipcMain.handle('multiFileEdit:acceptBlock', async () => ({ success: false, error: 'Not implemented' }));
     ipcMain.handle('multiFileEdit:rejectBlock', async () => ({ success: false, error: 'Not implemented' }));
     ipcMain.handle('multiFileEdit:applyAll', async () => ({ success: false, error: 'Not implemented' }));
-    // Fallback: cloud:connect — real handler registered in Phase B (registerCloudIpc).
-    // This ensures the renderer never gets "No handler registered" even if Phase B
-    // encounters an error before registerCloudIpc() is called.
-    ipcMain.handle('cloud:connect', async () => {
-      return { connected: false, error: 'Cloud IPC not yet initialized (Phase B pending)' };
-    });
     console.log('[Main] Registered fallback IPC handlers');
   } catch (err) {
     console.warn('[Main] Fallback handler registration:', err);
@@ -1045,51 +958,38 @@ async function bootstrap(): Promise<void> {
   // ── Phase B: Register handlers that NEED mainWindow ──
   // These handlers require a valid BrowserWindow instance and will be
   // skipped if the window failed to create.
-
-  // 加载工作区路径（必须在 Phase B 之前，确保 PipelineService 使用正确路径）
-  const loadedWorkspace = await loadWorkspaceFromConfig();
-  workspacePath = loadedWorkspace;
-  setWorkingDirectory(workspacePath);
-
   if (mainWindow) {
-    // CRITICAL: Each handler registration is wrapped in try-catch to prevent
-    // a single failure from blocking subsequent registrations. If any handler
-    // before registerCloudIpc() throws, the cloud:connect handler would never
-    // register, causing "No handler registered" errors in the renderer.
-    try { registerAgentIpc(mainWindow); } catch (err) { console.error('[Main] registerAgentIpc failed:', err); }
-    try { registerGithubSkillIpc(); } catch (err) { console.error('[Main] registerGithubSkillIpc failed:', err); }
-    try { setGithubSkillDb(getDatabase()); } catch (err) { console.error('[Main] setGithubSkillDb failed:', err); }
-    try { registerFsIpc(mainWindow, () => workspacePath); } catch (err) { console.error('[Main] registerFsIpc failed:', err); }
-    try { registerTerminalIpc(mainWindow); } catch (err) { console.error('[Main] registerTerminalIpc failed:', err); }
-    try { registerGitIpc(() => workspacePath); } catch (err) { console.error('[Main] registerGitIpc failed:', err); }
-    try { registerSkillsIpc(() => workspacePath); } catch (err) { console.error('[Main] registerSkillsIpc failed:', err); }
-    try { registerIndexingIpc(() => workspacePath, mainWindow); } catch (err) { console.error('[Main] registerIndexingIpc failed:', err); }
-    try { registerDiagnosticsIpc(mainWindow, () => workspacePath); } catch (err) { console.error('[Main] registerDiagnosticsIpc failed:', err); }
-    try { registerQuestIpc(mainWindow, () => workspacePath); } catch (err) { console.error('[Main] registerQuestIpc failed:', err); }
-    try { registerWikiIpc(mainWindow, () => workspacePath); } catch (err) { console.error('[Main] registerWikiIpc failed:', err); }
-    try { registerBrowserIpc(mainWindow); } catch (err) { console.error('[Main] registerBrowserIpc failed:', err); }
-    try { registerPlanIpc(mainWindow); } catch (err) { console.error('[Main] registerPlanIpc failed:', err); }
-    try { registerContextIpc(() => workspacePath); } catch (err) { console.error('[Main] registerContextIpc failed:', err); }
+    registerAgentIpc(mainWindow);
+    registerFsIpc(mainWindow, () => workspacePath);
+    registerTerminalIpc(mainWindow);
+    registerGitIpc(() => workspacePath);
+    registerSkillsIpc(() => workspacePath);
+    registerIndexingIpc(() => workspacePath, mainWindow);
+    registerDiagnosticsIpc(mainWindow, () => workspacePath);
+    console.log('[Main] About to call registerQuestIpc...');
     try {
-      setSshTerminalChangeCallback((sshTerminalId) => {
-        setSshTerminalId(sshTerminalId);
-        setQuestSshTerminalId(sshTerminalId);
-      });
-    } catch (err) { console.error('[Main] setSshTerminalChangeCallback failed:', err); }
-    try { registerSshIpc(mainWindow); } catch (err) { console.error('[Main] registerSshIpc failed:', err); }
+      registerQuestIpc(mainWindow, () => workspacePath);
+      console.log('[Main] registerQuestIpc completed successfully');
+    } catch (err) {
+      console.error('[Main] registerQuestIpc failed:', err);
+    }
+    registerWikiIpc(mainWindow, () => workspacePath);
+    registerBrowserIpc(mainWindow);
+    registerPlanIpc(mainWindow);
+    registerContextIpc(() => workspacePath);
+    setSshTerminalChangeCallback((sshTerminalId) => {
+      setSshTerminalId(sshTerminalId);
+      setQuestSshTerminalId(sshTerminalId);
+    });
+    registerSshIpc(mainWindow);
 
     // Cloud sync
     try {
       registerCloudIpc(mainWindow);
-      console.log('[Main] Cloud IPC registered successfully');
+      autoConnectCloud();
     } catch (err) {
       console.error('[Main] Cloud IPC registration failed:', err);
-      mainWindow?.webContents.send('cloud:status', { connected: false, error: 'Cloud IPC registration failed: ' + String(err) });
     }
-    autoConnectCloud().catch((err) => {
-      console.error('[Main] autoConnectCloud failed:', err);
-      mainWindow?.webContents.send('cloud:status', { connected: false, error: 'autoConnectCloud failed: ' + String(err) });
-    });
 
     // Schedule management
     try {
@@ -1118,28 +1018,14 @@ async function bootstrap(): Promise<void> {
       console.error('[Main] registerConnectorIPC failed:', err);
     }
 
-    // Pipeline + Trigger management — 完整的文件变更自动处理链路
+    // Trigger management
     try {
-      // 1. 创建 PipelineService（内部已连接 TriggerManager → PipelineEngine）
-      const pipelineSvc = getOrCreateService(workspacePath);
-      
-      // 2. 注册 pipeline:* IPC 处理器
-      registerPipelineIPC(mainWindow);
-      console.log('[Main] Pipeline IPC registered');
-      
-      // 3. 注册 trigger:* IPC 处理器（向后兼容，供 preload trigger API 使用）
-      const triggerMgr = pipelineSvc.getTriggerManager();
-      registerTriggerIPC(ipcMain, triggerMgr);
-      console.log('[Main] Trigger IPC registered (backed by PipelineService)');
-
-      // 4. 启动时自动加载 .lingjing/pipelines/*.yaml 并注册触发器
-      pipelineSvc.autoLoadPipelines().then(defs => {
-        console.log(`[Main] Auto-loaded ${defs.length} pipeline(s) from .lingjing/pipelines/`);
-      }).catch(err => {
-        console.error('[Main] Failed to auto-load pipelines:', err);
-      });
+      // @ts-ignore - core types available at runtime
+      const { TriggerManager } = require('@codepilot/core');
+      registerTriggerIPC(ipcMain, new TriggerManager());
+      console.log('[Main] Trigger IPC registered');
     } catch (err) {
-      console.error('[Main] Pipeline/Trigger IPC registration failed:', err);
+      console.error('[Main] registerTriggerIPC failed:', err);
     }
 
     // Fusion IPC + Full Initialization (DEF-002/003 fix) — comprehensive module init
@@ -1166,7 +1052,7 @@ async function bootstrap(): Promise<void> {
 
         if (FusionInitializer) {
           const init = new FusionInitializer();
-          const modules: Record<string, any> = {};
+          const modules = {};
 
           try { const eb = new EventBus(); init.setEventBus(eb); setEventBus(eb); console.log('[Main] Fusion EventBus created'); } catch (e) { console.warn('[Main] EventBus failed:', e); }
           try { const hr = new HookRegistry(); init.setHookRegistry(hr); setHookRegistry(hr); console.log('[Main] Fusion HookRegistry created'); } catch (e) { console.warn('[Main] HookRegistry failed:', e); }
@@ -1178,7 +1064,7 @@ async function bootstrap(): Promise<void> {
             const vm = new VectorMemoryStore(DEFAULT_VECTOR_MEMORY_CONFIG, sqliteAdapter);
             // Inject real embedding function using createEmbeddingService
             try {
-              const { createEmbeddingService } = await import('./services/embedding-service.js');
+              const { createEmbeddingService } = await import('../services/embedding-service.js');
               const { loadConfig: loadCoreConfig } = await import('@codepilot/core');
               const freshConfig = await loadCoreConfig();
               const embedService = await createEmbeddingService(freshConfig.config);
@@ -1198,8 +1084,8 @@ async function bootstrap(): Promise<void> {
           try { const re = new NudgeReviewEngine(DEFAULT_REVIEW_CONFIG); init.setReviewEngine(re); modules.reviewEngine = re; console.log('[Main] Fusion ReviewEngine created'); } catch (e) { console.warn('[Main] ReviewEngine failed:', e); }
           try { const th = new ExecutionTraceHarvester(DEFAULT_TRACE_HARVESTER_CONFIG); init.setTraceHarvester(th); modules.traceHarvester = th; console.log('[Main] Fusion TraceHarvester created'); } catch (e) { console.warn('[Main] TraceHarvester failed:', e); }
           try { const ss = new SkillSecurityLoader(DEFAULT_SECURITY_CONFIG); modules.skillSecurity = ss; console.log('[Main] Fusion SkillSecurity created'); } catch (e) { console.warn('[Main] SkillSecurity failed:', e); }
-          try { const dag = new DAGOrchestrator(async () => 'no-executor' as any); init.setDAGOrchestrator(dag); modules.dagOrchestrator = dag; console.log('[Main] Fusion DAGOrchestrator created'); } catch (e) { console.warn('[Main] DAGOrchestrator failed:', e); }
-          try { const ma = new MultiAgentExecutor(async () => 'no-executor' as any, DEFAULT_MULTI_AGENT_CONFIG); init.setMultiAgent(ma); modules.multiAgent = ma; console.log('[Main] Fusion MultiAgent created'); } catch (e) { console.warn('[Main] MultiAgent failed:', e); }
+          try { const dag = new DAGOrchestrator(async () => ({ success: false, error: 'no-executor' })); init.setDAGOrchestrator(dag); modules.dagOrchestrator = dag; console.log('[Main] Fusion DAGOrchestrator created'); } catch (e) { console.warn('[Main] DAGOrchestrator failed:', e); }
+          try { const ma = new MultiAgentExecutor(DEFAULT_MULTI_AGENT_CONFIG, async () => ({ success: false, error: 'no-executor' })); init.setMultiAgent(ma); modules.multiAgent = ma; console.log('[Main] Fusion MultiAgent created'); } catch (e) { console.warn('[Main] MultiAgent failed:', e); }
           try { const mr = new DynamicModelRouter([], DEFAULT_MODEL_ROUTER_CONFIG); init.setModelRouter(mr); modules.modelRouter = mr; console.log('[Main] Fusion ModelRouter created'); } catch (e) { console.warn('[Main] ModelRouter failed:', e); }
           try { const nc = new NLCronScheduler(DEFAULT_NL_CRON_CONFIG); init.setNLCron(nc); modules.nlCron = nc; console.log('[Main] Fusion NLCronScheduler created'); } catch (e) { console.warn('[Main] NLCronScheduler failed:', e); }
           try { const um = new HonchoUserModeler('default', DEFAULT_USER_MODELER_CONFIG); init.setUserModeler(um); modules.userModeler = um; console.log('[Main] Fusion UserModeler created'); } catch (e) { console.warn('[Main] UserModeler failed:', e); }
@@ -1220,7 +1106,7 @@ async function bootstrap(): Promise<void> {
           try {
             const integ = fusionMod.integration;
             if (integ && integ.registerFusionTools) {
-              integ.registerFusionTools(null as any, null as any, null as any);
+              integ.registerFusionTools();
               console.log('[Main] Fusion tools registered');
             }
           } catch (e) { console.warn('[Main] Fusion tools:', e); }
@@ -1238,7 +1124,7 @@ async function bootstrap(): Promise<void> {
           try {
             const integ = fusionMod.integration;
             if (integ && integ.setupMemoryLinkages) {
-              integ.setupMemoryLinkages({ db: getDatabase() } as any, null as any);
+              integ.setupMemoryLinkages({ db: getDatabase() });
               console.log('[Main] Fusion memory linkages established');
             }
           } catch (e) { console.warn('[Main] Fusion memory:', e); }
@@ -1300,14 +1186,29 @@ async function bootstrap(): Promise<void> {
     }
   }
 
-  // Notify renderer process that workspace has been restored
-  // (workspace was loaded before Phase B; workspacePath is already correct)
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('workspace:restored', {
-      path: workspacePath,
-      timestamp: Date.now(),
-      source: 'config'
-    });
+  // Load saved workspace path from config (enhanced validation)
+  // NOTE: This runs AFTER IPC registration so the renderer can safely call
+  // IPC methods (config:set, update:check, etc.) during the async file I/O below.
+  const loadedWorkspace = await loadWorkspaceFromConfig();
+
+  if (loadedWorkspace !== homedir()) {
+    // Successfully restored workspace from config
+    workspacePath = loadedWorkspace;
+    setWorkingDirectory(workspacePath);
+
+    // Notify renderer process that workspace has been restored
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('workspace:restored', {
+        path: workspacePath,
+        timestamp: Date.now(),
+        source: 'config'
+      });
+    }
+  } else {
+    // Using default directory
+    workspacePath = loadedWorkspace;
+    setWorkingDirectory(workspacePath);
+    console.log('[Main] Using default workspace:', workspacePath);
   }
 
   // Initialize the agent core with 15s timeout (load prompts, config, provider)

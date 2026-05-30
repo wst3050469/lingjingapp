@@ -134,8 +134,8 @@ export class WorkflowEngine {
                 {
                     taskId: 'main',
                     taskDef: {
-                        name: (requirement.goal || '').slice(0, 50),
-                        prompt: `Execute: ${requirement.goal || ''}. Context: ${JSON.stringify(requirement.context ?? {})}`,
+                        name: requirement.goal.slice(0, 50),
+                        prompt: `Execute: ${requirement.goal}. Context: ${JSON.stringify(requirement.context ?? {})}`,
                         model: requirement.model,
                     },
                     dependencies: [],

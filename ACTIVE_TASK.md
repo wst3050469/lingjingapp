@@ -1,28 +1,24 @@
-# ACTIVE_TASK -- v1.61.0
+# ACTIVE_TASK -- v1.50.0 Phase 93 全平台部署完成 ✅
 
-## Status
-✅ Completed — 2026-05-29 14:25 CST
+## 状态：✅ 全部完成
 
-## Version Info
-- From: v1.60.1 → To: v1.61.0
-- Commit: a9d2d4789
-- Branch: main
+| 项目 | 大小 | 状态 |
+|:-----|:-----|:----:|
+| 🐛 Bug1: Quest Agent生命周期管理 | 4项 | ✅ 全部修复 |
+| 🐛 Bug2: 任务执行意外中断 | 5项 | ✅ 全部修复 |
+| 🏗️ 持久记忆机制 | 3模块 | ✅ VectorMemory+SqliteAdapter |
+| 📱 移动端APP完善 | 4项 | ✅ 心跳/Markdown/持久化/文件查看 |
+| 🪟 Windows Setup | 142MB | ✅ 已部署到生产 |
+| 🪟 Windows Portable | 141MB | ✅ 已部署到生产 |
+| 🐧 Linux AppImage | 172MB | ✅ 已部署到生产 |
+| 🐧 Linux deb | 105MB | ✅ 已部署到生产 |
+| 📱 Android APK | 35MB | ✅ 软链至v1.46.0（待Expo原生构建） |
+| ☁️ versions.json | 全平台 | ✅ 4份同步，latest=1.50.0 |
+| 🔄 latest.yml | 1.50.0 | ✅ SHA512已更新 |
+| 🔄 latest-linux.yml | 1.50.0 | ✅ 含AppImage+deb双文件 |
+| 🌐 /api/latest | 1.50.0 | ✅ 完整返回 |
 
-## Deployment Strategy
-蓝绿部署 — 保留 v1.60.1 所有安装包作为回滚后备，v1.61.0 并行上线
-
-## Rollback Plan
-1. Git: `git revert a9d2d4789`
-2. versions.json: `latest` → `1.60.1`
-3. pm2 restart update-server
-
-## Build Artifacts
-- Linux AppImage: 183MB ✅
-- Linux DEB: 111MB ✅
-- Windows Setup: 142MB ✅
-- Windows Portable: 141MB ✅
-
-## Verification
-- API: GET /api/latest → {"hasUpdate":true,"version":"1.61.0"} ✅
-- HTTPS: All 5 files HTTP 200 ✅
-- Load: 0.11 | Mem: 5.2GB available | PM2: all online ✅
+### Git
+- `5a05b012a` — 已提交 ✅
+- GitHub: 已推送 ✅
+- 生产 bare repo: 已同步 ✅

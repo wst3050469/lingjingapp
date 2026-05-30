@@ -9,20 +9,8 @@ function getService(projectPath: string): SecurityService {
 }
 
 export function registerSecurityIPC(): void {
-  const validScopes = ['full', 'quick', 'incremental', 'specified'] as const;
-  type ValidScope = typeof validScopes[number];
-
   ipcMain.handle('security:scan', async (_e, projectPath: string, scope?: string, files?: string[]) => {
-    try {
-      const validatedScope: ValidScope = validScopes.includes(scope as any) ? (scope as ValidScope) : 'full';
-      // Map 'quick' to undefined (service default = 'full')
-      const serviceScope = validatedScope === 'quick' ? undefined : validatedScope;
-      const service = getService(projectPath);
-      const result = await service.scan(serviceScope, files);
-      return result;
-    } catch (err: any) {
-      return { success: false, error: err.message || String(err) };
-    }
+    return getService(projectPath).scan((scope as any) || 'full', files);
   });
   ipcMain.handle('security:cancel', async (_e, projectPath: string) => {
     return getService(projectPath).cancelScan();

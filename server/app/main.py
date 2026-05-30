@@ -122,7 +122,7 @@ async def _preload_tts():
 app = FastAPI(
     title="灵境 - 企业数字大脑",
     description="基于AI的企业管理系统",
-    version="1.64.2",
+    version="1.64.3",
     lifespan=lifespan,
 )
 
@@ -205,7 +205,7 @@ async def wecom_verify():
     
 @app.get("/")
 async def root():
-    return {"name": "灵境 - 企业数字大脑", "version": "1.64.2"}
+    return {"name": "灵境 - 企业数字大脑", "version": "1.64.3"}
 
 if __name__ == "__main__":
     import uvicorn

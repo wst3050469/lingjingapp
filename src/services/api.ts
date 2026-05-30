@@ -34,8 +34,10 @@ class ApiService {
  public onConnectionChange?: (connected: boolean) => void;
  private _deviceId: string|null = null;
  private _jwtToken: string|null = null;
+ private _cloudUser: any = null;
  get deviceId(): string|null { return this._deviceId; }
  get jwtToken(): string|null { return this._jwtToken; }
+ get cloudUser(): any { return this._cloudUser; }
  configure(config: Partial<ApiConfig>) { this.config = { ...this.config, ...config }; if (config.token) this._jwtToken = config.token; }
  getConfig(): ApiConfig { return { ...this.config }; }
  private get headers(): Record<string, string> {
@@ -175,11 +177,47 @@ class ApiService {
  async triggerSchedule(id: string) { return this.request<any>('/schedules/' + id + '/trigger', { method: 'POST' }); }
  async getScheduleLogs(id: string) { return this.request<any>('/schedules/' + id + '/logs'); }
  async triggerWebhook(channel: string, payload: any) { return this.request<any>('/webhook/' + encodeURIComponent(channel), { method: 'POST', body: JSON.stringify(payload) }); }
- async getSubscription() { return this.request<any>('/subscription'); }
- async getPlans2() { return this.request<any>('/plans'); }
+ async getSubscription() {
+  var data = await this.request<any>('/subscriptions/mine');
+  // Server returns subscription object directly; wrap it for screen compatibility
+  return { subscription: data };
+ }
+ async getPlans2() {
+  var data = await this.request<any>('/plans');
+  // Server returns a plain array; wrap it for screen compatibility
+  return { plans: Array.isArray(data) ? data : [] };
+ }
  async createPayment(channel: string, amount: number, planId: string) { return this.request<any>('/payments/create', { method: 'POST', body: JSON.stringify({ channel, amount, planId }) }); }
  async confirmPayment(orderId: string) { return this.request<any>('/payments/confirm/' + orderId, { method: 'POST' }); }
  async queryPayment(orderId: string) { return this.request<any>('/payments/query/' + orderId); }
+ async getPayments() {
+  var data = await this.request<any>('/payments');
+  // Server returns a plain array; wrap for screen compatibility
+  return Array.isArray(data) ? { payments: data } : data;
+ }
+ async upgrade(planId: string) { return this.request<any>('/subscriptions/upgrade', { method: 'POST', body: JSON.stringify({ planId }) }); }
+ async downgrade(planId: string) { return this.request<any>('/subscriptions/downgrade', { method: 'POST', body: JSON.stringify({ planId }) }); }
+ async login(username: string, password: string): Promise<any> {
+  var result = await this.request<any>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+  if (result?.token) {
+   this._jwtToken = result.token;
+   this._cloudUser = result.user || null;
+  }
+  return result;
+ }
+ async signup(username: string, password: string, email?: string): Promise<any> {
+  var result = await this.request<any>('/auth/signup', { method: 'POST', body: JSON.stringify({ username, password, email }) });
+  if (result?.token) {
+   this._jwtToken = result.token;
+   this._cloudUser = result.user || null;
+  }
+  return result;
+ }
+ async cloudLogout(): Promise<void> {
+  this._jwtToken = null;
+  this._cloudUser = null;
+  this.disconnectWs();
+ }
  async getDevices() { return this.request<any>('/devices'); }
  async registerDeviceEndpoint(deviceInfo: any) { return this.request<any>('/user/devices/register', { method: 'POST', body: JSON.stringify(deviceInfo) }); }
  async heartbeat() { return this.request<any>('/user/devices/heartbeat', { method: 'PUT' }); }

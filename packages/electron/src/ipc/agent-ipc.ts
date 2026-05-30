@@ -607,6 +607,7 @@ Only save genuinely useful, non-trivial information. Do NOT save obvious or temp
       systemPrompt,
       maxTurns: config!.maxTurns,
       maxDuration: config!.maxDuration,
+      turnTimeout: config!.turnTimeout,
       maxContextTokens: config!.maxContextTokens,
       maxResponseTokens: config!.maxResponseTokens,
       temperature: config!.temperature,

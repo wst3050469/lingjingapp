@@ -39,6 +39,69 @@ function signalWithTimeout(originalSignal, timeoutMs) {
         },
     };
 }
+/**
+ * Check if an error is a transient network error that can be retried.
+ * AbortError (user-cancelled) and TimeoutError are NOT retried.
+ */
+function isRecoverableNetworkError(err) {
+    const msg = (err?.message || '').toLowerCase();
+    const name = (err?.name || '').toLowerCase();
+    // Never retry abort/timeout
+    if (name === 'aborterror' || name === 'timeouterror' || msg.includes('abort') || msg.includes('timeout')) {
+        return false;
+    }
+    // Retry on: fetch failed, ECONNRESET, ECONNREFUSED, ENOTFOUND, ETIMEDOUT, 5xx, DNS failures
+    return msg.includes('fetch failed') ||
+        msg.includes('econnreset') ||
+        msg.includes('econnrefused') ||
+        msg.includes('enotfound') ||
+        msg.includes('etimedout') ||
+        msg.includes('networkerror') ||
+        msg.includes('network error') ||
+        msg.includes('dns') ||
+        msg.includes('eai_again') ||
+        msg.includes('socket') ||
+        msg.includes('endpoint') ||
+        msg.includes('tls') ||
+        msg.includes('ssl') ||
+        msg.includes('certificate') ||
+        msg.includes('unable to connect') ||
+        msg.includes('could not connect');
+}
+/**
+ * Fetch with automatic retry for transient network errors.
+ * Uses exponential backoff: 1s, 2s, 4s between retries.
+ * Only retries recoverable errors (network blips, DNS, ECONNREFUSED, etc.).
+ * AbortError and TimeoutError are never retried.
+ */
+async function fetchWithRetry(url, options = {}, maxRetries = 3) {
+    let lastError;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            // HTTP 5xx is retryable (server error)
+            if (response.status >= 500 && attempt < maxRetries) {
+                logger.warn(`[LLM] HTTP ${response.status} on attempt ${attempt + 1}/${maxRetries + 1}, retrying...`);
+                await sleep(Math.pow(2, attempt) * 1000);
+                continue;
+            }
+            return response;
+        }
+        catch (err) {
+            lastError = err;
+            if (!isRecoverableNetworkError(err) || attempt >= maxRetries) {
+                throw err; // Not recoverable or out of retries
+            }
+            const delay = Math.pow(2, attempt) * 1000;
+            logger.warn(`[LLM] Fetch failed on attempt ${attempt + 1}/${maxRetries + 1}: ${err.message}. Retrying in ${delay}ms...`);
+            await sleep(delay);
+        }
+    }
+    throw lastError;
+}
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 function parseTextToolCalls(text) {
     const results = [];
     let counter = 0;
@@ -214,7 +277,7 @@ export class OpenAIProvider {
         }
         const toolNames = tools ? tools.map(t => t.function.name) : [];
         logger.info(`[LLM] model=${this.model}, msgs=${messages.length}, tools=${toolNames.length}${toolNames.length > 0 ? ` [${toolNames.join(', ')}]` : ''}, temp=${body.temperature ?? 'default'}, toolChoice=${body.tool_choice ?? 'none'}, baseUrl=${this.baseUrl}`);
-        const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        const response = await fetchWithRetry(`${this.baseUrl}/chat/completions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -594,7 +657,7 @@ export class OpenAIProvider {
         }
         const toolNames = tools.map(t => t.function.name);
         logger.info(`[LLM] DeepSeek non-streaming tool call: model=${this.model}, msgs=${messages.length}, tools=${toolNames.length} [${toolNames.join(', ')}], toolChoice=${body.tool_choice}, temp=${body.temperature ?? 'default'}`);
-        const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        const response = await fetchWithRetry(`${this.baseUrl}/chat/completions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 // Doubao (豆包) Responses API Provider
 // Uses the v3 /responses endpoint (non-OpenAI-compatible format)
 import { parseSSEStream } from './sse-parser.js';
+import { logger } from '../utils/logger.js';
 const DEFAULT_TIMEOUT_MS = 120_000;
 function signalWithTimeout(parentSignal, timeoutMs = DEFAULT_TIMEOUT_MS) {
     const controller = new AbortController();
@@ -18,6 +19,38 @@ function signalWithTimeout(parentSignal, timeoutMs = DEFAULT_TIMEOUT_MS) {
         }
     }
     return { signal: controller.signal, clear: () => clearTimeout(timeoutId) };
+}
+/**
+ * Check if an error is a transient network error that can be retried.
+ */
+function isRecoverableNetworkError(err) {
+    const msg = (err?.message || '').toLowerCase();
+    const name = (err?.name || '').toLowerCase();
+    if (name === 'aborterror' || name === 'timeouterror' || msg.includes('abort') || msg.includes('timeout')) return false;
+    return msg.includes('fetch failed') || msg.includes('econnreset') || msg.includes('econnrefused') ||
+        msg.includes('enotfound') || msg.includes('etimedout') || msg.includes('network') ||
+        msg.includes('dns') || msg.includes('eai_again') || msg.includes('socket');
+}
+async function fetchWithRetry(url, options = {}, maxRetries = 2) {
+    let lastError;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            if (response.status >= 500 && attempt < maxRetries) {
+                logger.warn(`[Doubao] HTTP ${response.status} on attempt ${attempt+1}/${maxRetries+1}, retrying...`);
+                await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000));
+                continue;
+            }
+            return response;
+        } catch (err) {
+            lastError = err;
+            if (!isRecoverableNetworkError(err) || attempt >= maxRetries) throw err;
+            const delay = Math.pow(2, attempt) * 1000;
+            logger.warn(`[Doubao] Fetch failed attempt ${attempt+1}/${maxRetries+1}: ${err.message}. Retrying in ${delay}ms...`);
+            await new Promise(r => setTimeout(r, delay));
+        }
+    }
+    throw lastError;
 }
 /** Convert Doubao Responses API content blocks to text */
 function extractText(output) {
@@ -64,7 +97,7 @@ export class DoubaoProvider {
         }
         const _timeout = signalWithTimeout(request.signal);
         const url = `${this.baseUrl}/responses`;
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

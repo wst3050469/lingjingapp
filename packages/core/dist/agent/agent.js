@@ -185,7 +185,7 @@ export class Agent {
         this.config = {
             maxTurns: 500,
             maxDuration: 0, // no limit by default (config can override)
-            turnTimeout: 600_000, // 10 minutes per turn
+            turnTimeout: 1_200_000, // 20 minutes per turn (was 10 min - too short for complex tools)
             maxContextTokens: 128000,
             maxResponseTokens: 4096,
             temperature: 0.3,

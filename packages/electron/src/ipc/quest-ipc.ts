@@ -1983,6 +1983,8 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       maxDuration: config.maxDuration,
 
+      turnTimeout: Math.max(config.turnTimeout ?? 1_200_000, 300_000), // at least 5min for Quest mode
+
       maxContextTokens: getModelContextWindow(config.model, config.maxContextTokens),
 
       maxResponseTokens: config.maxResponseTokens,

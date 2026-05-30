@@ -13,7 +13,7 @@
 | 🗄️ PostgreSQL (生产) | ✅ active | 已配置授权 |
 
 ### Git
-- `a672d065` — chore: 更新日志 v1.64.3
+- `7b3f14bd` — chore: 更新versions.json为v1.64.3
 - ✅ 已推送到 prod 远程仓库
 
 ### 最近完成

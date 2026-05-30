@@ -41,6 +41,17 @@ interface QuestDiffState {
   addFileChange: (filePath: string, beforeContent: string | null, afterContent: string, toolName: string, isNewFile?: boolean) => void;
 }
 
+/** Fire-and-forget revert a file on disk via IPC. Logs errors silently. */
+function revertFileOnDisk(filePath: string, beforeContent: string | null): void {
+  try {
+    window.electronAPI.quest.revertFile(filePath, beforeContent).catch((err: unknown) => {
+      console.warn('[QuestDiff] revert file failed:', filePath, err);
+    });
+  } catch {
+    // window.electronAPI not available during SSR/testing
+  }
+}
+
 export const useQuestDiffStore = create<QuestDiffState>((set) => ({
   fileChanges: {},
   activeReviewFile: null,
@@ -62,12 +73,19 @@ export const useQuestDiffStore = create<QuestDiffState>((set) => ({
       return { fileChanges: { ...state.fileChanges, [filePath]: { ...file, status: 'accepted' as const } } };
     }),
 
-  rejectFile: (filePath) =>
+  rejectFile: (filePath) => {
+    const state = useQuestDiffStore.getState();
+    const file = state.fileChanges[filePath];
+    if (file) {
+      // Revert on disk before updating UI
+      revertFileOnDisk(file.filePath, file.beforeContent);
+    }
     set((state) => {
       const file = state.fileChanges[filePath];
       if (!file) return state;
       return { fileChanges: { ...state.fileChanges, [filePath]: { ...file, status: 'rejected' as const } } };
-    }),
+    });
+  },
 
   acceptAll: () =>
     set((state) => {
@@ -78,14 +96,22 @@ export const useQuestDiffStore = create<QuestDiffState>((set) => ({
       return { fileChanges: changes };
     }),
 
-  rejectAll: () =>
+  rejectAll: () => {
+    // Revert all pending files on disk before updating UI
+    const state = useQuestDiffStore.getState();
+    for (const [, file] of Object.entries(state.fileChanges)) {
+      if (file.status === 'pending') {
+        revertFileOnDisk(file.filePath, file.beforeContent);
+      }
+    }
     set((state) => {
       const changes: Record<string, QuestFileChange> = {};
       for (const [k, v] of Object.entries(state.fileChanges)) {
         changes[k] = { ...v, status: 'rejected' };
       }
       return { fileChanges: changes };
-    }),
+    });
+  },
 
   clearChanges: () => set({ fileChanges: {}, activeReviewFile: null }),
   clearReview: () => set({ fileChanges: {}, activeReviewFile: null }),

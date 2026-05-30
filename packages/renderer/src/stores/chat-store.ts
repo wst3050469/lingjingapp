@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import type { AgentEventData, CodeReviewReport } from '../ipc/ipc-client';
 import { estimateConversationTokens } from '../utils/token-estimator';
 import { useAuthStore } from './auth-store';
-import type { FileAttachment } from '../hooks/useFileAttachments';
 
 export type ChatMode = 'ask' | 'agent' | 'experts' | 'research';
 
@@ -24,7 +23,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'tool';
   content: string;
   toolCalls?: { name: string; args: Record<string, unknown>; result?: { content: string; isError?: boolean } }[];
-  attachments?: { images?: AttachedImage[]; files?: string[]; documents?: FileAttachment[] };
+  attachments?: { images?: AttachedImage[]; files?: string[] };
   metadata?: { type: 'code_review_report'; report: CodeReviewReport };
   timestamp: number;
 }

@@ -22,7 +22,7 @@ export class DslParser {
         }
         return results;
     }
-    parseYaml(content, yamlPath = '') {
+    parseYaml(content, yamlPath) {
         const raw = YAML.parse(content);
         if (!raw || !raw.name || !raw.stages || !Array.isArray(raw.stages) || raw.stages.length === 0) {
             throw new Error('Invalid pipeline YAML: missing name or stages');
@@ -48,7 +48,7 @@ export class DslParser {
             continueOnError: s.continueOnError ?? false,
             tasks: (s.tasks || []).map((t) => ({
                 name: t.name,
-                type: (t.type || 'custom'),
+                type: t.type || 'custom',
                 command: t.command || '',
                 timeout: t.timeout,
                 env: t.env,

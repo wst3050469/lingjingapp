@@ -7,15 +7,6 @@ import { useAppStore } from '../stores/app-store';
 export default function ConnectionBanner() {
   const { connected, mode, lanIp } = useAppStore();
 
-  function modeLabel(): string {
-    switch (mode) {
-      case 'lan': return `LAN ${lanIp || ''}`;
-      case 'cloud': return 'FRP 中转';
-      case 'cloud_account': return '云账号';
-      default: return 'Cloud';
-    }
-  }
-
   return (
     <View style={[styles.banner, connected ? styles.connected : styles.disconnected]}>
       <Ionicons
@@ -24,7 +15,9 @@ export default function ConnectionBanner() {
         color={connected ? '#3fb950' : '#f85149'}
       />
       <Text style={[styles.text, connected ? styles.connectedText : styles.disconnectedText]}>
-        {connected ? `已连接 · ${modeLabel()}` : '未连接 · 请在设置中配置连接'}
+        {connected
+          ? `已连接 · ${mode === 'lan' ? `LAN ${lanIp}` : mode === 'cloud_account' ? '云账号' : 'Cloud'}`
+          : '未连接 · 请在设置中配置连接'}
       </Text>
     </View>
   );

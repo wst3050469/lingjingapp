@@ -21,11 +21,8 @@ import PairingScreen from './src/screens/PairingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import ConnectionBanner from './src/components/ConnectionBanner';
-import { loadPersistedAuth, loadPersistedPairing } from './src/stores/app-store';
-import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, Platform } from 'react-native';
-
-// ── Connection Constants (from shared constants file) ──
-import { CLOUD_SERVER_URL, CLOUD_SERVER_WS, FRP_RELAY_URL, FRP_RELAY_WS } from './src/constants';
+import { loadPersistedAuth } from './src/stores/app-store';
+import { View, Text, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -62,112 +59,76 @@ export default function App() {
   }, []);
 
   async function initConnection() {
-    // Phase 0: Load persisted pairing info (separate from cloud auth)
-    const pairing = await loadPersistedPairing();
-    if (pairing) {
-      setToken(pairing.token);
-      setLanIp(pairing.lanIp);
-    }
-
-    // Phase 1: Check for persisted cloud account token (JWT)
+    // Phase 1: Check for persisted cloud account token
     const persisted = await loadPersistedAuth();
     if (persisted?.token) {
+      // Try cloud server auth with persisted token
       setLoadingText('正在验证云账号...');
       api.configure({
-        baseUrl: CLOUD_SERVER_URL,
+        baseUrl: 'https://ide.zhejiangjinmo.com',
         token: persisted.token,
-        wsUrl: CLOUD_SERVER_WS,
+        wsUrl: 'wss://ide.zhejiangjinmo.com/ws',
       });
       try {
         const me = await api.verifyToken();
-        if (me && me.ok !== false) {
+        if (me.ok) {
           // Token is valid, use cloud mode
           setAuth(me.user?.id || 'cloud_user', persisted.token);
           if (persisted.user) setUser(persisted.user);
-          // If pairing exists, use local web-server for sessions (higher priority for data access)
-          if (pairing) {
-            const pairingUrl = `http://${pairing.lanIp}:3001`;
-            // Verify pairing token against desktop web-server before using it
-            try {
-              const statusRes = await fetch(`${pairingUrl}/api/status`, {
-                headers: { Authorization: `Bearer ${pairing.token}` },
-              });
-              if (statusRes.ok) {
-                api.configure({ baseUrl: pairingUrl, token: pairing.token, wsUrl: `ws://${pairing.lanIp}:3001/ws` });
-                api.connectWs();
-                const statusData = await statusRes.json();
-                setStatus(statusData);
-                setConnection(true, 'cloud_account', pairingUrl);
-                setInitializing(false);
-                Notifications.registerPushToken(pairing.token, '灵境 Mobile').catch(() => {});
-                return;
-              }
-            } catch { /* LAN unreachable, use cloud server */ }
-          }
-          // Fallback: use cloud server directly
-          api.configure({ baseUrl: CLOUD_SERVER_URL, token: persisted.token, wsUrl: CLOUD_SERVER_WS });
           api.connectWs();
-          setConnection(true, 'cloud_account', CLOUD_SERVER_URL);
+          setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
           setInitializing(false);
           return;
         }
-      } catch { /* token invalid or expired, fall through to pairing or login */ }
+      } catch { /* token invalid or expired, fall through to login */ }
     }
 
-    // Phase 2: Pairing mode — try to connect to desktop via LAN or FRP relay
-    const storedToken = token || pairing?.token || '';
-    const storedIp = lanIp || pairing?.lanIp || '';
-
-    if (storedToken) {
-      // ── Attempt 1: LAN direct ──
-      if (storedIp) {
-        setLoadingText('正在连接局域网...');
-        try {
-          const lanUrl = `http://${storedIp}:3001`;
-          api.configure({ baseUrl: lanUrl, token: storedToken, wsUrl: `ws://${storedIp}:3001/ws` });
-          const res = await fetch(`${lanUrl}/api/status`, {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            api.connectWs();
-            setConnection(true, 'lan', lanUrl);
-            setStatus(data);
-            setInitializing(false);
-            Notifications.registerPushToken(storedToken, '灵境 Mobile').catch(() => {});
-            return;
-          }
-        } catch { /* LAN failed */ }
+    // Phase 2: Check for pairing token (desktop connection)
+    if (token) {
+      const storedIp = lanIp || '';
+      if (!storedIp) {
+        setLoadingText('请先配对桌面端IP');
+        setShowPairing(true);
+        setInitializing(false);
+        return;
       }
 
-      // ── Attempt 2: FRP relay (cloud tunnel to desktop) ──
-      // Note: FRP server (frps) must be running on the relay domain.
-      // Uses authenticated endpoint /api/sessions to verify the token works.
-      setLoadingText('正在通过中转连接...');
+      // LAN
+      setLoadingText('正在连接局域网...');
       try {
-        api.configure({ baseUrl: FRP_RELAY_URL, token: storedToken, wsUrl: FRP_RELAY_WS });
-        const res = await fetch(`${FRP_RELAY_URL}/api/sessions?limit=1`, {
-          headers: { Authorization: `Bearer ${storedToken}` },
+        const lanUrl = `http://${storedIp}:3001`;
+        api.configure({ baseUrl: lanUrl, token, wsUrl: `ws://${storedIp}:3001/ws` });
+        const res = await fetch(`${lanUrl}/api/status`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();
           api.connectWs();
-          setConnection(true, 'cloud', FRP_RELAY_URL);
-          if (data && data.device) setStatus(data);
+          setConnection(true, 'lan', lanUrl);
+          setStatus(data);
           setInitializing(false);
-          Notifications.registerPushToken(storedToken, '灵境 Mobile').catch(() => {});
+          Notifications.registerPushToken(token, '灵境 Mobile').catch(() => {});
           return;
         }
-      } catch { /* FRP relay also failed */ }
+      } catch { /* LAN failed, try Cloud */ }
 
-      // ── Both LAN and FRP failed → show pairing screen to retry ──
-      setLoadingText('连接失败，请重新配对');
-      setShowPairing(true);
-      setInitializing(false);
-      return;
+      // Cloud (pairing mode)
+      setLoadingText('正在连接云服务器...');
+      try {
+        const cloudUrl = 'https://ide.zhejiangjinmo.com';
+        api.configure({ baseUrl: cloudUrl, token, wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
+        const res = await fetch(`${cloudUrl}/api/health`);
+        if (res.ok) {
+          api.connectWs();
+          setConnection(true, 'cloud', cloudUrl);
+          setInitializing(false);
+          Notifications.registerPushToken(token, '灵境 Mobile').catch(() => {});
+          return;
+        }
+      } catch { /* Cloud also failed */ }
     }
 
-    // Phase 3: No auth info at all → show login
+    // Phase 3: No valid auth → show login screen
     setShowLogin(true);
     setInitializing(false);
   }
@@ -175,8 +136,6 @@ export default function App() {
   async function handlePaired(newToken: string, newIp: string) {
     setToken(newToken);
     setLanIp(newIp);
-    // Also store in separate pairing fields for cloud_account mode
-    useAppStore.setState({ pairingToken: newToken, pairingLanIp: newIp });
     setShowPairing(false);
     try {
       const s = await api.getStatus();
@@ -185,41 +144,20 @@ export default function App() {
     Notifications.registerPushToken(newToken, '灵境 Mobile').catch(() => {});
   }
 
-  async function handleLoginSuccess() {
+  function handleLoginSuccess() {
     setShowLogin(false);
-    const state = useAppStore.getState();
-    // If pairing exists, try local web-server for sessions first
-    if (state.pairingToken && state.pairingLanIp) {
-      const pairingUrl = `http://${state.pairingLanIp}:3001`;
-      api.configure({
-        baseUrl: pairingUrl,
-        token: state.pairingToken,
-        wsUrl: `ws://${state.pairingLanIp}:3001/ws`,
-      });
-      try {
-        const status = await api.getStatus();
-        api.connectWs();
-        setConnection(true, 'cloud_account', pairingUrl);
-        setStatus(status);
-        Notifications.registerPushToken(state.pairingToken, '灵境 Mobile').catch(() => {});
-        return;
-      } catch {
-        console.log('[App] Pairing unreachable after login, using cloud server');
-      }
-    }
-    // Fallback: use cloud server directly (cloud account JWT)
-    const cloudToken = state.cloudToken || state.token;
+    // Connect to cloud server as cloud_account mode
     api.configure({
-      baseUrl: CLOUD_SERVER_URL,
-      token: cloudToken,
-      wsUrl: CLOUD_SERVER_WS,
+      baseUrl: 'https://ide.zhejiangjinmo.com',
+      token: useAppStore.getState().token,
+      wsUrl: 'wss://ide.zhejiangjinmo.com/ws',
     });
     api.connectWs();
-    setConnection(true, 'cloud_account', CLOUD_SERVER_URL);
+    setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
     try {
       api.getStatus().then(setStatus).catch(() => {});
     } catch { /* ignore */ }
-    Notifications.registerPushToken(cloudToken, '灵境 Mobile').catch(() => {});
+    Notifications.registerPushToken(useAppStore.getState().token, '灵境 Mobile').catch(() => {});
   }
 
   function switchToPairing() {

@@ -75,7 +75,7 @@ export interface AgentConfig {
 }
 export declare class Agent {
     /** @internal - public for cross-window hydration via IPC */
-    conversation: any;
+    conversation: Conversation;
     private executor;
     private config;
     private interventionQueue;

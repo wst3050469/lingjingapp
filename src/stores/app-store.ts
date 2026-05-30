@@ -5,8 +5,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEY_TOKEN = 'lingjing_mobile_token';
 const STORAGE_KEY_USER = 'lingjing_mobile_user';
-const STORAGE_KEY_PAIRING_TOKEN = 'lingjing_mobile_pairing_token';
-const STORAGE_KEY_PAIRING_IP = 'lingjing_mobile_pairing_ip';
 
 export interface Session {
   id: string;
@@ -160,26 +158,19 @@ interface AppState {
   isLoading: boolean;
   setLoading: (loading: boolean) => void;
 
-  // Settings (pairing info)
+  // Settings
   token: string;
   setToken: (t: string) => void;
   lanIp: string;
   setLanIp: (ip: string) => void;
-  pairingToken: string;
-  pairingLanIp: string;
 
-  // Auth (cloud account)
+  // Auth (移植自 mobile/store.ts)
   isAuthenticated: boolean;
-  cloudToken: string;
   deviceId: string | null;
   user: UserInfo | null;
   setAuth: (deviceId: string, token: string) => void;
   setUser: (user: UserInfo) => void;
   logout: () => void;
-
-  // Update info
-  updateInfo: import('../services/api').UpdateInfo | null;
-  setUpdateInfo: (info: import('../services/api').UpdateInfo | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -218,12 +209,11 @@ export const useAppStore = create<AppState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
 
   isAuthenticated: false,
-  cloudToken: '',
   deviceId: null,
   user: null,
-  setAuth: (deviceId, cloudToken) => {
-    AsyncStorage.setItem(STORAGE_KEY_TOKEN, cloudToken).catch(() => {});
-    set({ isAuthenticated: true, deviceId, cloudToken });
+  setAuth: (deviceId, token) => {
+    AsyncStorage.setItem(STORAGE_KEY_TOKEN, token).catch(() => {});
+    set({ isAuthenticated: true, deviceId, token });
   },
   setUser: (user) => {
     AsyncStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user)).catch(() => {});
@@ -233,26 +223,15 @@ export const useAppStore = create<AppState>((set) => ({
     AsyncStorage.removeItem(STORAGE_KEY_TOKEN).catch(() => {});
     AsyncStorage.removeItem(STORAGE_KEY_USER).catch(() => {});
     set({
-      isAuthenticated: false, deviceId: null, user: null, cloudToken: '',
+      isAuthenticated: false, deviceId: null, user: null,
       token: '', connected: false, mode: 'lan',
     });
   },
 
   token: '',
-  setToken: (token) => {
-    AsyncStorage.setItem(STORAGE_KEY_PAIRING_TOKEN, token).catch(() => {});
-    set({ token });
-  },
+  setToken: (token) => set({ token }),
   lanIp: '',
-  setLanIp: (lanIp) => {
-    AsyncStorage.setItem(STORAGE_KEY_PAIRING_IP, lanIp).catch(() => {});
-    set({ lanIp });
-  },
-  pairingToken: '',
-  pairingLanIp: '',
-
-  updateInfo: null,
-  setUpdateInfo: (updateInfo) => set({ updateInfo }),
+  setLanIp: (lanIp) => set({ lanIp }),
 }));
 
 // ── Persistence helpers (AsyncStorage) ──
@@ -263,17 +242,6 @@ export async function loadPersistedAuth(): Promise<{ token: string; user: UserIn
     const userJson = await AsyncStorage.getItem(STORAGE_KEY_USER);
     const user = userJson ? JSON.parse(userJson) : null;
     return { token, user };
-  } catch {
-    return null;
-  }
-}
-
-export async function loadPersistedPairing(): Promise<{ token: string; lanIp: string } | null> {
-  try {
-    const token = await AsyncStorage.getItem(STORAGE_KEY_PAIRING_TOKEN);
-    const ip = await AsyncStorage.getItem(STORAGE_KEY_PAIRING_IP);
-    if (!token || !ip) return null;
-    return { token, lanIp: ip };
   } catch {
     return null;
   }

@@ -13,22 +13,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "allowImportingTsExtensions": false,
-    "jsx": "react"
+    "allowImportingTsExtensions": false
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/**/__tests__",
-    "src/**/*.test.ts",
-    "src/**/*.spec.ts",
-    "**/patch-electron-main.ts",
-    "**/patch-renderer.tsx",
-    "**/patch-theme-switch.tsx",
-    "src/**/*.tsx"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "src/**/__tests__", "src/**/*.test.ts", "src/**/*.spec.ts"]
 }

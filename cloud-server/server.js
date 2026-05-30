@@ -5,11 +5,10 @@
  */
 
 import http from 'node:http';
-import { randomUUID, createHmac, createHash, timingSafeEqual, scryptSync, randomBytes } from 'node:crypto';
+import { randomUUID, createHmac, timingSafeEqual, scryptSync, randomBytes } from 'node:crypto';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import os from 'node:os';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { initDB, closeDB } from './db.js';
@@ -49,23 +48,8 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
 const JWT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-// Log startup info with secrets redacted
-console.log(`[Config] API_KEY: ${API_KEY.slice(0, 8)}...`);
-console.log(`[Config] JWT_SECRET: ${JWT_SECRET ? JWT_SECRET.slice(0, 8) + '...' : '(not set)'}`);
-console.log(`[Config] DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY ? DEEPSEEK_API_KEY.slice(0, 8) + '...' : '(not set)'}`);
-console.log(`[Config] DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}`);
-
 const app = express();
 app.use(express.json({ limit: '50mb' }));
-
-// Normalize double slashes in URL path — prevent "Cannot GET //admin/versions" errors
-app.use((req, res, next) => {
-  if (req.path.startsWith('//')) {
-    const normalized = req.path.replace(/\/+/g, '/');
-    return res.redirect(301, normalized + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''));
-  }
-  next();
-});
 
 // Global error handler — prevents JSON parse crashes from leaking HTML to clients
 app.use((err, req, res, _next) => {
@@ -108,13 +92,13 @@ async function forwardWebhook(channel, payload) {
           title: 'Payload',
           text: '```' + JSON.stringify(payload, null, 2).slice(0, 3000) + '```',
           footer: '灵境 Cloud',
-          ts: Math.floor(Date.now() / 1000)
-        }]
+          ts: Math.floor(Date.now() / 1000),
+        }],
       };
       const slackRes = await fetch(cfg.slack, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(slackBody)
+        body: JSON.stringify(slackBody),
       });
       results.push({ service: 'slack', status: slackRes.ok ? 'ok' : 'fail', detail: slackRes.status });
     } catch (e) {
@@ -133,13 +117,13 @@ async function forwardWebhook(channel, payload) {
           description: '```json\n' + JSON.stringify(payload, null, 2).slice(0, 4000) + '\n```',
           color: 0x4A90D9,
           timestamp: new Date().toISOString(),
-          footer: { text: '灵境 Cloud Sync' }
-        }]
+          footer: { text: '灵境 Cloud Sync' },
+        }],
       };
       const discordRes = await fetch(cfg.discord, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(discordBody)
+        body: JSON.stringify(discordBody),
       });
       results.push({ service: 'discord', status: discordRes.ok ? 'ok' : 'fail', detail: discordRes.status });
     } catch (e) {
@@ -159,12 +143,12 @@ async function forwardWebhook(channel, payload) {
             headers: {
               'Authorization': `token ${token}`,
               'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify({
               event_type: event_type || 'lingjing-webhook',
-              client_payload: { channel, ...payload }
-            })
+              client_payload: { channel, ...payload },
+            }),
           }
         );
         results.push({ service: 'github', status: ghRes.ok ? 'ok' : 'fail', detail: ghRes.status });
@@ -180,7 +164,7 @@ async function forwardWebhook(channel, payload) {
       const customRes = await fetch(cfg.url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(cfg.headers || {}) },
-        body: JSON.stringify({ channel, payload })
+        body: JSON.stringify({ channel, payload }),
       });
       results.push({ service: 'custom', status: customRes.ok ? 'ok' : 'fail', detail: customRes.status });
     } catch (e) {
@@ -323,7 +307,7 @@ const PLAN_HIERARCHY = { free: 0, personal: 1, pro: 2, enterprise: 3 };
 function getUserSubscription(userId) {
   try {
     const sub = db.prepare(
-      'SELECT s.*, p.name, p.features, p.limits FROM subscriptions s LEFT JOIN plans p ON s.plan_id = p.id WHERE s.user_id = ? AND s.status = ? ORDER BY s.started_at DESC LIMIT 1'
+      'SELECT s.*, p.name as plan_name, p.features, p.limits FROM subscriptions s LEFT JOIN plans p ON s.plan_id = p.id WHERE s.user_id = ? AND s.status = ? ORDER BY s.started_at DESC LIMIT 1'
     ).get(userId, 'active');
 
     const freePlan = db.prepare("SELECT * FROM plans WHERE id = 'free'").get();
@@ -332,17 +316,17 @@ function getUserSubscription(userId) {
 
     // Real usage tracking
     const apiCallsToday = getDailyApiCalls(userId);
-    const storageFileCount = db.prepare('SELECT COUNT(*) FROM storage_files WHERE user_id = ?').get(userId)?.count || 0;
-    const apiKeyCount = db.prepare('SELECT COUNT(*) FROM api_keys WHERE user_id = ?').get(userId)?.count || 0;
+    const storageFileCount = db.prepare('SELECT COUNT(*) as count FROM storage_files WHERE user_id = ?').get(userId)?.count || 0;
+    const apiKeyCount = db.prepare('SELECT COUNT(*) as count FROM api_keys WHERE user_id = ?').get(userId)?.count || 0;
 
-    const sessionCount = db.prepare('SELECT COUNT(*) FROM sessions WHERE user_id = ?').get(userId)?.count || 0;
-    const memoryCount = db.prepare('SELECT COUNT(*) FROM memories WHERE user_id = ?').get(userId)?.count || 0;
+    const sessionCount = db.prepare('SELECT COUNT(*) as count FROM sessions WHERE user_id = ?').get(userId)?.count || 0;
+    const memoryCount = db.prepare('SELECT COUNT(*) as count FROM memories WHERE user_id = ?').get(userId)?.count || 0;
     const usage = {
       apiCalls: apiCallsToday,
       storageFiles: storageFileCount,
       apiKeys: apiKeyCount,
       sessions: sessionCount,
-      memories: memoryCount
+      memories: memoryCount,
     };
 
     if (!sub) {
@@ -357,7 +341,7 @@ function getUserSubscription(userId) {
       planId: sub.plan_id, planName: sub.plan_name || sub.plan_id,
       status: sub.status, limits, features, tier,
       subscriptionId: sub.id, expiresAt: sub.expires_at,
-      usage
+      usage,
     };
   } catch (err) {
     console.error('[Subscription] getUserSubscription error:', err.message);
@@ -502,7 +486,7 @@ app.get('/api/fusion/audit', (req, res) => {
   if (resource) results = results.filter(l => l.resource === resource);
   if (from) results = results.filter(l => l.timestamp >= from);
   if (to) results = results.filter(l => l.timestamp <= to);
-  const n = parseInt(limit) || 100;
+  const n = parseInt(limit as string) || 100;
   res.json({ total: results.length, logs: results.slice(-n) });
 });
 
@@ -513,7 +497,7 @@ app.post('/api/fusion/rbac/check', (req, res) => {
     admin: ['read', 'write', 'delete', 'admin'],
     editor: ['read', 'write'],
     viewer: ['read'],
-    guest: ['read']
+    guest: ['read'],
   };
   const perms = rolePerms[role] || [];
   res.json({ allowed: perms.includes(action), role, action, resource });
@@ -524,44 +508,6 @@ app.post('/api/fusion/rbac/check', (req, res) => {
 // Health
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '3.0.0', uptime: process.uptime(), node: process.version });
-});
-
-// Status — returns basic server info compatible with mobile app layout
-// Must include 'memory', 'cpu', 'stats' fields to match SettingsScreen expectations
-app.get('/api/status', (req, res) => {
-  try {
-    let totalSessions = 0;
-    try { totalSessions = db.prepare('SELECT COUNT(*) as count FROM sessions').get()?.count || 0; } catch (e) {}
-    res.json({
-      device: 'LingJing Cloud Server',
-      platform: process.platform,
-      arch: os.arch(),
-      uptime: Math.floor(process.uptime()),
-      memory: {
-        total: Math.round(os.totalmem() / 1024 / 1024),
-        free: Math.round(os.freemem() / 1024 / 1024),
-      },
-      cpu: os.cpus().length + ' cores',
-      version: '3.0.0',
-      stats: {
-        conversations: totalSessions,
-        quest_tasks: 0,
-        plans: 0,
-        mobile_clients: 0,
-      }
-    });
-  } catch (err) {
-    console.error('[Status] Error:', err.message);
-    res.json({
-      device: 'LingJing Cloud Server',
-      platform: process.platform,
-      uptime: Math.floor(process.uptime()),
-      memory: { total: 0, free: 0 },
-      cpu: 'unknown',
-      version: '3.0.0',
-      stats: { conversations: 0, quest_tasks: 0, plans: 0, mobile_clients: 0 },
-    });
-  }
 });
 
 // ── Version Info (for electron-updater) ──
@@ -614,7 +560,7 @@ function readVersionInfo() {
         status: 'published',
         releaseDate: new Date().toISOString(),
         releaseNotes: data.notes || ('灵境IDE v' + versionStr),
-        files
+        files,
       };
     }
 
@@ -632,7 +578,7 @@ function readVersionInfo() {
           status: 'published',
           releaseDate: latest.releaseDate || new Date().toISOString(),
           releaseNotes: latest.releaseNotes || ('灵境IDE v' + (latest.version || '1.4.0')),
-          files: latest.files || {}
+          files: latest.files || {},
         };
         _verCacheTime = _now;
         return _verCache;
@@ -671,7 +617,7 @@ app.post('/api/auth/register', (req, res) => {
     sub: id,
     name,
     iat: Date.now(),
-    exp: Date.now() + JWT_EXPIRY_MS
+    exp: Date.now() + JWT_EXPIRY_MS,
   });
 
   // Upsert device
@@ -690,7 +636,7 @@ app.post('/api/auth/register', (req, res) => {
     deviceId: id,
     token,
     expiresIn: JWT_EXPIRY_MS,
-    serverVersion: '3.0.0'
+    serverVersion: '3.0.0',
   });
 });
 
@@ -714,7 +660,7 @@ app.post('/api/auth/verify', (req, res) => {
     ok: true,
     deviceId: payload.sub,
     deviceName: payload.name,
-    expiresAt: payload.exp ? new Date(payload.exp).toISOString() : null
+    expiresAt: payload.exp ? new Date(payload.exp).toISOString() : null,
   });
 });
 
@@ -760,26 +706,7 @@ app.post('/api/auth/login', (req, res) => {
     }
 
     const valid = verifyPassword(password, user.password_hash, user.password_salt);
-    
-    // Legacy compatibility: old registrations via CloudSyncTab stored scrypt(sha256(password)).
-    // If raw password fails, try sha256-hashed version. If that succeeds, upgrade the stored hash
-    // to the new format (scrypt of raw password) so future verifications use the fast path.
-    let upgraded = false;
-    let validLegacy = false;
     if (!valid) {
-      const shaPwd = createHash('sha256').update(password).digest('hex');
-      validLegacy = verifyPassword(shaPwd, user.password_hash, user.password_salt);
-      if (validLegacy) {
-        // Upgrade to new format: re-hash with raw password
-        const newHash = hashPassword(password);
-        db.prepare('UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?')
-          .run(newHash, newHash.split(':')[0] || '', user.id);
-        console.log(`[Auth] Upgraded password hash for user ${user.username} (legacy sha256→scrypt)`);
-        upgraded = true;
-      }
-    }
-
-    if (!valid && !validLegacy) {
       return res.status(401).json({ error: 'invalid_credentials' });
     }
 
@@ -792,7 +719,7 @@ app.post('/api/auth/login', (req, res) => {
       name: user.username,
       role: 'user',
       iat: Date.now(),
-      exp: Date.now() + JWT_EXPIRY_MS
+      exp: Date.now() + JWT_EXPIRY_MS,
     });
 
     res.json({
@@ -803,9 +730,9 @@ app.post('/api/auth/login', (req, res) => {
         username: user.username,
         email: user.email,
         avatar: user.avatar,
-        registeredAt: user.registered_at
+        registeredAt: user.registered_at,
       },
-      expiresIn: JWT_EXPIRY_MS
+      expiresIn: JWT_EXPIRY_MS,
     });
   } catch (err) {
     console.error('[Auth] login error:', err);
@@ -842,7 +769,7 @@ app.post('/api/auth/signup', (req, res) => {
       name: username,
       role: 'user',
       iat: Date.now(),
-      exp: Date.now() + JWT_EXPIRY_MS
+      exp: Date.now() + JWT_EXPIRY_MS,
     });
 
     console.log('[Auth] User registered:', username, '(' + id + ')');
@@ -853,9 +780,9 @@ app.post('/api/auth/signup', (req, res) => {
         id,
         username,
         email: email || '',
-        registeredAt: now
+        registeredAt: now,
       },
-      expiresIn: JWT_EXPIRY_MS
+      expiresIn: JWT_EXPIRY_MS,
     });
   } catch (err) {
     console.error('[Auth] signup error:', err);
@@ -889,8 +816,8 @@ app.get('/api/auth/me', (req, res) => {
         email: user.email,
         avatar: user.avatar,
         registeredAt: user.registered_at,
-        lastLoginAt: user.last_login_at
-      }
+        lastLoginAt: user.last_login_at,
+      },
     });
   } catch (err) {
     console.error('[Auth] me error:', err);
@@ -909,7 +836,7 @@ app.get('/api/plans', (req, res) => {
       billingCycle: p.billing_cycle,
       features: JSON.parse(p.features || '[]'),
       limits: JSON.parse(p.limits || '{}'),
-      recommended: !!p.recommended
+      recommended: !!p.recommended,
     }));
     res.json(plans);
   } catch (err) {
@@ -925,7 +852,7 @@ app.get('/api/subscriptions/mine', auth, (req, res) => {
     if (!req.userId) {
       return res.status(401).json({ message: '需要用户认证' });
     }
-    const sub = db.prepare('SELECT s.*, p.name, p.price, p.features, p.limits FROM subscriptions s LEFT JOIN plans p ON s.plan_id = p.id WHERE s.user_id = ? ORDER BY s.started_at DESC LIMIT 1').get(req.userId);
+    const sub = db.prepare('SELECT s.*, p.name as plan_name, p.price, p.features, p.limits FROM subscriptions s LEFT JOIN plans p ON s.plan_id = p.id WHERE s.user_id = ? ORDER BY s.started_at DESC LIMIT 1').get(req.userId);
     if (!sub) {
       // Return default free subscription
       const freePlan = db.prepare("SELECT * FROM plans WHERE id = 'free'").get();
@@ -939,7 +866,7 @@ app.get('/api/subscriptions/mine', auth, (req, res) => {
         autoRenew: false,
         price: 0,
         features: freePlan ? JSON.parse(freePlan.features || '[]') : [],
-        limits: freePlan ? JSON.parse(freePlan.limits || '{}') : {}
+        limits: freePlan ? JSON.parse(freePlan.limits || '{}') : {},
       });
     }
     res.json({
@@ -953,7 +880,7 @@ app.get('/api/subscriptions/mine', auth, (req, res) => {
       autoRenew: !!sub.auto_renew,
       price: sub.price || 0,
       features: JSON.parse(sub.features || '[]'),
-      limits: JSON.parse(sub.limits || '{}')
+      limits: JSON.parse(sub.limits || '{}'),
     });
   } catch (err) {
     console.error('[Subscription] error:', err);
@@ -1174,7 +1101,7 @@ app.get('/api/payments', auth, (req, res) => {
       transactionId: p.transaction_id,
       invoiceNumber: p.invoice_number,
       paidAt: p.paid_at,
-      createdAt: p.created_at
+      createdAt: p.created_at,
     })));
   } catch (err) {
     console.error('[Payments] error:', err);
@@ -1217,7 +1144,7 @@ app.post('/api/payments/create', auth, async (req, res) => {
     const result = await createPayment(channel, {
       amount,
       subject: subject || '灵境订阅支付',
-      notifyUrl: 'https://ide.zhejiangjinmo.com/api/payments/notify/' + channel
+      notifyUrl: 'https://ide.zhejiangjinmo.com/api/payments/notify/' + channel,
     });
     // Store payment record in DB
     const paymentId = randomUUID();
@@ -1288,7 +1215,7 @@ app.get('/api/invoices', auth, (req, res) => {
       status: inv.status,
       invoiceNumber: inv.invoice_number,
       issuedAt: inv.issued_at,
-      createdAt: inv.created_at
+      createdAt: inv.created_at,
     })));
   } catch (err) {
     console.error('[Invoices] error:', err);
@@ -1331,7 +1258,7 @@ app.get('/api/sessions', auth, (req, res) => {
   res.json(sessions.map(s => ({
     ...s,
     messages: safeJsonParse(s.messages, []),
-    metadata: safeJsonParse(s.metadata, {})
+    metadata: safeJsonParse(s.metadata, {}),
   })));
 });
 
@@ -1345,7 +1272,7 @@ app.post('/api/sessions', auth, requireSubscription(), (req, res) => {
   if (!existing && req.userId) {
     const sub = req.subscription || {};
     const sessionLimit = (sub.limits && sub.limits.sessions) || 50;
-    const sessionCount = (db.prepare('SELECT COUNT(*) FROM sessions WHERE user_id = ?').get(req.userId) || {}).count || 0;
+    const sessionCount = (db.prepare('SELECT COUNT(*) as count FROM sessions WHERE user_id = ?').get(req.userId) || {}).count || 0;
     if (sessionCount >= sessionLimit) {
       return res.status(429).json({ error: 'session_limit_exceeded', limit: sessionLimit, current: sessionCount, message: '会话数量已达上限(' + sessionLimit + '个)，请删除旧会话或升级套餐' });
     }
@@ -1370,39 +1297,6 @@ app.get('/api/sessions/:id', auth, (req, res) => {
 app.delete('/api/sessions/:id', auth, (req, res) => {
   db.prepare('DELETE FROM sessions WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
-});
-
-// Send message to a session (mobile app endpoint)
-// Appends the user message to the session's messages array and broadcasts
-// to connected WebSocket clients for real-time sync
-app.post('/api/sessions/:id/send', auth, (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: 'message_is_required' });
-
-  try {
-    const s = db.prepare('SELECT * FROM sessions WHERE id = ?').get(req.params.id);
-    if (!s) return res.status(404).json({ error: 'session_not_found' });
-
-    const messages = safeJsonParse(s.messages, []);
-    const userMsg = { role: 'user', content: message, created_at: new Date().toISOString() };
-    messages.push(userMsg);
-
-    const now = new Date().toISOString();
-    db.prepare('UPDATE sessions SET messages = ?, updated_at = ? WHERE id = ?')
-      .run(JSON.stringify(messages), now, req.params.id);
-
-    // Broadcast to WebSocket clients
-    broadcast({
-      type: 'push',
-      channel: 'chat',
-      data: { conversationId: req.params.id, message: userMsg }
-    });
-
-    res.json({ ok: true, status: 'sent', conversationId: req.params.id, message: userMsg });
-  } catch (err) {
-    console.error('[Sessions] Send error:', err);
-    res.status(500).json({ error: 'failed_to_send_message' });
-  }
 });
 
 // ── Memories ──
@@ -1468,7 +1362,7 @@ app.post('/api/webhook/:channel', async (req, res) => {
   res.json({
     ok: true,
     channel,
-    forwarded: forwardResults.length > 0 ? forwardResults : undefined
+    forwarded: forwardResults.length > 0 ? forwardResults : undefined,
   });
 });
 
@@ -1493,7 +1387,7 @@ app.post('/api/webhook-config', auth, (req, res) => {
     github: req.body.github || webhookConfig[channel]?.github,
     url: req.body.url || webhookConfig[channel]?.url,
     headers: req.body.headers || webhookConfig[channel]?.headers,
-    slackText: req.body.slackText || webhookConfig[channel]?.slackText
+    slackText: req.body.slackText || webhookConfig[channel]?.slackText,
   };
 
   // Clean up null/undefined
@@ -1518,41 +1412,9 @@ app.post('/api/webhook-config', auth, (req, res) => {
 const tenantManager = new TenantManager(db);
 
 // Serve SaaS Web Dashboard
-// NOTE: Static assets middleware MUST be mounted BEFORE the wildcard route,
-// otherwise /admin/* catches all asset requests and returns index.html
-// (text/html MIME type), causing MIME type mismatch errors.
-app.use('/admin/assets', express.static(resolve(__dirname, 'web-platform', 'public', 'assets'), {
-  maxAge: '7d',
-  immutable: true,
-  setHeaders: (res) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-  },
-}));
 app.get('/admin', (req, res) => {
   res.sendFile(resolve(__dirname, 'web-platform', 'public', 'index.html'));
 });
-app.get('/admin/versions-v2.html', (req, res) => {
-  res.sendFile(resolve(__dirname, 'web-platform', 'public', 'versions-v2.html'));
-});
-
-app.get('/admin/versions-v2.js', (req, res) => {
-  const filePath = resolve(__dirname, 'web-platform', 'public', 'versions-v2.js');
-  try {
-    const content = readFileSync(filePath, 'utf8');
-    res.type('js').send(content);
-  } catch {
-    res.status(404).json({ error: 'versions-v2.js not found' });
-  }
-});
-
-app.get('/admin/versions-redirect.js', (req, res) => {
-  res.type('js').sendFile(resolve(__dirname, 'web-platform', 'public', 'versions-redirect.js'));
-});
-
-app.get('/admin/versions', (req, res) => {
-  res.sendFile(resolve(__dirname, 'web-platform', 'public', 'versions-v2.html'));
-});
-
 app.get('/admin/*', (req, res) => {
   res.sendFile(resolve(__dirname, 'web-platform', 'public', 'index.html'));
 });
@@ -1590,7 +1452,7 @@ app.get('/api/tenants/:id/quota', auth, (req, res) => {
   res.json({
     api_call: tenantManager.checkQuota(req.params.id, 'api_call'),
     storage: tenantManager.checkQuota(req.params.id, 'storage'),
-    session: tenantManager.checkQuota(req.params.id, 'session')
+    session: tenantManager.checkQuota(req.params.id, 'session'),
   });
 });
 
@@ -1617,7 +1479,7 @@ app.get('/api/billing', auth, (req, res) => {
   const planPricing = {
     free:      { base: 0,   apiCall: 0,      storage: 0,    label: '免费计划', sessions: 50,   apiQuota: 1000,    storageQuota: 100 },
     pro:       { base: 29,  apiCall: 0.001,  storage: 0.05, label: '专业版',   sessions: 200,  apiQuota: 10000,   storageQuota: 1024 },
-    enterprise:{ base: 99,  apiCall: 0.0005, storage: 0.02, label: '企业版',   sessions: 99999, apiQuota: 999999,  storageQuota: 10240 }
+    enterprise:{ base: 99,  apiCall: 0.0005, storage: 0.02, label: '企业版',   sessions: 99999, apiQuota: 999999,  storageQuota: 10240 },
   };
 
   const overview = { totalTenants: 0, free: 0, pro: 0, enterprise: 0, totalApiCalls: 0, totalStorageMb: 0, estimatedMRR: 0 };
@@ -1627,7 +1489,7 @@ app.get('/api/billing', auth, (req, res) => {
     const quota = {
       api_call: tenantManager.checkQuota(t.id, 'api_call'),
       storage:  tenantManager.checkQuota(t.id, 'storage'),
-      session:  tenantManager.checkQuota(t.id, 'session')
+      session:  tenantManager.checkQuota(t.id, 'session'),
     };
 
     overview.totalTenants++;
@@ -1644,7 +1506,7 @@ app.get('/api/billing', auth, (req, res) => {
       storageQuotaMb: t.quota_storage_mb || 0,
       sessionsUsed: t.sessions_used || 0, sessionsQuota: t.quota_sessions || 0,
       usage, quota, bill,
-      created_at: t.created_at, updated_at: t.updated_at
+      created_at: t.created_at, updated_at: t.updated_at,
     };
   });
 
@@ -1665,7 +1527,7 @@ app.put('/api/tenants/:id/settings', auth, (req, res) => {
 // ====== Slack Bot ======
 const slackBot = createSlackBot({
   token: process.env.SLACK_BOT_TOKEN || '',
-  signingSecret: process.env.SLACK_SIGNING_SECRET || ''
+  signingSecret: process.env.SLACK_SIGNING_SECRET || '',
 });
 
 // ====== CI Integration ======
@@ -1673,7 +1535,7 @@ const ci = createCiIntegration({
   githubToken: process.env.GITHUB_TOKEN || '',
   jenkinsUrl: process.env.JENKINS_URL || '',
   jenkinsUser: process.env.JENKINS_USER || '',
-  jenkinsToken: process.env.JENKINS_TOKEN || ''
+  jenkinsToken: process.env.JENKINS_TOKEN || '',
 });
 
 // ── Slack Webhook Receiver ──
@@ -1698,7 +1560,7 @@ app.post('/api/slack/events', async (req, res) => {
 // ── Slack Interactive (button clicks, modals) ──
 app.post('/api/slack/interactive', async (req, res) => {
   try {
-    // Slack sends interactive payloads-encoded "payload" param
+    // Slack sends interactive payloads as form-encoded "payload" param
     const payload = req.body.payload ? safeJsonParse(req.body.payload, req.body) : req.body;
     const result = await slackBot._handleInteractive(
       payload.actions?.[0] || {},
@@ -1764,7 +1626,7 @@ app.get('/api/ci/github/runs', auth, async (req, res) => {
       workflowId: workflow_id,
       branch,
       status,
-      perPage: parseInt(per_page) || 10
+      perPage: parseInt(per_page) || 10,
     });
     res.json(runs);
   } catch (err) {
@@ -1873,14 +1735,14 @@ async function deepseekChat(messages) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + DEEPSEEK_API_KEY
+      'Authorization': 'Bearer ' + DEEPSEEK_API_KEY,
     },
     body: JSON.stringify({
       model: 'deepseek-chat',
       messages,
       max_tokens: 2048,
-      temperature: 0.3
-    })
+      temperature: 0.3,
+    }),
   });
   if (!res.ok) {
     const err = await res.text();
@@ -1980,7 +1842,7 @@ app.post('/api/notifications/register', auth, (req, res) => {
       deviceName: deviceName || 'Unknown',
       registeredAt: new Date().toISOString(),
       lastSeen: new Date().toISOString(),
-      userId: req.user?.id || 'unknown'
+      userId: req.user?.id || 'unknown',
     };
   } else {
     tokens.push({
@@ -1989,7 +1851,7 @@ app.post('/api/notifications/register', auth, (req, res) => {
       deviceName: deviceName || 'Unknown',
       registeredAt: new Date().toISOString(),
       lastSeen: new Date().toISOString(),
-      userId: req.user?.id || 'unknown'
+      userId: req.user?.id || 'unknown',
     });
   }
   savePushTokens(tokens);
@@ -2017,7 +1879,7 @@ app.post('/api/notifications/send', auth, async (req, res) => {
     title,
     body,
     data: data || {},
-    priority: 'high'
+    priority: 'high',
   }));
 
   try {
@@ -2026,9 +1888,9 @@ app.post('/api/notifications/send', auth, async (req, res) => {
       headers: {
         'Accept': 'application/json',
         'Accept-encoding': 'gzip, deflate',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(messages)
+      body: JSON.stringify(messages),
     });
 
     const result = await resp.json();
@@ -2056,7 +1918,7 @@ app.get('/api/notifications/tokens', auth, (req, res) => {
   // Mask tokens for security
   const masked = tokens.map(t => ({
     ...t,
-    pushToken: t.pushToken.substring(0, 8) + '...' + t.pushToken.slice(-4)
+    pushToken: t.pushToken.substring(0, 8) + '...' + t.pushToken.slice(-4),
   }));
   res.json({ count: tokens.length, devices: masked });
 });
@@ -2066,7 +1928,7 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
   const { version, size, releaseNotes } = req.body;
   if (!version) return res.status(400).json({ error: 'version required' });
 
-  // Search for existing versions.json using same paths()
+  // Search for existing versions.json using same paths as readVersionInfo()
   const searchPaths = [
     '/root/lingjing-update/data/versions.json',
     '/var/www/update-server/data/versions.json',
@@ -2098,9 +1960,9 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
     releaseNotes: releaseNotes || `Auto-deployed ${version}`,
     files: {
       apk: `https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-${version.replace('v', '').replace('-mobile', '')}.apk`,
-      platform: 'android'
+      platform: 'android',
     },
-    size: size || 0
+    size: size || 0,
   };
 
   if (idx >= 0) {
@@ -2118,7 +1980,7 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
 const scheduler = new CloudScheduler(db, {
   tickInterval: 10000,   // check every 10 seconds
   maxRetries: 3,
-  retryBaseMs: 1000
+  retryBaseMs: 1000,
 });
 
 // Forward scheduler webhooks to real services
@@ -2135,10 +1997,10 @@ const wss = new WebSocketServer({ server });
 
 const clients = new Set();
 
-function broadcast(data, excludeWs) {
+function broadcast(data) {
   const msg = JSON.stringify(data);
   for (const ws of clients) {
-    if (ws.readyState === 1 && ws !== excludeWs) ws.send(msg);
+    if (ws.readyState === 1) ws.send(msg);
   }
 }
 
@@ -2197,8 +2059,7 @@ wss.on('connection', (ws, req) => {
         }
         return;
       }
-
-            
+      
       // Desktop heartbeat
       if (data.type === 'desktop:heartbeat' && wsUserId && wsDeviceId) {
         try {
@@ -2209,40 +2070,7 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ type: 'desktop:heartbeat:ack' }));
         return;
       }
-
-
-      // Chat: handle mobile app chat messages via WebSocket
-      // Mobile sends: { type: "cmd", channel: "chat", action: "send", payload: { conversationId, message } }
-      if (data.type === "cmd" && data.channel === "chat" && data.action === "send") {
-        const { conversationId, message } = data.payload || {};
-        if (!conversationId || !message) {
-          ws.send(JSON.stringify({ type: "error", id: data.id, error: "conversationId_and_message_required" }));
-          return;
-        }
-        try {
-          const s = db.prepare("SELECT * FROM sessions WHERE id = ?").get(conversationId);
-          if (!s) {
-            ws.send(JSON.stringify({ type: "error", id: data.id, error: "session_not_found" }));
-            return;
-          }
-          const messages = safeJsonParse(s.messages, []);
-          const userMsg = { role: "user", content: message, created_at: new Date().toISOString() };
-          messages.push(userMsg);
-          const now = new Date().toISOString();
-          db.prepare("UPDATE sessions SET messages = ?, updated_at = ? WHERE id = ?")
-            .run(JSON.stringify(messages), now, conversationId);
-          broadcast({
-            type: "push",
-            channel: "chat",
-            data: { conversationId, message: userMsg }
-          }, ws);
-          ws.send(JSON.stringify({ type: "ack", id: data.id, success: true, data: { status: "sent", conversationId, message: userMsg } }));
-        } catch (err) {
-          console.error("[WS] Chat send error:", err.message);
-          ws.send(JSON.stringify({ type: "error", id: data.id, error: err.message }));
-        }
-        return;
-      }
+      
       // Relay: send message to a desktop device
       if (data.type === 'relay:to-desktop') {
         const { targetDeviceId, payload, correlationId } = data;
@@ -2257,7 +2085,7 @@ wss.on('connection', (ws, req) => {
             fromUserId: wsUserId,
             payload,
             correlationId,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
           }));
           ws.send(JSON.stringify({ type: 'relay:ack', ok: true, correlationId }));
         } else {
@@ -2265,8 +2093,7 @@ wss.on('connection', (ws, req) => {
         }
         return;
       }
-
-            
+      
       // Relay: desktop replies to mobile
       if (data.type === 'relay:to-mobile') {
         const { correlationId, payload } = data;
@@ -2278,7 +2105,7 @@ wss.on('connection', (ws, req) => {
                 deviceId: wsDeviceId,
                 payload,
                 correlationId,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
               }));
             } catch (e) { /* ignore */ }
           }
@@ -2308,8 +2135,8 @@ wss.on('connection', (ws, req) => {
               name: d.name,
               os: d.os,
               lastSeen: d.last_sync_at,
-              isOnline: !!d.is_online
-            }))
+              isOnline: !!d.is_online,
+            })),
           }));
         } catch (e) {
           ws.send(JSON.stringify({ type: 'desktop:list', ok: false, error: e.message }));
@@ -2505,7 +2332,7 @@ app.get('/api/subscription', auth, requireSubscription(), (req, res) => {
       autoRenew: sub.status === 'active' && sub.planId !== 'free',
       features: sub.features,
       limits: sub.limits,
-      usage: sub.usage || { apiCalls: getDailyApiCalls(req.userId), storageFiles: 0, apiKeys: 0 }
+      usage: sub.usage || { apiCalls: getDailyApiCalls(req.userId), storageFiles: 0, apiKeys: 0 },
     });
   } catch (err) {
     console.error('[Subscription] /api/subscription error:', err.message);
@@ -2522,7 +2349,7 @@ app.get('/api/subscription/plans', auth, (req, res) => {
       billingCycle: p.billing_cycle,
       recommended: !!p.recommended,
       features: JSON.parse(p.features || '[]'),
-      limits: JSON.parse(p.limits || '{}')
+      limits: JSON.parse(p.limits || '{}'),
     }));
     res.json(plans);
   } catch (err) {
@@ -2537,8 +2364,8 @@ app.get('/api/sync/status', auth, (req, res) => {
       ? db.prepare('SELECT timestamp, status FROM sync_records WHERE user_id = ? ORDER BY timestamp DESC LIMIT 1').get(userId)
       : db.prepare('SELECT timestamp, status FROM sync_records ORDER BY timestamp DESC LIMIT 1').get();
     const totalRecords = userId
-      ? db.prepare('SELECT COUNT(*) FROM sync_records WHERE user_id = ?').get(userId)
-      : db.prepare('SELECT COUNT(*) FROM sync_records').get();
+      ? db.prepare('SELECT COUNT(*) as count FROM sync_records WHERE user_id = ?').get(userId)
+      : db.prepare('SELECT COUNT(*) as count FROM sync_records').get();
     const wsClients = clients.size;
     res.json({
       enabled: true,
@@ -2546,7 +2373,7 @@ app.get('/api/sync/status', auth, (req, res) => {
       status: lastRecord?.status || 'idle',
       progress: null,
       totalRecords: totalRecords?.count || 0,
-      connectedClients: wsClients
+      connectedClients: wsClients,
     });
   } catch (err) {
     console.error('[Sync] status error:', err.message);
@@ -2596,7 +2423,7 @@ app.get('/api/sync/history', auth, (req, res) => {
       status: r.status,
       size: r.size,
       deviceId: r.device_id,
-      timestamp: r.timestamp
+      timestamp: r.timestamp,
     })));
   } catch (err) {
     console.error('[Sync] history error:', err.message);
@@ -2607,7 +2434,7 @@ app.get('/api/storage/stats', auth, requireSubscription(), (req, res) => {
   try {
     const sub = req.subscription || {};
     const storageLimit = (sub.limits && sub.limits.storage) || 100;
-    const files = db.prepare('SELECT COUNT(*), COALESCE(SUM(size), 0) FROM storage_files').get() || { count: 0, total: 0 };
+    const files = db.prepare('SELECT COUNT(*) as count, COALESCE(SUM(size), 0) as total FROM storage_files').get() || { count: 0, total: 0 };
     const usedMb = Math.round(files.total / (1024 * 1024) * 100) / 100;
     res.json({ total: storageLimit, used: usedMb, available: Math.max(0, storageLimit - usedMb), files: files.count, breakdown: { files: usedMb, other: 0 } });
   } catch (err) {
@@ -2631,7 +2458,7 @@ app.post('/api/api-keys', auth, requireSubscription(), (req, res) => {
     if (!name) return res.status(400).json({ error: 'name_required' });
     const sub = req.subscription || {};
     const keyLimit = (sub.limits && sub.limits.apiKeys) || 5;
-    const existingCount = (db.prepare('SELECT COUNT(*) FROM api_keys WHERE user_id = ? AND status = ?').get(req.userId || '', 'active') || {}).count || 0;
+    const existingCount = (db.prepare('SELECT COUNT(*) as count FROM api_keys WHERE user_id = ? AND status = ?').get(req.userId || '', 'active') || {}).count || 0;
     if (existingCount >= keyLimit) {
       return res.status(429).json({ error: 'api_key_limit_exceeded', limit: keyLimit, message: 'API密钥数量已达上限(' + keyLimit + '个)' });
     }
@@ -2657,7 +2484,7 @@ app.delete('/api/api-keys/:keyId', auth, (req, res) => {
 });
 app.get('/api/api-keys/stats', auth, requireSubscription(), (req, res) => {
   try {
-    const stats = db.prepare('SELECT COUNT(*), SUM(CASE WHEN status = ? THEN 1 ELSE 0 END), COALESCE(SUM(call_count), 0), COALESCE(SUM(error_count), 0) FROM api_keys WHERE user_id = ?').get('active', req.userId || '');
+    const stats = db.prepare('SELECT COUNT(*) as total, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as active, COALESCE(SUM(call_count), 0) as totalCalls, COALESCE(SUM(error_count), 0) as totalErrors FROM api_keys WHERE user_id = ?').get('active', req.userId || '');
     res.json({ totalKeys: stats.total || 0, activeKeys: stats.active || 0, totalCalls: stats.totalCalls || 0, totalErrors: stats.totalErrors || 0, avgCallsPerDay: 0 });
   } catch (err) {
     console.error('[API Keys] stats error:', err.message);
@@ -2669,7 +2496,7 @@ console.log('[Cloud Management] API routes initialized');
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`灵境 Cloud Server v3 running on http://0.0.0.0:${PORT}`);
-  console.log(`API Key: ${API_KEY.slice(0, 8)}...`);
+  console.log(`API Key: ${API_KEY}`);
   console.log(`JWT Secret: ${JWT_SECRET.slice(0, 8)}...`);
   console.log(`Webhook forwarding: ${Object.keys(webhookConfig).length} channels configured`);
   console.log(`Scheduler: running (active schedules: ${scheduler.listSchedules('active').length})`);

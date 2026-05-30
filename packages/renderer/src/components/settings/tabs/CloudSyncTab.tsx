@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 /* Types */
-interface CloudStatus { connected: boolean; healthy: boolean; url?: string; error?: string }
+interface CloudStatus { connected: boolean; healthy: boolean; url?: string }
 interface CloudSession { id: string; title?: string; created_at?: string; messages?: any[] }
 interface CloudMemory { id: string; title: string; content: string; category: string; scope: string }
 interface SyncLog { time: string; action: string; status: 'ok' | 'fail'; detail?: string }
@@ -12,15 +12,10 @@ const CLOUD_TOKEN_KEY = 'cloudAccountToken';
 const CLOUD_USER_KEY = 'cloudAccountUser';
 const CLOUD_DEVICE_ID_KEY = 'cloudAccountDeviceId';
 
-/** Check if the app is running in Web mode (no Electron IPC) */
-function isWebMode(): boolean {
-  return !window.electronAPI?.cloud?.connect;
-}
-
 export function CloudSyncTab() {
   const [status, setStatus] = useState<CloudStatus>({ connected: false, healthy: false });
   const [url, setUrl] = useState(() => localStorage.getItem('cloudSyncUrl') || 'https://ide.zhejiangjinmo.com');
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('cloudSyncApiKey') || 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('cloudSyncApiKey') || '5379dcbe873b356430d84f3fc4b58974aa6f7e001cc8d047');
   const [sessions, setSessions] = useState<CloudSession[]>([]);
   const [memories, setMemories] = useState<CloudMemory[]>([]);
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([]);
@@ -28,6 +23,7 @@ export function CloudSyncTab() {
   const [pulling, setPulling] = useState<string | null>(null);
   const [pushedSessionId, setPushedSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState('Manual Push Session');
+  const [connected, setConnected] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [syncStats, setSyncStats] = useState({ pushed: 0, pulled: 0 });
 
@@ -47,8 +43,6 @@ export function CloudSyncTab() {
 
   // Heartbeat reference
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // WebSocket reference for Web mode direct connection
-  const wsRef = useRef<WebSocket | null>(null);
 
   // Persist config changes to localStorage
   useEffect(() => {
@@ -62,117 +56,19 @@ export function CloudSyncTab() {
     setSyncLogs(prev => [{ time: new Date().toLocaleTimeString(), action, status, detail }, ...prev].slice(0, 50));
   };
 
-  /**
-   * Connect directly using native browser APIs (no Electron IPC).
-   * Falls back to this when window.electronAPI.cloud.connect is unavailable (Web mode).
-   */
-  const connectDirect = useCallback(async (serverUrl: string, key: string): Promise<CloudStatus> => {
-    try {
-      // 1. Register device via HTTP API to get JWT
-      const baseUrl = serverUrl.replace(/\/+$/, '');
-      const deviceId = 'web-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
-      const deviceName = 'LingJing Web (' + navigator.platform + ')';
-
-      const regRes = await fetch(baseUrl + '/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          deviceId,
-          deviceName,
-          deviceInfo: { type: 'web', os: navigator.platform, version: 'web' },
-          apiKey: key,
-        }),
-      });
-      if (!regRes.ok) {
-        const errData = await regRes.json().catch(() => ({}));
-        throw new Error(errData.error || '注册失败 (HTTP ' + regRes.status + ')');
-      }
-      const regData = await regRes.json();
-
-      // 2. Build WebSocket URL with JWT token
-      const wsUrl = baseUrl.replace(/^http/, 'ws') + '/ws?token=' + encodeURIComponent(regData.token || key);
-      const ws = new WebSocket(wsUrl);
-
-      // 3. Wait for WebSocket open with timeout
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('WebSocket 连接超时 (15s)')), 15000);
-        ws.onopen = () => { clearTimeout(timeout); resolve(); };
-        ws.onerror = () => { clearTimeout(timeout); reject(new Error('WebSocket 连接失败')); };
-      });
-
-      // 4. Store WebSocket ref and set up event handlers
-      if (wsRef.current) { try { wsRef.current.close(); } catch {} }
-      wsRef.current = ws;
-
-      ws.onclose = () => {
-        console.log('[CloudSync-Direct] WebSocket closed');
-        setStatus(prev => ({ ...prev, connected: false }));
-        if ((ws as any).__pingInterval) {
-          clearInterval((ws as any).__pingInterval);
-          (ws as any).__pingInterval = null;
-        }
-        wsRef.current = null;
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'pong') return;
-          if (data.type === 'connected') {
-            addLog('ws-event', 'ok', 'WebSocket 已连接');
-          } else if (data.type === 'sync') {
-            addLog('sync-event', 'ok', JSON.stringify(data).slice(0, 100));
-          } else if (data.type === 'webhook') {
-            addLog('webhook-event', 'ok', JSON.stringify(data).slice(0, 100));
-          }
-        } catch { /* ignore parse errors */ }
-      };
-
-      // 5. Start ping interval to keep connection alive
-      const pingInterval = setInterval(() => {
-        try { ws.send(JSON.stringify({ type: 'ping' })); } catch {}
-      }, 30000);
-
-      // Store cleanup on ws ref
-      (ws as any).__pingInterval = pingInterval;
-
-      addLog('connect-direct', 'ok', 'Web 模式直连成功');
-      return { connected: true, healthy: true, url: serverUrl + ' (Web直连)' };
-    } catch (err: any) {
-      console.warn('[CloudSync-Direct] Connection failed:', err.message);
-      // Cleanup
-      if (wsRef.current) {
-        clearInterval((wsRef.current as any).__pingInterval);
-        try { wsRef.current.close(); } catch {}
-        wsRef.current = null;
-      }
-      return { connected: false, healthy: false, url: undefined };
-    }
-  }, [addLog]);
-
   // Connect / disconnect
   const handleConnect = async () => {
     setLoading(true);
     try {
-      let result: CloudStatus;
-      if (isWebMode()) {
-        // Web mode: connect directly via native WebSocket + fetch
-        console.log('[CloudSync] Web mode detected, using direct connection');
-        result = await connectDirect(url, apiKey);
-      } else {
-        // Electron mode: use IPC
-        result = await window.electronAPI.cloud.connect({ url, apiKey });
-      }
-
+      const result = await window.electronAPI.cloud.connect({ url, apiKey });
       setStatus(result);
-      // Save config on successful connection
+      setConnected(result.connected);
+      // Save config on successful connection (renderer localStorage + main process file)
       if (result.connected) {
         localStorage.setItem('cloudSyncUrl', url);
         localStorage.setItem('cloudSyncApiKey', apiKey);
-        if (!isWebMode()) {
-          // Save via IPC so main process auto-connect can read it
-          window.electronAPI.cloud.saveConfig({ url, apiKey }).catch(() => {});
-        }
+        // Also save via IPC so main process auto-connect can read it
+        window.electronAPI.cloud.saveConfig({ url, apiKey }).catch(() => {});
         loadCloudData();
       }
       addLog('connect', result.connected ? 'ok' : 'fail', result.healthy ? 'healthy' : result.error || 'unreachable');
@@ -190,18 +86,9 @@ export function CloudSyncTab() {
       clearInterval(autoSyncRef.current);
       autoSyncRef.current = null;
     }
-    if (isWebMode()) {
-      // Web mode: close WebSocket directly
-      if (wsRef.current) {
-        clearInterval((wsRef.current as any).__pingInterval);
-        try { wsRef.current.close(); } catch {}
-        wsRef.current = null;
-      }
-    } else {
-      // Electron mode: use IPC
-      try { await window.electronAPI.cloud.disconnect(); } catch {}
-    }
+    await window.electronAPI.cloud.disconnect();
     setStatus({ connected: false, healthy: false });
+    setConnected(false);
     setSessions([]);
     setMemories([]);
     addLog('disconnect', 'ok');
@@ -210,155 +97,61 @@ export function CloudSyncTab() {
   // Auto-connect on mount if saved config exists
   const autoConnectRef = useRef(false);
   const autoSyncRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  /** Cloud server API call via Electron IPC proxy (bypasses CORS restrictions). Includes 15s timeout and friendly error messages. */
-  const cloudApi = async (endpoint: string, method: string = 'POST', body?: unknown, token?: string) => {
-    // Web mode: use direct fetch
-    if (isWebMode()) {
-      return cloudApiDirect(endpoint, method, body, token);
-    }
-    // Electron mode: try IPC first
-    try {
-      const result = await window.electronAPI!.cloud.api({
-        endpoint,
-        method,
-        body,
-        token: token || cloudToken || undefined,
-      });
-      return result;
-    } catch (err: any) {
-      // If the IPC handler is not registered (e.g. running an older build), fall back to direct fetch
-      if (err.message?.includes('No handler registered') || err.message?.includes('cloud:proxy-api')) {
-        console.warn('[CloudSync] cloud:proxy-api handler not found, falling back to direct fetch');
-        return cloudApiDirect(endpoint, method, body, token);
-      }
-      throw err;
-    }
-  };
-
-  /** Direct HTTP API call (for Web mode or IPC fallback) */
-  const cloudApiDirect = async (endpoint: string, method: string = 'POST', body?: unknown, token?: string) => {
-    try {
-      const baseUrl = 'https://ide.zhejiangjinmo.com';
-      const url = `${baseUrl}/api${endpoint}`;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token || cloudToken) headers['Authorization'] = `Bearer ${token || cloudToken}`;
-      const res = await fetch(url, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${res.status}`);
-      }
-      return await res.json();
-    } catch (fallbackErr: any) {
-      if (fallbackErr.message?.includes('CORS') || fallbackErr.message?.includes('Failed to fetch')) {
-        throw new Error('云服务器连接失败 - 请检查网络或CORS配置');
-      }
-      throw fallbackErr;
-    }
-  };
-
+  
   // Auto-sync function: bidirectional sync (push + pull) for sessions and memories
   const triggerAutoSync = useCallback(async () => {
     try {
       console.log('[CloudSync] Auto-sync triggered - bidirectional mode');
       let pushed = 0;
       let pulled = 0;
-      const token = cloudToken || undefined;
 
-      if (isWebMode()) {
-        // Web mode: use direct API calls
-        // TODO: PUSH currently fetches from cloud then POSTs back to cloud (no-op). Should push local data instead.
-        // 1. PUSH: Push local sessions to cloud
-        try {
-          const localSessions = await cloudApi('/sessions', 'GET', undefined, token);
-          if (Array.isArray(localSessions) && localSessions.length > 0) {
-            for (const session of localSessions.slice(0, 10)) {
-              try {
-                await cloudApi('/sessions', 'POST', session, token);
-                pushed++;
-              } catch (e) { /* ignore per-item errors */ }
-            }
+      // 1. PUSH: Push local sessions to cloud
+      try {
+        const localSessions = await window.electronAPI.cloud.sessions.list();
+        if (localSessions && localSessions.length > 0) {
+          for (const session of localSessions.slice(0, 10)) {
+            try {
+              await window.electronAPI.cloud.sessions.upsert(session);
+              pushed++;
+            } catch (e) { /* ignore per-item errors */ }
           }
-        } catch (e) { /* ignore */ }
+        }
+      } catch (e) { /* ignore */ }
 
-        // 2. PUSH: Push local memories to cloud
-        try {
-          const localMemories = await cloudApi('/memories', 'GET', undefined, token);
-          if (Array.isArray(localMemories) && localMemories.length > 0) {
-            for (const memory of localMemories.slice(0, 10)) {
-              try {
-                await cloudApi('/memories', 'POST', memory, token);
-                pushed++;
-              } catch (e) { /* ignore */ }
-            }
+      // 2. PUSH: Push local memories to cloud
+      try {
+        const localMemories = await window.electronAPI.cloud.memories.list();
+        if (localMemories && localMemories.length > 0) {
+          for (const memory of localMemories.slice(0, 10)) {
+            try {
+              await window.electronAPI.cloud.memories.upsert(memory);
+              pushed++;
+            } catch (e) { /* ignore per-item errors */ }
           }
-        } catch (e) { /* ignore */ }
+        }
+      } catch (e) { /* ignore */ }
 
-        // 3. PULL: Pull cloud sessions to local
-        try {
-          const cloudSessions = await cloudApi('/sessions', 'GET', undefined, token);
-          if (Array.isArray(cloudSessions)) pulled += cloudSessions.length;
-        } catch (e) { /* ignore */ }
-
-        // 4. PULL: Pull cloud memories to local
-        try {
-          const cloudMemories = await cloudApi('/memories', 'GET', undefined, token);
-          if (Array.isArray(cloudMemories)) pulled += cloudMemories.length;
-        } catch (e) { /* ignore */ }
-      } else {
-        // Electron mode: use IPC
-        // 1. PUSH: Push local sessions to cloud
-        try {
-          const localSessions = await window.electronAPI!.cloud.sessions.list();
-          if (localSessions && localSessions.length > 0) {
-            for (const session of localSessions.slice(0, 10)) {
-              try {
-                await window.electronAPI!.cloud.sessions.upsert(session);
-                pushed++;
-              } catch (e) { /* ignore per-item errors */ }
-            }
+      // 3. PULL: Pull cloud sessions to local
+      try {
+        const cloudSessions = await window.electronAPI.cloud.sessions.list();
+        if (cloudSessions && cloudSessions.length > 0) {
+          // Fetch full content for each session
+          for (const session of cloudSessions.slice(0, 10)) {
+            try {
+              await window.electronAPI.cloud.sessions.get(session.id);
+              pulled++;
+            } catch (e) { /* ignore */ }
           }
-        } catch (e) { /* ignore */ }
+        }
+      } catch (e) { /* ignore */ }
 
-        // 2. PUSH: Push local memories to cloud
-        try {
-          const localMemories = await window.electronAPI!.cloud.memories.list();
-          if (localMemories && localMemories.length > 0) {
-            for (const memory of localMemories.slice(0, 10)) {
-              try {
-                await window.electronAPI!.cloud.memories.upsert(memory);
-                pushed++;
-              } catch (e) { /* ignore per-item errors */ }
-            }
-          }
-        } catch (e) { /* ignore */ }
-
-        // 3. PULL: Pull cloud sessions to local
-        try {
-          const cloudSessions = await window.electronAPI!.cloud.sessions.list();
-          if (cloudSessions && cloudSessions.length > 0) {
-            // Fetch full content for each session
-            for (const session of cloudSessions.slice(0, 10)) {
-              try {
-                await window.electronAPI!.cloud.sessions.get(session.id);
-                pulled++;
-              } catch (e) { /* ignore */ }
-            }
-          }
-        } catch (e) { /* ignore */ }
-
-        // 4. PULL: Pull cloud memories to local
-        try {
-          const cloudMemories = await window.electronAPI!.cloud.memories.list();
-          if (cloudMemories && cloudMemories.length > 0) {
-            pulled += cloudMemories.length;
-          }
-        } catch (e) { /* ignore */ }
-      }
+      // 4. PULL: Pull cloud memories to local
+      try {
+        const cloudMemories = await window.electronAPI.cloud.memories.list();
+        if (cloudMemories && cloudMemories.length > 0) {
+          pulled += cloudMemories.length;
+        }
+      } catch (e) { /* ignore */ }
 
       setSyncStats(prev => ({ pushed: prev.pushed + pushed, pulled: prev.pulled + pulled }));
       setLastSyncTime(new Date().toLocaleTimeString());
@@ -366,7 +159,7 @@ export function CloudSyncTab() {
     } catch (err: any) {
       addLog('auto-sync', 'fail', err.message || 'sync error');
     }
-  }, [cloudToken, addLog]);
+  }, []);
   
   useEffect(() => {
     if (autoConnectRef.current) return;
@@ -381,13 +174,9 @@ export function CloudSyncTab() {
       setTimeout(async () => {
         setLoading(true);
         try {
-          let result: CloudStatus;
-          if (isWebMode()) {
-            result = await connectDirect(savedUrl, savedKey);
-          } else {
-            result = await window.electronAPI.cloud.connect({ url: savedUrl, apiKey: savedKey });
-          }
+          const result = await window.electronAPI.cloud.connect({ url: savedUrl, apiKey: savedKey });
           setStatus(result);
+          setConnected(result.connected);
           addLog('auto-connect', result.connected ? 'ok' : 'fail', result.healthy ? 'healthy' : result.error || 'unreachable');
           if (result.connected) {
             loadCloudData();
@@ -410,78 +199,47 @@ export function CloudSyncTab() {
         clearInterval(autoSyncRef.current);
         autoSyncRef.current = null;
       }
-      if (wsRef.current) {
-        clearInterval((wsRef.current as any).__pingInterval);
-        try { wsRef.current.close(); } catch {}
-        wsRef.current = null;
-      }
     };
-  }, [triggerAutoSync, connectDirect]);
+  }, [triggerAutoSync]);
 
-  // Auto-check status (polling for both Web and Electron mode)
+  // Auto-check status
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
-    if (status.connected) {
+    if (connected) {
       timer = setInterval(async () => {
         try {
-          if (isWebMode()) {
-            // Web mode: check health via direct fetch
-            const baseUrl = url.replace(/\/+$/, '');
-            const res = await fetch(baseUrl + '/api/health', { signal: AbortSignal.timeout(5000) });
-            if (res.ok) {
-              const data = await res.json();
-              setStatus(prev => ({ ...prev, healthy: data.status === 'ok' }));
-            } else {
-              setStatus(prev => ({ ...prev, healthy: false }));
-            }
-          } else {
-            const s = await window.electronAPI.cloud.status();
-            setStatus(s);
-          }
-        } catch {
-          if (!isWebMode()) setStatus(prev => ({ ...prev, healthy: false }));
-        }
+          const s = await window.electronAPI.cloud.status();
+          setStatus(s);
+        } catch {}
       }, 5000);
     }
     return () => { if (timer) clearInterval(timer); };
-  }, [status.connected, url]);
+  }, [connected]);
 
-  // Subscribe to cloud events (Electron mode only)
+  // Subscribe to cloud events
   useEffect(() => {
-    if (isWebMode()) return; // Web mode handles events via WebSocket onmessage in connectDirect
-
     const unsubs: Array<() => void> = [];
-    unsubs.push(window.electronAPI!.cloud.onStatus((data: CloudStatus) => {
+    unsubs.push(window.electronAPI.cloud.onStatus((data: CloudStatus) => {
       setStatus(data);
+      setConnected(data.connected);
     }));
-    unsubs.push(window.electronAPI!.cloud.onSyncEvent((data: any) => {
+    unsubs.push(window.electronAPI.cloud.onSyncEvent((data: any) => {
       addLog('sync-event', 'ok', JSON.stringify(data).slice(0, 100));
     }));
-    unsubs.push(window.electronAPI!.cloud.onWebhookEvent((data: any) => {
+    unsubs.push(window.electronAPI.cloud.onWebhookEvent((data: any) => {
       addLog('webhook-event', 'ok', JSON.stringify(data).slice(0, 100));
     }));
     return () => unsubs.forEach(fn => fn());
-  }, [addLog]);
+  }, []);
 
   const loadCloudData = async () => {
     try {
-      if (isWebMode()) {
-        // Web mode: use direct fetch (cloudApi has fallback to direct fetch)
-        const token = cloudToken || undefined;
-        const [sess, mem] = await Promise.all([
-          cloudApi('/sessions', 'GET', undefined, token).catch(() => []),
-          cloudApi('/memories', 'GET', undefined, token).catch(() => []),
-        ]);
-        setSessions(Array.isArray(sess) ? sess : []);
-        setMemories(Array.isArray(mem) ? mem : []);
-      } else {
-        const [sess, mem] = await Promise.all([
-          window.electronAPI.cloud.sessions.list().catch(() => []),
-          window.electronAPI.cloud.memories.list().catch(() => []),
-        ]);
-        setSessions(sess || []);
-        setMemories(mem || []);
-      }
+      const [sess, mem] = await Promise.all([
+        window.electronAPI.cloud.sessions.list().catch(() => []),
+        window.electronAPI.cloud.memories.list().catch(() => []),
+      ]);
+      setSessions(sess || []);
+      setMemories(mem || []);
     } catch {}
   };
 
@@ -497,13 +255,8 @@ export function CloudSyncTab() {
   const pullSession = async (id: string) => {
     setPulling(id);
     try {
-      if (isWebMode()) {
-        const session = await cloudApi('/sessions/' + encodeURIComponent(id), 'GET', undefined, cloudToken || undefined);
-        addLog('pull-session', 'ok', `${session.title} (${session.messages?.length || 0} msgs)`);
-      } else {
-        const session = await window.electronAPI!.cloud.sessions.get(id);
-        addLog('pull-session', 'ok', `${session.title} (${session.messages?.length || 0} msgs)`);
-      }
+      const session = await window.electronAPI.cloud.sessions.get(id);
+      addLog('pull-session', 'ok', `${session.title} (${session.messages?.length || 0} msgs)`);
     } catch (err: any) {
       addLog('pull-session', 'fail', err.message);
     } finally {
@@ -515,20 +268,14 @@ export function CloudSyncTab() {
   const pushSession = async () => {
     setLoading(true);
     try {
-      const payload = {
+      const result = await window.electronAPI.cloud.sessions.upsert({
         id: pushedSessionId || undefined,
         title: sessionTitle,
         messages: [{ role: 'user', content: 'Manual push from LingJing settings' }],
         metadata: { source: 'lingjing-ui', pushed_at: new Date().toISOString() },
-      };
-      if (isWebMode()) {
-        const result = await cloudApi('/sessions', 'POST', payload, cloudToken || undefined);
-        setPushedSessionId(result.id);
-      } else {
-        const result = await window.electronAPI!.cloud.sessions.upsert(payload);
-        setPushedSessionId(result.id);
-      }
-      addLog('push-session', 'ok', `ID: ${pushedSessionId}`);
+      });
+      setPushedSessionId(result.id);
+      addLog('push-session', 'ok', `ID: ${result.id}`);
       await loadCloudData();
     } catch (err: any) {
       addLog('push-session', 'fail', err.message);
@@ -540,11 +287,7 @@ export function CloudSyncTab() {
   // Delete session
   const deleteSession = async (id: string) => {
     try {
-      if (isWebMode()) {
-        await cloudApi('/sessions/' + encodeURIComponent(id), 'DELETE', undefined, cloudToken || undefined);
-      } else {
-        await window.electronAPI!.cloud.sessions.delete(id);
-      }
+      await window.electronAPI.cloud.sessions.delete(id);
       addLog('delete-session', 'ok', id);
       setSessions(prev => prev.filter(s => s.id !== id));
     } catch (err: any) {
@@ -556,19 +299,13 @@ export function CloudSyncTab() {
   const pushMemory = async () => {
     setLoading(true);
     try {
-      const payload = {
+      const result = await window.electronAPI.cloud.memories.upsert({
         title: 'Manual Memory from UI',
         content: 'Created via LingJing Cloud Settings at ' + new Date().toISOString(),
         category: 'test',
         scope: 'global',
-      };
-      if (isWebMode()) {
-        const result = await cloudApi('/memories', 'POST', payload, cloudToken || undefined);
-        addLog('push-memory', 'ok', `ID: ${result.id}`);
-      } else {
-        const result = await window.electronAPI!.cloud.memories.upsert(payload);
-        addLog('push-memory', 'ok', `ID: ${result.id}`);
-      }
+      });
+      addLog('push-memory', 'ok', `ID: ${result.id}`);
       await loadCloudData();
     } catch (err: any) {
       addLog('push-memory', 'fail', err.message);
@@ -580,11 +317,7 @@ export function CloudSyncTab() {
   // Delete memory
   const deleteMemory = async (id: string) => {
     try {
-      if (isWebMode()) {
-        await cloudApi('/memories/' + encodeURIComponent(id), 'DELETE', undefined, cloudToken || undefined);
-      } else {
-        await window.electronAPI!.cloud.memories.delete(id);
-      }
+      await window.electronAPI.cloud.memories.delete(id);
       addLog('delete-memory', 'ok', id);
       setMemories(prev => prev.filter(m => m.id !== id));
     } catch (err: any) {
@@ -594,6 +327,22 @@ export function CloudSyncTab() {
 
   // ── Cloud Account Login / Device Registration ──
 
+  /** Cloud server API call via Electron IPC proxy (bypasses CORS restrictions). Includes 15s timeout and friendly error messages. */
+  const cloudApi = async (endpoint: string, method: string = 'POST', body?: unknown, token?: string) => {
+    try {
+      const result = await window.electronAPI.cloud.api({
+        endpoint,
+        method,
+        body,
+        token: token || cloudToken || undefined,
+      });
+      return result;
+    } catch (err: any) {
+      // Error messages are already translated by the main process proxy
+      throw err;
+    }
+  };
+
   /** Login to cloud account */
   const handleCloudLogin = async () => {
     if (!loginEmail || !loginPassword) { setCloudError('请输入用户名和密码'); return; }
@@ -602,7 +351,7 @@ export function CloudSyncTab() {
     try {
       const data = await cloudApi('/auth/login', 'POST', {
         username: loginEmail,
-        password: loginPassword,
+        password: await sha256(loginPassword),
       });
       const user: CloudUser = data.user;
       localStorage.setItem(CLOUD_TOKEN_KEY, data.token);
@@ -613,32 +362,21 @@ export function CloudSyncTab() {
       addLog('cloud-login', 'ok', `${user.username} (${user.email})`);
       // Auto-register device after login
       await registerDevice(data.token);
-      if (isWebMode()) {
-        // Web mode: after login, connect directly via WebSocket
-        const wsResult = await connectDirect(url, apiKey);
-        if (wsResult.connected) {
-          setStatus(wsResult);
+      // Bind user JWT to sync client so sessions go under user account (not device)
+      try {
+        const bindResult = await window.electronAPI.cloud.setUserToken(data.token);
+        if (bindResult.connected) {
+          setConnected(true);
+          setStatus(bindResult);
           loadCloudData();
-          addLog('cloud-sync-connect', 'ok', '同步客户端已连接（Web 用户模式）');
+          addLog('cloud-sync-connect', 'ok', '同步客户端已连接（用户模式）');
+          // Start auto-sync
           if (autoSyncRef.current) clearInterval(autoSyncRef.current);
           autoSyncRef.current = setInterval(() => { triggerAutoSync(); }, 60000);
         }
-      } else {
-        // Electron mode: bind user JWT to sync client
-        try {
-          const bindResult = await window.electronAPI!.cloud.setUserToken(data.token);
-          if (bindResult.connected) {
-            setStatus(bindResult);
-            loadCloudData();
-            addLog('cloud-sync-connect', 'ok', '同步客户端已连接（用户模式）');
-            // Start auto-sync
-            if (autoSyncRef.current) clearInterval(autoSyncRef.current);
-            autoSyncRef.current = setInterval(() => { triggerAutoSync(); }, 60000);
-          }
-          addLog('bind-user-token', 'ok', '用户JWT已绑定到同步客户端');
-        } catch (err: any) {
-          addLog('bind-user-token', 'fail', err.message || '绑定失败');
-        }
+        addLog('bind-user-token', 'ok', '用户JWT已绑定到同步客户端');
+      } catch (err: any) {
+        addLog('bind-user-token', 'fail', err.message || '绑定失败');
       }
     } catch (err: any) {
       setCloudError(err.message || '登录失败');
@@ -651,13 +389,8 @@ export function CloudSyncTab() {
   /** Register this desktop as a device on the cloud */
   const registerDevice = async (token?: string) => {
     try {
-      let platform: string;
-      if (isWebMode()) {
-        platform = navigator.platform || 'web';
-      } else {
-        platform = await window.electronAPI!.app.platform().catch(() => 'unknown');
-      }
-      const deviceName = `LingJing ${isWebMode() ? 'Web' : 'Desktop'} (${platform})`;
+      const platform = await window.electronAPI.app.platform().catch(() => 'unknown');
+      const deviceName = `LingJing Desktop (${platform})`;
       const existingId = cloudDeviceId || undefined;
       const data = await cloudApi('/devices/register', 'POST', {
         name: deviceName,
@@ -666,10 +399,6 @@ export function CloudSyncTab() {
         deviceId: existingId,
       }, token);
       const deviceId = data.id;
-      if (!deviceId) {
-        addLog('device-register', 'fail', '注册返回数据缺少 id');
-        return;
-      }
       localStorage.setItem(CLOUD_DEVICE_ID_KEY, deviceId);
       setCloudDeviceId(deviceId);
       addLog('device-register', 'ok', `${deviceName} (${deviceId.slice(0, 12)}...)`);
@@ -709,7 +438,6 @@ export function CloudSyncTab() {
       }
     } catch { /* ignore */ }
     stopHeartbeat();
-    await handleDisconnect();
     localStorage.removeItem(CLOUD_TOKEN_KEY);
     localStorage.removeItem(CLOUD_USER_KEY);
     localStorage.removeItem(CLOUD_DEVICE_ID_KEY);
@@ -840,21 +568,21 @@ export function CloudSyncTab() {
             {status.url && <span className="text-[10px] text-cp-text-dim/40">{status.url}</span>}
           </div>
           <button
-            onClick={status.connected ? handleDisconnect : handleConnect}
+            onClick={connected ? handleDisconnect : handleConnect}
             disabled={loading}
-            title={status.connected && autoSyncRef.current ? '自动同步正在运行' : ''}
+            title={connected && autoSyncRef.current ? '自动同步正在运行' : ''}
             className={`text-xs px-4 py-1.5 rounded-md transition-colors ${
-              status.connected
+              connected
                 ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
                 : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
             } disabled:opacity-50`}
           >
-            {loading ? '···' : status.connected ? '断开' : '连接'}
+            {loading ? '···' : connected ? '断开' : '连接'}
           </button>
         </div>
 
         {/* Auto-sync status indicator */}
-        {status.connected && (
+        {connected && (
           <div className="mb-3 flex items-center gap-3 text-[10px]">
             <div className="flex items-center gap-1.5">
               <span className={`w-1.5 h-1.5 rounded-full ${autoSyncRef.current ? 'bg-green-400 animate-pulse' : 'bg-yellow-500'}`} />
@@ -877,7 +605,7 @@ export function CloudSyncTab() {
               type="text"
               value={url}
               onChange={e => setUrl(e.target.value)}
-              disabled={status.connected}
+              disabled={connected}
               className="w-full bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-1.5 text-xs text-cp-text outline-none focus:border-cp-accent disabled:opacity-50 font-mono"
             />
           </div>
@@ -887,7 +615,7 @@ export function CloudSyncTab() {
               type="password"
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
-              disabled={status.connected}
+              disabled={connected}
               className="w-full bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-1.5 text-xs text-cp-text outline-none focus:border-cp-accent disabled:opacity-50 font-mono"
             />
           </div>
@@ -895,7 +623,7 @@ export function CloudSyncTab() {
       </div>
 
       {/* Actions */}
-      {status.connected && (
+      {connected && (
         <div className="grid grid-cols-2 gap-3">
           {/* Sessions panel */}
           <div className="bg-white/[0.03] border border-cp-border/40 rounded-xl p-4">

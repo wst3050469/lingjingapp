@@ -2,7 +2,7 @@
   "expo": {
     "name": "灵境",
     "slug": "lingjing-mobile",
-    "version": "1.55.1",
+    "version": "1.55.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "lingjing",
@@ -31,6 +31,5 @@
       "cloudUrl": "https://ide.zhejiangjinmo.com",
       "apiKey": ""
     }
-  },
-  "version": "1.55.0"
+  }
 }

@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
-import type { IHookRegistry, HookPoint } from '@codepilot/core/fusion';
+// @ts-ignore - relative path to core src
+import type { IHookRegistry, HookPoint } from '../../../core/src/fusion/hook-registry/types.js';
 
 let hookRegistry: IHookRegistry | null = null;
 

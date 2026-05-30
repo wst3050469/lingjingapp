@@ -11,11 +11,22 @@
 - **Git HEAD**: `58cfef73` — feat: 添加db.js和payment-gateway.js
 - **所有服务**: ✅ 正常运行（详见 `../ACTIVE_TASK.md`）
 
-## 2026-06-04 日志规范化
+## 2026-06-04 仓库清理 + 日志规范化
 
 ### 操作
-- 创建 `logs/DEVLOG.md` — 整合 `开发日志.md` + `日志.md` 到规范路径
-- 保留原始日志文件作为备份引用
+1. **创建 `logs/DEVLOG.md`** — 整合 `开发日志.md` + `日志.md` 到规范路径
+2. **修复 Git 冲突** — `update-server/data/versions.json` 冲突已解决并提交
+3. **提交全部遗留变更** (22个文件, +831/-146)
+   - 安全修复: CloudSyncTab API Key, voice_asr, hardware_voice
+   - 清理: useFileMentions 删除, android keystore
+   - 审计: audit-report.md 新增
+   - 日志: DEVLOG.md 新增
+4. **更新 ACTIVE_TASK.md** — 同步最新 Git HEAD `1a06a2f7`
+
+### 当前状态
+- 工作区干净，所有变更已提交
+- 所有服务正常运行
+- 待推送到 prod 远程仓库
 
 ---
 

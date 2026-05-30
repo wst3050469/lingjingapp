@@ -274,6 +274,7 @@ declare interface ElectronAPI {
     onEvent: (callback: (data: any) => void) => () => void;
     onProgress: (callback: (data: any) => void) => () => void;
     onLog: (callback: (data: any) => void) => () => void;
+    revertFile: (filePath: string, beforeContent: string | null) => Promise<{ success: boolean; error?: string }>;
   };
   memory: {
     list: (opts?: { scope?: string; projectPath?: string }) => Promise<any[]>;

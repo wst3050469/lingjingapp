@@ -31,6 +31,7 @@ const CRITICAL_HANDLERS: string[] = [
   // Quest
   'quest:run',
   'quest:abort',
+  'quest:revert-file',
   // Filesystem
   'fs:read-dir',
   'fs:read-file',

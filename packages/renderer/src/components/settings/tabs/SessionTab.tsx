@@ -79,7 +79,7 @@ export function SessionTab({ config, saveKey }: SessionTabProps) {
   const [retrievalTools, setRetrievalTools] = useState<boolean>(s.retrievalTools ?? true);
   const [fileEditOutside, setFileEditOutside] = useState<boolean>(s.fileEditOutsideWorkspace ?? false);
   const [maxWindows, setMaxWindows] = useState<number>(s.maxWindows ?? 10);
-  const [maxTurns, setMaxTurns] = useState<number>(config?.maxTurns ?? 50);
+  const [maxTurns, setMaxTurns] = useState<number>(config?.maxTurns ?? 500);
   const [autoExecute, setAutoExecute] = useState<boolean>(s.autoExecute ?? false);
   const [mcpTools, setMcpTools] = useState<boolean>(s.mcpTools ?? true);
   const [blockedCommands, setBlockedCommands] = useState<string>(s.blockedCommands ?? 'rm,mv,sudo,wget,curl,chown');
@@ -111,7 +111,7 @@ export function SessionTab({ config, saveKey }: SessionTabProps) {
 
   const handleMaxTurnsChange = (val: string) => {
     const n = parseInt(val, 10);
-    if (!isNaN(n) && n >= 10 && n <= 500) {
+    if (!isNaN(n) && n >= 1 && n <= 2000) {
       setMaxTurns(n);
       saveKey('maxTurns', n);
     }
@@ -184,12 +184,12 @@ export function SessionTab({ config, saveKey }: SessionTabProps) {
         <Card>
           <SettingRow
             title="智能体最大轮次"
-            description="单次任务中智能体可执行的最大轮次（Quest 模式最低 200 轮）"
+            description="单次任务中智能体可执行的最大轮次（Quest 模式自动保护不低于 500 轮）"
           >
             <input
               type="number"
-              min={10}
-              max={500}
+              min={1}
+              max={2000}
               value={maxTurns}
               onChange={(e) => handleMaxTurnsChange(e.target.value)}
               className="w-[70px] bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-1.5 text-sm text-cp-text text-center outline-none focus:border-cp-accent"

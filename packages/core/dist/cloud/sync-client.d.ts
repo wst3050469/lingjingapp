@@ -6,8 +6,6 @@ export interface CloudSyncClientOptions {
     enabled?: boolean;
     deviceId?: string;
     deviceName?: string;
-    userId?: string;
-    isDesktop?: boolean;
 }
 type EventListener = (data: any) => void;
 export declare class CloudSyncClient {
@@ -17,29 +15,24 @@ export declare class CloudSyncClient {
     token: string | null;
     deviceId: string;
     deviceName: string;
-    userId: string | null;
-    isDesktop: boolean;
     ws: WebSocket | null;
     wsReconnectTimer: ReturnType<typeof setTimeout> | null;
+    /** Heartbeat timer: sends ping every 30s to keep WebSocket alive */
     _heartbeatTimer: ReturnType<typeof setInterval> | null;
-    _desktopHeartbeatTimer: ReturnType<typeof setInterval> | null;
+    syncTimer: ReturnType<typeof setInterval> | null;
     listeners: Map<string, Set<EventListener>>;
     queue: OfflineQueue;
-    private _autoRegisterRetries;
-    private _maxAutoRegisterRetries;
+    private _online;
     constructor(options?: CloudSyncClientOptions);
+    /** Auto-register device and get JWT token */
     autoRegister(): Promise<boolean>;
-    private _retryAutoRegister;
     authHeaders(): Record<string, string>;
+    /** Direct request without queue */
     _directRequest(method: string, path: string, body?: any): Promise<any>;
-    /**
-     * Fallback HTTP request using Node.js native http/https module.
-     * Used when fetch() fails (e.g. in Electron ASAR with proxy/TLS issues).
-     * This is NOT available in browser/Web mode — requires Node.js http/https modules.
-     */
-    private _nativeHttpRequest;
     request(method: string, path: string, body?: any): Promise<any>;
+    /** Set a user JWT token directly (overrides device registration token) */
     setToken(token: string): void;
+    /** Clear token (fall back to device registration) */
     clearToken(): void;
     getDeviceId(): string;
     getDeviceName(): string;
@@ -53,14 +46,11 @@ export declare class CloudSyncClient {
     deleteMemory(id: string): Promise<void>;
     triggerWebhook(channel: string, payload: any): Promise<any>;
     getWebhookLogs(channel: string): Promise<any>;
-    healthCheck(): Promise<{
-        ok: boolean;
-        error?: string;
-    }>;
+    healthCheck(): Promise<boolean>;
+    /** Start heartbeat: sends ping every 30s to keep WebSocket alive */
     private _startHeartbeat;
+    /** Stop heartbeat timer */
     private _stopHeartbeat;
-    private _startDesktopHeartbeat;
-    private _stopDesktopHeartbeat;
     connectWebSocket(): void;
     scheduleReconnect(): void;
     disconnectWebSocket(): void;
@@ -76,14 +66,9 @@ export declare class CloudSyncClient {
         failed: number;
     }>;
     isOnline(): Promise<boolean>;
-    listDesktops(): void;
-    sendRelayToMobile(payload: any, correlationId?: string): void;
-    sendRelayToDesktop(targetDeviceId: string, payload: any, correlationId?: string): void;
     on(event: string, fn: EventListener): void;
     off(event: string, fn: EventListener): void;
-    once(event: string, fn: EventListener): void;
     emit(event: string, data: any): void;
-    removeAllListeners(event?: string): void;
     disconnect(): void;
 }
 export {};

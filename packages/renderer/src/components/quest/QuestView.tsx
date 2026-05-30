@@ -67,38 +67,23 @@ const AUTO_MODES = [
 export function QuestView() {
   const { tasks, activeTaskId, runningTaskIds } = useQuestStore();
 
-  // Mount: reset stale streaming state when re-entering quest mode.
-  // Auto-resume of paused tasks is handled by QuestConversation's mount effect.
+  // Mount: reset streaming state in case we're returning from editor mode.
+  // The main-process agent was already aborted on unmount, but the Zustand store
+  // may still hold stale isStreaming / runningTaskIds that block new messages.
   useEffect(() => {
     const store = useQuestStore.getState();
-
+    
+    // Only reset if truly stale (no actual running agent in main process)
+    // We keep runningTaskIds if the task might still be active
     if (store.isStreaming) {
       console.log('[QuestView] Mount: resetting stale streaming state');
       store.resetStreamText();
       store.setStreaming(false);
       store.setActiveRunId(null);
     }
-
-    // Auto-resume any task that was paused by stopOnSwitch (user just returned)
-    const pausedTaskId = store.activeTaskId;
-    if (pausedTaskId) {
-      const task = store.tasks.find(t => t.id === pausedTaskId);
-      if (task?.status === 'paused') {
-        console.log('[QuestView] Mount: auto-resuming paused task:', pausedTaskId);
-        const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
-        store.setStreaming(true);
-        store.resetStreamText();
-        store.addRunningTask(pausedTaskId);
-        store.setActiveRunId(runId);
-        store.setTaskStatus(pausedTaskId, 'running');
-        window.electronAPI.quest.resume(pausedTaskId, undefined, runId).catch((err) => {
-          console.error('[QuestView] Auto-resume failed:', err);
-          store.setStreaming(false);
-          store.setActiveRunId(null);
-          store.removeRunningTask(pausedTaskId);
-        });
-      }
-    }
+    
+    // DO NOT clear runningTaskIds on mount - they may represent real running tasks
+    // Only clear if confirmed stale by checking with main process
   }, []);
 
   // Cleanup: pause (not stop) running agents when leaving quest mode
@@ -110,11 +95,16 @@ export function QuestView() {
       
       if (ids.length > 0) {
         console.log('[QuestView] Unmounting, pausing running agents:', ids);
-        // Fire-and-forget: stop all running agents. We clear state synchronously
-        // and let the IPC calls complete asynchronously.
-        for (const id of ids) {
-          window.electronAPI.quest.stopOnSwitch(id, currentRunId || undefined).catch(() => {});
-        }
+        // Serial await: ensure all stopOnSwitch calls complete before clearing state,
+        // preventing a late stopOnSwitch from killing a newly-started agent after re-mount.
+        const stopAll = async () => {
+          for (const id of ids) {
+            try {
+              await window.electronAPI.quest.stopOnSwitch(id, currentRunId || undefined);
+            } catch { /* ignore */ }
+          }
+        };
+        stopAll();
       }
       
       // Only reset streaming state, keep runningTaskIds for when we return

@@ -18,8 +18,7 @@ const __dirname = path.dirname(__filename);
 
 // Admin credentials (in production, use environment variables)
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_HOME = process.env.HOME || process.env.USERPROFILE || '/root';
-const PASSWORD_FILE = process.env.ADMIN_PASSWORD_FILE || path.join(ADMIN_HOME, 'lingjing-cloud', '.admin-password.json');
+const PASSWORD_FILE = '/root/lingjing-cloud/.admin-password.json';
 const DEFAULT_PASSWORD_HASH = createHash('sha256').update('admin123').digest('hex');
 
 function getAdminPasswordHash() {
@@ -836,28 +835,14 @@ export function registerAdminAPI(app, db) {
       if (!data || !data.versions || data.versions.length === 0) {
         return res.json([]);
       }
-      const DL = 'https://ide.zhejiangjinmo.com/downloads/';
-      const getUrl = (files, key) => {
-        const e = files[key]; if (!e) return '';
-        if (typeof e === 'string') return DL + e;
-        return e.url ? DL + e.url : '';
-      };
+      // Map versions.json entries to the expected format, including status
       const result = data.versions.map((v, idx) => ({
         id: v.version || 'v-' + idx,
         version: v.version || '0.0.0',
         releaseDate: v.releaseDate || v.date || null,
-        changelog: v.releaseNotes || v.description || v.changelog || "",
-        downloadUrl: getUrl(v.files || {}, 'win-x64'),
-        downloadUrls: {
-          windows: getUrl(v.files || {}, 'win-x64'),
-          windowsPortable: getUrl(v.files || {}, 'win-x64-portable'),
-          linux: getUrl(v.files || {}, 'linux-x64'),
-          linuxDeb: getUrl(v.files || {}, 'linux-deb'),
-          android: getUrl(v.files || {}, 'android'),
-          ios: getUrl(v.files || {}, 'ios'),
-          web: getUrl(v.files || {}, 'web'),
-        },
-        active: v.status === 'published',
+        changelog: v.releaseNotes || v.description || v.changelog || '',
+        downloadUrl: v.files ? (typeof v.files['win-x64'] === 'string' ? 'https://ide.zhejiangjinmo.com/downloads/' + v.files['win-x64'] : (v.files['win-x64'] && v.files['win-x64'].url ? v.files['win-x64'].url : '')) : (v.downloadUrl || ''),
+        active: v.status === 'published' || v.status !== 'draft',
         status: v.status || 'published',
       }));
       res.json(result);
@@ -866,33 +851,24 @@ export function registerAdminAPI(app, db) {
     }
   });
 
+
   app.post('/api/versions', adminAuth, (req, res) => {
     try {
-      const { version, changelog, downloadUrl, windowsUrl, linuxUrl, androidUrl, iosUrl, webUrl } = req.body;
+      const { version, changelog, downloadUrl } = req.body;
       if (!version) return res.status(400).json({ error: 'version required' });
       const data = readVersionsJson();
       const now = new Date().toISOString();
       
       // Check if version already exists
       const existingIdx = data.versions.findIndex(v => v.version === version);
-      const pfx = 'https://ide.zhejiangjinmo.com/downloads/';
-      const clean = (url) => url ? (url.startsWith(pfx) ? url.slice(pfx.length) : url) : '';
-      
       const entry = {
         version,
         releaseDate: now,
         releaseNotes: changelog || '灵境IDE v' + version,
         downloadUrl: downloadUrl || '',
         files: {},
-        status: 'draft',
+        status: 'draft',  // Default to draft - requires admin review to publish
       };
-      
-      if (windowsUrl) entry.files['win-x64'] = { url: clean(windowsUrl), size: 0 };
-      if (linuxUrl) entry.files['linux-x64'] = { url: clean(linuxUrl), size: 0 };
-      if (androidUrl) entry.files['android'] = { url: clean(androidUrl), size: 0 };
-      if (iosUrl) entry.files['ios'] = { url: clean(iosUrl), size: 0 };
-      if (webUrl) entry.files['web'] = { url: clean(webUrl), size: 0 };
-      if (downloadUrl && !windowsUrl) entry.files['win-x64'] = { url: clean(downloadUrl), size: 0 };
       
       if (existingIdx >= 0) {
         data.versions[existingIdx] = { ...data.versions[existingIdx], ...entry };
@@ -1442,9 +1418,6 @@ export function registerAdminAPI(app, db) {
       '/root/lingjing-update/data/versions.json',
       '/var/www/update-server/data/versions.json',
       '/opt/lingjing-update/data/versions.json',
-      '/var/www/html/downloads/versions.json',
-      '/var/www/html/versions.json',
-      '/var/www/downloads/versions.json',
       path.resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
       path.resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
     ];
@@ -1457,7 +1430,6 @@ export function registerAdminAPI(app, db) {
   function findVersionsJsonDownloadPath() {
     const searchPaths = [
       '/var/www/html/downloads/versions.json',
-      '/var/www/html/versions.json',
       '/var/www/downloads/versions.json',
     ];
     for (const p of searchPaths) {
@@ -1482,39 +1454,19 @@ export function registerAdminAPI(app, db) {
     return data;
   }
 
-  function findAllVersionsJsonPaths() {
-    const paths = new Set([
-      '/root/lingjing-update/data/versions.json',
-      '/var/www/update-server/data/versions.json',
-      '/opt/lingjing-update/data/versions.json',
-      '/opt/lingjing-update-server/data/versions.json',
-      '/opt/lingjing-cloud-server/versions.json',
-      '/var/www/html/downloads/versions.json',
-      '/var/www/html/versions.json',
-      '/var/www/downloads/versions.json',
-      '/var/www/lingjing/versions.json',
-      path.resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
-      path.resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
-    ]);
-    return [...paths].filter(p => fs.existsSync(p));
-  }
-
   function writeVersionsJson(data) {
-    const allPaths = findAllVersionsJsonPaths();
+    const apiPath = findVersionsJsonPath();
+    const dlPath = findVersionsJsonDownloadPath();
     const json = JSON.stringify(data, null, 2);
-    let written = 0;
-    for (const p of allPaths) {
-      try {
-        fs.writeFileSync(p, json, 'utf8');
-        written++;
-      } catch (e) {
-        console.warn('[Admin API] Failed to write versions.json:', p, e.message);
-      }
+    if (apiPath) {
+      fs.writeFileSync(apiPath, json, 'utf8');
+      console.log('[Admin API] Updated versions.json:', apiPath);
     }
-    if (written > 0) {
-      console.log(`[Admin API] Updated ${written}/${allPaths.length} versions.json locations`);
+    if (dlPath) {
+      fs.writeFileSync(dlPath, json, 'utf8');
+      console.log('[Admin API] Updated download versions.json:', dlPath);
     }
-    return written > 0;
+    return true;
   }
 
   // ====== Storage formatting helper ======

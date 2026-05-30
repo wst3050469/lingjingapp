@@ -8,7 +8,6 @@ declare interface ElectronAPI {
       conversationId?: string;
       contexts?: { id: string; type: string; label: string; path: string; content?: string }[];
       images?: { data: string; mediaType: string }[];
-      documents?: { name: string; content: string; ext?: string }[];
       conversationMessages?: any[];
     }) => Promise<void>;
     abort: () => Promise<void>;
@@ -27,7 +26,7 @@ declare interface ElectronAPI {
     writeFile: (path: string, content: string) => Promise<any>;
     onChanged: (callback: (event: any) => void) => () => void;
     selectFolder: () => Promise<string | null>;
-    selectFile: (filters?: Array<{ name: string; extensions: string[] }>) => Promise<string[] | null>;
+    selectFile: () => Promise<string | null>;
     saveAs: (defaultName?: string) => Promise<string | null>;
   };
   terminal: {
@@ -124,29 +123,7 @@ declare interface ElectronAPI {
     onStatusChange: (callback: (data: any) => void) => () => void;
     onError: (callback: (data: any) => void) => () => void;
   };
-
-  /** Pipeline 管理 API — 含文件变更自动处理 */
-  pipeline: {
-    list: (projectPath: string) => Promise<any[]>;
-    get: (projectPath: string, id: string) => Promise<any>;
-    save: (projectPath: string, definition: any) => Promise<any>;
-    delete: (projectPath: string, id: string) => Promise<any>;
-    trigger: (projectPath: string, pipelineId: string, triggerType?: string) => Promise<any>;
-    cancel: (projectPath: string, runId: string) => Promise<any>;
-    runHistory: (projectPath: string, pipelineId: string, limit?: number) => Promise<any[]>;
-    runDetail: (projectPath: string, runId: string) => Promise<any>;
-    watchStatus: (projectPath: string) => Promise<any[]>;
-    autoLoad: (projectPath: string) => Promise<any>;
-    onAutoTriggered: (callback: (data: any) => void) => () => void;
-    onRunStarted: (callback: (data: any) => void) => () => void;
-  };
-  githubSkill: {
-    list: () => Promise<any[]>;
-    uninstall: (id: string) => Promise<any>;
-  };
-
   github: {
-    search: (query: string, limit?: number) => Promise<any[]>;
     generateAuthUrl: (scopes?: string[]) => Promise<string>;
     handleCallback: (code: string, state: string) => Promise<any>;
     getUser: () => Promise<any>;
@@ -374,7 +351,6 @@ declare interface ElectronAPI {
     sendIntervention: (taskId: string, text: string) => Promise<any>;
     saveMessages: (taskId: string) => Promise<any>;
     stopOnSwitch: (taskId: string, runId?: string) => Promise<any>;
-    getAgentStatus: (taskId: string) => Promise<{ hasActiveAgent: boolean; runId: string | null }>;
     cleanup: (taskId: string) => Promise<any>;
     onEvent: (callback: (event: any) => void) => () => void;
     onAskUser: (callback: (data: any) => void) => () => void;
@@ -502,8 +478,6 @@ declare interface ElectronAPI {
     getConfig: () => Promise<{ url?: string; apiKey?: string }>;
     onSyncEvent: (callback: (data: any) => void) => () => void;
     onWebhookEvent: (callback: (data: any) => void) => () => void;
-    onDesktopList: (callback: (data: any) => void) => () => void;
-    onRelayFromMobile: (callback: (data: any) => void) => () => void;
     api: (opts: { endpoint: string; method?: string; body?: unknown; token?: string; baseUrl?: string }) => Promise<any>;
     setUserToken: (token: string) => Promise<any>;
   };

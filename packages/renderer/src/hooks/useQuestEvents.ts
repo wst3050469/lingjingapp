@@ -27,30 +27,16 @@ export function useQuestEvents(): void {
         return; // Ignore events from other/old tasks
       }
 
-      // runId epoch filter: discard stale streaming events from old runs.
-      // Cross-task events (todo_update, file_snapshot, etc.) are exempt from this filter
-      // because they carry task metadata that must be applied regardless of run epoch.
-      // IMPORTANT: 'done', 'error', and 'status_change' are lifecycle events that MUST be
-      // processed even with mismatched runId — they clean up activeRunId, runningTaskIds,
-      // and task status. Without this, error events from Agent (which carry their runId)
-      // are dropped when activeRunId changes, leaving error messages never shown and
-      // state never cleaned up.
-      //
-      // BUT: we must protect against LATE lifecycle events from a PREVIOUS agent run
-      // (e.g. stopOnSwitch's 'done' event arriving after the new resume run has started).
-      // The age guard: if activeRunId is set and differs from event.runId, only process
-      // the lifecycle event if it would NOT reset activeRunId or isStreaming.
-      const isLifecycleEvent = event.type === 'done' || event.type === 'error' || event.type === 'status_change';
-      if (!isCrossTask && !isLifecycleEvent && event.runId) {
+      // runId epoch filter: discard stale events from old runs.
+      // If the event carries a runId but the store's activeRunId is null (e.g. after
+      // switchTask clears it), we still filter: an event with a runId arriving when
+      // there is no active run is almost certainly stale.
+      // Events without a runId (legacy / cross-task) are always accepted.
+      if (event.runId) {
         if (!store.activeRunId || event.runId !== store.activeRunId) {
-          return; // Stale streaming event from a previous run – drop it
+          return; // Stale event from a previous run – drop it
         }
       }
-
-      // Late lifecycle event guard: if activeRunId is set and differs, this is a stale
-      // lifecycle event from a previous run. We still need to update task status/properties,
-      // but we MUST NOT reset streaming state or activeRunId.
-      const isLateLifecycleEvent = isLifecycleEvent && event.runId && store.activeRunId && event.runId !== store.activeRunId;
 
       switch (event.type) {
         case 'thinking':
@@ -96,15 +82,7 @@ export function useQuestEvents(): void {
             content: `Error: ${event.error?.message || 'Unknown error'}`,
             timestamp: Date.now(),
           });
-          // Only reset streaming state if this is NOT a late lifecycle event
-          // (late event = old run's done/error arriving after new run started)
-          if (!isLateLifecycleEvent) {
-            store.setStreaming(false);
-            store.setActiveRunId(null);
-          }
-          if (event.taskId) {
-            store.removeRunningTask(event.taskId);
-          }
+          store.setStreaming(false);
           break;
 
         case 'done': {
@@ -118,13 +96,7 @@ export function useQuestEvents(): void {
             });
           }
           store.resetStreamText();
-          // Only reset streaming state if this is NOT a late lifecycle event
-          // (late event = old run's done arriving after new run started).
-          // Prevents stopOnSwitch's done event from killing the new resume run.
-          if (!isLateLifecycleEvent) {
-            store.setStreaming(false);
-            store.setActiveRunId(null);
-          }
+          store.setStreaming(false);
 
           // Remove from running tasks
           if (event.taskId) {
@@ -179,9 +151,7 @@ export function useQuestEvents(): void {
             } else {
               store.removeRunningTask(event.taskId);
               // Reset streaming state for non-running statuses (defense-in-depth)
-              // BUT: skip if this is a late lifecycle event (e.g. paused status from
-              // stopOnSwitch arriving after new resume run has started)
-              if (event.taskId === store.activeTaskId && !isLateLifecycleEvent) {
+              if (event.taskId === store.activeTaskId) {
                 store.resetStreamText();
                 store.setStreaming(false);
               }

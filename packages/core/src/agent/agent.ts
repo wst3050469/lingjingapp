@@ -116,7 +116,7 @@ function looksLikeTaskComplete(text: string): boolean {
     /全部结束[。！]?\s*$/,
     
     // Summary-style completion (model summarizes what was done)
-    /^(?:已完成|已成功|成功完成|顺利完成)[了。]?\s*$/m,
+    /^(?:已完成|已成功|成功完成|顺利完)成[了。]?/m,
   ];
   
   const INCOMPLETE_PATTERNS = [
@@ -155,15 +155,6 @@ function looksLikeTaskComplete(text: string): boolean {
     // "完成" used as future/incomplete ("我会完成这个任务" → NOT done)
     /[会要需][将去].*完成/,
     /还没[有]?完成/,
-
-    // Additional incomplete guards — text contains completion-looking
-    // phrases AND continuation signals → definitely not done
-    /已(?:完成|成功).*(?:接下来|然后|下一步|还需要|将要|即将|现在|准备|开始)/,
-    /完成.*(?:接下来|然后|下一步|还需要|将要|即将|现在|准备|开始)/,
-    // "已完成xxx" at beginning followed by any future action → not done
-    /^(?:已经|已).{0,10}(?:完成|成功).{0,20}(?:接下来|然后|下一步|还需要|现在|准备|开始|让我|我来)/,
-    // "功能开发已完成" or similar completion statement followed by deployment intent
-    /(?:功能|任务|工作|开发|部署).{0,10}(?:完成|成功|结束).{0,20}(?:接下来|然后|下一步|现在|即将|准备|需要)/,
   ];
   
   const textLower = text.toLowerCase();
@@ -325,14 +316,6 @@ export class Agent {
 
     const abortSignal = signal ?? new AbortController().signal;
 
-    // ★ Fix B: Guard against already-aborted input signals.
-    // If the incoming signal is already aborted (e.g. from a previous run's
-    // AbortController that was reused), create a fresh signal.
-    if (abortSignal.aborted) {
-      logger.warn('[Agent] Input signal already aborted, creating fresh signal');
-    }
-    const safeSignal = abortSignal.aborted ? new AbortController().signal : abortSignal;
-
     // Merge user abort signal + global wall-clock timeout into one controller
     const globalController = new AbortController();
     let globalTimer: ReturnType<typeof setTimeout> | undefined;
@@ -342,7 +325,7 @@ export class Agent {
         globalController.abort(new Error('Agent max duration reached'));
       }, this.config.maxDuration);
     }
-    safeSignal.addEventListener('abort', () => globalController.abort(safeSignal.reason), { once: true });
+    abortSignal.addEventListener('abort', () => globalController.abort(abortSignal.reason), { once: true });
     const mergedSignal = globalController.signal;
 
     // Heartbeat: send a pulse every 5 seconds so the renderer knows the agent is alive
@@ -354,8 +337,7 @@ export class Agent {
     let turn = 0;
     let hasNudgedForTools = false;
     let noToolRetryCount = 0;
-    let postCompact = false;
-    const MAX_NO_TOOL_RETRIES = 5;
+    const MAX_NO_TOOL_RETRIES = 3;
 
     // Enhance system prompt with tool-use instructions when tools are available
     const hasTools = this.config.tools.getSchemas().length > 0;
@@ -376,27 +358,13 @@ export class Agent {
 	      if (this.conversation.needsCompaction(compactionCtxCap)) {
 	        await this.autoCompact();
 
-	        // ★ Fix A: Reset retry count after compaction so the model gets fresh retries
-	        noToolRetryCount = 0;
-	        postCompact = true;
-
 	        // ★ After compaction, inject a continuation directive so the LLM
 	        // knows the task is still in progress and should continue working.
 	        // Without this, the model may interpret the compressed summary as
 	        // "task complete" and stop executing, requiring a manual nudge.
-	        // ★ Fix D: Include recent context so the LLM knows what was just happening.
-	        const lastMsgs = this.conversation.messages.slice(-3);
-	        const lastCtx = lastMsgs
-	          .filter((m: any) => m.role === 'assistant' || m.role === 'user')
-	          .map((m: any) => {
-	            const txt = typeof m.content === 'string' ? m.content.slice(0, 200) : '(non-text)';
-	            return `[${m.role}]: ${txt}`;
-	          })
-	          .join('\n');
 	        this.conversation.addUserMessage(
 	          '[自动继续] 以上对话已由系统压缩。任务仍在进行中，请继续执行剩余步骤，根据需要调用工具。' +
-	          '不要总结已经完成的工作——立即执行下一步操作。' +
-	          '\n\n最近操作上下文：\n' + lastCtx
+	          '不要总结已经完成的工作——立即执行下一步操作。'
 	        );
 	      }
 
@@ -549,12 +517,8 @@ Technical details: ${err.message}`;
           continue; // Loop back to call LLM again with the nudge
         }
         
-        // ★ Fix B: Skip task-complete detection right after compaction.
-        // The model's first response post-compaction is often a confirmation that
-        // may look like completion ("已完成"), even though we injected a continuation.
-        // Skip completion detection until the model calls at least one tool.
-        const isTaskComplete = postCompact ? false : looksLikeTaskComplete(responseText);
-        postCompact = false; // Reset after checking regardless
+        // Check if task is actually complete or just paused
+        const isTaskComplete = looksLikeTaskComplete(responseText);
         
         if (isTaskComplete) {
           logger.info('Task marked as complete by model');
@@ -570,12 +534,12 @@ Technical details: ${err.message}`;
           noToolRetryCount++;
           if (noToolRetryCount > MAX_NO_TOOL_RETRIES) {
             logger.info('No tool calls after ' + MAX_NO_TOOL_RETRIES + ' retries - returning control to user');
-            this.conversation.addUserMessage('我已经尝试了多次自动继续，但模型没有执行新的操作。请提供更具体的指示或说明需要执行什么操作。');
+            this.conversation.addUserMessage('我已经尝试多次但未能继续执行新的操作。如果你希望我继续，请提供更具体的指示或说明需要执行什么操作。');
             if (turnTimer) clearTimeout(turnTimer);
             return responseText;
           }
           logger.info('No tool calls but task seems incomplete - prompting to continue (retry ' + noToolRetryCount + '/' + MAX_NO_TOOL_RETRIES + ')');
-          this.conversation.addUserMessage('[自动继续] 任务尚未完成，请继续执行。如有需要请调用工具完成操作。');
+          this.conversation.addUserMessage('请继续完成任务。如果需要执行操作，请调用相应的工具。');
           if (turnTimer) clearTimeout(turnTimer);
           continue; // Loop back to call LLM again
         }
@@ -598,18 +562,7 @@ Technical details: ${err.message}`;
             this.emit({ type: 'tool_progress', name: tc.name, text });
           },
         };
-        // ★ Fix A: Wrap tool execution in try-catch to prevent a single tool
-        // crash from killing the entire agent loop. Emit a proper error event
-        // and add a tool result with the error message so the LLM can recover.
-        let result: ToolResult;
-        try {
-          result = await this.executor.execute(tc, toolContext);
-        } catch (execError) {
-          const errMsg = execError instanceof Error ? execError.message : String(execError);
-          logger.error(`[Agent] Tool '${tc.name}' execution failed:`, errMsg);
-          this.emit({ type: 'error', error: new Error(`Tool '${tc.name}' failed: ${errMsg}`) });
-          result = { content: `Error executing tool '${tc.name}': ${errMsg}`, isError: true };
-        }
+        const result = await this.executor.execute(tc, toolContext);
         this.conversation.addToolResult(tc.id, result);
         this.emit({ type: 'tool_end', name: tc.name, result });
       }
@@ -646,45 +599,14 @@ Technical details: ${err.message}`;
       // ALWAYS emit done so the renderer can reset isStreaming
       this.emit({ type: 'done' });
 
-      // ── Memory Reflector: post-session reflection for memory consolidation ──
-      if (this.reflector && this.reflector.shouldReflect()) {
-        try {
-          const msgs = this.conversation.messages;
-          const memoryRecords: Array<{ id: string; title: string; content: string; category: string; scope: string }> = [];
-          for (let idx = 0; idx < msgs.length; idx++) {
-            const msg = msgs[idx];
-            if (msg.role === 'user' || msg.role === 'assistant') {
-              const text = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
-              if (text) {
-                memoryRecords.push({
-                  id: String(idx),
-                  title: text.slice(0, 80),
-                  content: text,
-                  category: 'conversation',
-                  scope: 'session',
-                });
-              }
-            }
-          }
-          if (memoryRecords.length > 0) {
-            const reflectResult = await this.reflector.reflect(memoryRecords);
-            if (reflectResult) {
-              logger.info('[Agent] Reflector produced reflection insights');
-            }
-          }
-        } catch (err) {
-          logger.warn('[Agent] Reflector reflect failed:', (err as Error).message);
-        }
-      }
-
       // ── Skill harvesting (Hermes-inspired): auto-create skills from conversations ──
       if (this.harvester) {
         const durationMs = Date.now() - this.runStartedAt;
-        this.harvester.harvest(this.conversation, durationMs).then((skillName: string | null) => {
+        this.harvester.harvest(this.conversation, durationMs).then((skillName) => {
           if (skillName) {
             this.emit({ type: 'intervention_injected', text: `\u{1F4A1} Auto-created skill: ${skillName}` });
           }
-        }).catch((err: Error) => {
+        }).catch((err) => {
           logger.warn('[Harvester] Harvest failed:', err.message);
         });
       }

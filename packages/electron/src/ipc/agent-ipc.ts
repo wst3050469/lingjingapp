@@ -570,113 +570,10 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
         const { createRememberVectorTool, createRecallVectorTool } = await import('@codepilot/core/fusion');
         const rememberTool = createRememberVectorTool(vectorMem);
         const recallTool = createRecallVectorTool(vectorMem);
-        // Fusion Tool type and core Tool type have slightly different JSONSchema subtypes,
-        // but they are structurally compatible at runtime.
-        runTools.register(rememberTool as any);
-        runTools.register(recallTool as any);
+        runTools.register(rememberTool);
+        runTools.register(recallTool);
       } catch (e) {
         console.warn('[Agent IPC] Failed to register vector memory tools:', e instanceof Error ? e.message : String(e));
-      }
-    }
-
-    // Register GitHub skill integration tools (search_github / install_skill / uninstall_skill)
-    if (mode !== 'ask') {
-      try {
-        const { ToolRegistry } = await import('@codepilot/core');
-        const searchGithubTool = {
-          name: 'search_github',
-          description: 'Search GitHub for open-source projects by keyword. Returns repo name, stars, language, and description. Use this to find tools, libraries, or agents that can extend your capabilities.',
-          parameters: {
-            type: 'object',
-            properties: {
-              query: { type: 'string', description: 'Search keywords (e.g. "markdown parser python", "code review AI agent")' },
-              limit: { type: 'number', description: 'Max results (default 10)' },
-            },
-            required: ['query'],
-          },
-          execute: async (params: Record<string, unknown>) => {
-            try {
-              const https = await import('https');
-              const query = encodeURIComponent(String(params.query));
-              const limit = Number(params.limit) || 10;
-              const result = await new Promise<any>((resolve, reject) => {
-                const req = https.default.request(
-                  { hostname: 'api.github.com', path: `/search/repositories?q=${query}&sort=stars&order=desc&per_page=${limit}`, method: 'GET', headers: { 'User-Agent': 'LingJing-IDE', 'Accept': 'application/vnd.github.v3+json' } },
-                  (res: any) => { let d = ''; res.on('data', (c: any) => { d += c; }); res.on('end', () => { try { resolve(JSON.parse(d)); } catch { reject(new Error('parse error')); } }); }
-                );
-                req.on('error', reject);
-                req.setTimeout(15000, () => { req.destroy(); reject(new Error('timeout')); });
-                req.end();
-              });
-              const repos = (result.items || []).map((r: any) => ({
-                fullName: r.full_name, description: r.description, stars: r.stargazers_count,
-                language: r.language, url: r.html_url, topics: r.topics || [],
-              }));
-              return { success: true, data: repos, content: JSON.stringify(repos) };
-            } catch (err: any) {
-              return { success: false, error: err.message, content: 'Error: ' + err.message };
-            }
-          },
-        };
-
-        const installSkillTool = {
-          name: 'install_skill',
-          description: 'Install a GitHub open-source project as a skill/tool into LingJing. This wraps the project\'s functionality so you can use it directly. The project must be specified as owner/repo.',
-          parameters: {
-            type: 'object',
-            properties: {
-              owner: { type: 'string', description: 'GitHub repository owner' },
-              repo: { type: 'string', description: 'GitHub repository name' },
-              skill_type: { type: 'string', description: 'Type: "tool", "agent", or "library" (default: auto-detect)' },
-              tool_name: { type: 'string', description: 'Custom tool name (default: derived from repo name)' },
-            },
-            required: ['owner', 'repo'],
-          },
-          execute: async (params: Record<string, unknown>) => {
-            try {
-              const { getDatabase } = await import('../db/database.js');
-              const db = getDatabase();
-              const owner = String(params.owner);
-              const repo = String(params.repo);
-              const id = `gh_${owner}_${repo}`.replace(/[-_.]/g, '_').toLowerCase();
-              db.run(`INSERT OR REPLACE INTO installed_skills (id, source, repo_url, repo_name, repo_owner, description, language, stars, skill_type, tool_name, tool_description, tool_parameters, execute_command, status) VALUES (?, 'github', ?, ?, ?, '', '', 0, ?, ?, ?, '{}', '', 'active')`, [
-                id, `https://github.com/${owner}/${repo}`, repo, owner,
-                params.skill_type || 'tool', params.tool_name || id, `Execute ${owner}/${repo} functionality`,
-              ]);
-              return { success: true, message: `Skill ${owner}/${repo} installed (id: ${id}). Restart agent to use the new tool.`, content: `Skill ${owner}/${repo} installed (id: ${id}).` };
-            } catch (err: any) {
-              return { success: false, error: err.message, content: 'Error: ' + err.message };
-            }
-          },
-        };
-
-        const uninstallSkillTool = {
-          name: 'uninstall_skill',
-          description: 'Uninstall (remove) a previously installed GitHub skill/tool from LingJing.',
-          parameters: {
-            type: 'object',
-            properties: {
-              skill_id: { type: 'string', description: 'Skill ID to uninstall (format: gh_owner_repo)' },
-            },
-            required: ['skill_id'],
-          },
-          execute: async (params: Record<string, unknown>) => {
-            try {
-              const { getDatabase } = await import('../db/database.js');
-              const db = getDatabase();
-              db.run("UPDATE installed_skills SET status = 'uninstalled' WHERE id = ?", [String(params.skill_id)]);
-              return { success: true, message: `Skill ${params.skill_id} has been uninstalled.`, content: `Skill ${params.skill_id} uninstalled.` };
-            } catch (err: any) {
-              return { success: false, error: err.message, content: 'Error: ' + err.message };
-            }
-          },
-        };
-
-        runTools.register(searchGithubTool as any);
-        runTools.register(installSkillTool as any);
-        runTools.register(uninstallSkillTool as any);
-      } catch (e) {
-        console.warn('[Agent IPC] Failed to register GitHub skill tools:', e instanceof Error ? e.message : String(e));
       }
     }
 
@@ -715,9 +612,6 @@ Only save genuinely useful, non-trivial information. Do NOT save obvious or temp
       temperature: config!.temperature,
       workingDirectory,
       sshTerminalId: currentSshTerminalId || undefined,
-      enableMemoryNudge: config!.enableMemoryNudge,
-      enableReflector: config!.enableReflector,
-      enableSkillHarvest: config!.enableSkillHarvest,
       onEvent: (event: AgentEvent) => {
         if (!senderWindow.isDestroyed()) {
           senderWindow.webContents.send('agent:event', serializeEvent(event));

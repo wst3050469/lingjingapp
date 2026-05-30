@@ -1,9 +1,0 @@
-Package: lingjing-ide
-Version: 1.63.0
-Section: devel
-Priority: optional
-Architecture: amd64
-Maintainer: LingJing AI <support@lingjing.ai>
-Description: 灵境 IDE - AI 驱动的智能开发平台
-Depends: libgtk-3-0, libnotify4, libnss3, libxss1, libxtst6, xdg-utils, libatspi2.0-0, libuuid1, libsecret-1-0
-Recommends: libappindicator3-1

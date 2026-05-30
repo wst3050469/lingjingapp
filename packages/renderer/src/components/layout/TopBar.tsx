@@ -45,9 +45,8 @@ async function actionNewFile() {
 }
 
 async function actionOpenFile() {
-  const filePaths = await window.electronAPI?.fs?.selectFile?.();
-  if (filePaths && filePaths.length > 0) {
-    const filePath = filePaths[0];
+  const filePath = await window.electronAPI?.fs?.selectFile?.();
+  if (filePath) {
     try {
       const { content, language } = await window.electronAPI.fs.readFile(filePath);
       const name = filePath.split(/[\\/]/).pop() || 'unknown';

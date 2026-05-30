@@ -290,14 +290,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
   },
 
-  githubSkill: {
-    list: () => ipcRenderer.invoke('github-skill:list'),
-    uninstall: (id: string) => ipcRenderer.invoke('github-skill:uninstall', { id }),
-  },
-
   github: {
-    search: (query: string, limit?: number) =>
-      ipcRenderer.invoke('github:search', { query, limit }),
     generateAuthUrl: (scopes?: string[]) =>
       ipcRenderer.invoke('github:generate-auth-url', scopes),
     handleCallback: (code: string, state: string) =>
@@ -370,9 +363,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
       maxTokens?: number;
     }) => ipcRenderer.invoke('completion:inline', params),
     abort: () => ipcRenderer.invoke('completion:abort'),
-    accept: () => ipcRenderer.send('completion:accept'),
-    acceptWord: () => ipcRenderer.send('completion:accept-word'),
-    reject: () => ipcRenderer.send('completion:reject'),
+    accept: () => {},
+    acceptWord: () => {},
+    reject: () => {},
     crossFile: (params: {
       changedFile: string;
       changeDescription: string;
@@ -424,8 +417,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('quest:save-messages', { taskId }),
     stopOnSwitch: (taskId: string, runId?: string) =>
       ipcRenderer.invoke('quest:stop-on-switch', { taskId, runId }),
-    getAgentStatus: (taskId: string) =>
-      ipcRenderer.invoke('quest:get-agent-status', { taskId }),
     cleanup: (taskId: string) =>
       ipcRenderer.invoke('quest:cleanup', { taskId }),
     onEvent: (callback: (event: any) => void) => {
@@ -629,16 +620,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on('cloud:webhook-event', handler);
       return () => ipcRenderer.removeListener('cloud:webhook-event', handler);
     },
-    onDesktopList: (callback) => {
-      const handler = (_event, data) => callback(data);
-      ipcRenderer.on('cloud:desktop:list', handler);
-      return () => ipcRenderer.removeListener('cloud:desktop:list', handler);
-    },
-    onRelayFromMobile: (callback) => {
-      const handler = (_event, data) => callback(data);
-      ipcRenderer.on('cloud:relay:from-mobile', handler);
-      return () => ipcRenderer.removeListener('cloud:relay:from-mobile', handler);
-    },
     pushSession: (session) =>
       ipcRenderer.invoke('cloud:push-session', session),
     pushMemory: (memory) =>
@@ -747,46 +728,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       const handler = (_event: any, data: any) => callback(data);
       ipcRenderer.on('trigger:error', handler);
       return () => ipcRenderer.removeListener('trigger:error', handler);
-    },
-  },
-
-  /**
-   * Pipeline 管理 API — 用于创建、管理、执行 Pipeline（含文件变更自动处理）
-   */
-  pipeline: {
-    list: (projectPath: string) =>
-      ipcRenderer.invoke('pipeline:list', projectPath),
-    get: (projectPath: string, id: string) =>
-      ipcRenderer.invoke('pipeline:get', projectPath, id),
-    save: (projectPath: string, definition: any) =>
-      ipcRenderer.invoke('pipeline:save', projectPath, definition),
-    delete: (projectPath: string, id: string) =>
-      ipcRenderer.invoke('pipeline:delete', projectPath, id),
-    trigger: (projectPath: string, pipelineId: string, triggerType?: string) =>
-      ipcRenderer.invoke('pipeline:trigger', projectPath, pipelineId, triggerType),
-    cancel: (projectPath: string, runId: string) =>
-      ipcRenderer.invoke('pipeline:cancel', projectPath, runId),
-    runHistory: (projectPath: string, pipelineId: string, limit?: number) =>
-      ipcRenderer.invoke('pipeline:runHistory', projectPath, pipelineId, limit),
-    runDetail: (projectPath: string, runId: string) =>
-      ipcRenderer.invoke('pipeline:runDetail', projectPath, runId),
-    /** 查看文件监听状态 */
-    watchStatus: (projectPath: string) =>
-      ipcRenderer.invoke('pipeline:watchStatus', projectPath),
-    /** 手动触发自动加载 pipelines */
-    autoLoad: (projectPath: string) =>
-      ipcRenderer.invoke('pipeline:autoLoad', projectPath),
-    /** 监听 pipeline 自动触发事件 */
-    onAutoTriggered: (callback: (data: any) => void) => {
-      const handler = (_event: any, data: any) => callback(data);
-      ipcRenderer.on('pipeline:auto-triggered', handler);
-      return () => ipcRenderer.removeListener('pipeline:auto-triggered', handler);
-    },
-    /** 监听 pipeline 执行开始事件 */
-    onRunStarted: (callback: (data: any) => void) => {
-      const handler = (_event: any, data: any) => callback(data);
-      ipcRenderer.on('pipeline:run-started', handler);
-      return () => ipcRenderer.removeListener('pipeline:run-started', handler);
     },
   },
 
@@ -925,33 +866,4 @@ contextBridge.exposeInMainWorld('electronAPI', {
     offlinePayment: (params: { token: string; amount: number; companyName: string; bankName?: string; bankAccount?: string; remark?: string; receiptUrl?: string }) => ipcRenderer.invoke('subscription:offline-payment', params),
   },
 
-});
-
-// ── 兼容层：暴露 window.electron.ipcRenderer ──
-// 部分代码（useWorkspace, pipeline-store, pm-store, review-store, security-store, AdminPanel）
-// 使用 window.electron.ipcRenderer，但 contextBridge 只暴露了 window.electronAPI。
-// 此处补充暴露 window.electron，避免 "Cannot read properties of undefined (reading 'ipcRenderer')"
-const listenerMap = new Map<(...args: any[]) => void, (...args: any[]) => void>();
-
-contextBridge.exposeInMainWorld('electron', {
-  ipcRenderer: {
-    invoke: (channel: string, ...args: unknown[]) => ipcRenderer.invoke(channel, ...args),
-    send: (channel: string, ...args: unknown[]) => ipcRenderer.send(channel, ...args),
-    sendSync: (channel: string, ...args: unknown[]) => ipcRenderer.sendSync(channel, ...args),
-    on: (channel: string, listener: (...args: any[]) => void) => {
-      const wrapped = (_event: Electron.IpcRendererEvent, ...args: any[]) => listener(...args);
-      listenerMap.set(listener, wrapped);
-      ipcRenderer.on(channel, wrapped);
-    },
-    removeListener: (channel: string, listener: (...args: any[]) => void) => {
-      const wrapped = listenerMap.get(listener);
-      if (wrapped) {
-        ipcRenderer.removeListener(channel, wrapped);
-        listenerMap.delete(listener);
-      }
-    },
-    removeAllListeners: (channel: string) => {
-      ipcRenderer.removeAllListeners(channel);
-    },
-  },
 });

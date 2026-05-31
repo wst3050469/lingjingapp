@@ -61,3 +61,44 @@ async def get_records(user_id: str, month: Optional[str] = None):
     else:
         records = await attendance_service.get_today_records(user_id)
     return {"records": records}
+
+
+@router.get("/wages/{user_id}")
+async def get_wages(user_id: str):
+    """获取工人工资信息（日薪 + 工资支付记录）"""
+    import json, db as database
+
+    wage_info = {"daily_wage": 0, "records": [], "total_paid": 0}
+
+    async with database.pool.acquire() as conn:
+        # 1. 从 tenant_users.ext_data 获取日薪
+        tu = await conn.fetchrow(
+            "SELECT ext_data FROM tenant_users WHERE user_id=$1", user_id
+        )
+        if tu and tu["ext_data"]:
+            ext = json.loads(tu["ext_data"]) if isinstance(tu["ext_data"], str) else tu["ext_data"]
+            wage_info["daily_wage"] = float(ext.get("daily_wage", 0))
+
+        # 2. 从 biz_finance 查询工资支付记录
+        rows = await conn.fetch(
+            """SELECT bf.*, bp.name as project_name
+               FROM biz_finance bf
+               LEFT JOIN biz_projects bp ON bp.id = bf.project_id
+               WHERE bf.applicant_name = $1 AND bf.type = 'wage'
+               ORDER BY bf.created_at DESC LIMIT 20""",
+            user_id,
+        )
+        wage_info["records"] = [
+            {
+                "id": r["id"],
+                "amount": float(r["amount"]),
+                "project_name": r.get("project_name", ""),
+                "status": r["status"],
+                "created_at": str(r["created_at"]) if r["created_at"] else "",
+                "reason": r.get("reason", ""),
+            }
+            for r in rows
+        ]
+        wage_info["total_paid"] = sum(r["amount"] for r in wage_info["records"])
+
+    return wage_info

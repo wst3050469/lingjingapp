@@ -5,6 +5,139 @@ interface Props {
   cloudApi: (endpoint: string, method?: string, body?: unknown) => Promise<any>;
 }
 
+/** 考勤统计模态框 */
+function AttendanceModal({
+  onClose,
+  cloudApi,
+  userId,
+}: {
+  onClose: () => void;
+  cloudApi: Props['cloudApi'];
+  userId: string;
+}) {
+  const now = new Date();
+  const [month, setMonth] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+  const [stats, setStats] = useState<any>(null);
+  const [records, setRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    loadData();
+  }, [month]);
+
+  const loadData = async () => {
+    if (!userId) return;
+    setLoading(true);
+    setErr('');
+    try {
+      const [statsRes, recordsRes] = await Promise.all([
+        cloudApi(`/api/attendance/stats/${userId}?month=${month}`).catch(() => null),
+        cloudApi(`/api/attendance/records/${userId}?month=${month}`).catch(() => null),
+      ]);
+      if (statsRes) setStats(statsRes);
+      if (recordsRes?.records) setRecords(recordsRes.records);
+    } catch (e: any) {
+      setErr(e.message || '加载失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const prevMonth = () => {
+    const [y, m] = month.split('-').map(Number);
+    if (m === 1) setMonth(`${y - 1}-12`);
+    else setMonth(`${y}-${String(m - 1).padStart(2, '0')}`);
+  };
+  const nextMonth = () => {
+    const [y, m] = month.split('-').map(Number);
+    if (m === 12) setMonth(`${y + 1}-01`);
+    else setMonth(`${y}-${String(m + 1).padStart(2, '0')}`);
+  };
+
+  /* 按天分组 */
+  const dayMap = new Map<string, { checkIn?: string; checkOut?: string }>();
+  for (const r of records) {
+    const d = new Date(r.check_time).toLocaleDateString('zh-CN');
+    if (r.type === 'check_in') {
+      dayMap.set(d, { ...(dayMap.get(d) || {}), checkIn: new Date(r.check_time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) });
+    } else {
+      dayMap.set(d, { ...(dayMap.get(d) || {}), checkOut: new Date(r.check_time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) });
+    }
+  }
+  const dayEntries = Array.from(dayMap.entries()).reverse();
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 w-full max-w-sm mx-3 shadow-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-2 mb-4 shrink-0">
+          <span className="text-xl">📅</span>
+          <h3 className="text-sm text-gray-200 font-medium">我的考勤</h3>
+          <button onClick={onClose} className="ml-auto text-gray-500 hover:text-gray-300 text-sm">✕</button>
+        </div>
+
+        {/* 月份切换 */}
+        <div className="flex items-center justify-between mb-4 shrink-0">
+          <button onClick={prevMonth} className="text-gray-500 hover:text-gray-300 text-xs px-2 py-1">◀</button>
+          <span className="text-xs text-gray-200 font-medium">{month}</span>
+          <button onClick={nextMonth} className="text-gray-500 hover:text-gray-300 text-xs px-2 py-1">▶</button>
+        </div>
+
+        {err && <p className="text-[10px] text-red-400 mb-2 text-center shrink-0">{err}</p>}
+
+        {/* 统计卡片 */}
+        {stats && (
+          <div className="grid grid-cols-3 gap-2 mb-4 shrink-0">
+            <div className="bg-gray-900/50 rounded-lg p-2 text-center border border-gray-700/30">
+              <div className="text-lg font-bold text-blue-400">{stats.days || 0}</div>
+              <div className="text-[9px] text-gray-500">出勤天数</div>
+            </div>
+            <div className="bg-gray-900/50 rounded-lg p-2 text-center border border-gray-700/30">
+              <div className="text-lg font-bold text-green-400">{stats.check_in_count || 0}</div>
+              <div className="text-[9px] text-gray-500">上班打卡</div>
+            </div>
+            <div className="bg-gray-900/50 rounded-lg p-2 text-center border border-gray-700/30">
+              <div className="text-lg font-bold text-orange-400">{stats.check_out_count || 0}</div>
+              <div className="text-[9px] text-gray-500">下班打卡</div>
+            </div>
+          </div>
+        )}
+
+        {/* 记录列表 */}
+        <div className="flex-1 overflow-auto space-y-1 min-h-0">
+          {loading ? (
+            <div className="text-center py-6">
+              <span className="text-xs text-gray-500">加载中...</span>
+            </div>
+          ) : dayEntries.length === 0 ? (
+            <div className="text-center py-6">
+              <span className="text-xs text-gray-500">本月暂无打卡记录</span>
+            </div>
+          ) : (
+            dayEntries.map(([day, times]) => (
+              <div key={day} className="flex items-center justify-between bg-gray-900/30 rounded px-3 py-2 border border-gray-700/20">
+                <span className="text-xs text-gray-300">{day}</span>
+                <div className="flex items-center gap-3">
+                  {times.checkIn ? (
+                    <span className="text-[10px] text-green-400">⬆ {times.checkIn}</span>
+                  ) : (
+                    <span className="text-[10px] text-gray-600">—</span>
+                  )}
+                  {times.checkOut ? (
+                    <span className="text-[10px] text-orange-400">⬇ {times.checkOut}</span>
+                  ) : (
+                    <span className="text-[10px] text-gray-600">—</span>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** 打卡签到模态框 */
 function CheckInModal({
   onClose,
@@ -125,6 +258,7 @@ export function WorkerDashboard({ cloudApi }: Props) {
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
   const [showCheckIn, setShowCheckIn] = useState(false);
+  const [showAttendance, setShowAttendance] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -187,6 +321,11 @@ export function WorkerDashboard({ cloudApi }: Props) {
   const handleModuleClick = (m: QuickModule) => {
     if (m.id === 'clock-in') {
       setShowCheckIn(true);
+      return;
+    }
+    if (m.id === 'my-attendance') {
+      if (!userId) { showToast('请先登录'); return; }
+      setShowAttendance(true);
       return;
     }
     showToast(`${m.label} — 功能开发中`);
@@ -302,6 +441,15 @@ export function WorkerDashboard({ cloudApi }: Props) {
           todayStatus={todayStatus}
           userId={userId}
           onSuccess={handleCheckInSuccess}
+        />
+      )}
+
+      {/* 考勤统计模态框 */}
+      {showAttendance && (
+        <AttendanceModal
+          onClose={() => setShowAttendance(false)}
+          cloudApi={cloudApi}
+          userId={userId}
         />
       )}
     </div>

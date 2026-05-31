@@ -59,7 +59,14 @@ export const useUIStore = create<UIState>((set) => ({
   showSettingsModal: false,
   theme: 'dark',
 
-  activeSidebarPanel: 'explorer',
+  activeSidebarPanel: (() => {
+    try {
+      const saved = localStorage.getItem('last_sidebar_panel');
+      const valid: SidebarPanel[] = ['dashboard','explorer','search','chat','git','run-debug','extension','remote','workflow','admin','pipeline','review','pm','security','fusion-settings','vector-memory','dag-canvas','multi-agent','model-router','cron-scheduler','review-report','user-profile','openspace','openspace-script','openspace-dataset','openspace-profile','openspace-recorder'];
+      if (saved && valid.includes(saved as SidebarPanel)) return saved as SidebarPanel;
+    } catch {}
+    return 'explorer';
+  })(),
   showSidebar: true,
 
   showBottomPanel: false,
@@ -120,6 +127,8 @@ export const useUIStore = create<UIState>((set) => ({
     if (s.showSidebar && s.activeSidebarPanel === panel) {
       return { showSidebar: false };
     }
+    // 持久化最后打开的面板
+    try { localStorage.setItem('last_sidebar_panel', panel); } catch {}
     return { activeSidebarPanel: panel, showSidebar: true };
   }),
 

@@ -242,6 +242,7 @@ export function AdminPanel() {
             </div>
             <RoleDashboard
               tenantServerUrl={tenantServerUrl}
+              fromAdminPanel={true}
               isLoggedIn={!!adminToken}
             />
           </>

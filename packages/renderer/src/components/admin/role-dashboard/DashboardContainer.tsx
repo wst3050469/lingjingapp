@@ -4,13 +4,12 @@ import { RoleDashboard } from './RoleDashboard';
 /**
  * 首页仪表盘容器组件
  * 独立于 AdminPanel，可直接在 SidebarContainer 中使用。
- * 从 localStorage 读取租户服务器地址和管理员登录状态。
+ * 从 localStorage 读取租户服务器地址，不依赖云管理后台登录。
  */
 export function DashboardContainer() {
   const [tenantServerUrl, setTenantServerUrl] = useState<string>(
     () => localStorage.getItem('admin_tenant_server_url') || ''
   );
-  const isLoggedIn = !!localStorage.getItem('cloudAdminToken');
 
   return (
     <div className="h-full flex flex-col bg-cp-bg overflow-hidden">
@@ -38,7 +37,6 @@ export function DashboardContainer() {
       <div className="flex-1 overflow-auto p-3">
         <RoleDashboard
           tenantServerUrl={tenantServerUrl}
-          isLoggedIn={isLoggedIn}
         />
       </div>
     </div>

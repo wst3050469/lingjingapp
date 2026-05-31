@@ -7,7 +7,9 @@ import { WorkerDashboard } from './WorkerDashboard';
 
 interface Props {
   tenantServerUrl: string;
-  isLoggedIn: boolean;
+  /** 是否来自 AdminPanel（带云管理登录上下文） */
+  fromAdminPanel?: boolean;
+  isLoggedIn?: boolean;
 }
 
 const ROLE_PERSIST_KEY = 'admin_role_override';
@@ -21,7 +23,7 @@ const ALL_ROLES: { value: TenantRole; label: string; icon: string }[] = [
 ];
 
 /** 角色仪表盘统一入口 — 根据用户角色渲染对应的看板 */
-export function RoleDashboard({ tenantServerUrl, isLoggedIn }: Props) {
+export function RoleDashboard({ tenantServerUrl, fromAdminPanel, isLoggedIn }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -160,8 +162,8 @@ export function RoleDashboard({ tenantServerUrl, isLoggedIn }: Props) {
     });
   }, []);
 
-  // ── 未登录云管理后台 ──
-  if (!isLoggedIn) {
+  // ── 来自 AdminPanel 且未登录云管理后台 ──
+  if (fromAdminPanel && !isLoggedIn) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center px-4 py-8 max-w-xs">

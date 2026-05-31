@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { RoleDashboard } from './role-dashboard/RoleDashboard';
 
-type AdminTab = 'dashboard' | 'audit' | 'config' | 'data' | 'versions';
+type AdminTab = 'dashboard' | 'role-dashboard' | 'audit' | 'config' | 'data' | 'versions';
 
 interface AuditEntry {
   id: number;
@@ -45,6 +46,7 @@ export function AdminPanel() {
   const [branding, setBranding] = useState<AdminBranding>(() => loadBranding());
   const [showBranding, setShowBranding] = useState(false);
   const [brandingDraft, setBrandingDraft] = useState<AdminBranding>(() => ({ ...branding }));
+  const [tenantServerUrl, setTenantServerUrl] = useState<string>(() => localStorage.getItem('admin_tenant_server_url') || '');
 
   useEffect(() => {
     if (activeTab === 'dashboard') loadDashboardStats();
@@ -59,6 +61,17 @@ export function AdminPanel() {
       method,
       body,
       token: adminToken || undefined,
+    });
+  };
+
+  // Helper: call tenant app API (业务服务器，用于角色看板数据)
+  const tenantApi = async (endpoint: string, method: string = 'GET', body?: unknown) => {
+    return window.electronAPI.cloud.api({
+      endpoint,
+      method,
+      body,
+      token: adminToken || undefined,
+      baseUrl: tenantServerUrl || undefined,
     });
   };
 
@@ -167,7 +180,8 @@ export function AdminPanel() {
   };
 
   const tabs: { id: AdminTab; label: string }[] = [
-    { id: 'dashboard', label: '仪表盘' },
+    { id: 'dashboard', label: '系统状态' },
+    { id: 'role-dashboard', label: '业务仪表盘' },
     { id: 'audit', label: '审计日志' },
     { id: 'config', label: '系统配置' },
     { id: 'data', label: '数据管理' },
@@ -216,6 +230,35 @@ export function AdminPanel() {
       </div>
       <div className="flex-1 overflow-auto p-3">
         {activeTab === 'dashboard' && <DashboardTab stats={stats} />}
+        {activeTab === 'role-dashboard' && (
+          <>
+            {/* 租户服务器地址配置 */}
+            <div className="mb-3 flex items-center gap-2">
+              <input
+                type="text"
+                value={tenantServerUrl}
+                onChange={e => {
+                  setTenantServerUrl(e.target.value);
+                  localStorage.setItem('admin_tenant_server_url', e.target.value);
+                }}
+                placeholder="租户API地址（如 http://localhost:8000/api）"
+                className="flex-1 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-[10px] text-gray-300 outline-none focus:border-blue-500"
+              />
+              <button
+                onClick={() => setTenantServerUrl('')}
+                className="text-[9px] px-2 py-1 rounded text-gray-500 hover:text-gray-300"
+                title="重置为默认"
+              >
+                ✕
+              </button>
+            </div>
+            <RoleDashboard
+              cloudApi={tenantApi}
+              serverUrl={tenantServerUrl || adminServerUrl}
+              isLoggedIn={!!adminToken}
+            />
+          </>
+        )}
         {activeTab === 'audit' && <AuditTab logs={auditLogs} />}
         {activeTab === 'config' && <ConfigTab />}
         {activeTab === 'data' && <DataTab onBackup={handleDbBackup} onClean={handleCacheClean} />}

@@ -67,24 +67,36 @@
 - ✅ 向后兼容：旧版 AdminPanel 功能不受影响
 - ✅ TypeScript 类型检查 — 新增文件零错误
 
-### V5 优化 — 仪表盘独立入口 + 交互反馈 + 面板持久化（v1.64.13）
+### V6 功能 — 工人打卡签到端到端实现
+- 新增 `CheckInModal` 打卡签到模态框
+- 上班打卡 → 实时更新状态为"已上班"，调用 `POST /api/attendance/check-in`
+- 下班打卡 → 实时更新状态为"已下班"，调用 `POST /api/attendance/check-out"
+- 可选打卡位置输入
+- 打卡成功/失败 Toast 反馈
+- 今日状态卡片新增"去打卡"快捷按钮
+- **风险**: 🟢 低 — 纯前端组件 + 已有后端 API
+
+### V5 优化 — API路径审计 + 仪表盘可用性
 
 **问题修复：**
 1. 🏠 **首页入口独立化** — 不再依赖云管理后台 token，打开即显示租户登录/角色预览
 2. 🖱️ **快捷模块可点击** — 三个看板的快捷功能卡片均支持点击，显示 Toast 反馈"功能开发中"
 3. 🚪 **退出租户后保留预览** — 退出后"角色预览"列表仍然可见，可随时切换预览
 4. 💾 **面板持久化** — `setSidebarPanel` 自动保存最后面板到 localStorage，重启自动恢复
+5. 🔗 **API 路径审计** — 修复 WorkerDashboard 考勤 API 路径 (`/api/v1/attendance/today` → `/api/attendance/today/{userId}`)
+6. 👤 **Profile API 新增 user_id** — 前端可获取当前用户名，用于考勤等需要指定用户的 API
 
-**修改文件 (7个)**
+**修改文件 (8个)**
 | 文件 | 变更 |
 |:-----|:------|
 | `DashboardContainer.tsx` | 移除 isLoggedIn 依赖，独立工作 |
 | `RoleDashboard.tsx` | 新增 fromAdminPanel prop；仅 AdminPanel 内需云管理登录 |
 | `TenantAdminDashboard.tsx` | 快捷模块 onClick + toast |
 | `ProjectManagerDashboard.tsx` | 同上 |
-| `WorkerDashboard.tsx` | 同上 |
+| `WorkerDashboard.tsx` | 修正考勤 API 路径 + 从 profile 取 userId |
 | `ui-store.ts` | `setSidebarPanel` 持久化 last_sidebar_panel；初始化时恢复 |
 | `AdminPanel.tsx` | 传递 `fromAdminPanel={true}` |
+| `server/app/routers/profile.py` | 返回数据增加 `user_id` 字段 |
 
 ### V4 增强 — ActivityBar 首页入口
 - 新增 `DashboardContainer` 独立组件，不依赖 AdminPanel

@@ -18,6 +18,12 @@ export function WorkerDashboard({ cloudApi }: Props) {
     setTimeout(() => setToast(''), 2000);
   };
 
+  /** 从 cloudApi 响应中提取 data（兼容 {data:...} 和裸返回） */
+  const extractData = (res: any) => {
+    if (!res) return null;
+    return res.data !== undefined ? res.data : res;
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -28,15 +34,19 @@ export function WorkerDashboard({ cloudApi }: Props) {
     try {
       // 获取用户资料（含项目绑定信息）
       const profileRes = await cloudApi('/api/v1/user/profile').catch(() => null);
-      if (profileRes?.tenant_role) {
+      const profileData = extractData(profileRes);
+      const userId = profileData?.user_id || profileRes?.user_id || '';
+      if (profileRes?.tenant_role || profileData?.tenant_role) {
         setProfile(profileRes);
       }
 
-      // 尝试获取今日打卡状态
-      const now = new Date().toISOString().slice(0, 10);
-      const attendanceRes = await cloudApi(`/api/v1/attendance/today?date=${now}`).catch(() => null);
-      if (attendanceRes?.data?.status) {
-        setTodayStatus(attendanceRes.data.status);
+      // 通过认证 token 获取今日打卡状态（用 userId）
+      if (userId) {
+        const attendanceRes = await cloudApi(`/api/attendance/today/${userId}`).catch(() => null);
+        if (attendanceRes?.records?.[0]?.check_in) {
+          const hasCheckOut = !!attendanceRes.records[0].check_out;
+          setTodayStatus(hasCheckOut ? '已下班' : '已上班');
+        }
       }
     } catch (err: any) {
       setError(err.message || '加载失败');

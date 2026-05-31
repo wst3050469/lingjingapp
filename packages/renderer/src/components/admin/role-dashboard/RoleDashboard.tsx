@@ -33,6 +33,7 @@ export function RoleDashboard({ tenantServerUrl, fromAdminPanel, isLoggedIn }: P
     return null;
   });
   const [showRolePicker, setShowRolePicker] = useState(false);
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
 
   // 租户登录状态（独立于云管理登录）
   const [tenantToken, setTenantToken] = useState<string>(() => localStorage.getItem(TENANT_TOKEN_KEY) || '');
@@ -279,6 +280,57 @@ export function RoleDashboard({ tenantServerUrl, fromAdminPanel, isLoggedIn }: P
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {/* 角色快捷切换 */}
+          <div className="relative">
+            <button
+              onClick={() => setShowRoleMenu(v => !v)}
+              className="text-[9px] px-1.5 py-0.5 rounded bg-gray-700 text-gray-400 hover:text-gray-200"
+              title="切换角色预览"
+            >
+              🔄
+            </button>
+            {showRoleMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowRoleMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 z-20 bg-gray-800 border border-gray-600 rounded-lg shadow-xl py-1 min-w-[140px]">
+                  {ALL_ROLES.map(r => (
+                    <button
+                      key={r.value}
+                      onClick={() => {
+                        handleManualRoleSelect(r.value);
+                        setShowRoleMenu(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-2 ${
+                        role === r.value && !isManualMode ? 'text-blue-400 bg-blue-500/10' :
+                        manualRole === r.value ? 'text-amber-400 bg-amber-500/10' :
+                        'text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      <span>{r.icon}</span>
+                      <span className="flex-1">{r.label}</span>
+                      {(role === r.value && !isManualMode) && <span className="text-[9px] text-gray-500">当前</span>}
+                      {manualRole === r.value && <span className="text-[9px] text-amber-500">预览</span>}
+                    </button>
+                  ))}
+                  {isManualMode && (
+                    <div className="border-t border-gray-700/50 mt-1 pt-1">
+                      <button
+                        onClick={() => {
+                          setManualRole(null);
+                          setShowRoleMenu(false);
+                          localStorage.removeItem(ROLE_PERSIST_KEY);
+                          if (tenantToken) loadProfile();
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-[10px] text-gray-500 hover:text-gray-300"
+                      >
+                        ← 恢复真实角色
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
           {tenantUser && <span className="text-[9px] text-gray-500">{tenantUser}</span>}
           <button onClick={handleTenantLogout} className="text-[9px] px-1.5 py-0.5 rounded bg-gray-700 text-gray-400 hover:text-red-400" title="退出租户登录">🚪</button>
         </div>

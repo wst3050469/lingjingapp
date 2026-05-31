@@ -63,6 +63,19 @@ async def get_records(user_id: str, month: Optional[str] = None):
     return {"records": records}
 
 
+class WageResponse(BaseModel):
+    daily_wage: float = 0
+    records: list = []
+    total_paid: float = 0
+
+
+class FundApplyRequest(BaseModel):
+    user_id: str
+    amount: float
+    reason: str = ""
+    project_name: str = ""
+
+
 @router.get("/wages/{user_id}")
 async def get_wages(user_id: str):
     """获取工人工资信息（日薪 + 工资支付记录）"""
@@ -102,3 +115,40 @@ async def get_wages(user_id: str):
         wage_info["total_paid"] = sum(r["amount"] for r in wage_info["records"])
 
     return wage_info
+
+
+@router.post("/fund-apply")
+async def apply_fund(req: FundApplyRequest):
+    """工人申请备用金"""
+    import db as database
+
+    if req.amount <= 0:
+        raise HTTPException(status_code=400, detail="金额必须大于0")
+
+    # 查找 user 的 tenant_id
+    async with database.pool.acquire() as conn:
+        tu = await conn.fetchrow(
+            "SELECT tenant_id FROM tenant_users WHERE user_id=$1", req.user_id
+        )
+        if not tu:
+            raise HTTPException(status_code=404, detail="用户不存在")
+
+        # 查找项目ID（根据项目名称）
+        pid = None
+        if req.project_name:
+            proj = await conn.fetchrow(
+                "SELECT id FROM biz_projects WHERE tenant_id=$1 AND name=$2",
+                tu["tenant_id"], req.project_name,
+            )
+            pid = proj["id"] if proj else None
+
+        # 创建备用金申请记录
+        row = await conn.fetchrow(
+            """INSERT INTO biz_finance
+               (tenant_id, project_id, type, category, amount, applicant_name, status, reason)
+               VALUES ($1, $2, 'fund_application', 'reserve_fund', $3, $4, 'pending', $5)
+               RETURNING id""",
+            tu["tenant_id"], pid, req.amount, req.user_id, req.reason[:200] if req.reason else "备用金申请",
+        )
+
+    return {"code": 0, "id": row["id"], "amount": req.amount, "status": "pending", "msg": "备用金申请已提交"}

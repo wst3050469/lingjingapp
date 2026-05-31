@@ -7,26 +7,28 @@
 
 ## 当前状态
 
-- **最新版本**: v1.64.11
-- **Git HEAD**: 本会话完成3次提交（遗留变更整理 + 日志规范化 + ACTIVE_TASK同步）
+- **最新版本**: v1.64.12
+- **Git HEAD**: Phase 3 品牌自定义完成
 - **所有服务**: ✅ 正常运行
-- **本会话状态**: ✅ 已完成 — 日志规范化 + 租户管理员登录个性化分析
+- **本会话状态**: ✅ 已完成 — Phase 3: 品牌自定义（Logo/主题）
 
-## 2026-06-04 会话完成 — 日志规范化 + 仓库整理
+## 2026-06-04 会话完成 — Phase 3: 品牌自定义（Logo/主题）
 
 ### 完成内容
-1. **创建 `logs/DEVLOG.md`** (321行) — 整合 `开发日志.md` + `日志.md` 到规范路径
-2. **修复 Git 冲突** — `update-server/data/versions.json` 冲突已解决并提交
-3. **提交全部遗留变更** (24个文件, +853/-155行)
-   - 安全修复: CloudSyncTab API Key, voice_asr, hardware_voice
-   - 清理: useFileMentions 删除, android keystore
-   - 审计: audit-report.md 新增
-   - 日志: DEVLOG.md 新增
-4. **更新 ACTIVE_TASK.md** — 同步最新状态
+1. **Phase 3: 品牌自定义（Logo/主题）** — 管理面板品牌覆盖功能
+   - 新增 `AdminBranding` 接口定义：`title`、`accentColor`、`logo` 字段
+   - 新增 `DEFAULT_BRANDING` / `loadBranding()` / `saveBranding()` 工具函数
+   - 新增品牌设置模态对话框：标题编辑、颜色选择器、Logo（Emoji/文本）输入、重置
+   - 应用 CSS 自定义属性注入：`--admin-accent` / `--admin-accent-hover` / `--admin-accent-light` / `--admin-accent-bg`
+   - 注入全局 `.admin-btn-primary` / `.admin-text-accent` / `.admin-bg-accent` 等工具类
+   - 标题栏显示自定义标题和 Logo 标志
+   - 新增齿轮图标 ⚙️ 按钮打开品牌设置
+   - localStorage 持久化，会话间保持
+   - 设置对话框支持点击空白关闭、重置为默认值
 
 ### 当前状态
-- ✅ **日志文件**: 已创建并整合完毕（322行，覆盖v1.64.2~v1.64.11全部历史）
-- 📝 **内容覆盖**: 版本发布、Bug修复、安全加固、规格审计、TypeScript编译修复等
+- ✅ **Phase 3 品牌自定义**: 已完成并提交
+- 📝 **TypeScript 编译**: 无新增错误
 
 ## 2026-06-04 租户管理员登录入口个性化分析
 
@@ -413,3 +415,34 @@ FONT_SCALE=2.0: 10→20, 11→22, 12→24, 13→26, 14→28, 15→30, 16→32, 1
 - ✅ 纯前端功能，不涉及 IPC/API 变更
 - ✅ 密码仅存储于本机 localStorage
 - ✅ 空书签时隐藏「快捷登录」区域
+
+---
+
+## 2026-06-04 v1.64.12 — 自定义URL多租户路由（Phase 2）✅
+
+### 实现内容
+在管理员登录面板中新增自定义服务器地址输入，支持多租户场景。
+
+### 新增功能
+1. **自定义服务器地址** — 登录表单新增「服务器地址」字段，可连接不同的云管理后台
+2. **地址持久化** — 最后使用的服务器地址保存在 localStorage
+3. **书签集成** — 快捷方式收藏夹（Phase 1）扩展存储 serverUrl，书签按钮显示对应服务器
+4. **地址显示** — 登录后顶部显示当前连接的服务器地址
+5. **兼容性** — 字段为空时使用默认云端地址（`ide.zhejiangjinmo.com`）
+
+### 实现细节
+- `cloud:proxy-api` IPC 已支持 `baseUrl` 参数，`AdminLoginTab` 直接传递
+- 旧书签（无 `serverUrl`）自动使用默认地址，完全向后兼容
+
+### 修改文件
+- `packages/renderer/src/components/admin/AdminPanel.tsx`
+  - `AdminBookmark` 接口新增 `serverUrl?: string`
+  - `handleAdminLogin` 新增 `serverUrl` 参数并传递到 `cloud.api()`
+  - `AdminLoginTab` 新增 `serverUrl` 状态、输入框、持久化逻辑
+  - `VersionTab` 新增 `serverUrl` prop，显示当前服务器地址
+  - 行数: 657→704 行 (+47 行)
+
+### 风险 & 验证
+- ✅ 类型检查通过（无新增错误）
+- ✅ 向后兼容：旧书签无 serverUrl 时使用默认地址
+- ✅ 向后兼容：serverUrl 为空时行为与 Phase 1 完全相同

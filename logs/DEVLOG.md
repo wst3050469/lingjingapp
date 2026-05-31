@@ -67,6 +67,13 @@
 - ✅ 向后兼容：旧版 AdminPanel 功能不受影响
 - ✅ TypeScript 类型检查 — 新增文件零错误
 
+### V8 功能 — 工人"我的考勤"月度统计模块
+- 新增 `AttendanceModal` 考勤统计模态框
+- 月度出勤天数 / 上班打卡 / 下班打卡 统计卡片
+- 月份切换导航（◀ ▶）
+- 按日展示打卡记录列表（⬆上班时间 ⬇下班时间）
+- 后端新增 `GET /api/attendance/records/{user_id}?month=YYYY-MM` 端点
+
 ### V7 增强 — 仪表盘内快捷角色切换
 - 顶部角色信息栏新增 🔄 按钮，点击打开角色下拉菜单
 - 支持在 admin/project_manager/worker/technician 之间一键切换

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 type AdminTab = 'dashboard' | 'audit' | 'config' | 'data' | 'versions';
 
@@ -8,6 +8,15 @@ interface AuditEntry {
   user: string;
   details: string;
   timestamp: string;
+}
+
+interface AdminBookmark {
+  id: string;
+  label: string;
+  username: string;
+  password: string;
+  createdAt: number;
+  lastUsedAt?: number;
 }
 
 interface VersionEntry {
@@ -203,19 +212,56 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/* ─── Bookmark helpers ─── */
+
+const BOOKMARKS_KEY = 'admin_bookmarks';
+
+function loadBookmarks(): AdminBookmark[] {
+  try {
+    const raw = localStorage.getItem(BOOKMARKS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveBookmarks(bookmarks: AdminBookmark[]) {
+  localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
+}
+
 /** Admin login form for cloud server version management */
 function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: string) => Promise<boolean> }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [bookmarks, setBookmarks] = useState<AdminBookmark[]>(() => loadBookmarks());
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [bookmarkLabel, setBookmarkLabel] = useState('');
 
-  const handleSubmit = async () => {
-    if (!username || !password) { setError('请输入用户名和密码'); return; }
+  // Reload bookmarks from localStorage on mount
+  useEffect(() => {
+    setBookmarks(loadBookmarks());
+  }, []);
+
+  const syncBookmarks = useCallback((next: AdminBookmark[]) => {
+    setBookmarks(next);
+    saveBookmarks(next);
+  }, []);
+
+  const handleSubmit = async (prefillUsername?: string, prefillPassword?: string) => {
+    const u = prefillUsername ?? username;
+    const p = prefillPassword ?? password;
+    if (!u || !p) { setError('请输入用户名和密码'); return; }
     setLoading(true);
     setError('');
     try {
-      await onLogin(username, password);
+      await onLogin(u, p);
+      // Update lastUsedAt for the matching bookmark
+      const updated = bookmarks.map(b =>
+        b.username === u && b.password === p
+          ? { ...b, lastUsedAt: Date.now() }
+          : b
+      );
+      syncBookmarks(updated);
     } catch (err: any) {
       setError(err.message || '登录失败');
     } finally {
@@ -223,10 +269,69 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
     }
   };
 
+  const handleUseBookmark = async (b: AdminBookmark) => {
+    setUsername(b.username);
+    setPassword(b.password);
+    await handleSubmit(b.username, b.password);
+  };
+
+  const handleSaveBookmark = () => {
+    if (!username || !password || !bookmarkLabel.trim()) return;
+    const newBm: AdminBookmark = {
+      id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      label: bookmarkLabel.trim(),
+      username,
+      password,
+      createdAt: Date.now(),
+    };
+    syncBookmarks([...bookmarks, newBm]);
+    setShowSaveDialog(false);
+    setBookmarkLabel('');
+  };
+
+  const handleDeleteBookmark = (id: string) => {
+    syncBookmarks(bookmarks.filter(b => b.id !== id));
+  };
+
   return (
     <div className="flex items-center justify-center h-full">
       <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 w-full max-w-sm">
         <h3 className="text-sm text-gray-200 font-medium mb-4 text-center">云端管理登录</h3>
+
+        {/* Quick access bookmarks */}
+        {bookmarks.length > 0 && (
+          <div className="mb-4">
+            <div className="text-[10px] text-gray-500 mb-2">快捷登录</div>
+            <div className="space-y-1">
+              {bookmarks.map(b => (
+                <div key={b.id} className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleUseBookmark(b)}
+                    disabled={loading}
+                    className="flex-1 text-left text-[11px] px-2.5 py-1.5 rounded bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-600/50 disabled:opacity-50 truncate"
+                    title={`${b.username} · ${b.label}`}
+                  >
+                    <span className="font-medium">{b.label}</span>
+                    {b.lastUsedAt && (
+                      <span className="text-[9px] text-gray-600 ml-2">
+                        {new Date(b.lastUsedAt).toLocaleDateString('zh-CN')}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBookmark(b.id)}
+                    className="text-[9px] px-1.5 py-1 rounded text-gray-600 hover:text-red-400 hover:bg-red-500/10"
+                    title="删除快捷方式"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-gray-700/50 my-3" />
+          </div>
+        )}
+
         <div className="space-y-3">
           <input
             type="text"
@@ -248,12 +353,53 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
           />
           {error && <p className="text-[10px] text-red-400">{error}</p>}
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={loading}
             className="w-full text-xs px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50"
           >
             {loading ? '登录中...' : '登录管理后台'}
           </button>
+
+          {/* Save as bookmark button */}
+          {username && password && (
+            <div className="pt-1">
+              {!showSaveDialog ? (
+                <button
+                  onClick={() => { setBookmarkLabel(username); setShowSaveDialog(true); }}
+                  className="w-full text-[10px] px-3 py-1.5 rounded text-gray-500 hover:text-gray-300 border border-dashed border-gray-600/50 hover:border-gray-500"
+                >
+                  + 保存为快捷方式
+                </button>
+              ) : (
+                <div className="space-y-2 p-2 bg-gray-900/50 rounded border border-gray-700/50">
+                  <input
+                    type="text"
+                    value={bookmarkLabel}
+                    onChange={e => setBookmarkLabel(e.target.value)}
+                    placeholder="快捷方式名称（如：生产环境）"
+                    className="w-full bg-gray-900 border border-gray-600 rounded px-2 py-1 text-[10px] text-gray-200 outline-none focus:border-blue-500"
+                    onKeyDown={e => e.key === 'Enter' && handleSaveBookmark()}
+                    autoFocus
+                  />
+                  <div className="flex gap-1">
+                    <button
+                      onClick={handleSaveBookmark}
+                      disabled={!bookmarkLabel.trim()}
+                      className="flex-1 text-[10px] px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50"
+                    >
+                      保存
+                    </button>
+                    <button
+                      onClick={() => setShowSaveDialog(false)}
+                      className="text-[10px] px-2 py-1 rounded text-gray-500 hover:text-gray-300"
+                    >
+                      取消
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -383,3 +383,33 @@ FONT_SCALE=2.0: 10→20, 11→22, 12→24, 13→26, 14→28, 15→30, 16→32, 1
 ├── 分辨率切换.desktop      ← 系统工具（未动）
 └── README.txt              ← 远程桌面说明（未动）
 ```
+
+---
+
+## 2026-06-04 v1.64.12 — 管理员快捷方式收藏夹（Phase 1）✅
+
+### 实现内容
+在管理员登录面板（`AdminPanel.tsx`）中新增快捷方式收藏夹功能。
+
+### 新增功能
+1. **快捷登录区域** — 已保存的书签以按钮列表显示在登录表单上方，点击即自动填充并触发登录
+2. **保存为快捷方式** — 输入用户名/密码后，可保存为带自定义名称的快捷方式
+3. **管理快捷方式** — 每个书签旁有删除按钮（✕），可删除不再需要的快捷方式
+4. **使用追踪** — 登录后自动更新 `lastUsedAt` 时间戳
+
+### 数据存储
+- localStorage key: `admin_bookmarks`
+- 格式: AdminBookmark[] (id, label, username, password, createdAt, lastUsedAt)
+
+### 修改文件
+- `packages/renderer/src/components/admin/AdminPanel.tsx` — 扩展 AdminLoginTab + 新增 bookmark 辅助函数
+  - 新增 `AdminBookmark` 接口
+  - 新增 `loadBookmarks()` / `saveBookmarks()` 辅助函数
+  - AdminLoginTab 增加书签列表显示、保存对话框、删除操作
+  - 代码行数: 509→654 行 (+145行)
+
+### 风险 & 验证
+- ✅ 类型检查通过（无新增错误）
+- ✅ 纯前端功能，不涉及 IPC/API 变更
+- ✅ 密码仅存储于本机 localStorage
+- ✅ 空书签时隐藏「快捷登录」区域

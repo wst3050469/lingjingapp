@@ -67,6 +67,14 @@
 - ✅ 向后兼容：旧版 AdminPanel 功能不受影响
 - ✅ TypeScript 类型检查 — 新增文件零错误
 
+### V9 功能 — 工人"工资查询"模块
+- 新增 `WageModal` 工资查询模态框
+- 展示日薪标准（从 tenant_users.ext_data.daily_wage 读取）
+- 展示累计已发工资总额
+- 工资发放记录列表（来自 biz_finance type='wage'）
+- 后端新增 `GET /api/attendance/wages/{user_id}` 端点
+- 工人看板已有 **3/6 个模块实现真功能**
+
 ### V8 功能 — 工人"我的考勤"月度统计模块
 - 新增 `AttendanceModal` 考勤统计模态框
 - 月度出勤天数 / 上班打卡 / 下班打卡 统计卡片

@@ -44,3 +44,20 @@ async def get_stats(user_id: str, month: Optional[str] = None):
     """获取考勤统计"""
     stats = await attendance_service.get_month_stats(user_id, month)
     return stats
+
+
+@router.get("/records/{user_id}")
+async def get_records(user_id: str, month: Optional[str] = None):
+    """获取指定月份的打卡记录列表"""
+    if month:
+        from datetime import date
+        year, mon = map(int, month.split("-"))
+        start = date(year, mon, 1)
+        if mon == 12:
+            end = date(year + 1, 1, 1)
+        else:
+            end = date(year, mon + 1, 1)
+        records = await attendance_service.get_records(user_id, start, end)
+    else:
+        records = await attendance_service.get_today_records(user_id)
+    return {"records": records}

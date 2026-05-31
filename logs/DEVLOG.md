@@ -67,6 +67,12 @@
 - ✅ 向后兼容：旧版 AdminPanel 功能不受影响
 - ✅ TypeScript 类型检查 — 新增文件零错误
 
+### V4 增强 — ActivityBar 首页入口
+- 新增 `DashboardContainer` 独立组件，不依赖 AdminPanel
+- ActivityBar 顶部新增 🏠 首页图标，点击直接打开角色仪表盘
+- 独立的服务器地址配置（右上角输入框），与 AdminPanel 共享 localStorage
+- `SidebarPanel` 类型新增 `'dashboard'`，`ui-store.ts` 同步更新
+
 ### V3 增强 — 独立租户登录
 - RoleDashboard 现在自带完整租户登录表单，独立于云管理后台登录
 - 使用 `fetch` 直接调用租户API，不经过 Electron IPC 代理（避免 token 混淆）

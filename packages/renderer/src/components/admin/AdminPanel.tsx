@@ -10,6 +10,12 @@ interface AuditEntry {
   timestamp: string;
 }
 
+interface AdminBranding {
+  title: string;
+  accentColor: string;
+  logo: string;
+}
+
 interface AdminBookmark {
   id: string;
   label: string;
@@ -36,6 +42,9 @@ export function AdminPanel() {
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem('cloudAdminToken') || '');
   const [adminServerUrl, setAdminServerUrl] = useState<string>('');
+  const [branding, setBranding] = useState<AdminBranding>(() => loadBranding());
+  const [showBranding, setShowBranding] = useState(false);
+  const [brandingDraft, setBrandingDraft] = useState<AdminBranding>(() => ({ ...branding }));
 
   useEffect(() => {
     if (activeTab === 'dashboard') loadDashboardStats();
@@ -139,6 +148,12 @@ export function AdminPanel() {
     setVersions([]);
   };
 
+  const handleBrandingSave = () => {
+    setBranding({ ...brandingDraft });
+    saveBranding(brandingDraft);
+    setShowBranding(false);
+  };
+
   const handleDbBackup = async () => {
     try {
       await window.electron.ipcRenderer.invoke('admin:dbBackup');
@@ -160,9 +175,28 @@ export function AdminPanel() {
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{
+      '--admin-accent': branding.accentColor,
+      '--admin-accent-hover': branding.accentColor + 'cc',
+      '--admin-accent-light': branding.accentColor + '33',
+      '--admin-accent-bg': branding.accentColor + '1a',
+    } as React.CSSProperties}>
+      <style>{`
+        .admin-panel { --accent: ${branding.accentColor}; }
+        .admin-btn-primary { background-color: var(--admin-accent); color: white; }
+        .admin-btn-primary:hover { background-color: var(--admin-accent-hover); }
+        .admin-btn-primary:disabled { opacity: 0.5; }
+        .admin-text-accent { color: var(--admin-accent); }
+        .admin-bg-accent { background-color: var(--admin-accent-light); }
+        .admin-border-accent:focus { border-color: var(--admin-accent); }
+        .admin-btn-ghost-accent { color: var(--admin-accent); }
+        .admin-btn-ghost-accent:hover { background-color: var(--admin-accent-light); }
+      `}</style>
       <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-700">
-        <h2 className="text-sm font-medium text-gray-200 mr-3">管理面板</h2>
+        <h2 className="text-sm font-medium text-gray-200 mr-3">
+          {branding.logo && <span className="mr-1.5">{branding.logo}</span>}
+          {branding.title}
+        </h2>
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -172,6 +206,13 @@ export function AdminPanel() {
             {tab.label}
           </button>
         ))}
+        <button
+          onClick={() => { setBrandingDraft({ ...branding }); setShowBranding(true); }}
+          className="ml-auto text-[10px] px-1.5 py-1 rounded text-gray-600 hover:text-gray-400 hover:bg-gray-700/50"
+          title="品牌设置"
+        >
+          ⚙️
+        </button>
       </div>
       <div className="flex-1 overflow-auto p-3">
         {activeTab === 'dashboard' && <DashboardTab stats={stats} />}
@@ -194,6 +235,83 @@ export function AdminPanel() {
           )
         )}
       </div>
+
+      {/* Branding settings dialog */}
+      {showBranding && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50" onClick={() => setShowBranding(false)}>
+          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 w-full max-w-sm mx-3 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm text-gray-200 font-medium mb-4">品牌设置</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] text-gray-500 block mb-1">面板标题</label>
+                <input
+                  type="text"
+                  value={brandingDraft.title}
+                  onChange={e => setBrandingDraft(p => ({ ...p, title: e.target.value }))}
+                  className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-admin-accent"
+                  placeholder="管理面板"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500 block mb-1">强调色</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={brandingDraft.accentColor}
+                    onChange={e => setBrandingDraft(p => ({ ...p, accentColor: e.target.value }))}
+                    className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded"
+                  />
+                  <input
+                    type="text"
+                    value={brandingDraft.accentColor}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (/^#[0-9a-fA-F]{6}$/.test(v) || /^#[0-9a-fA-F]{3}$/.test(v) || v === '') {
+                        setBrandingDraft(p => ({ ...p, accentColor: v }));
+                      }
+                    }}
+                    className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-admin-accent font-mono"
+                    placeholder="#3b82f6"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500 block mb-1">Logo 标志（Emoji 或简短文本）</label>
+                <input
+                  type="text"
+                  value={brandingDraft.logo}
+                  onChange={e => setBrandingDraft(p => ({ ...p, logo: e.target.value }))}
+                  className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-admin-accent"
+                  placeholder="如 🚀 或留空"
+                  maxLength={8}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleBrandingSave}
+                  className="flex-1 text-xs px-4 py-2 rounded admin-btn-primary"
+                >
+                  保存
+                </button>
+                <button
+                  onClick={() => {
+                    setBrandingDraft({ ...DEFAULT_BRANDING });
+                  }}
+                  className="text-xs px-3 py-2 rounded text-gray-500 hover:text-gray-300"
+                >
+                  重置
+                </button>
+                <button
+                  onClick={() => setShowBranding(false)}
+                  className="text-xs px-3 py-2 rounded text-gray-500 hover:text-gray-300"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -216,6 +334,27 @@ function StatusBadge({ status }: { status: string }) {
       {labels[status] || status}
     </span>
   );
+}
+
+/* ─── Branding helpers ─── */
+
+const BRANDING_KEY = 'admin_branding';
+
+const DEFAULT_BRANDING: AdminBranding = {
+  title: '管理面板',
+  accentColor: '#3b82f6',
+  logo: '',
+};
+
+function loadBranding(): AdminBranding {
+  try {
+    const raw = localStorage.getItem(BRANDING_KEY);
+    return raw ? { ...DEFAULT_BRANDING, ...JSON.parse(raw) } : { ...DEFAULT_BRANDING };
+  } catch { return { ...DEFAULT_BRANDING }; }
+}
+
+function saveBranding(b: AdminBranding) {
+  localStorage.setItem(BRANDING_KEY, JSON.stringify(b));
 }
 
 /* ─── Bookmark helpers ─── */

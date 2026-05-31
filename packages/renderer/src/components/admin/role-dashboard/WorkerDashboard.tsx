@@ -10,11 +10,13 @@ function CheckInModal({
   onClose,
   cloudApi,
   todayStatus,
+  userId,
   onSuccess,
 }: {
   onClose: () => void;
   cloudApi: Props['cloudApi'];
   todayStatus: '未打卡' | '已上班' | '已下班';
+  userId: string;
   onSuccess: (newStatus: '未打卡' | '已上班' | '已下班') => void;
 }) {
   const [location, setLocation] = useState('');
@@ -25,8 +27,9 @@ function CheckInModal({
     setLoading(true);
     setErr('');
     try {
+      const uid = userId || 'anonymous';
       await cloudApi('/api/attendance/check-in', 'POST', {
-        user_id: '',
+        user_id: uid,
         address: location || undefined,
       });
       onSuccess('已上班');
@@ -41,8 +44,9 @@ function CheckInModal({
     setLoading(true);
     setErr('');
     try {
+      const uid = userId || 'anonymous';
       await cloudApi('/api/attendance/check-out', 'POST', {
-        user_id: '',
+        user_id: uid,
       });
       onSuccess('已下班');
     } catch (e: any) {
@@ -296,6 +300,7 @@ export function WorkerDashboard({ cloudApi }: Props) {
           onClose={() => setShowCheckIn(false)}
           cloudApi={cloudApi}
           todayStatus={todayStatus}
+          userId={userId}
           onSuccess={handleCheckInSuccess}
         />
       )}

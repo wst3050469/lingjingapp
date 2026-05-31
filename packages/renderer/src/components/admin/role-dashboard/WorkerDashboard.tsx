@@ -334,6 +334,85 @@ function WageModal({
   );
 }
 
+/** 备用金申请模态框 */
+function FundApplyModal({
+  onClose,
+  cloudApi,
+  userId,
+}: {
+  onClose: () => void;
+  cloudApi: Props['cloudApi'];
+  userId: string;
+}) {
+  const [amount, setAmount] = useState('');
+  const [reason, setReason] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ success: boolean; msg: string } | null>(null);
+
+  const handleSubmit = async () => {
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await cloudApi('/api/attendance/fund-apply', 'POST', {
+        user_id: userId,
+        amount: amt,
+        reason: reason || '备用金申请',
+      });
+      if (res?.code === 0) {
+        setResult({ success: true, msg: `✅ 申请成功！¥${amt.toLocaleString()} 备用金待审批` });
+      } else {
+        setResult({ success: false, msg: res?.msg || '申请失败' });
+      }
+    } catch (e: any) {
+      setResult({ success: false, msg: e.message || '提交失败' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 w-full max-w-sm mx-3 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xl">💸</span>
+          <h3 className="text-sm text-gray-200 font-medium">申请备用金</h3>
+          <button onClick={onClose} className="ml-auto text-gray-500 hover:text-gray-300 text-sm">✕</button>
+        </div>
+
+        {result ? (
+          <div className="text-center py-4">
+            <p className={`text-xs mb-3 ${result.success ? 'text-green-400' : 'text-red-400'}`}>{result.msg}</p>
+            <button onClick={onClose} className="text-xs px-4 py-1.5 rounded bg-gray-700 text-gray-300 hover:bg-gray-600">关闭</button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="text-[10px] text-gray-500 block mb-1">金额（元）</label>
+              <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
+                placeholder="输入申请金额" disabled={loading}
+                className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-blue-500 disabled:opacity-50"
+                min={0} step={0.01}
+                onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500 block mb-1">用途说明</label>
+              <textarea value={reason} onChange={e => setReason(e.target.value)}
+                placeholder="说明申请备用金的用途" disabled={loading} rows={2}
+                className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-blue-500 disabled:opacity-50 resize-none" />
+            </div>
+            <button onClick={handleSubmit} disabled={loading || !amount || parseFloat(amount) <= 0}
+              className="w-full text-xs px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50">
+              {loading ? '提交中...' : '提交申请'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** 工人看板：打卡状态、出工统计、工资查询 */
 export function WorkerDashboard({ cloudApi }: Props) {
   const [profile, setProfile] = useState<any>(null);
@@ -345,6 +424,7 @@ export function WorkerDashboard({ cloudApi }: Props) {
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [showAttendance, setShowAttendance] = useState(false);
   const [showWage, setShowWage] = useState(false);
+  const [showFundApply, setShowFundApply] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -417,6 +497,11 @@ export function WorkerDashboard({ cloudApi }: Props) {
     if (m.id === 'my-wage') {
       if (!userId) { showToast('请先登录'); return; }
       setShowWage(true);
+      return;
+    }
+    if (m.id === 'apply-funds') {
+      if (!userId) { showToast('请先登录'); return; }
+      setShowFundApply(true);
       return;
     }
     showToast(`${m.label} — 功能开发中`);
@@ -548,6 +633,15 @@ export function WorkerDashboard({ cloudApi }: Props) {
       {showWage && (
         <WageModal
           onClose={() => setShowWage(false)}
+          cloudApi={cloudApi}
+          userId={userId}
+        />
+      )}
+
+      {/* 备用金申请模态框 */}
+      {showFundApply && (
+        <FundApplyModal
+          onClose={() => setShowFundApply(false)}
           cloudApi={cloudApi}
           userId={userId}
         />

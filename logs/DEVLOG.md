@@ -8,25 +8,59 @@
 ## 当前状态
 
 - **最新版本**: v1.64.11
-- **Git HEAD**: `58cfef73` — feat: 添加db.js和payment-gateway.js
-- **所有服务**: ✅ 正常运行（详见 `../ACTIVE_TASK.md`）
+- **Git HEAD**: 本会话完成3次提交（遗留变更整理 + 日志规范化 + ACTIVE_TASK同步）
+- **所有服务**: ✅ 正常运行
+- **本会话状态**: ✅ 已完成 — 日志规范化 + 租户管理员登录个性化分析
 
-## 2026-06-04 仓库清理 + 日志规范化
+## 2026-06-04 会话完成 — 日志规范化 + 仓库整理
 
-### 操作
-1. **创建 `logs/DEVLOG.md`** — 整合 `开发日志.md` + `日志.md` 到规范路径
+### 完成内容
+1. **创建 `logs/DEVLOG.md`** (321行) — 整合 `开发日志.md` + `日志.md` 到规范路径
 2. **修复 Git 冲突** — `update-server/data/versions.json` 冲突已解决并提交
-3. **提交全部遗留变更** (22个文件, +831/-146)
+3. **提交全部遗留变更** (24个文件, +853/-155行)
    - 安全修复: CloudSyncTab API Key, voice_asr, hardware_voice
    - 清理: useFileMentions 删除, android keystore
    - 审计: audit-report.md 新增
    - 日志: DEVLOG.md 新增
-4. **更新 ACTIVE_TASK.md** — 同步最新 Git HEAD `1a06a2f7`
+4. **更新 ACTIVE_TASK.md** — 同步最新状态
 
 ### 当前状态
-- 工作区干净，所有变更已提交
-- 所有服务正常运行
-- 待推送到 prod 远程仓库
+- ✅ **日志文件**: 已创建并整合完毕（322行，覆盖v1.64.2~v1.64.11全部历史）
+- 📝 **内容覆盖**: 版本发布、Bug修复、安全加固、规格审计、TypeScript编译修复等
+
+## 2026-06-04 租户管理员登录入口个性化分析
+
+### 背景
+分析"租户管理员登录快捷入口为什么没有实现个性化"，并提供可行方案。
+
+### 代码勘察结果
+| 模块 | 文件 | 定位 |
+|:-----|:-----|:-----|
+| 桌面端管理员面板 | `packages/renderer/src/components/admin/AdminPanel.tsx` | 509行，5个tab，简单登录表单 |
+| 桌面端本地认证 | `packages/electron/src/admin/admin-auth.ts` | 内存存储，硬编码admin/4角色 |
+| 服务端租户API | `server/app/routers/tenant_admin.py` | FastAPI JWT，tenant_role校验 |
+| 云服务器管理 | `cloud-server/admin-api.js` | 标准POST登录，无个性化 |
+
+### 根因分析（5点）
+1. **设计理念**: 轻量工具而非平台 — AdminPanel仅509行，登录表单2输入框+1按钮
+2. **安全考量**: 单一入口最小攻击面，无Session持久化，无自定义branding入口防XSS
+3. **单租户历史**: `admin-auth.ts`硬编码admin-001，不允许删除默认用户
+4. **无多端解耦**: 嵌入Electron主窗口，无独立Web入口
+5. **MVP阶段**: 版本管理仅4操作，ConfigTab静态硬编码，DataTab仅3按钮
+
+### 个性化方案
+| 方案 | 风险 | 工时 | 说明 |
+|:-----|:----:|:----:|:-----|
+| A. 自定义URL `?tenant=xxx` | 🟢 低 | 1天 | 动态路由 + 预填充租户信息 |
+| B. 品牌自定义 Logo/主题 | 🟡 中 | 2天 | 数据库admin_branding字段 + CSS变量 |
+| C. 快捷方式收藏夹 | 🟢 极低 | 0.5天 | localStorage存储，快速导航 |
+| D. SSO/OAuth单点登录 | 🔴 高 | 3-5天 | OIDC/SAML集成 |
+| E. 深链接+多租户仪表盘 | 🟡 中 | 1.5天 | 个性化widgets + app://深链接 |
+
+### 推荐实施路径
+- Phase 1 (0.5天): 方案C 快捷方式收藏夹
+- Phase 2 (1天): 方案A 自定义URL
+- Phase 3 (2天): 方案B 品牌自定义
 
 ---
 
@@ -320,3 +354,32 @@ FONT_SCALE=2.0: 10→20, 11→22, 12→24, 13→26, 14→28, 15→30, 16→32, 1
 - nginx: 运行中 (80/443)
 - PostgreSQL: 运行中 (5432)
 - APK下载: CDN链路完整可工作
+
+---
+
+## 2026-06-04 v1.64.12 — 桌面文件整理（灵境项目文件归类）
+
+### 完成内容
+将桌面（`~/Desktop/`）上属于灵境项目的文件整理到 `~/Desktop/灵境/` 文件夹中。
+
+### 桌面文件分析
+| 文件 | 归属 | 说明 |
+|:----|:----:|:------|
+| `lingjing.desktop` | ✅ 灵境项目 | 灵境IDE启动快捷方式，Exec指向`/opt/灵境/lingjing` |
+| `分辨率切换.desktop` | ❌ 非项目 | 通用系统分辨率切换工具，调用`~/scripts/res-switch.sh` |
+| `README.txt` | ❌ 非项目 | 远程桌面连接说明（VNC/RDP） |
+| `~/桌面/httpsbusiness...txt` | ❌ 非项目 | 巨量引擎链接，与项目无关 |
+
+### 操作
+- ✅ 创建 `~/Desktop/灵境/` 文件夹
+- ✅ 移动 `lingjing.desktop` → `~/Desktop/灵境/lingjing.desktop`
+- ✅ 未动其他非项目文件
+
+### 当前桌面状态
+```
+~/Desktop/
+├── 灵境/
+│   └── lingjing.desktop   ← 灵境启动快捷方式
+├── 分辨率切换.desktop      ← 系统工具（未动）
+└── README.txt              ← 远程桌面说明（未动）
+```

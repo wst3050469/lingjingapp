@@ -73,6 +73,7 @@ async def get_profile(user: dict = Depends(get_current_user)):
 
     return {
         "code": 0,
+        "user_id": user.get("code", "").replace("u_", ""),  # 当前用户名
         "nickname": user.get("nickname", ""),
         "tenant_id": tenant_id,
         "company_name": user.get("company_name"),

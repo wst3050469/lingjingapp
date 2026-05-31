@@ -10,11 +10,18 @@ interface AuditEntry {
   timestamp: string;
 }
 
+interface AdminBranding {
+  title: string;
+  accentColor: string;
+  logo: string;
+}
+
 interface AdminBookmark {
   id: string;
   label: string;
   username: string;
   password: string;
+  serverUrl?: string;
   createdAt: number;
   lastUsedAt?: number;
 }
@@ -34,6 +41,10 @@ export function AdminPanel() {
   const [stats, setStats] = useState({ agentCalls: 0, tokenUsage: 0, activeUsers: 0, uptime: '' });
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem('cloudAdminToken') || '');
+  const [adminServerUrl, setAdminServerUrl] = useState<string>('');
+  const [branding, setBranding] = useState<AdminBranding>(() => loadBranding());
+  const [showBranding, setShowBranding] = useState(false);
+  const [brandingDraft, setBrandingDraft] = useState<AdminBranding>(() => ({ ...branding }));
 
   useEffect(() => {
     if (activeTab === 'dashboard') loadDashboardStats();
@@ -110,15 +121,17 @@ export function AdminPanel() {
   };
 
   // Admin login
-  const handleAdminLogin = async (username: string, password: string) => {
+  const handleAdminLogin = async (username: string, password: string, serverUrl?: string) => {
     try {
       const result = await window.electronAPI.cloud.api({
         endpoint: '/admin/login',
         method: 'POST',
         body: { username, password },
+        baseUrl: serverUrl || undefined,
       });
       if (result.token) {
         setAdminToken(result.token);
+        setAdminServerUrl(serverUrl || '');
         localStorage.setItem('cloudAdminToken', result.token);
         return true;
       }
@@ -130,8 +143,15 @@ export function AdminPanel() {
 
   const handleAdminLogout = () => {
     setAdminToken('');
+    setAdminServerUrl('');
     localStorage.removeItem('cloudAdminToken');
     setVersions([]);
+  };
+
+  const handleBrandingSave = () => {
+    setBranding({ ...brandingDraft });
+    saveBranding(brandingDraft);
+    setShowBranding(false);
   };
 
   const handleDbBackup = async () => {
@@ -155,9 +175,28 @@ export function AdminPanel() {
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{
+      '--admin-accent': branding.accentColor,
+      '--admin-accent-hover': branding.accentColor + 'cc',
+      '--admin-accent-light': branding.accentColor + '33',
+      '--admin-accent-bg': branding.accentColor + '1a',
+    } as React.CSSProperties}>
+      <style>{`
+        .admin-panel { --accent: ${branding.accentColor}; }
+        .admin-btn-primary { background-color: var(--admin-accent); color: white; }
+        .admin-btn-primary:hover { background-color: var(--admin-accent-hover); }
+        .admin-btn-primary:disabled { opacity: 0.5; }
+        .admin-text-accent { color: var(--admin-accent); }
+        .admin-bg-accent { background-color: var(--admin-accent-light); }
+        .admin-border-accent:focus { border-color: var(--admin-accent); }
+        .admin-btn-ghost-accent { color: var(--admin-accent); }
+        .admin-btn-ghost-accent:hover { background-color: var(--admin-accent-light); }
+      `}</style>
       <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-700">
-        <h2 className="text-sm font-medium text-gray-200 mr-3">管理面板</h2>
+        <h2 className="text-sm font-medium text-gray-200 mr-3">
+          {branding.logo && <span className="mr-1.5">{branding.logo}</span>}
+          {branding.title}
+        </h2>
         {tabs.map(tab => (
           <button
             key={tab.id}
@@ -167,6 +206,13 @@ export function AdminPanel() {
             {tab.label}
           </button>
         ))}
+        <button
+          onClick={() => { setBrandingDraft({ ...branding }); setShowBranding(true); }}
+          className="ml-auto text-[10px] px-1.5 py-1 rounded text-gray-600 hover:text-gray-400 hover:bg-gray-700/50"
+          title="品牌设置"
+        >
+          ⚙️
+        </button>
       </div>
       <div className="flex-1 overflow-auto p-3">
         {activeTab === 'dashboard' && <DashboardTab stats={stats} />}
@@ -177,6 +223,7 @@ export function AdminPanel() {
           adminToken ? (
             <VersionTab
               versions={versions}
+              serverUrl={adminServerUrl}
               onCreate={handleCreateVersion}
               onSubmitReview={handleSubmitReview}
               onPublish={handlePublish}
@@ -188,6 +235,83 @@ export function AdminPanel() {
           )
         )}
       </div>
+
+      {/* Branding settings dialog */}
+      {showBranding && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-50" onClick={() => setShowBranding(false)}>
+          <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 w-full max-w-sm mx-3 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm text-gray-200 font-medium mb-4">品牌设置</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] text-gray-500 block mb-1">面板标题</label>
+                <input
+                  type="text"
+                  value={brandingDraft.title}
+                  onChange={e => setBrandingDraft(p => ({ ...p, title: e.target.value }))}
+                  className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none admin-border-accent"
+                  placeholder="管理面板"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500 block mb-1">强调色</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={brandingDraft.accentColor}
+                    onChange={e => setBrandingDraft(p => ({ ...p, accentColor: e.target.value }))}
+                    className="w-8 h-8 rounded cursor-pointer bg-transparent border-0 [&::-webkit-color-swatch-wrapper]:p-0 [&::-webkit-color-swatch]:rounded"
+                  />
+                  <input
+                    type="text"
+                    value={brandingDraft.accentColor}
+                    onChange={e => {
+                      const v = e.target.value;
+                      if (/^#[0-9a-fA-F]{6}$/.test(v) || /^#[0-9a-fA-F]{3}$/.test(v) || v === '') {
+                        setBrandingDraft(p => ({ ...p, accentColor: v }));
+                      }
+                    }}
+                    className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none admin-border-accent font-mono"
+                    placeholder="#3b82f6"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-gray-500 block mb-1">Logo 标志（Emoji 或简短文本）</label>
+                <input
+                  type="text"
+                  value={brandingDraft.logo}
+                  onChange={e => setBrandingDraft(p => ({ ...p, logo: e.target.value }))}
+                  className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none admin-border-accent"
+                  placeholder="如 🚀 或留空"
+                  maxLength={8}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleBrandingSave}
+                  className="flex-1 text-xs px-4 py-2 rounded admin-btn-primary"
+                >
+                  保存
+                </button>
+                <button
+                  onClick={() => {
+                    setBrandingDraft({ ...DEFAULT_BRANDING });
+                  }}
+                  className="text-xs px-3 py-2 rounded text-gray-500 hover:text-gray-300"
+                >
+                  重置
+                </button>
+                <button
+                  onClick={() => setShowBranding(false)}
+                  className="text-xs px-3 py-2 rounded text-gray-500 hover:text-gray-300"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -212,6 +336,27 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/* ─── Branding helpers ─── */
+
+const BRANDING_KEY = 'admin_branding';
+
+const DEFAULT_BRANDING: AdminBranding = {
+  title: '管理面板',
+  accentColor: '#3b82f6',
+  logo: '',
+};
+
+function loadBranding(): AdminBranding {
+  try {
+    const raw = localStorage.getItem(BRANDING_KEY);
+    return raw ? { ...DEFAULT_BRANDING, ...JSON.parse(raw) } : { ...DEFAULT_BRANDING };
+  } catch { return { ...DEFAULT_BRANDING }; }
+}
+
+function saveBranding(b: AdminBranding) {
+  localStorage.setItem(BRANDING_KEY, JSON.stringify(b));
+}
+
 /* ─── Bookmark helpers ─── */
 
 const BOOKMARKS_KEY = 'admin_bookmarks';
@@ -227,10 +372,27 @@ function saveBookmarks(bookmarks: AdminBookmark[]) {
   localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
 }
 
+const SERVER_URL_KEY = 'admin_server_url';
+
+function loadServerUrl(): string {
+  try {
+    return localStorage.getItem(SERVER_URL_KEY) || '';
+  } catch { return ''; }
+}
+
+function saveServerUrl(url: string) {
+  if (url) {
+    localStorage.setItem(SERVER_URL_KEY, url);
+  } else {
+    localStorage.removeItem(SERVER_URL_KEY);
+  }
+}
+
 /** Admin login form for cloud server version management */
-function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: string) => Promise<boolean> }) {
+function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: string, serverUrl?: string) => Promise<boolean> }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [serverUrl, setServerUrl] = useState(() => loadServerUrl());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [bookmarks, setBookmarks] = useState<AdminBookmark[]>(() => loadBookmarks());
@@ -242,22 +404,28 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
     setBookmarks(loadBookmarks());
   }, []);
 
+  // Persist serverUrl on change
+  useEffect(() => {
+    saveServerUrl(serverUrl);
+  }, [serverUrl]);
+
   const syncBookmarks = useCallback((next: AdminBookmark[]) => {
     setBookmarks(next);
     saveBookmarks(next);
   }, []);
 
-  const handleSubmit = async (prefillUsername?: string, prefillPassword?: string) => {
+  const handleSubmit = async (prefillUsername?: string, prefillPassword?: string, prefillServerUrl?: string) => {
     const u = prefillUsername ?? username;
     const p = prefillPassword ?? password;
+    const s = prefillServerUrl ?? serverUrl;
     if (!u || !p) { setError('请输入用户名和密码'); return; }
     setLoading(true);
     setError('');
     try {
-      await onLogin(u, p);
+      await onLogin(u, p, s || undefined);
       // Update lastUsedAt for the matching bookmark
       const updated = bookmarks.map(b =>
-        b.username === u && b.password === p
+        b.username === u && b.password === p && (b.serverUrl || '') === (s || '')
           ? { ...b, lastUsedAt: Date.now() }
           : b
       );
@@ -272,7 +440,8 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
   const handleUseBookmark = async (b: AdminBookmark) => {
     setUsername(b.username);
     setPassword(b.password);
-    await handleSubmit(b.username, b.password);
+    if (b.serverUrl) setServerUrl(b.serverUrl);
+    await handleSubmit(b.username, b.password, b.serverUrl);
   };
 
   const handleSaveBookmark = () => {
@@ -282,6 +451,7 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
       label: bookmarkLabel.trim(),
       username,
       password,
+      serverUrl: serverUrl || undefined,
       createdAt: Date.now(),
     };
     syncBookmarks([...bookmarks, newBm]);
@@ -309,11 +479,16 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
                     onClick={() => handleUseBookmark(b)}
                     disabled={loading}
                     className="flex-1 text-left text-[11px] px-2.5 py-1.5 rounded bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-600/50 disabled:opacity-50 truncate"
-                    title={`${b.username} · ${b.label}`}
+                    title={`${b.username} · ${b.label}${b.serverUrl ? ` · ${b.serverUrl}` : ''}`}
                   >
                     <span className="font-medium">{b.label}</span>
+                    {b.serverUrl && (
+                      <span className="text-[9px] text-gray-600 ml-1.5 truncate max-w-[100px] inline-block align-bottom">
+                        {b.serverUrl.replace(/^https?:\/\//, '')}
+                      </span>
+                    )}
                     {b.lastUsedAt && (
-                      <span className="text-[9px] text-gray-600 ml-2">
+                      <span className="text-[9px] text-gray-600 ml-1.5">
                         {new Date(b.lastUsedAt).toLocaleDateString('zh-CN')}
                       </span>
                     )}
@@ -333,6 +508,15 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
         )}
 
         <div className="space-y-3">
+          <input
+            type="text"
+            value={serverUrl}
+            onChange={e => setServerUrl(e.target.value)}
+            placeholder="服务器地址（可选，默认云端）"
+            disabled={loading}
+            className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-blue-500 disabled:opacity-50"
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+          />
           <input
             type="text"
             value={username}
@@ -381,6 +565,9 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
                     onKeyDown={e => e.key === 'Enter' && handleSaveBookmark()}
                     autoFocus
                   />
+                  <p className="text-[9px] text-gray-600">
+                    {serverUrl ? `服务器: ${serverUrl}` : '使用默认云端地址'}
+                  </p>
                   <div className="flex gap-1">
                     <button
                       onClick={handleSaveBookmark}
@@ -408,6 +595,7 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
 
 function VersionTab({
   versions,
+  serverUrl,
   onCreate,
   onSubmitReview,
   onPublish,
@@ -415,6 +603,7 @@ function VersionTab({
   onLogout,
 }: {
   versions: VersionEntry[];
+  serverUrl?: string;
   onCreate: (version: string, changelog: string) => Promise<void>;
   onSubmitReview: (version: string) => Promise<void>;
   onPublish: (version: string) => Promise<void>;
@@ -451,8 +640,12 @@ function VersionTab({
     <div className="space-y-4">
       {/* Admin header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] text-gray-500">已登录云端管理后台</span>
-        <button onClick={onLogout} className="text-[10px] px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[10px] text-gray-500 truncate">
+            已登录{serverUrl ? ` ${serverUrl.replace(/^https?:\/\//, '')}` : '云端'}管理后台
+          </span>
+        </div>
+        <button onClick={onLogout} className="text-[10px] px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 shrink-0">
           退出登录
         </button>
       </div>

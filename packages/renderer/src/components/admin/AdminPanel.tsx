@@ -248,7 +248,7 @@ export function AdminPanel() {
                   type="text"
                   value={brandingDraft.title}
                   onChange={e => setBrandingDraft(p => ({ ...p, title: e.target.value }))}
-                  className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-admin-accent"
+                  className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none admin-border-accent"
                   placeholder="管理面板"
                 />
               </div>
@@ -270,7 +270,7 @@ export function AdminPanel() {
                         setBrandingDraft(p => ({ ...p, accentColor: v }));
                       }
                     }}
-                    className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-admin-accent font-mono"
+                    className="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none admin-border-accent font-mono"
                     placeholder="#3b82f6"
                   />
                 </div>
@@ -281,7 +281,7 @@ export function AdminPanel() {
                   type="text"
                   value={brandingDraft.logo}
                   onChange={e => setBrandingDraft(p => ({ ...p, logo: e.target.value }))}
-                  className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-admin-accent"
+                  className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none admin-border-accent"
                   placeholder="如 🚀 或留空"
                   maxLength={8}
                 />

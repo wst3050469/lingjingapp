@@ -5,16 +5,125 @@ interface Props {
   cloudApi: (endpoint: string, method?: string, body?: unknown) => Promise<any>;
 }
 
+/** 打卡签到模态框 */
+function CheckInModal({
+  onClose,
+  cloudApi,
+  todayStatus,
+  onSuccess,
+}: {
+  onClose: () => void;
+  cloudApi: Props['cloudApi'];
+  todayStatus: '未打卡' | '已上班' | '已下班';
+  onSuccess: (newStatus: '未打卡' | '已上班' | '已下班') => void;
+}) {
+  const [location, setLocation] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const handleCheckIn = async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      await cloudApi('/api/attendance/check-in', 'POST', {
+        user_id: '',
+        address: location || undefined,
+      });
+      onSuccess('已上班');
+    } catch (e: any) {
+      setErr(e.message || '打卡失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      await cloudApi('/api/attendance/check-out', 'POST', {
+        user_id: '',
+      });
+      onSuccess('已下班');
+    } catch (e: any) {
+      setErr(e.message || '下班打卡失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 w-full max-w-xs mx-3 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-xl">📍</span>
+          <h3 className="text-sm text-gray-200 font-medium">打卡签到</h3>
+          <button onClick={onClose} className="ml-auto text-gray-500 hover:text-gray-300 text-sm">✕</button>
+        </div>
+
+        <div className="text-center mb-4">
+          <div className="text-3xl font-light text-gray-400 mb-1">
+            {new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+          </div>
+          <p className="text-[10px] text-gray-500">
+            {new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+          </p>
+        </div>
+
+        {/* 当前位置（可选） */}
+        <input
+          type="text"
+          value={location}
+          onChange={e => setLocation(e.target.value)}
+          placeholder="打卡位置（可选）"
+          disabled={loading}
+          className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-blue-500 disabled:opacity-50 mb-3"
+        />
+
+        {err && <p className="text-[10px] text-red-400 mb-2 text-center">{err}</p>}
+
+        <div className="flex gap-2">
+          {todayStatus === '未打卡' && (
+            <button
+              onClick={handleCheckIn}
+              disabled={loading}
+              className="flex-1 text-xs px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-50 flex items-center justify-center gap-1"
+            >
+              {loading ? '打卡中...' : '✅ 上班打卡'}
+            </button>
+          )}
+          {todayStatus === '已上班' && (
+            <button
+              onClick={handleCheckOut}
+              disabled={loading}
+              className="flex-1 text-xs px-4 py-2 rounded bg-orange-600 text-white hover:bg-orange-500 disabled:opacity-50 flex items-center justify-center gap-1"
+            >
+              {loading ? '打卡中...' : '🏁 下班打卡'}
+            </button>
+          )}
+          {todayStatus === '已下班' && (
+            <div className="flex-1 text-center text-xs text-green-400 py-2">
+              ✅ 今日已完成打卡
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** 工人看板：打卡状态、出工统计、工资查询 */
 export function WorkerDashboard({ cloudApi }: Props) {
   const [profile, setProfile] = useState<any>(null);
+  const [userId, setUserId] = useState('');
   const [todayStatus, setTodayStatus] = useState<'未打卡' | '已上班' | '已下班'>('未打卡');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
+  const [showCheckIn, setShowCheckIn] = useState(false);
 
-  const handleModuleClick = (label: string) => {
-    setToast(`${label} — 功能开发中`);
+  const showToast = (msg: string) => {
+    setToast(msg);
     setTimeout(() => setToast(''), 2000);
   };
 
@@ -35,14 +144,15 @@ export function WorkerDashboard({ cloudApi }: Props) {
       // 获取用户资料（含项目绑定信息）
       const profileRes = await cloudApi('/api/v1/user/profile').catch(() => null);
       const profileData = extractData(profileRes);
-      const userId = profileData?.user_id || profileRes?.user_id || '';
+      const uid = profileData?.user_id || profileRes?.user_id || '';
+      setUserId(uid);
       if (profileRes?.tenant_role || profileData?.tenant_role) {
         setProfile(profileRes);
       }
 
       // 通过认证 token 获取今日打卡状态（用 userId）
-      if (userId) {
-        const attendanceRes = await cloudApi(`/api/attendance/today/${userId}`).catch(() => null);
+      if (uid) {
+        const attendanceRes = await cloudApi(`/api/attendance/today/${uid}`).catch(() => null);
         if (attendanceRes?.records?.[0]?.check_in) {
           const hasCheckOut = !!attendanceRes.records[0].check_out;
           setTodayStatus(hasCheckOut ? '已下班' : '已上班');
@@ -55,6 +165,12 @@ export function WorkerDashboard({ cloudApi }: Props) {
     }
   };
 
+  const handleCheckInSuccess = (newStatus: '未打卡' | '已上班' | '已下班') => {
+    setTodayStatus(newStatus);
+    setShowCheckIn(false);
+    showToast(newStatus === '已上班' ? '✅ 上班打卡成功' : '✅ 下班打卡成功');
+  };
+
   const quickModules: QuickModule[] = [
     { id: 'clock-in', label: '打卡签到', icon: '📍', description: '上班打卡 / 下班打卡', color: 'text-blue-400' },
     { id: 'my-attendance', label: '我的考勤', icon: '📅', description: '查看出勤记录与统计', color: 'text-green-400' },
@@ -64,7 +180,14 @@ export function WorkerDashboard({ cloudApi }: Props) {
     { id: 'work-report', label: '报工记录', icon: '📋', description: '我的报工与工时统计', color: 'text-purple-400' },
   ];
 
-  // 模拟今日状态（当API不可用时）
+  const handleModuleClick = (m: QuickModule) => {
+    if (m.id === 'clock-in') {
+      setShowCheckIn(true);
+      return;
+    }
+    showToast(`${m.label} — 功能开发中`);
+  };
+
   const statusColor = todayStatus === '已下班' ? 'text-green-400' : todayStatus === '已上班' ? 'text-blue-400' : 'text-gray-500';
 
   if (error && !profile) {
@@ -92,7 +215,12 @@ export function WorkerDashboard({ cloudApi }: Props) {
             <div className="flex items-center gap-2">
               <span className={`text-lg font-bold ${statusColor}`}>{todayStatus}</span>
               {todayStatus === '未打卡' && (
-                <span className="text-[10px] text-gray-500">— 点击下方"打卡签到"</span>
+                <button
+                  onClick={() => setShowCheckIn(true)}
+                  className="text-[10px] px-2 py-0.5 rounded bg-blue-600/20 text-blue-400 hover:bg-blue-600/30"
+                >
+                  去打卡
+                </button>
               )}
             </div>
           </div>
@@ -114,7 +242,7 @@ export function WorkerDashboard({ cloudApi }: Props) {
           {quickModules.map(m => (
             <div
               key={m.id}
-              onClick={() => handleModuleClick(m.label)}
+              onClick={() => handleModuleClick(m)}
               className="bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 rounded-lg p-3 cursor-pointer transition-colors active:scale-[0.98]"
               title={m.description}
             >
@@ -160,6 +288,16 @@ export function WorkerDashboard({ cloudApi }: Props) {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-800 text-gray-200 text-xs px-4 py-2 rounded-lg border border-gray-600 shadow-lg animate-fade-in">
           {toast}
         </div>
+      )}
+
+      {/* 打卡签到模态框 */}
+      {showCheckIn && (
+        <CheckInModal
+          onClose={() => setShowCheckIn(false)}
+          cloudApi={cloudApi}
+          todayStatus={todayStatus}
+          onSuccess={handleCheckInSuccess}
+        />
       )}
     </div>
   );

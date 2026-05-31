@@ -11,6 +11,12 @@ export function ProjectManagerDashboard({ cloudApi }: Props) {
   const [financeSummary, setFinanceSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState('');
+
+  const handleModuleClick = (label: string) => {
+    setToast(`${label} — 功能开发中`);
+    setTimeout(() => setToast(''), 2000);
+  };
 
   useEffect(() => {
     loadData();
@@ -85,7 +91,8 @@ export function ProjectManagerDashboard({ cloudApi }: Props) {
           {quickModules.map(m => (
             <div
               key={m.id}
-              className="bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 rounded-lg p-3 cursor-pointer transition-colors"
+              onClick={() => handleModuleClick(m.label)}
+              className="bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700/50 rounded-lg p-3 cursor-pointer transition-colors active:scale-[0.98]"
               title={m.description}
             >
               <div className="flex items-center gap-2">
@@ -158,6 +165,13 @@ export function ProjectManagerDashboard({ cloudApi }: Props) {
       {loading && (
         <div className="text-center py-6">
           <span className="text-xs text-gray-500">加载中...</span>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-800 text-gray-200 text-xs px-4 py-2 rounded-lg border border-gray-600 shadow-lg animate-fade-in">
+          {toast}
         </div>
       )}
     </div>

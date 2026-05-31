@@ -67,6 +67,13 @@
 - ✅ 向后兼容：旧版 AdminPanel 功能不受影响
 - ✅ TypeScript 类型检查 — 新增文件零错误
 
+### V3 增强 — 独立租户登录
+- RoleDashboard 现在自带完整租户登录表单，独立于云管理后台登录
+- 使用 `fetch` 直接调用租户API，不经过 Electron IPC 代理（避免 token 混淆）
+- 租户 token 持久化到 localStorage，刷新后保持登录状态
+- 退出登录按钮 🚪 清除租户 token
+- 不再依赖 `cloudAdminApi` 代理，API调用更直接可靠
+
 ### V2 增强 — 手动角色降级
 - 当租户API不可用时，显示黄色警告条 + 角色选择器
 - 用户手动选择角色后，自动生成演示profile并展示对应看板

@@ -249,6 +249,91 @@ function CheckInModal({
   );
 }
 
+/** 工资查询模态框 */
+function WageModal({
+  onClose,
+  cloudApi,
+  userId,
+}: {
+  onClose: () => void;
+  cloudApi: Props['cloudApi'];
+  userId: string;
+}) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    if (!userId) return;
+    setLoading(true);
+    cloudApi(`/api/attendance/wages/${userId}`)
+      .then(d => setData(d))
+      .catch((e: any) => setErr(e.message || '加载失败'))
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div className="bg-gray-800 rounded-xl p-5 border border-gray-700 w-full max-w-sm mx-3 shadow-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center gap-2 mb-4 shrink-0">
+          <span className="text-xl">💰</span>
+          <h3 className="text-sm text-gray-200 font-medium">工资查询</h3>
+          <button onClick={onClose} className="ml-auto text-gray-500 hover:text-gray-300 text-sm">✕</button>
+        </div>
+
+        {loading && <div className="text-center py-6"><span className="text-xs text-gray-500">加载中...</span></div>}
+        {err && <p className="text-[10px] text-red-400 mb-2 text-center">{err}</p>}
+
+        {data && (
+          <div className="space-y-4">
+            {/* 日薪 + 累计已发 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-900/50 rounded-lg p-3 text-center border border-gray-700/30">
+                <div className="text-[9px] text-gray-500 mb-1">日薪标准</div>
+                <div className="text-lg font-bold text-green-400">
+                  ¥{Number(data.daily_wage || 0).toLocaleString()}
+                </div>
+              </div>
+              <div className="bg-gray-900/50 rounded-lg p-3 text-center border border-gray-700/30">
+                <div className="text-[9px] text-gray-500 mb-1">累计已发</div>
+                <div className="text-lg font-bold text-blue-400">
+                  ¥{Number(data.total_paid || 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            {/* 工资发放记录 */}
+            <div>
+              <h4 className="text-[10px] text-gray-500 font-medium mb-2">发放记录</h4>
+              {data.records?.length === 0 ? (
+                <div className="text-center py-4 text-xs text-gray-600">暂无发放记录</div>
+              ) : (
+                <div className="space-y-1 max-h-48 overflow-auto">
+                  {data.records.map((r: any) => (
+                    <div key={r.id} className="flex items-center justify-between bg-gray-900/30 rounded px-3 py-2 border border-gray-700/20">
+                      <div className="min-w-0">
+                        <div className="text-xs text-gray-300 truncate">
+                          {r.project_name || '工资'}
+                        </div>
+                        <div className="text-[9px] text-gray-600">
+                          {r.created_at?.slice(0, 10) || ''} · {r.status === 'approved' ? '已发放' : r.status}
+                        </div>
+                      </div>
+                      <span className="text-xs text-green-400 shrink-0 ml-2">
+                        +¥{Number(r.amount).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** 工人看板：打卡状态、出工统计、工资查询 */
 export function WorkerDashboard({ cloudApi }: Props) {
   const [profile, setProfile] = useState<any>(null);
@@ -259,6 +344,7 @@ export function WorkerDashboard({ cloudApi }: Props) {
   const [toast, setToast] = useState('');
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [showAttendance, setShowAttendance] = useState(false);
+  const [showWage, setShowWage] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -326,6 +412,11 @@ export function WorkerDashboard({ cloudApi }: Props) {
     if (m.id === 'my-attendance') {
       if (!userId) { showToast('请先登录'); return; }
       setShowAttendance(true);
+      return;
+    }
+    if (m.id === 'my-wage') {
+      if (!userId) { showToast('请先登录'); return; }
+      setShowWage(true);
       return;
     }
     showToast(`${m.label} — 功能开发中`);
@@ -448,6 +539,15 @@ export function WorkerDashboard({ cloudApi }: Props) {
       {showAttendance && (
         <AttendanceModal
           onClose={() => setShowAttendance(false)}
+          cloudApi={cloudApi}
+          userId={userId}
+        />
+      )}
+
+      {/* 工资查询模态框 */}
+      {showWage && (
+        <WageModal
+          onClose={() => setShowWage(false)}
           cloudApi={cloudApi}
           userId={userId}
         />

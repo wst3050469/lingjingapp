@@ -441,8 +441,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on('quest:log', handler);
       return () => ipcRenderer.removeListener('quest:log', handler);
     },
-    revertFile: (filePath: string, beforeContent: string | null) =>
-      ipcRenderer.invoke('quest:revert-file', { filePath, beforeContent }),
   },
 
   wiki: {

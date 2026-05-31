@@ -89,3 +89,13 @@ downloads/*.AppImage
 downloads/*.deb
 downloads/*.exe
 downloads/*.blockmap
+""  
+# build artifacts  
+packages/electron/build_output/  
+packages/electron/build_portable/  
+packages/release/  
+clean_build.py
+# temp build scripts
+rebuild-deb.*
+update-versions.py
+build-deb.py

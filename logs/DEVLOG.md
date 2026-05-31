@@ -413,3 +413,34 @@ FONT_SCALE=2.0: 10→20, 11→22, 12→24, 13→26, 14→28, 15→30, 16→32, 1
 - ✅ 纯前端功能，不涉及 IPC/API 变更
 - ✅ 密码仅存储于本机 localStorage
 - ✅ 空书签时隐藏「快捷登录」区域
+
+---
+
+## 2026-06-04 v1.64.12 — 自定义URL多租户路由（Phase 2）✅
+
+### 实现内容
+在管理员登录面板中新增自定义服务器地址输入，支持多租户场景。
+
+### 新增功能
+1. **自定义服务器地址** — 登录表单新增「服务器地址」字段，可连接不同的云管理后台
+2. **地址持久化** — 最后使用的服务器地址保存在 localStorage
+3. **书签集成** — 快捷方式收藏夹（Phase 1）扩展存储 serverUrl，书签按钮显示对应服务器
+4. **地址显示** — 登录后顶部显示当前连接的服务器地址
+5. **兼容性** — 字段为空时使用默认云端地址（`ide.zhejiangjinmo.com`）
+
+### 实现细节
+- `cloud:proxy-api` IPC 已支持 `baseUrl` 参数，`AdminLoginTab` 直接传递
+- 旧书签（无 `serverUrl`）自动使用默认地址，完全向后兼容
+
+### 修改文件
+- `packages/renderer/src/components/admin/AdminPanel.tsx`
+  - `AdminBookmark` 接口新增 `serverUrl?: string`
+  - `handleAdminLogin` 新增 `serverUrl` 参数并传递到 `cloud.api()`
+  - `AdminLoginTab` 新增 `serverUrl` 状态、输入框、持久化逻辑
+  - `VersionTab` 新增 `serverUrl` prop，显示当前服务器地址
+  - 行数: 657→704 行 (+47 行)
+
+### 风险 & 验证
+- ✅ 类型检查通过（无新增错误）
+- ✅ 向后兼容：旧书签无 serverUrl 时使用默认地址
+- ✅ 向后兼容：serverUrl 为空时行为与 Phase 1 完全相同

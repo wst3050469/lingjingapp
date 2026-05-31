@@ -15,6 +15,7 @@ interface AdminBookmark {
   label: string;
   username: string;
   password: string;
+  serverUrl?: string;
   createdAt: number;
   lastUsedAt?: number;
 }
@@ -34,6 +35,7 @@ export function AdminPanel() {
   const [stats, setStats] = useState({ agentCalls: 0, tokenUsage: 0, activeUsers: 0, uptime: '' });
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [adminToken, setAdminToken] = useState<string>(() => localStorage.getItem('cloudAdminToken') || '');
+  const [adminServerUrl, setAdminServerUrl] = useState<string>('');
 
   useEffect(() => {
     if (activeTab === 'dashboard') loadDashboardStats();
@@ -110,15 +112,17 @@ export function AdminPanel() {
   };
 
   // Admin login
-  const handleAdminLogin = async (username: string, password: string) => {
+  const handleAdminLogin = async (username: string, password: string, serverUrl?: string) => {
     try {
       const result = await window.electronAPI.cloud.api({
         endpoint: '/admin/login',
         method: 'POST',
         body: { username, password },
+        baseUrl: serverUrl || undefined,
       });
       if (result.token) {
         setAdminToken(result.token);
+        setAdminServerUrl(serverUrl || '');
         localStorage.setItem('cloudAdminToken', result.token);
         return true;
       }
@@ -130,6 +134,7 @@ export function AdminPanel() {
 
   const handleAdminLogout = () => {
     setAdminToken('');
+    setAdminServerUrl('');
     localStorage.removeItem('cloudAdminToken');
     setVersions([]);
   };
@@ -177,6 +182,7 @@ export function AdminPanel() {
           adminToken ? (
             <VersionTab
               versions={versions}
+              serverUrl={adminServerUrl}
               onCreate={handleCreateVersion}
               onSubmitReview={handleSubmitReview}
               onPublish={handlePublish}
@@ -227,10 +233,27 @@ function saveBookmarks(bookmarks: AdminBookmark[]) {
   localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarks));
 }
 
+const SERVER_URL_KEY = 'admin_server_url';
+
+function loadServerUrl(): string {
+  try {
+    return localStorage.getItem(SERVER_URL_KEY) || '';
+  } catch { return ''; }
+}
+
+function saveServerUrl(url: string) {
+  if (url) {
+    localStorage.setItem(SERVER_URL_KEY, url);
+  } else {
+    localStorage.removeItem(SERVER_URL_KEY);
+  }
+}
+
 /** Admin login form for cloud server version management */
-function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: string) => Promise<boolean> }) {
+function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: string, serverUrl?: string) => Promise<boolean> }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [serverUrl, setServerUrl] = useState(() => loadServerUrl());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [bookmarks, setBookmarks] = useState<AdminBookmark[]>(() => loadBookmarks());
@@ -242,22 +265,28 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
     setBookmarks(loadBookmarks());
   }, []);
 
+  // Persist serverUrl on change
+  useEffect(() => {
+    saveServerUrl(serverUrl);
+  }, [serverUrl]);
+
   const syncBookmarks = useCallback((next: AdminBookmark[]) => {
     setBookmarks(next);
     saveBookmarks(next);
   }, []);
 
-  const handleSubmit = async (prefillUsername?: string, prefillPassword?: string) => {
+  const handleSubmit = async (prefillUsername?: string, prefillPassword?: string, prefillServerUrl?: string) => {
     const u = prefillUsername ?? username;
     const p = prefillPassword ?? password;
+    const s = prefillServerUrl ?? serverUrl;
     if (!u || !p) { setError('请输入用户名和密码'); return; }
     setLoading(true);
     setError('');
     try {
-      await onLogin(u, p);
+      await onLogin(u, p, s || undefined);
       // Update lastUsedAt for the matching bookmark
       const updated = bookmarks.map(b =>
-        b.username === u && b.password === p
+        b.username === u && b.password === p && (b.serverUrl || '') === (s || '')
           ? { ...b, lastUsedAt: Date.now() }
           : b
       );
@@ -272,7 +301,8 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
   const handleUseBookmark = async (b: AdminBookmark) => {
     setUsername(b.username);
     setPassword(b.password);
-    await handleSubmit(b.username, b.password);
+    if (b.serverUrl) setServerUrl(b.serverUrl);
+    await handleSubmit(b.username, b.password, b.serverUrl);
   };
 
   const handleSaveBookmark = () => {
@@ -282,6 +312,7 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
       label: bookmarkLabel.trim(),
       username,
       password,
+      serverUrl: serverUrl || undefined,
       createdAt: Date.now(),
     };
     syncBookmarks([...bookmarks, newBm]);
@@ -309,11 +340,16 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
                     onClick={() => handleUseBookmark(b)}
                     disabled={loading}
                     className="flex-1 text-left text-[11px] px-2.5 py-1.5 rounded bg-gray-700/50 text-gray-300 hover:bg-gray-700 hover:text-white border border-gray-600/50 disabled:opacity-50 truncate"
-                    title={`${b.username} · ${b.label}`}
+                    title={`${b.username} · ${b.label}${b.serverUrl ? ` · ${b.serverUrl}` : ''}`}
                   >
                     <span className="font-medium">{b.label}</span>
+                    {b.serverUrl && (
+                      <span className="text-[9px] text-gray-600 ml-1.5 truncate max-w-[100px] inline-block align-bottom">
+                        {b.serverUrl.replace(/^https?:\/\//, '')}
+                      </span>
+                    )}
                     {b.lastUsedAt && (
-                      <span className="text-[9px] text-gray-600 ml-2">
+                      <span className="text-[9px] text-gray-600 ml-1.5">
                         {new Date(b.lastUsedAt).toLocaleDateString('zh-CN')}
                       </span>
                     )}
@@ -333,6 +369,15 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
         )}
 
         <div className="space-y-3">
+          <input
+            type="text"
+            value={serverUrl}
+            onChange={e => setServerUrl(e.target.value)}
+            placeholder="服务器地址（可选，默认云端）"
+            disabled={loading}
+            className="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-xs text-gray-200 outline-none focus:border-blue-500 disabled:opacity-50"
+            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+          />
           <input
             type="text"
             value={username}
@@ -381,6 +426,9 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
                     onKeyDown={e => e.key === 'Enter' && handleSaveBookmark()}
                     autoFocus
                   />
+                  <p className="text-[9px] text-gray-600">
+                    {serverUrl ? `服务器: ${serverUrl}` : '使用默认云端地址'}
+                  </p>
                   <div className="flex gap-1">
                     <button
                       onClick={handleSaveBookmark}
@@ -408,6 +456,7 @@ function AdminLoginTab({ onLogin }: { onLogin: (username: string, password: stri
 
 function VersionTab({
   versions,
+  serverUrl,
   onCreate,
   onSubmitReview,
   onPublish,
@@ -415,6 +464,7 @@ function VersionTab({
   onLogout,
 }: {
   versions: VersionEntry[];
+  serverUrl?: string;
   onCreate: (version: string, changelog: string) => Promise<void>;
   onSubmitReview: (version: string) => Promise<void>;
   onPublish: (version: string) => Promise<void>;
@@ -451,8 +501,12 @@ function VersionTab({
     <div className="space-y-4">
       {/* Admin header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] text-gray-500">已登录云端管理后台</span>
-        <button onClick={onLogout} className="text-[10px] px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-[10px] text-gray-500 truncate">
+            已登录{serverUrl ? ` ${serverUrl.replace(/^https?:\/\//, '')}` : '云端'}管理后台
+          </span>
+        </div>
+        <button onClick={onLogout} className="text-[10px] px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 shrink-0">
           退出登录
         </button>
       </div>

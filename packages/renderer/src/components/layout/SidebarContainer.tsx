@@ -8,6 +8,7 @@ import { RunDebugPanel } from '../run-debug/RunDebugPanel';
 import { ExtensionPanel } from '../extension/ExtensionPanel';
 import { RemotePanel } from '../remote/RemotePanel';
 import { AdminPanel } from '../admin/AdminPanel';
+import { DashboardContainer } from '../admin/role-dashboard/DashboardContainer';
 import { WorkflowList, WorkflowEditor, WorkflowMonitor } from '../workflow';
 import { PipelineEditor } from '../pipeline/PipelineEditor';
 import { ReviewPanel } from '../review/ReviewPanel';
@@ -80,6 +81,7 @@ export function SidebarContainer() {
 
   return (
     <div className="h-full bg-cp-sidebar flex flex-col overflow-hidden">
+      {activeSidebarPanel === 'dashboard' && <DashboardContainer />}
       {activeSidebarPanel === 'explorer' && <FileTree />}
       {activeSidebarPanel === 'search' && <SearchPanel />}
       {activeSidebarPanel === 'chat' && (

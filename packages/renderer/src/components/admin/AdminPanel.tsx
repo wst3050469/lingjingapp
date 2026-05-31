@@ -64,17 +64,6 @@ export function AdminPanel() {
     });
   };
 
-  // Helper: call tenant app API (业务服务器，用于角色看板数据)
-  const tenantApi = async (endpoint: string, method: string = 'GET', body?: unknown) => {
-    return window.electronAPI.cloud.api({
-      endpoint,
-      method,
-      body,
-      token: adminToken || undefined,
-      baseUrl: tenantServerUrl || undefined,
-    });
-  };
-
   const loadDashboardStats = async () => {
     try {
       const result = await window.electron.ipcRenderer.invoke('audit:getStats');
@@ -232,7 +221,6 @@ export function AdminPanel() {
         {activeTab === 'dashboard' && <DashboardTab stats={stats} />}
         {activeTab === 'role-dashboard' && (
           <>
-            {/* 租户服务器地址配置 */}
             <div className="mb-3 flex items-center gap-2">
               <input
                 type="text"
@@ -253,8 +241,7 @@ export function AdminPanel() {
               </button>
             </div>
             <RoleDashboard
-              cloudApi={tenantApi}
-              serverUrl={tenantServerUrl || adminServerUrl}
+              tenantServerUrl={tenantServerUrl}
               isLoggedIn={!!adminToken}
             />
           </>

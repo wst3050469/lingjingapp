@@ -7,10 +7,10 @@
 
 ## 当前状态
 
-- **最新版本**: v1.64.12
-- **Git HEAD**: Phase 3 品牌自定义完成
+- **最新版本**: v1.64.13
+- **Git HEAD**: 角色动态仪表盘完成
 - **所有服务**: ✅ 正常运行
-- **本会话状态**: ✅ 已完成 — Phase 3: 品牌自定义（Logo/主题）
+- **本会话状态**: ✅ 已完成 — 角色动态仪表盘（业务仪表盘）
 
 ## 2026-06-04 会话完成 — Phase 3: 品牌自定义（Logo/主题）
 
@@ -30,7 +30,41 @@
 - ✅ **Phase 3 品牌自定义**: 已完成并提交
 - 📝 **TypeScript 编译**: 无新增错误
 
-## 2026-06-04 租户管理员登录入口个性化分析
+## 2026-06-04 v1.64.13 — 角色动态仪表盘（业务看板）
+
+### 完成内容
+在 AdminPanel 中新增「业务仪表盘」标签页，根据用户角色动态展示不同的快捷功能模块和业务数据。
+
+### 角色看板对应关系
+| 角色 (tenant_role) | 看板组件 | 功能模块 |
+|:---|:---|:---|
+| owner / admin (租户管理员) | `TenantAdminDashboard` | 项目管理、资金管理、客户管理、团队管理、发票管理、合同管理 + 数据概览统计 |
+| project_manager (项目经理) | `ProjectManagerDashboard` | 项目进度、质量看板、耗材管理、支出记录、考勤查看、供应商 + 收支汇总 + 项目列表 |
+| worker (工人) | `WorkerDashboard` | 打卡签到、我的考勤、工资查询、申请备用金、我的项目、报工记录 + 今日状态卡片 |
+| 未登录 / 无角色 | 提示信息 | 引导用户登录云管理后台 |
+
+### 新增文件 (4个)
+1. `packages/renderer/src/components/admin/role-dashboard/types.ts` — 类型定义
+2. `packages/renderer/src/components/admin/role-dashboard/RoleDashboard.tsx` — 统一入口，根据角色路由
+3. `packages/renderer/src/components/admin/role-dashboard/TenantAdminDashboard.tsx` — 管理员看板
+4. `packages/renderer/src/components/admin/role-dashboard/ProjectManagerDashboard.tsx` — 项目经理看板
+5. `packages/renderer/src/components/admin/role-dashboard/WorkerDashboard.tsx` — 工人看板
+
+### 修改文件 (2个)
+1. `packages/renderer/src/components/admin/AdminPanel.tsx` — 新增「业务仪表盘」tab + `tenantApi` 函数 + 租户服务器地址配置
+2. `server/app/routers/auth.py` — `/login` 接口返回 `tenant_role`（JOIN tenant_users 表）
+
+### 架构说明
+- 角色看板通过 `tenantApi` 连接租户应用服务器（FastAPI），与云管理服务器（Express）分离
+- 租户服务器地址可在业务仪表盘顶部的输入框中配置（默认空=当前云服务器）
+- 所有组件遵循 AdminPanel 现有的暗色主题样式
+
+### 风险 & 验证
+- ✅ 未登录时显示引导提示，不崩溃
+- ✅ 无角色/个人用户显示友好提示
+- ✅ API 错误时显示重试按钮，不阻塞
+- ✅ 租户服务器地址为空时，使用云服务器 URL 作为后备
+- ✅ 向后兼容：旧版 AdminPanel 功能不受影响
 
 ### 背景
 分析"租户管理员登录快捷入口为什么没有实现个性化"，并提供可行方案。

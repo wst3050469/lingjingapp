@@ -173,9 +173,11 @@ async def login(req: LoginRequest):
     async with database.pool.acquire() as conn:
         row = await conn.fetchrow(
             """SELECT u.id, u.password_hash, u.nickname, u.token, u.status,
-                      u.tenant_id, u.account_type, t.company_name, t.industry
+                      u.tenant_id, u.account_type, t.company_name, t.industry,
+                      tu.role AS tenant_role
                FROM users u
                LEFT JOIN tenants t ON u.tenant_id = t.tenant_id
+               LEFT JOIN tenant_users tu ON tu.tenant_id = u.tenant_id AND tu.user_id = u.username
                WHERE u.username=$1""",
             username,
         )
@@ -213,6 +215,7 @@ async def login(req: LoginRequest):
         result["tenant_id"] = row["tenant_id"]
         result["company_name"] = row["company_name"]
         result["industry"] = row["industry"]
+        result["tenant_role"] = row["tenant_role"]
     return result
 
 

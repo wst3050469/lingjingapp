@@ -384,6 +384,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   quest: {
+    getAgentStatus: (taskId: string) =>
+      ipcRenderer.invoke('quest:get-agent-status', { taskId }),
     createTask: (params: { scenario: string; runMode: string; autoMode: string; title?: string }) =>
       ipcRenderer.invoke('quest:create-task', params),
     listTasks: () => ipcRenderer.invoke('quest:list-tasks'),

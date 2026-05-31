@@ -2347,9 +2347,14 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
 
 
-  // --- Quest Abort / Pause / Resume ---
+  // --- Quest Agent Status / Abort / Pause / Resume ---
 
-
+  // Check if a task has an active agent running in the main process
+  // Returns { hasActiveAgent: boolean }
+  ipcMain.handle('quest:get-agent-status', async (_event, { taskId }: { taskId: string }) => {
+    const hasActiveAgent = taskAgents.has(taskId);
+    return { hasActiveAgent };
+  });
 
   ipcMain.handle('quest:abort', async (_event, { taskId }: { taskId: string }) => {
 

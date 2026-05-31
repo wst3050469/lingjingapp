@@ -336,6 +336,7 @@ declare interface ElectronAPI {
     polish: (text: string) => Promise<{ polished: string; error: string | null }>;
   };
   quest: {
+    getAgentStatus: (taskId: string) => Promise<{ hasActiveAgent: boolean }>;
     createTask: (params: { scenario: string; runMode: string; autoMode: string; title?: string }) => Promise<any>;
     listTasks: () => Promise<any[]>;
     loadTask: (taskId: string) => Promise<any>;

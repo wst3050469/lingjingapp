@@ -31,6 +31,7 @@ const CRITICAL_HANDLERS: string[] = [
   // Quest
   'quest:run',
   'quest:abort',
+  'quest:get-agent-status',
   'quest:revert-file',
   // Filesystem
   'fs:read-dir',
@@ -135,6 +136,7 @@ function generateFeatureDescriptions(missing: string[]): string[] {
     'agent:run': 'AI Agent — run message',
     'agent:abort': 'AI Agent — abort',
     'quest:run': 'Quest Mode — run message',
+    'quest:get-agent-status': 'Quest Mode — check if agent is active',
     'quest:abort': 'Quest Mode — abort execution',
     'fs:read-dir': 'File System — read directory',
     'fs:read-file': 'File System — read file',

@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# Build artifacts
+dist/
+build/
+*.apk
+*.AppImage
+*.deb
+*.exe
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

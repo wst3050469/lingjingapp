@@ -1,0 +1,4 @@
+upstream cloud_server {
+    server ${SERVER_HOST}:8000;
+    keepalive 32;
+}

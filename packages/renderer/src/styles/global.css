@@ -1,0 +1,629 @@
+/* highlight.js theme */
+@import 'highlight.js/styles/atom-one-dark.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+@layer base {
+  html {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    min-width: 100vw;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary, #007acc);
+    outline-offset: 2px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: rgba(0, 122, 204, 0.3);
+    color: inherit;
+  }
+
+  html.light ::selection {
+    background-color: rgba(0, 122, 204, 0.2);
+  }
+
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    max-width: 100%;
+  }
+
+  input, button, textarea, select {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  a {
+    color: var(--color-primary, #007acc);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+}
+
+@layer components {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .animate-in {
+    animation-duration: 200ms;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation-name: fadeIn;
+  }
+
+  .zoom-in-95 {
+    animation-name: zoomIn95;
+  }
+
+  .slide-in-bottom {
+    animation-name: slideInBottom;
+  }
+
+  .slide-in-right {
+    animation-name: slideInRight;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn95 {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInBottom {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== Dark Theme (夜晚模式 - 默认) ===== */
+html, body, #root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--cp-bg, #1e1e1e);
+  color: var(--cp-text, #ffffff);
+}
+
+/* ===== Light Theme Variables ===== */
+html.light {
+  --cp-bg: #ffffff;
+  --cp-sidebar: #f3f4f6;
+  --cp-editor: #ffffff;
+  --cp-panel: #ffffff;
+  --cp-statusbar: #007acc;
+  --cp-activitybar: #e5e7eb;
+  --cp-tab-active: #ffffff;
+  --cp-tab-inactive: #f9fafb;
+  --cp-border: #e5e7eb;
+  --cp-text: #1a1a1a;
+  --cp-text-dim: #6b7280;
+  --cp-accent: #007acc;
+  --cp-success: #059669;
+  --cp-error: #dc2626;
+  --cp-warning: #d97706;
+  --cp-info: #2563eb;
+}
+
+/* ===== Light Theme (白天模式) ===== */
+html.light, html.light body, html.light #root {
+  background-color: var(--cp-bg, #ffffff);
+  color: var(--cp-text, #1a1a1a);
+}
+
+/* 滚动条样式 - 夜晚模式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 滚动条样式 - 白天模式 */
+html.light ::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Code block styling */
+pre code {
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 13px;
+}
+
+/* Code block container */
+.code-block-wrapper {
+  position: relative;
+  margin: 0.75rem 0;
+}
+
+.code-block-wrapper .code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  font-size: 11px;
+}
+
+.code-block-wrapper .code-block-header .code-lang {
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.code-block-wrapper .code-block-header .code-copy-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 11px;
+  transition: all 0.15s ease;
+}
+
+.code-block-wrapper .code-block-header .code-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.code-block-wrapper pre {
+  margin: 0 !important;
+  border-radius: 0 0 0.5rem 0.5rem !important;
+  border-top: none !important;
+}
+
+/* Override highlight.js background to match our theme */
+.hljs {
+  background: #0d0d0d !important;
+}
+
+/* ===== Light theme: override hardcoded white text/background classes ===== */
+/* text-white with opacity → dark text equivalent (keeps hierarchy via opacity) */
+html.light .text-white\/95 { color: rgba(26, 26, 26, 0.95) !important; }
+html.light .text-white\/90 { color: rgba(26, 26, 26, 0.9) !important; }
+html.light .text-white\/80 { color: rgba(26, 26, 26, 0.8) !important; }
+html.light .text-white\/70 { color: rgba(26, 26, 26, 0.7) !important; }
+html.light .text-white\/60 { color: rgba(26, 26, 26, 0.6) !important; }
+html.light .text-white\/50 { color: rgba(26, 26, 26, 0.5) !important; }
+html.light .text-white\/40 { color: rgba(26, 26, 26, 0.4) !important; }
+html.light .text-white\/30 { color: rgba(26, 26, 26, 0.3) !important; }
+html.light .text-white\/20 { color: rgba(26, 26, 26, 0.2) !important; }
+html.light .text-white\/10 { color: rgba(26, 26, 26, 0.1) !important; }
+html.light .text-white\/5  { color: rgba(26, 26, 26, 0.05) !important; }
+
+/* hover:text-white and variants */
+html.light .hover\:text-white:hover { color: rgba(26, 26, 26, 0.9) !important; }
+html.light .hover\:text-white\/80:hover { color: rgba(26, 26, 26, 0.8) !important; }
+html.light .hover\:text-white\/70:hover { color: rgba(26, 26, 26, 0.7) !important; }
+html.light .hover\:text-white\/60:hover { color: rgba(26, 26, 26, 0.6) !important; }
+html.light .hover\:text-white\/50:hover { color: rgba(26, 26, 26, 0.5) !important; }
+
+/* bg-white with opacity → dark bg equivalent (subtle hover/surface in light mode) */
+html.light .bg-white\/5   { background-color: rgba(0, 0, 0, 0.05) !important; }
+html.light .bg-white\/10  { background-color: rgba(0, 0, 0, 0.1) !important; }
+html.light .bg-white\/\[0\.06\] { background-color: rgba(0, 0, 0, 0.06) !important; }
+html.light .bg-white\/\[0\.05\] { background-color: rgba(0, 0, 0, 0.05) !important; }
+html.light .bg-white\/\[0\.04\] { background-color: rgba(0, 0, 0, 0.04) !important; }
+html.light .bg-white\/\[0\.03\] { background-color: rgba(0, 0, 0, 0.03) !important; }
+html.light .bg-white\/\[0\.02\] { background-color: rgba(0, 0, 0, 0.02) !important; }
+html.light .bg-white\/\[0\.08\] { background-color: rgba(0, 0, 0, 0.08) !important; }
+
+/* hover:bg-white with opacity → dark hover bg */
+html.light .hover\:bg-white\/5:hover { background-color: rgba(0, 0, 0, 0.05) !important; }
+html.light .hover\:bg-white\/10:hover { background-color: rgba(0, 0, 0, 0.1) !important; }
+
+/* border-white with opacity → dark border equivalent */
+html.light .border-white\/30 { border-color: rgba(0, 0, 0, 0.3) !important; }
+html.light .border-white\/20 { border-color: rgba(0, 0, 0, 0.2) !important; }
+html.light .border-white\/40 { border-color: rgba(0, 0, 0, 0.4) !important; }
+html.light .border-white\/50 { border-color: rgba(0, 0, 0, 0.5) !important; }
+html.light .border-white\/60 { border-color: rgba(0, 0, 0, 0.6) !important; }
+
+/* placeholder text in inputs — use dark placeholder */
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: rgba(26, 26, 26, 0.4) !important;
+}
+
+/* Light theme code overrides */
+html.light .code-block-wrapper .code-block-header {
+  background: #f3f4f6;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+html.light .code-block-wrapper .code-block-header .code-lang {
+  color: rgba(0, 0, 0, 0.5);
+}
+html.light .code-block-wrapper .code-block-header .code-copy-btn {
+  color: rgba(0, 0, 0, 0.5);
+}
+html.light .code-block-wrapper .code-block-header .code-copy-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.8);
+}
+html.light .hljs {
+  background: #f8f9fa !important;
+}
+
+/* Inline Chat diff decorations */
+.inline-chat-diff-remove {
+  background: rgba(248, 81, 73, 0.15) !important;
+  text-decoration: line-through;
+  text-decoration-color: rgba(248, 81, 73, 0.5);
+}
+
+.inline-chat-diff-add {
+  background: rgba(46, 160, 67, 0.15) !important;
+}
+
+/* NEXT diff decorations */
+.next-diff-add {
+  background: rgba(46, 160, 67, 0.12) !important;
+}
+
+.next-diff-remove {
+  background: rgba(248, 81, 73, 0.12) !important;
+}
+
+.next-diff-modify {
+  background: rgba(210, 153, 34, 0.12) !important;
+}
+
+/* ======================================================================
+   SCIFI-DARK THEME — 科技感暗色主题覆盖
+   通过 [data-theme="scifi-dark"] 属性选择器作用
+   ====================================================================== */
+
+/* --- SCIFI-DARK 主题变量 --- */
+[data-theme="scifi-dark"] {
+  --cp-bg: #0a0e1a;
+  --cp-sidebar: #0d1220;
+  --cp-editor: #0a0e1a;
+  --cp-panel: #0d1220;
+  --cp-statusbar: #00d4ff;
+  --cp-activitybar: #070b14;
+  --cp-tab-active: #0a0e1a;
+  --cp-tab-inactive: #0d1220;
+  --cp-border: rgba(0, 212, 255, 0.08);
+  --cp-text: #e2e8f0;
+  --cp-text-dim: #94a3b8;
+  --cp-accent: #00d4ff;
+  --cp-success: #22d3ee;
+  --cp-error: #f43f5e;
+  --cp-warning: #fbbf24;
+  --cp-info: #38bdf8;
+  --cp-surface: rgba(0, 212, 255, 0.05);
+}
+
+/* --- T-UI07: ChatModeSelector 美化 --- */
+[data-theme="scifi-dark"] .flex.items-center.gap-0\.5.bg-white\/\[0\.04\] {
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  border-radius: 0.5rem;
+}
+
+[data-theme="scifi-dark"] .flex.items-center.gap-0\.5.bg-white\/\[0\.04\] button.bg-cp-accent {
+  background: rgba(0, 212, 255, 0.1) !important;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+  color: #00d4ff !important;
+}
+
+[data-theme="scifi-dark"] .flex.items-center.gap-0\.5.bg-white\/\[0\.04\] button:not(.bg-cp-accent):not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* --- T-UI08: ModelSelector 美化 --- */
+/* 下拉面板 glass-panel */
+[data-theme="scifi-dark"] .absolute.top-full.left-0.mt-1.w-80.bg-cp-panel {
+  background: rgba(13, 18, 32, 0.85) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Provider分组头 - purple neon */
+[data-theme="scifi-dark"] .px-3.py-1\.5.text-\[10px\].text-cp-text-dim.uppercase.tracking-wide {
+  color: #a855f7 !important;
+  text-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+/* 选中模型项 */
+[data-theme="scifi-dark"] button.text-cp-accent.w-full {
+  border-left: 2px solid #00d4ff;
+  background: rgba(0, 212, 255, 0.05) !important;
+}
+
+/* 模型项 hover */
+[data-theme="scifi-dark"] button.w-full.text-left.px-3.py-1\.5:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  transition: all 150ms ease;
+}
+
+/* --- T-UI09: ContextSelector 美化 --- */
+/* 弹出面板 glass-panel */
+[data-theme="scifi-dark"] .absolute.bottom-full.bg-cp-panel {
+  background: rgba(13, 18, 32, 0.85) !important;
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* 搜索框 glass-input + focus neon */
+[data-theme="scifi-dark"] .absolute.bottom-full .bg-transparent.outline-none {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.375rem;
+}
+
+[data-theme="scifi-dark"] .absolute.bottom-full .bg-transparent.outline-none:focus {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* Tab栏选中 */
+[data-theme="scifi-dark"] .flex.gap-1.p-2 button.bg-cp-accent\/20 {
+  border-bottom: 2px solid #00d4ff !important;
+  color: #00d4ff !important;
+}
+
+/* Tab栏未选中 hover */
+[data-theme="scifi-dark"] .flex.gap-1.p-2 button:not(.bg-cp-accent\/20):hover {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* --- T-UI10: ActivityBar 美化 --- */
+[data-theme="scifi-dark"] .w-12.bg-cp-activitybar {
+  background: #070b14 !important;
+  border-right-color: rgba(0, 212, 255, 0.05) !important;
+}
+
+/* 选中图标 */
+[data-theme="scifi-dark"] .w-12.bg-cp-activitybar button.text-cp-text {
+  color: #00d4ff !important;
+  animation: pulseNeon 2s ease-in-out infinite;
+}
+
+/* 未选中图标 hover */
+[data-theme="scifi-dark"] .w-12.bg-cp-activitybar button:not(.text-cp-text):hover {
+  color: rgba(255, 255, 255, 0.7) !important;
+  transition: all 150ms ease;
+}
+
+/* Active indicator bar - cyan */
+[data-theme="scifi-dark"] .absolute.left-0.bg-white.rounded-r {
+  background: #00d4ff !important;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* 图标 badge (purple neon) - 通用 badge 样式 */
+[data-theme="scifi-dark"] .bg-cp-accent\/30 {
+  background: rgba(168, 85, 247, 0.3) !important;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.5), 0 0 2px rgba(168, 85, 247, 0.3);
+}
+
+/* --- T-UI11: SettingsPanel 美化 --- */
+/* 左侧导航选中项 */
+[data-theme="scifi-dark"] nav button.bg-cp-surface {
+  border-left: 2px solid #00d4ff !important;
+  background: rgba(0, 212, 255, 0.05) !important;
+  color: #00d4ff !important;
+}
+
+/* 导航项 hover */
+[data-theme="scifi-dark"] nav button:not(.bg-cp-surface):hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* 内容卡片 glass-card (applied to section containers within settings) */
+[data-theme="scifi-dark"] .flex-1.overflow-y-auto.p-6 > div {
+  background: rgba(13, 18, 32, 0.6);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Section 标题 - accent with opacity */
+[data-theme="scifi-dark"] h3.text-lg.text-cp-text.font-semibold {
+  color: rgba(0, 212, 255, 0.8) !important;
+}
+
+[data-theme="scifi-dark"] .text-sm.font-medium.text-cp-text {
+  color: rgba(0, 212, 255, 0.8) !important;
+}
+
+/* --- T-UI12: 通用交互增强 --- */
+/* button/hover 通用 transition */
+[data-theme="scifi-dark"] button {
+  transition: all 150ms ease;
+}
+
+/* 选中态 pulse neon */
+[data-theme="scifi-dark"] [aria-selected="true"],
+[data-theme="scifi-dark"] [data-active="true"] {
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* 焦点发光环 */
+[data-theme="scifi-dark"] :focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.5), 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* 链接 hover neon */
+[data-theme="scifi-dark"] a:hover {
+  color: #00d4ff;
+  text-shadow: 0 0 8px rgba(0, 212, 255, 0.4);
+}
+
+/* --- T-UI13: 基础UI组件升级 --- */
+/* Card elevated variant → glass-card in scifi-dark */
+[data-theme="scifi-dark"] .bg-neutral-900.shadow-lg {
+  background: rgba(13, 18, 32, 0.6) !important;
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Input focus neon */
+[data-theme="scifi-dark"] input:focus:not(:focus-visible) {
+  /* handled by focus-visible above */
+}
+
+[data-theme="scifi-dark"] input.rounded-md.border:focus {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+}
+
+/* --- T-UI14: 视觉元素丰富化 --- */
+
+/* .scifi-grid-overlay — 背景网格线效果 */
+.scifi-grid-overlay {
+  position: relative;
+}
+
+.scifi-grid-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* .scifi-glow-divider — 渐变发光分割线 */
+.scifi-glow-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #00d4ff, transparent);
+  border: none;
+  opacity: 0.6;
+}
+
+/* .scifi-status-dot — 状态指示灯呼吸动画 */
+.scifi-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00d4ff;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.4), 0 0 2px rgba(0, 212, 255, 0.2);
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* .scifi-scan-line — 扫描线效果 */
+.scifi-scan-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.scifi-scan-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 212, 255, 0.06) 48%,
+    rgba(0, 212, 255, 0.12) 50%,
+    rgba(0, 212, 255, 0.06) 52%,
+    transparent 100%
+  );
+  animation: scanLine 4s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* --- SCIFI-DARK 滚动条增强 --- */
+[data-theme="scifi-dark"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.15);
+}
+
+[data-theme="scifi-dark"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.25);
+}
+
+/* --- SCIFI-DARK Selection --- */
+[data-theme="scifi-dark"] ::selection {
+  background-color: rgba(0, 212, 255, 0.2);
+  color: #e2e8f0;
+}

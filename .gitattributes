@@ -1,0 +1,35 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Source code - LF for all platforms
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Shell scripts - LF
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Batch scripts - CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files - don't touch
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.wasm binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary

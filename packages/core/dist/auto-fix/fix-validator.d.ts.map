@@ -1,0 +1,1 @@
+{"version":3,"file":"fix-validator.d.ts","sourceRoot":"","sources":["../../src/auto-fix/fix-validator.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,cAAc,EAAE,SAAS,EAAE,MAAM,YAAY,CAAC;AAE5D,qBAAa,YAAY;IACvB,QAAQ,CAAC,YAAY,EAAE,MAAM,EAAE,cAAc,EAAE,cAAc,EAAE,EAAE,mBAAmB,EAAE,cAAc,EAAE,GAAG,SAAS;CAuBnH"}

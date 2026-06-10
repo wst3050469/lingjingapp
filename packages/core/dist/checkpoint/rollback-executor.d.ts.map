@@ -1,0 +1,1 @@
+{"version":3,"file":"rollback-executor.d.ts","sourceRoot":"","sources":["../../src/checkpoint/rollback-executor.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,UAAU,EAAE,gBAAgB,EAAE,cAAc,EAAE,MAAM,YAAY,CAAC;AAE/E,qBAAa,gBAAgB;IACrB,QAAQ,CAAC,UAAU,EAAE,UAAU,EAAE,QAAQ,GAAE,gBAA0C,GAAG,OAAO,CAAC,cAAc,CAAC;CAmCtH"}

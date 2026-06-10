@@ -1,0 +1,113 @@
+src/agent/agent.ts(3,15): error TS2305: Module '"../llm/types.js"' has no exported member 'LLMProvider'.
+src/agent/agent.ts(3,28): error TS2305: Module '"../llm/types.js"' has no exported member 'StreamEvent'.
+src/agent/agent.ts(4,43): error TS2307: Cannot find module './message-types.js' or its corresponding type declarations.
+src/agent/agent.ts(5,30): error TS2307: Cannot find module './conversation.js' or its corresponding type declarations.
+src/agent/agent.ts(6,30): error TS2307: Cannot find module '../tools/executor.js' or its corresponding type declarations.
+src/agent/agent.ts(7,30): error TS2307: Cannot find module '../tools/registry.js' or its corresponding type declarations.
+src/agent/agent.ts(9,15): error TS2305: Module '"../tools/builtin/code-review.js"' has no exported member 'CodeReviewReport'.
+src/agent/agent.ts(12,30): error TS2307: Cannot find module '../memory/nudger.js' or its corresponding type declarations.
+src/agent/agent.ts(15,40): error TS2307: Cannot find module '../workflow/task-complexity-analyzer.js' or its corresponding type declarations.
+src/agent/agent.ts(285,13): error TS2353: Object literal may only specify known properties, and 'featureName' does not exist in type 'WorkflowRequirement'.
+src/agent/agent.ts(349,10): error TS2339: Property 'on' does not exist on type 'Agent'.
+src/agent/agent.ts(521,71): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/agent/agent.ts(630,12): error TS2339: Property 'off' does not exist on type 'Agent'.
+src/agent/agent.ts(637,69): error TS7006: Parameter 'skillName' implicitly has an 'any' type.
+src/agent/agent.ts(641,19): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/fusion/integration/degradation-test.ts(24,3): error TS2739: Type '{ enabled: false; modules: never[]; }' is missing the following properties from type 'FusionConfig': globalTimeout, retryAttempts, retryDelayMs
+src/fusion/integration/degradation-test.ts(50,19): error TS2345: Argument of type '"test.topic"' is not assignable to parameter of type 'EventTopic'.
+src/fusion/integration/degradation-test.ts(51,9): error TS2554: Expected 3 arguments, but got 2.
+src/fusion/integration/degradation-test.ts(53,9): error TS2339: Property 'removeAllHandlers' does not exist on type 'EventBus'.
+src/fusion/integration/degradation-test.ts(75,23): error TS2345: Argument of type '"test.point"' is not assignable to parameter of type 'HookPoint'.
+src/fusion/integration/degradation-test.ts(76,27): error TS2345: Argument of type '"test.point"' is not assignable to parameter of type 'HookPoint'.
+src/fusion/integration/health-check.ts(71,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(77,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(90,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(96,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(102,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(115,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(121,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(127,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(133,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/health-check.ts(139,16): error TS2345: Argument of type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is not assignable to parameter of type 'FusionHealthModule'.
+  Type '{ ok: boolean; detail: string; name: string; enabled: boolean; }' is missing the following properties from type 'FusionHealthModule': healthy, details
+src/fusion/integration/index.ts(51,3): error TS2305: Module '"./patch-renderer.js"' has no exported member 'FUSION_PANEL_COMPONENTS'.
+src/fusion/integration/index.ts(52,3): error TS2305: Module '"./patch-renderer.js"' has no exported member 'OPENSPACE_PANEL_COMPONENTS'.
+src/fusion/integration/index.ts(54,3): error TS2305: Module '"./patch-renderer.js"' has no exported member 'ALL_PANEL_COMPONENTS'.
+src/fusion/integration/index.ts(67,8): error TS6142: Module './patch-theme-switch.js' was resolved to 'D:/lingjing/lingjing/packages/core/src/fusion/integration/patch-theme-switch.tsx', but '--jsx' is not set.
+src/fusion/integration/index.ts(71,8): error TS6142: Module './patch-theme-switch.js' was resolved to 'D:/lingjing/lingjing/packages/core/src/fusion/integration/patch-theme-switch.tsx', but '--jsx' is not set.
+src/fusion/integration/patch-electron-main.ts(29,36): error TS2307: Cannot find module 'electron' or its corresponding type declarations.
+src/fusion/integration/patch-electron-main.ts(31,29): error TS2305: Module '"../types.js"' has no exported member 'FusionInitResult'.
+src/fusion/integration/patch-electron-main.ts(79,23): error TS2307: Cannot find module '../../../electron/src/ipc/fusion/register.js' or its corresponding type declarations.
+src/fusion/integration/patch-electron-main.ts(90,23): error TS2307: Cannot find module '../../../electron/src/ipc/fusion/openspace-register.js' or its corresponding type declarations.
+src/fusion/integration/patch-openspace.ts(139,30): error TS2339: Property 'installed' does not exist on type 'OpenSpaceDetectionResult'.
+src/fusion/integration/patch-openspace.ts(139,53): error TS2339: Property 'binaryPath' does not exist on type 'OpenSpaceDetectionResult'.
+src/fusion/integration/patch-openspace.ts(140,33): error TS2339: Property 'installed' does not exist on type 'OpenSpaceDetectionResult'.
+src/fusion/openspace/fusion-adapter.ts(107,31): error TS2345: Argument of type '"openspace:health_changed"' is not assignable to parameter of type 'EventTopic'.
+src/fusion/openspace/fusion-adapter.ts(126,13): error TS2345: Argument of type '"openspace:skills_available"' is not assignable to parameter of type 'EventTopic'.
+src/fusion/openspace/fusion-adapter.ts(145,13): error TS2345: Argument of type '"openspace:skills_unavailable"' is not assignable to parameter of type 'EventTopic'.
+src/fusion/openspace/fusion-adapter.ts(250,31): error TS2345: Argument of type '"openspace:health_changed"' is not assignable to parameter of type 'EventTopic'.
+src/fusion/vector-memory/adapters/sqlite-adapter.ts(59,22): error TS2345: Argument of type '{ id: string; score: number; metadata: Record<string, unknown>; }' is not assignable to parameter of type 'VectorSearchResult'.
+  Property 'content' is missing in type '{ id: string; score: number; metadata: Record<string, unknown>; }' but required in type 'VectorSearchResult'.
+src/index.ts(6,30): error TS2307: Cannot find module './agent/conversation.js' or its corresponding type declarations.
+src/index.ts(7,32): error TS2307: Cannot find module './agent/token-counter.js' or its corresponding type declarations.
+src/index.ts(8,92): error TS2307: Cannot find module './agent/prompts.js' or its corresponding type declarations.
+src/index.ts(9,32): error TS2307: Cannot find module './agent/agent-scheduler.js' or its corresponding type declarations.
+src/index.ts(10,27): error TS2307: Cannot find module './agent/agent-core.js' or its corresponding type declarations.
+src/index.ts(11,30): error TS2307: Cannot find module './agent/agent-factory.js' or its corresponding type declarations.
+src/index.ts(12,29): error TS2307: Cannot find module './agent/dag-executor.js' or its corresponding type declarations.
+src/index.ts(13,35): error TS2307: Cannot find module './agent/context-compressor.js' or its corresponding type declarations.
+src/index.ts(16,32): error TS2307: Cannot find module './llm/openai.js' or its corresponding type declarations.
+src/index.ts(17,35): error TS2307: Cannot find module './llm/anthropic.js' or its corresponding type declarations.
+src/index.ts(18,32): error TS2307: Cannot find module './llm/ollama.js' or its corresponding type declarations.
+src/index.ts(19,84): error TS2307: Cannot find module './llm/provider-factory.js' or its corresponding type declarations.
+src/index.ts(20,32): error TS2307: Cannot find module './llm/sse-parser.js' or its corresponding type declarations.
+src/index.ts(26,30): error TS2307: Cannot find module './tools/registry.js' or its corresponding type declarations.
+src/index.ts(27,30): error TS2307: Cannot find module './tools/executor.js' or its corresponding type declarations.
+src/index.ts(28,32): error TS2307: Cannot find module './tools/tool-permission.js' or its corresponding type declarations.
+src/index.ts(29,31): error TS2307: Cannot find module './tools/sandbox/bash-whitelist.js' or its corresponding type declarations.
+src/index.ts(30,39): error TS2307: Cannot find module './tools/index.js' or its corresponding type declarations.
+src/index.ts(32,10): error TS2724: '"./tools/builtin/dispatch-experts.js"' has no exported member named 'dispatchExpertsTool'. Did you mean 'initDispatchExpertsTool'?
+src/index.ts(35,48): error TS2307: Cannot find module './tools/builtin/codebase-search/chunker.js' or its corresponding type declarations.
+src/index.ts(37,34): error TS2307: Cannot find module './tools/builtin/browser/index.js' or its corresponding type declarations.
+src/index.ts(39,10): error TS2305: Module '"./tools/builtin/cloud-memory.js"' has no exported member 'cloudMemorySearchTool'.
+src/index.ts(40,10): error TS2724: '"./tools/builtin/cloud-session.js"' has no exported member named 'cloudSessionTool'. Did you mean 'initCloudSessionTool'?
+src/index.ts(41,10): error TS2724: '"./tools/builtin/cloud-webhook.js"' has no exported member named 'cloudWebhookTool'. Did you mean 'initCloudWebhookTool'?
+src/index.ts(42,29): error TS2305: Module '"./tools/builtin/bash-output-store.js"' has no exported member 'storeBashOutput'.
+src/index.ts(45,106): error TS2307: Cannot find module './agents/presets.js' or its corresponding type declarations.
+src/index.ts(46,67): error TS2307: Cannot find module './agents/loader.js' or its corresponding type declarations.
+src/index.ts(49,33): error TS2307: Cannot find module './config/schema.js' or its corresponding type declarations.
+src/index.ts(50,32): error TS2307: Cannot find module './config/defaults.js' or its corresponding type declarations.
+src/index.ts(51,28): error TS2307: Cannot find module './config/loader.js' or its corresponding type declarations.
+src/index.ts(54,107): error TS2307: Cannot find module './git/operations.js' or its corresponding type declarations.
+src/index.ts(55,26): error TS2307: Cannot find module './git/pr.js' or its corresponding type declarations.
+src/index.ts(59,47): error TS2307: Cannot find module './utils/truncate.js' or its corresponding type declarations.
+src/index.ts(60,44): error TS2307: Cannot find module './utils/encoding.js' or its corresponding type declarations.
+src/index.ts(61,27): error TS2307: Cannot find module './utils/retry.js' or its corresponding type declarations.
+src/index.ts(62,15): error TS2307: Cannot find module './utils/index.js' or its corresponding type declarations.
+src/index.ts(74,32): error TS2307: Cannot find module './planning/plan-manager.js' or its corresponding type declarations.
+src/index.ts(80,34): error TS2307: Cannot find module './completion/completion-engine.js' or its corresponding type declarations.
+src/index.ts(83,32): error TS2307: Cannot find module './context/context-manager.js' or its corresponding type declarations.
+src/index.ts(86,32): error TS2307: Cannot find module './intent/intent-detector.js' or its corresponding type declarations.
+src/index.ts(89,58): error TS2307: Cannot find module './rules/index.js' or its corresponding type declarations.
+src/index.ts(92,35): error TS2307: Cannot find module './checkpoint/manager.js' or its corresponding type declarations.
+src/index.ts(93,34): error TS2307: Cannot find module './checkpoint/rollback-executor.js' or its corresponding type declarations.
+src/index.ts(96,59): error TS2307: Cannot find module './pipeline/index.js' or its corresponding type declarations.
+src/index.ts(102,31): error TS2307: Cannot find module './security/data-sanitizer.js' or its corresponding type declarations.
+src/index.ts(103,15): error TS2307: Cannot find module './security/index.js' or its corresponding type declarations.
+src/index.ts(106,15): error TS2307: Cannot find module './errors/index.js' or its corresponding type declarations.
+src/index.ts(109,15): error TS2307: Cannot find module './observability/index.js' or its corresponding type declarations.
+src/index.ts(112,15): error TS2307: Cannot find module './lifecycle/index.js' or its corresponding type declarations.
+src/index.ts(115,15): error TS2307: Cannot find module './cross-session/index.js' or its corresponding type declarations.
+src/skills/harvester.ts(5,32): error TS2307: Cannot find module '../../../dist/skills/harvester.js' or its corresponding type declarations.
+src/skills/harvester.ts(6,38): error TS2307: Cannot find module '../../../dist/skills/harvester.js' or its corresponding type declarations.
+src/skills/loader.ts(5,58): error TS2307: Cannot find module '../../../dist/skills/loader.js' or its corresponding type declarations.
+src/skills/types.ts(5,69): error TS2307: Cannot find module '../../../dist/skills/types.js' or its corresponding type declarations.

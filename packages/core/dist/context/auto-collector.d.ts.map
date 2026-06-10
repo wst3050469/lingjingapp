@@ -1,0 +1,1 @@
+{"version":3,"file":"auto-collector.d.ts","sourceRoot":"","sources":["../../src/context/auto-collector.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,WAAW,EAAkC,MAAM,YAAY,CAAC;AAE9E,UAAU,mBAAmB;IAC3B,WAAW,EAAE,MAAM,CAAC;IACpB,SAAS,EAAE,MAAM,EAAE,CAAC;IACpB,WAAW,EAAE,MAAM,EAAE,CAAC;CACvB;AAED,qBAAa,aAAa;IACxB,OAAO,CAAC,MAAM,EAAE,mBAAmB,GAAG,WAAW,EAAE;IAoDnD,OAAO,CAAC,eAAe;CAQxB"}

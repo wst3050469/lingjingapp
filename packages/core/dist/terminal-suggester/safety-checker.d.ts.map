@@ -1,0 +1,1 @@
+{"version":3,"file":"safety-checker.d.ts","sourceRoot":"","sources":["../../src/terminal-suggester/safety-checker.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAA2B,SAAS,EAAE,MAAM,YAAY,CAAC;AAErE,qBAAa,aAAa;IACxB,OAAO,CAAC,QAAQ,CASd;IAEF,KAAK,CAAC,OAAO,EAAE,MAAM,GAAG;QAAE,WAAW,EAAE,OAAO,CAAC;QAAC,SAAS,EAAE,SAAS,CAAC;QAAC,WAAW,CAAC,EAAE,MAAM,CAAA;KAAE;CAQ7F"}

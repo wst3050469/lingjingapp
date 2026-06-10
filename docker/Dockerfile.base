@@ -1,0 +1,18 @@
+# Dockerfile.base
+FROM node:20-slim
+
+# Install essential build tools
+RUN apt-get update && apt-get install -y \
+    git \
+    python3 \
+    python3-pip \
+    curl \
+    ca-certificates \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Set working directory
+WORKDIR /workspace

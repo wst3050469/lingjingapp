@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "\u7075\u5883AI",
+    "slug": "lingjing-mobile",
+    "version": "1.72.26",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0d1117",
+      "image": "./assets/splash.png",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zhejiangjinmo.lingjing.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0d1117",
+        "foregroundImage": "./assets/adaptive-icon.png"
+      },
+      "package": "com.zhejiangjinmo.lingjing.mobile",
+      "versionCode": 63
+    },
+    "plugins": [
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2c8f346b-10e0-4b26-b893-124eb212602f"
+      },
+      "cloudUrl": "https://ide.zhejiangjinmo.com",
+      "apiKey": ""
+    },
+    "owner": "wst3050469",
+    "scheme": "lingjing",
+    "newArchEnabled": true
+  },
+  "version": "1.72.24"
+}

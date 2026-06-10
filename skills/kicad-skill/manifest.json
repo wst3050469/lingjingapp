@@ -1,0 +1,18 @@
+{
+  "id": "kicad-skill",
+  "name": "KiCad 硬件设计",
+  "version": "1.0.0",
+  "description": "KiCad PCB/原理图编辑器封装，支持原理图编辑、PCB布局、DRC检查、BOM导出、Gerber生成、3D查看",
+  "category": "hardware_design",
+  "author": "Lingjing Team",
+  "entryPoint": "adapter.js",
+  "cliDependencies": [
+    { "command": "kicad-cli", "versionRange": ">=7.0.0 <9.0.0", "required": true, "installGuide": "https://www.kicad.org/download/", "detectionCommand": "kicad-cli --version" }
+  ],
+  "fileAssociations": [
+    { "extension": ".kicad_sch", "mimeType": "application/x-kicad-schematic", "openCommand": "kicad_schematic_edit" },
+    { "extension": ".kicad_pcb", "mimeType": "application/x-kicad-pcb", "openCommand": "kicad_pcb_edit" },
+    { "extension": ".kicad_pro", "mimeType": "application/x-kicad-project", "openCommand": "kicad_schematic_edit" }
+  ],
+  "sidebarPanels": ["kicad-explorer"]
+}

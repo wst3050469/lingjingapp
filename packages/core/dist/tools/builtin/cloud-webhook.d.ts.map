@@ -1,0 +1,1 @@
+{"version":3,"file":"cloud-webhook.d.ts","sourceRoot":"","sources":["../../../src/tools/builtin/cloud-webhook.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,IAAI,EAA2B,MAAM,aAAa,CAAC;AAOjE,wBAAgB,oBAAoB,CAAC,OAAO,CAAC,EAAE,OAAO,GAAG,IAAI,CAE5D;AAED,eAAO,MAAM,gBAAgB,EAAE,IAoE9B,CAAC"}

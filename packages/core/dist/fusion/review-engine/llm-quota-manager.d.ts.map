@@ -1,0 +1,1 @@
+{"version":3,"file":"llm-quota-manager.d.ts","sourceRoot":"","sources":["../../../src/fusion/review-engine/llm-quota-manager.ts"],"names":[],"mappings":"AAAA,qBAAa,eAAe;IAC1B,OAAO,CAAC,cAAc,CAAS;IAC/B,OAAO,CAAC,YAAY,CAAK;gBAEb,cAAc,EAAE,MAAM;IAIlC,OAAO,IAAI,OAAO;IAQlB,OAAO,IAAI,IAAI;IAMf,IAAI,SAAS,IAAI,MAAM,CAEtB;IAED,IAAI,IAAI,IAAI,MAAM,CAEjB;CACF"}

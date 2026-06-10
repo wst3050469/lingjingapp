@@ -1,0 +1,1 @@
+{"version":3,"file":"browser-session.js","sourceRoot":"","sources":["../../../../src/tools/builtin/browser/browser-session.ts"],"names":[],"mappings":"AAgCA,IAAI,gBAAgB,GAA2B,IAAI,CAAC;AAEpD,MAAM,UAAU,gBAAgB,CAAC,QAAyB;IACxD,gBAAgB,GAAG,QAAQ,CAAC;AAC9B,CAAC;AAED,MAAM,UAAU,kBAAkB;IAChC,OAAO,gBAAgB,CAAC;AAC1B,CAAC;AAED,MAAM,UAAU,oBAAoB;IAClC,OAAO,gBAAgB,KAAK,IAAI,CAAC;AACnC,CAAC"}

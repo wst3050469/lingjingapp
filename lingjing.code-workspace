@@ -1,0 +1,13 @@
+{
+ "folders": [
+ { "name": "lingjing-ide", "path": "/home/liuhui/lingjing-ide" },
+ { "name": "core", "path": "/home/liuhui/lingjing-ide/packages/core" },
+ { "name": "electron", "path": "/home/liuhui/lingjing-ide/packages/electron" },
+ { "name": "renderer", "path": "/home/liuhui/lingjing-ide/packages/renderer" }
+ ],
+ "settings": {
+ "editor.formatOnSave": true,
+"typescript.updateImportsOnFileMove.enabled": "always",
+"clawMode.mode": "editor"
+ }
+}

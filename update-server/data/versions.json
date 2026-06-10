@@ -1,0 +1,1487 @@
+{
+  "latest": "1.72.20",
+  "versions": [
+    {
+      "version": "1.72.20",
+      "status": "published",
+      "releaseDate": "2026-06-10",
+      "releaseNotes": "v1.72.20: Mac init script + Linux/Mac builds + cloud-landing i18n + ParticleBackground fix",
+      "platforms": {
+        "android": {
+          "size": 36640670,
+          "sha512": "d7d9f059fbd32adbc8bc11564d00133a6ec53394d0e112ee29ef1531e109f57e1b2b6b56a3415670387b5cedd495eb853382312ea51f06649891c2d3a540e48d"
+        },
+        "win-x64": {
+          "size": 145848044,
+          "sha512": "b0fd503206c4388ebde505200c46e95595831e7ba7d7acee096f67566448a84e66ca7269fb098186d3feb4a9fe3cdfab1ee0a5d214aaa2d8b63af8d1dff4f14c"
+        },
+        "win-x64-portable": {
+          "size": 118464453,
+          "sha512": "7b1fac59948416049aa19296dca544ce798e3bd9ffebe3cbd91e02736a58aa15b1cbebbc22d61d282aa9995ef9cc8b496e31935a5e19d5482f20e069822a10f9"
+        },
+        "linux-x86_64": {
+          "size": 180638745,
+          "sha512": "43a4c9ee98f86d1137ee96fa5984001b28e9852384e3c4614e4647d47af2147958f928520464d4aa5cc51d5fdccbfbd3bab8554679b679a5266c6d52f125cca8d"
+        },
+        "linux-x64": {
+          "size": 180638745,
+          "sha512": "43a4c9ee98f86d1137ee96fa5984001b28e9852384e3c4614e4647d47af2147958f928520464d4aa5cc51d5fdccbfbd3bab8554679b679a5266c6d52f125cca8d"
+        },
+        "linux-x64-deb": {
+          "size": 109666372,
+          "sha512": "da52fd2dac8f52309442e2724703e19f1d23c402921f4036b32ee1bfbefd1ea3b12d977b732cd71bec44562fef3a1f616671b69746d8a6acf51cb5f5c9152abc"
+        },
+        "mac-x64": {
+          "size": 173496865,
+          "sha512": "b2354f68a5fc20bc22b70cfff7fa8fd301f98f928a807f67c8aa4e7a022f5a2ccc75759b11a2dc82a0110e6dd084bb2781a3c3d87cdecdd756243e7a3d876955"
+        },
+        "mac-arm64": {
+          "size": 168023189,
+          "sha512": "30a8ace855991b39cde992d0a692b2a17c61dcad597f542f1078b4971268ab22a7f0c8662c944c37893024644696e3cd1ae672cf2b29263d48b3d909af4885dc"
+        }
+      },
+      "files": {
+        "android": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.20-android.apk",
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.20-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.20-win-x64.exe",
+        "linux-x86_64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.20-linux-x86_64.AppImage",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.20-linux-x86_64.AppImage",
+        "linux-x64-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.20-linux-x86_64.deb",
+        "mac-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.20-mac-x64.zip",
+        "mac-arm64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.20-mac-arm64.zip"
+      }
+    },
+    {
+      "version": "1.72.18",
+      "status": "published",
+      "releaseDate": "2026-06-08",
+      "releaseNotes": "v1.72.18: APP消息云中继双向同步 — 移动端可通过云服务器发送消息到桌面AI，支持cloud_account模式实时双向通信",
+      "platforms": {
+        "win-x64": {
+          "size": 145848780,
+          "sha512": "/CcqkWsDHPtmO13zmH0QT9/7pAHqJXJQlMAJf8uopcUSq5qzLVau3nZH+wwxBEcqFcYu7uuzM56TE11CtO8wFA=="
+        },
+        "win-x64-portable": {
+          "size": 145621114,
+          "sha512": "pending"
+        },
+        "linux-x64": {
+          "size": 180634755,
+          "sha512": "pending-upload"
+        },
+        "linux-x64-deb": {
+          "size": 156908920,
+          "sha512": "4d41b092d1d0adf21263da66ddaf3c6391c240baf11737a61a4dc96fc542d823835963cfd206b4edc0ce95ecb170f350b7ae53d92471d93eab3e8bb715848068"
+        },
+        "mac-x64": {
+          "size": 189714772,
+          "sha512": "867e6ba55446e9f307d96b3405daf27556a68807624eb622ad4db2eb8b2261f746323b617baeada6dea503a8a01fc2b2167f2477ef3524b79c18bdce32fd5860"
+        },
+        "mac-arm64": {
+          "size": 184241200,
+          "sha512": "014bbd3dd507a2ecb124d243a42762e8fbff46a30971e30a95ada7090644757d0e896c8d08259d6c03cd270b9d835f5b6afe2aa2eb6bf00bfacbfe3df0109f72"
+        },
+        "android": {
+          "size": 34569790,
+          "sha512": "c1bf42b522866ff30a6fa1d65d7e38342a7541ba1fe87d95b42827e70b595daf551c6e8aaaf35c09869eaf5dcb6b65a9b40395d5765bb82af01686a401458f1e"
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.18-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.18-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.18-linux-x86_64.AppImage",
+        "linux-x64-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.18-linux-x86_64.deb",
+        "mac-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.18-mac-x64.zip",
+        "mac-arm64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.18-mac-arm64.zip",
+        "android": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.18-android.apk"
+      }
+    },
+    {
+      "version": "1.72.17",
+      "status": "published",
+      "releaseDate": "2026-06-08",
+      "releaseNotes": "v1.72.17: 全平台重新打包 — cloud-server域名优化 + macOS双架构 + Linux DEB",
+      "platforms": {
+        "win-x64-portable": {
+          "size": 232058177,
+          "sha512": "5GkwnXKFMrVFrh8nig5YV+WPm59UxmGg/CvQxhg+RKGUT9CpTf1CB7j7eI0p7NEeHCCoXwCgv0lexHLdpOq14A=="
+        },
+        "linux-x64": {
+          "size": 196724102,
+          "sha512": "qFU8CUUSXJCBI0iTkWjPqBQAjYpgW3W8wfmegDEJOXT+4YYzxLLpjir1Qbvgkcell0aU6Vz6/5oAuXPXbN9Gpg=="
+        },
+        "linux-x64-deb": {
+          "size": 150787882,
+          "sha512": "HAyPAJstaSxYpuzjmqjRtuPfCC+lmWxCQTpoSWHQLNOuQuw5ZujUWFmGxSDl082O/Q0qr70Z3BzmUUG68IV/rQ=="
+        },
+        "mac-x64": {
+          "size": 189714650,
+          "sha512": "C7ANQ+qGp9twj/ecH7bKiANanhVMbGFnmRKzZGbY7ZVaLi4Hl3rdWFM8d2dMyMPhLlT6S9AlVlGp6Mx4PbNqYg=="
+        },
+        "mac-arm64": {
+          "size": 184240974,
+          "sha512": "7fC/y2R5Py796wtpB4E+mqxYbiMeU6BjZa82aDDhvPBR4LZJHuoJeIOq1TPM7vv8oAaUvQScsV2LY1+I5xUADQ=="
+        },
+        "android": {
+          "size": 33554432,
+          "sha512": "4e9361f355d28c55"
+        },
+        "win-x64": {
+          "size": 146033007,
+          "sha512": "local-build"
+        }
+      },
+      "files": {
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.17-win-x64.zip",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.17-linux-x86_64.AppImage",
+        "linux-x64-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.17-linux-x86_64.deb",
+        "mac-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.17-mac-x64.zip",
+        "mac-arm64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.17-mac-arm64.zip",
+        "android": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.17-android.apk",
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/灵境 Setup 1.72.17.exe"
+      }
+    },
+    {
+      "version": "1.72.16",
+      "status": "published",
+      "releaseDate": "2026-06-08T02:59:45.941Z",
+      "releaseNotes": "v1.72.16: Fix download progress bar disappearing (remove redundant checkForUpdates in download handler)",
+      "files": {
+        "win-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.16-win-x64.exe",
+          "sha512": "53a5b53bc0d9e8fdff01a92c250288e466c1c99caf8c1f6fc1c47250c38e47e1d3c9871c208942e6b9eb248681e0fc0b47303d8f003aa233c7b843b28749986d",
+          "size": 145847995
+        },
+        "win-x64-portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.16-win-x64.exe",
+          "sha512": "bc98b006c36f9eb6a0def5651b3223117b5fb4f07b9f83e32cdfffdda9302c9b5e86a4619d00e1d23bc4f91c1211b4bf870bc6d2fa707e9460f136618917449b",
+          "size": 145620335
+        },
+        "linux-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.16-linux-x86_64.AppImage",
+          "sha512": "826e0766084bca20f9d463c26790e0a560e818f2ea6c73140dafb9f750bcd39a1a800f0b684a3279f8aa9c80cceadc240a4e4a0bd7fc6e1f6541486b35c81232",
+          "size": 180609824
+        },
+        "linux-x64-deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.16-linux-x86_64.deb",
+          "sha512": "bc83599201ef6de2e75979dfc555e5a5b0bf4bb2f06857f7a05d43a6851a5e6d6ceec1d89f839f98679b7b1ee3fd0567c5448d8f0d0a8c2a76b31a031ec58dc2",
+          "size": 109681350
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.16-android.apk",
+          "sha512": "4e9361f3557631943996601e5eee5e0c4f763863c80e7fcacb1df2e07470a6d18b962e88eb6c072b25f75146c359e4775399c3bf0e337327b83bb6e763d28c55",
+          "size": 32519961
+        },
+        "mac-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.16-mac-x64.zip",
+          "sha512": "234c97418767aac416e1584c4f13adbbea02162425a9377fd325939a10a6e8a041acc1feda5390dfcd9e2d295977ec15fdf7a932fa016f1a896769b1972c2184",
+          "size": 189714656
+        },
+        "mac-arm64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.16-mac-arm64.zip",
+          "sha512": "df93acd01e6d827a023f176818937d1e32848d7b96e4b6c70d4a62adba03a75327d59eeea89f0e06d5264c6f8fd3044587fb5d4c670148d70a62ac6ac9d7ae29",
+          "size": 184240980
+        }
+      }
+    },
+    {
+      "version": "1.72.15",
+      "status": "published",
+      "releaseDate": "2026-06-08T01:52:19.393Z",
+      "releaseNotes": "v1.72.15: Fix online update DNS — lingjing.zhejiangjinmo.com → ide.zhejiangjinmo.com",
+      "files": {
+        "win-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.15-win-x64.exe",
+          "sha512": "lMa+1dYiXgt09WZJdTX6YTawSMf0jVHWiSnkA0e5lx9NOvSyVIFDPzr+sLBNfBpMyWJvvY2JKYI/4kIeWDFAUg==",
+          "size": 145848328
+        },
+        "win-x64-portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.15-win-x64.exe",
+          "sha512": "10fc9280dfc6c087cdbff2d15ff157a1c0faa9b8365284b1287c438e57fa067f6a0c03c0b5207275a8d02cb53a4a09e257795f6bba6da0ac5a6bf87a2ede3d1d",
+          "size": 145620669
+        },
+        "linux-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.15-linux-x86_64.AppImage",
+          "sha512": "1f372067a9dfe4d3a83f55a5d2b0ed217f2f056a17ad2f8f87001a3c6258fa1cb7e86ca1afba5b9be734b1bb13e2585b1669b58b7c5f653283227b9760897cdf",
+          "size": 180634678
+        },
+        "linux-x64-deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.15-linux-x86_64.deb",
+          "sha512": "ecacbd7b0d071e065bd3c943a1be25465018d0952f2eb62f2c9acd4fc4c72359d344adce76722748f76c3f3c9cf51c3752d1560f489ba58838d0f6b741d4e92a",
+          "size": 109639000
+        }
+      }
+    },
+    {
+      "version": "1.72.14",
+      "releaseDate": "2026-06-07T16:55:04.493Z",
+      "releaseNotes": "v1.72.14: Remove dangling imports - patch-tenant-quota.ts and routers/__init__.py cleanup",
+      "downloadUrl": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.14-win-x64.exe",
+      "files": {
+        "win-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.14-win-x64.exe",
+          "sha512": "2bb220ac7f5fb2ac425b4c733bb4a55dd2fc60c1498dff2261602587fb71eb3bca122ec7edcfca9afb2302588c99211a83614bf2af7654db85225c7400954c87",
+          "size": 145848593
+        },
+        "win-x64-portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.14-win-x64.exe",
+          "sha512": "7934d1454ec9c40c4664a5109475db6298ecb09191843e4dc3e00ee553dde6ccf50dac4b2f9104ab2b3050028fbb5854c6c979cbaf6c96db8888b3dd865a5c6f",
+          "size": 145620901
+        },
+        "linux-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.14-linux-x86_64.AppImage",
+          "sha512": "a0bbebbdde9451ef72d51662029cb6982fe721e6c17c443e5955976521a6880c94a06d8b80e13d4ff2567213c0a4afe591c8aa08677df5ef0d48abbcad339a60",
+          "size": 180634417
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.72.14-android.apk",
+          "sha512": "205c6e3094358c3fce8462b63adfb20e57e12e3ff3d09ccd86c092e17fa0172c1b7eaad4732373ee7ddbb91e80d864a60cc4c673d426410ff55361a8829bceda",
+          "size": 82218196
+        },
+        "linux-x64-deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.14-linux-x86_64.deb",
+          "sha512": "a7f5cc42b4383b9608dfe9b2a719cadbef01609b07a0dc0a8841f406ffaf63a0cf44f22ab417939764ff2e30c102d18bb7d6465ebdcd87204b765de9f5dbcd78",
+          "size": 109718648
+        }
+      },
+      "status": "published",
+      "platforms": {
+        "win-x64": {
+          "sha512": "2bb220ac7f5fb2ac425b4c733bb4a55dd2fc60c1498dff2261602587fb71eb3bca122ec7edcfca9afb2302588c99211a83614bf2af7654db85225c7400954c87",
+          "size": 145848593,
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.14-win-x64.exe"
+        },
+        "win-x64-portable": {
+          "sha512": "7934d1454ec9c40c4664a5109475db6298ecb09191843e4dc3e00ee553dde6ccf50dac4b2f9104ab2b3050028fbb5854c6c979cbaf6c96db8888b3dd865a5c6f",
+          "size": 145620901,
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.14-win-x64.exe"
+        },
+        "linux-x64": {
+          "sha512": "a0bbebbdde9451ef72d51662029cb6982fe721e6c17c443e5955976521a6880c94a06d8b80e13d4ff2567213c0a4afe591c8aa08677df5ef0d48abbcad339a60",
+          "size": 180634417,
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.14-linux-x86_64.AppImage"
+        },
+        "android": {
+          "sha512": "205c6e3094358c3fce8462b63adfb20e57e12e3ff3d09ccd86c092e17fa0172c1b7eaad4732373ee7ddbb91e80d864a60cc4c673d426410ff55361a8829bceda",
+          "size": 82218196,
+          "url": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.72.14-android.apk"
+        },
+        "linux-x64-deb": {
+          "sha512": "a7f5cc42b4383b9608dfe9b2a719cadbef01609b07a0dc0a8841f406ffaf63a0cf44f22ab417939764ff2e30c102d18bb7d6465ebdcd87204b765de9f5dbcd78",
+          "size": 109718648,
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.14-linux-x86_64.deb"
+        }
+      }
+    },
+    {
+      "version": "1.72.13",
+      "status": "published",
+      "releaseDate": "2026-06-07T16:00:00.000Z",
+      "releaseNotes": "v1.72.13: Remove homepage dashboard, tenant login, business dashboard (-3763 lines). Cloud-only code cleanup.",
+      "files": {
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.13-linux-x86_64.AppImage",
+        "linux-x64-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.13-linux-x86_64.deb"
+      },
+      "platforms": {
+        "linux-x64": {
+          "sha512": "adbb4aaf021b055cf290ed2be4f59cd6e76f845c1e1e4dc2336de53ae6614ff1c6227cf810fd5ff4f2f63a64bc3b2010983eefded91e7e7bf48312580506b018",
+          "size": 180634665,
+          "url": "LingJing-1.72.13-linux-x86_64.AppImage"
+        },
+        "linux-x64-deb": {
+          "sha512": "ce635d9d69ce79b36dcc4cbac433a05058581bea0cc75ba5252c1703ebf9b6958c4217aa917288c05fe64e42fd1401726bfa0b21efead1e6596e657a5c295dde",
+          "size": 109666238,
+          "url": "LingJing-1.72.13-linux-x86_64.deb"
+        }
+      }
+    },
+    {
+      "version": "1.72.12",
+      "status": "published",
+      "releaseDate": "2026-06-07T06:25:33.391Z",
+      "releaseNotes": "v1.72.12: Fix admin blank page (router base URL) + crypto.randomBytes crash (missing node:crypto import)",
+      "platforms": {
+        "win-x64": {
+          "size": 146197782,
+          "sha512": "02dff53304b5a2021d5cddcd3740a9b1f793dc0c11bdca7b6c11a2173dabbb485d18c7a21ecfeee78333f35794d8729873e073c6bd4a64285ae522b10c65570e"
+        },
+        "win-x64-portable": {
+          "size": 145856227,
+          "sha512": "eca71278ee819ad7b794e3ab1b7dcbbbc844f6f203d93ff1fd875fcfe75836663a646801b37a21d56d05e5e2c4294220b95da2e17ae6d1a97fd28d3b7db5dbef"
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/灵境 Setup 1.72.12.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.12-win-x64.exe"
+      }
+    },
+    {
+      "version": "1.72.11",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.11: CRITICAL - remove dormant disable-gpu fallback from window-utils.ts that re-triggered no-window bug after 3 consecutive failures, version-aware rollback (only count same-version failures), NaN guard in window bounds validation, GPU diagnostic logging on window creation",
+      "platforms": {
+        "win-x64": {
+          "size": 146197854,
+          "sha512": "5e927ecb2966524a7ec9aa6c2e69d99cc275c22e0c2023228dd46e6e320c24776a2d52f878643711d718a3f221f1be10264f80665c25b022e92417fade12fbd1"
+        },
+        "win-x64-portable": {
+          "size": 145856302,
+          "sha512": "0c164a39e832a844885e159690c53f22b261d5ccebdb092dcb9f7e29bc8e1c81bf1307e7654ae75003a02f6b63e775a840e825d880a8ad27a89c870093c150ca"
+        },
+        "linux-x64": {
+          "size": 181076944,
+          "sha512": "93ee1594be3bd5ef3276530f6012f0914226344e06cc94c06d3968c3c482d859a53986993785ecf9fcd347109da0463e09afb4d8a0e1accab709d7ee5e1a0f73"
+        },
+        "linux-x64-deb": {
+          "size": 109538138,
+          "sha512": "75de9286f56f39ca3c1d16785ca29653023b9adcd7107942a30bf883b9d8ba12781667bfb5a3d58d58cb8dbd0dafcbad0170e89f1ae73ab2010a0405fc65f12e"
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.11-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.11-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.11-linux-x86_64.AppImage",
+        "linux-x64-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.11-linux-x86_64.deb"
+      }
+    },
+    {
+      "version": "1.72.10",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.10: CRITICAL - remove --disable-gpu (fixes no-window bug on Windows/Linux), fix Linux --disable-software-rasterizer",
+      "platforms": {
+        "win-x64": {
+          "size": 143948116,
+          "sha512": "ffeff9d25fdea9b8aad7d6f42d32c33f0660c424e498b368ad013c5d3fd2a8433232ca1c0a484871ece0e9b5c225e5f571d4001c63717a49ab8b639fa7dd8fe3"
+        },
+        "win-x64-portable": {
+          "size": 143719963,
+          "sha512": "62dcf9ab71ece350b724c0e08140948aede05c0113ad084e97482f4323e3a5b528bfa5258f69f0f456a4f93dffd7ab94722cddcc5c680450ec902290d0bffc9c"
+        },
+        "linux-x64": {
+          "size": 180630567,
+          "sha512": "02ad900f7651204d5fdd61c3e53463036ca6b2317574d71f76e93bdb919a75f6fa00c01ab2e907765935464e28bdd2d7abac2cc0e0c977a1c7a872218313566c"
+        },
+        "linux-x64-deb": {
+          "size": 109650232,
+          "sha512": "b9abe0bc43ba24cd003c107b2d3999f06991f52bd7ef273ebc2156f7d945643166c911e482d50b20eb277636c845193d39016c0a70ca5a872783334c62383faa"
+        },
+        "android": {
+          "size": 82218200,
+          "sha512": "a6626b456b95ad53b5ba7378e70239edd12d4237b9ff9a5c9bda7b8b281c682c402a38f68c46284395b29f0631b4ced37b185d1ee5dddf897081869d0dde0057"
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.10-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.10-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.10-linux-x86_64.AppImage",
+        "linux-x64-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.10-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.72.10-android.apk"
+      }
+    },
+    {
+      "version": "1.72.9",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.9: 35 security fixes (L0-L3) - 4 new security modules (crypto-utils, rate-limiter, audit-logger, db-helpers), timing attack safeCompare, scrypt password hashing, CSP tighten, rate limiting, JWT_SECRET enforce, 14 perf indexes",
+      "platforms": {
+        "win-x64": {
+          "size": 146319161,
+          "sha512": "000183a7e217b765158fe1b521f1ffb10694247e7ee9ebe9f81774e67053cc6fc19cb3115b588e9b6e3fb901aab7b1f96af326ee2c62145a48c302e0149403f6"
+        },
+        "win-x64-portable": {
+          "size": 146091454,
+          "sha512": "f10a27e51d9a49023c3a0b3ab9d0dc7313f802c4a5de37bacef611f46b1df798805f7e3ecc7bdb4c44ae01bcdd288683facbba7071bd4135b59a2700657c9d78"
+        },
+        "linux-x64": {
+          "size": 180658809,
+          "sha512": "e532def3560aeb66adb8edbeb97b8c2feea4d941302d274bd69b64ad688b0472734f3f42d53324ba3cfcbfc0cd2d4d4ea708ab35a57b6b60c387ca2e6cad1639"
+        },
+        "linux-x64-deb": {
+          "size": 109727102,
+          "sha512": "68c15b995e218118250c011b06e3a57cccc7c99f7c57f583ffeaef49262c367ba9423dd74f6038a9515125d3d22b751dfd31bd095298f8d5b43f45494af4ced8"
+        },
+        "android": {
+          "size": 82218200,
+          "sha512": "a6626b456b95ad53b5ba7378e70239edd12d4237b9ff9a5c9bda7b8b281c682c402a38f68c46284395b29f0631b4ced37b185d1ee5dddf897081869d0dde0057"
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.9-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.9-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.9-linux-x86_64.AppImage",
+        "linux-x64-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.9-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.72.9-android.apk"
+      }
+    },
+    {
+      "version": "1.72.8",
+      "status": "published",
+      "releaseDate": "2026-06-06",
+      "releaseNotes": "v1.72.8: CRITICAL FIX - remove disable-software-rasterizer (no window bug)",
+      "platforms": {
+        "win-x64": {
+          "size": 145835368,
+          "sha512": "nfQFjE1tzU88sCHeoJkHsLaAckJdPG5Wcua/en/Ag39XX/HdZC5/+nOe2WIm846vxMnI8Vv0JJhqeoyar0O2tQ=="
+        },
+        "win-x64-portable": {
+          "size": 145607654
+        },
+        "linux-x64": {
+          "size": 180658782,
+          "sha512": "oI3gG6NlFZi7PHw7fNKjgFIFZ65tgIvk575VV7DlxW8jrpLzU0n7XB6cp2Yr3zeOcJ738TRf39IV6TxUyRUNpQ=="
+        },
+        "linux-x64-deb": {
+          "size": 109653412,
+          "sha512": "HmX84v+5Ppkogh8n7u9sddrUGahzu0TWLnYFceMRn7mxUynbC92SDVoIVzs2pIrY3+/1AbKjTSuXhoZ3d7+5fg=="
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.8-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.8-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.8-linux-x86_64.AppImage",
+        "linux-x64-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.8-linux-x86_64.deb"
+      }
+    },
+    {
+      "version": "1.72.7",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.7: boot diagnostic log + GPU sw render + error dialog + show:true",
+      "platforms": {
+        "win-x64": {
+          "size": 133460499
+        },
+        "win-x64-portable": {
+          "size": 133230710
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.7-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.7-win-x64.exe",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.1-android.apk"
+      }
+    },
+    {
+      "version": "1.72.6",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.6: boot.log diagnostic + GPU software rendering",
+      "platforms": {
+        "win-x64": {
+          "size": 133460472
+        },
+        "win-x64-portable": {
+          "size": 133230687
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.6-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.6-win-x64.exe"
+      }
+    },
+    {
+      "version": "1.72.5",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.5: GPU software rendering + uncaughtException error dialog + bootstrap catch",
+      "platforms": {
+        "win-x64": {
+          "size": 133459829
+        },
+        "win-x64-portable": {
+          "size": 133230043
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.5-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.5-win-x64.exe",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.1-android.apk"
+      }
+    },
+    {
+      "version": "1.72.4",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.4: createWindow try/catch with fallback error window + full renderer crash recovery",
+      "platforms": {
+        "win-x64": {
+          "size": 133459739
+        },
+        "win-x64-portable": {
+          "size": 133229949
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.4-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.4-win-x64.exe",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.1-android.apk"
+      }
+    },
+    {
+      "version": "1.72.3",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.3: renderer crash auto-recovery + loadFile error page + render-process-gone handler",
+      "platforms": {
+        "win-x64": {
+          "size": 133459246
+        },
+        "win-x64-portable": {
+          "size": 133229404
+        },
+        "linux-x64": {
+          "size": 180646187
+        },
+        "linux-deb": {
+          "size": 109721676
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.3-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.3-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.2-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.2-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.1-android.apk"
+      }
+    },
+    {
+      "version": "1.72.2",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.2: Fix online update (asarUnpack + node_modules in build + blockmap) + show:true",
+      "platforms": {
+        "win-x64": {
+          "size": 133458597
+        },
+        "win-x64-portable": {
+          "size": 133228815
+        },
+        "linux-x64": {
+          "size": 180646187
+        },
+        "linux-deb": {
+          "size": 109721676
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.2-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.2-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.2-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.2-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.1-android.apk"
+      }
+    },
+    {
+      "version": "1.72.1",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.1: CRITICAL - show:true (window always visible, eliminates never-appear bug)",
+      "platforms": {
+        "win-x64": {
+          "size": 133176009
+        },
+        "win-x64-portable": {
+          "size": 132946221
+        },
+        "linux-x64": {
+          "size": 180991542
+        },
+        "linux-deb": {
+          "size": 109391650
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.1-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.1-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.0-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.0-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.1-android.apk"
+      }
+    },
+    {
+      "version": "1.72.0",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.72.0: Triple layer startup protection - lazy node-pty + try/catch IPC + force-show fallback",
+      "platforms": {
+        "win-x64": {
+          "size": 133176140
+        },
+        "win-x64-portable": {
+          "size": 132946347
+        },
+        "linux-x64": {
+          "size": 180991542
+        },
+        "linux-deb": {
+          "size": 109391650
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.72.0-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.72.0-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.0-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.72.0-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.1-android.apk"
+      }
+    },
+    {
+      "version": "1.71.8",
+      "status": "published",
+      "releaseDate": "2026-06-06",
+      "releaseNotes": "v1.71.8: Fix node-pty crash on Windows (lazy import) + ASCII artifactName",
+      "platforms": {
+        "win-x64": {
+          "size": 133175722
+        },
+        "win-x64-portable": {
+          "size": 132945915
+        },
+        "linux-x64": {
+          "size": 180991460
+        },
+        "linux-deb": {
+          "size": 109457884
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": {
+          "size": 133175823
+        },
+        "win-x64-portable": {
+          "size": 132946019
+        },
+        "linux-x64": {
+          "size": 180991330
+        },
+        "linux-deb": {
+          "size": 109412378
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "downloadUrl": ""
+    },
+    {
+      "version": "1.71.7",
+      "status": "published",
+      "releaseDate": "2026-06-06",
+      "releaseNotes": "v1.71.7: Fix update download (ASCII artifactName) + 14 audit fixes + PTY + Debug MVP + init-script",
+      "platforms": {
+        "win-x64": {
+          "size": 133175823
+        },
+        "win-x64-portable": {
+          "size": 132946019
+        },
+        "linux-x64": {
+          "size": 180991264
+        },
+        "linux-deb": {
+          "size": 109476230
+        },
+        "android": {
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133175500
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132945695
+        },
+        "android": {
+          "sha512": "TBD",
+          "size": 100438946
+        },
+        "linux-x64": {
+          "size": 180991330
+        },
+        "linux-deb": {
+          "size": 109412378
+        }
+      },
+      "downloadUrl": ""
+    },
+    {
+      "version": "1.71.6",
+      "status": "published",
+      "releaseDate": "2026-06-06",
+      "releaseNotes": "v1.71.6: BUG-020 headless mode + PTY terminal + Debug MVP + init-script + 14 audit fixes",
+      "platforms": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133175500
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132945695
+        },
+        "android": {
+          "sha512": "TBD",
+          "size": 100438946
+        },
+        "linux-x64": {
+          "size": 180991330
+        },
+        "linux-deb": {
+          "size": 109412378
+        }
+      },
+      "files": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133175539
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132945739
+        },
+        "android": {
+          "sha512": "TBD",
+          "size": 100438946
+        },
+        "linux-x64": {
+          "sha512": "TBD",
+          "size": 180991330
+        },
+        "linux-deb": {
+          "sha512": "TBD",
+          "size": 109412378
+        }
+      },
+      "downloadUrl": ""
+    },
+    {
+      "version": "1.71.5",
+      "status": "published",
+      "releaseDate": "2026-06-06",
+      "releaseNotes": "v1.71.5: PTY terminal (node-pty) + Debug MVP + init-script Quest + 13 audit fixes",
+      "platforms": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133175539
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132945739
+        },
+        "android": {
+          "sha512": "TBD",
+          "size": 100438946
+        },
+        "linux-x64": {
+          "sha512": "TBD",
+          "size": 180991330
+        },
+        "linux-deb": {
+          "sha512": "TBD",
+          "size": 109412378
+        }
+      },
+      "files": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133175664
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132945854
+        },
+        "linux-x64": {
+          "sha512": "TBD",
+          "size": 180991473
+        },
+        "linux-deb": {
+          "sha512": "TBD",
+          "size": 109453286
+        },
+        "android": {
+          "sha512": "11cce3e9e541c9e575670f54290f11355975a46373d553b6c71ec7b48e6c1254bd7541b9b7c05f53fcecac81ce2b61615aeee24df244fceeed85156b91815865",
+          "size": 100438946
+        }
+      },
+      "downloadUrl": ""
+    },
+    {
+      "version": "1.71.4",
+      "status": "published",
+      "releaseDate": "2026-06-06",
+      "releaseNotes": "v1.71.3: Debug MVP (launch.json + Node.js inspect + DebugPanel)",
+      "platforms": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133175664
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132945854
+        },
+        "linux-x64": {
+          "sha512": "TBD",
+          "size": 180991473
+        },
+        "linux-deb": {
+          "sha512": "TBD",
+          "size": 109453286
+        },
+        "android": {
+          "sha512": "11cce3e9e541c9e575670f54290f11355975a46373d553b6c71ec7b48e6c1254bd7541b9b7c05f53fcecac81ce2b61615aeee24df244fceeed85156b91815865",
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133175163
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132945364
+        },
+        "linux-x64": {
+          "sha512": "TBD",
+          "size": 179998799
+        },
+        "linux-deb": {
+          "sha512": "TBD",
+          "size": 108923698
+        }
+      },
+      "downloadUrl": ""
+    },
+    {
+      "version": "1.71.3",
+      "status": "published",
+      "releaseDate": "2026-06-06",
+      "releaseNotes": "v1.71.3: GAP-001 Debug MVP (launch.json + Node.js inspect + DebugPanel UI) + 11项审计缺陷修复",
+      "platforms": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133175163
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132945364
+        },
+        "linux-x64": {
+          "sha512": "TBD",
+          "size": 179998799
+        },
+        "linux-deb": {
+          "sha512": "TBD",
+          "size": 108923698
+        }
+      },
+      "files": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133173897
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132944090
+        },
+        "linux-x64": {
+          "sha512": "TBD",
+          "size": 180002900
+        },
+        "linux-deb": {
+          "sha512": "TBD",
+          "size": 108891524
+        }
+      },
+      "downloadUrl": ""
+    },
+    {
+      "version": "1.71.2",
+      "status": "published",
+      "releaseDate": "2026-06-06",
+      "releaseNotes": "v1.71.2: Phase 3-5审计修复合集 (11项缺陷: 终端孤儿进程/闭包陷阱/并发限制/执行追踪/Docker资源限制/Token加密/Worktree冲突/Browser恢复/消息上限/beforeunload/lint)",
+      "platforms": {
+        "win-x64": {
+          "sha512": "TBD",
+          "size": 133173897
+        },
+        "win-x64-portable": {
+          "sha512": "TBD",
+          "size": 132944090
+        },
+        "linux-x64": {
+          "sha512": "TBD",
+          "size": 180002900
+        },
+        "linux-deb": {
+          "sha512": "TBD",
+          "size": 108891524
+        }
+      },
+      "files": {
+        "win-x64": {
+          "sha512": "5ed29faaa1ac15c3805634bd30e0178557e8ab49706351602b08ffd09bedd027228297c4a0bf5dd91f4ccebfa1672a00493f066d4a5ece4780833b8cac8238b6",
+          "size": 133171297
+        },
+        "win-x64-portable": {
+          "sha512": "b8f849f6d3e9fd0d5154b496f980d1911fe1fdb45d3efeb3282b45cd7ae077f0de622ce471379a474753a6ca54e2cde6983584c2b9a6d8bd6acc839bb08a5f69",
+          "size": 132941502
+        },
+        "linux-x64": {
+          "sha512": "a7072b5701c8f011b02352cc58b3de67341a16f7f1a3ec45d66d89615ac68663a958ceb7bc48aa61352e5c10555407416c74e43e6071e76052439fdc429faacc",
+          "size": 179990496
+        },
+        "linux-deb": {
+          "sha512": "b96a9e9e1cae7d268c8ce9035ed61da9acf6383502cca2322720a7a2ae22f9488575de64762bed960b608d31461f3ac9ff2cdbc96aed1bcd68faf139a5c86712",
+          "size": 108937544
+        }
+      },
+      "downloadUrl": ""
+    },
+    {
+      "version": "1.71.2",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.71.2: Phase 3-5审计修复合集 (11项缺陷: 终端孤儿进程/闭包陷阱/并发限制/执行追踪/Docker资源限制/Token加密/Worktree冲突/Browser恢复/消息上限/beforeunload/lint)",
+      "platforms": {
+        "win-x64": {
+          "sha512": "5ed29faaa1ac15c3805634bd30e0178557e8ab49706351602b08ffd09bedd027228297c4a0bf5dd91f4ccebfa1672a00493f066d4a5ece4780833b8cac8238b6",
+          "size": 133171297
+        },
+        "win-x64-portable": {
+          "sha512": "b8f849f6d3e9fd0d5154b496f980d1911fe1fdb45d3efeb3282b45cd7ae077f0de622ce471379a474753a6ca54e2cde6983584c2b9a6d8bd6acc839bb08a5f69",
+          "size": 132941502
+        },
+        "linux-x64": {
+          "sha512": "a7072b5701c8f011b02352cc58b3de67341a16f7f1a3ec45d66d89615ac68663a958ceb7bc48aa61352e5c10555407416c74e43e6071e76052439fdc429faacc",
+          "size": 179990496
+        },
+        "linux-deb": {
+          "sha512": "b96a9e9e1cae7d268c8ce9035ed61da9acf6383502cca2322720a7a2ae22f9488575de64762bed960b608d31461f3ac9ff2cdbc96aed1bcd68faf139a5c86712",
+          "size": 108937544
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.71.2-win-x64.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.71.2-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.71.2-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.71.2-linux-x86_64.deb"
+      }
+    },
+    {
+      "version": "1.71.1",
+      "status": "published",
+      "releaseDate": "2026-06-07",
+      "releaseNotes": "v1.71.1: 4项遗留审计缺陷修复 (BUG-007/008/014 + DB-002) + 版本号统一升级",
+      "platforms": {
+        "win-x64": {
+          "sha512": "9e6922d0c12cedf4b8163c69785b5eb7109a4459a530f192b9f92b3a3e1f1354b09d57164d1c1a0641fc9a28842f69c582368b9130e3b13fbe3224caa870aab9",
+          "size": 142398152
+        },
+        "win-x64-portable": {
+          "sha512": "e5415fb215fa245ffe2898383629e932042a0627fb6bd055a2355e97456ff2d6e81f7cc2d6d9342f8269bd30fc0eebc433a7b4048973d158462e2d8b2a4dfb3a",
+          "size": 142170461
+        },
+        "linux-x64": {
+          "sha512": "0362f71f7079aae7e1423e31e3cd301eb190d488fc6979dacd1a70ce5a7264286d6483c54391fe17c8cddce4d6b28c01eae9a5b7edfe546bbc931463220a3ac0",
+          "size": 179986315
+        },
+        "linux-deb": {
+          "sha512": "b85a8aea26fcf87de708dc2500cda7af105cbff0907b2602ee69f6da47fb0d6e82c264117f74dd94e2a4aec532ffd66142eae40eb6ae75a4ce2636ad42c5ee37",
+          "size": 217929214
+        },
+        "android": {
+          "sha512": "11cce3e9e541c9e575670f54290f11355975a46373d553b6c71ec7b48e6c1254bd7541b9b7c05f53fcecac81ce2b61615aeee24df244fceeed85156b91815865",
+          "size": 100438946
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/灵境 Setup 1.71.1.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.71.1-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.71.1-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.71.1-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.1-android.apk"
+      }
+    },
+    {
+      "version": "1.71.0",
+      "status": "published",
+      "releaseDate": "2026-06-05",
+      "releaseNotes": "域名统一(lingjing→ide) + Cloud Landing生产上线 + 前端首页重构",
+      "platforms": {
+        "win-x64": {
+          "sha512": "13eee1909eb4f83406238cf7e963e8d410fb8e549b53a3bb62d9f3a298163ec7217094bab1d35319bb1a8f79681940470cb41b70d6adcb10ed5fd9d9385e8b16",
+          "size": 142400184
+        },
+        "win-x64-portable": {
+          "sha512": "c5b81151d3d68cbb916b5a2653a75a815f70830ef117c0d904719fbf9589e9fc175f7df35b28dc579c0c9bcf77308a5cc80887ad2e9d38ad9435574b3cc857af",
+          "size": 142172491
+        },
+        "linux-x64": {
+          "sha512": "e23b84799abfa5117ca361c9954d8cae0e1bed7425611ca8c61d9a443c44d1bd4adaf443906893da5f0fcd0d5e8eaab84628e60c3434404aedddcdf155404658",
+          "size": 173077627
+        },
+        "android": {
+          "sha512": "82381b943d0d1729101a5c8b92de65005188f0ae3d68a227ffe9eed7e92c038aded94e2c2e47a6758faa967bacdaef4c514ac790abbf73b19d6dea6c22f64e83",
+          "size": 82544215
+        },
+        "linux-deb": {
+          "sha512": "6110f9ed3d7e1b92d8ee4f6e26e1f387c48c18ca78c908e9760c13c4040fbe89c63bb9fa15e626a75afe63fb726634720167102d8c6987f2289c2bf3922d2881",
+          "size": 115020566
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/灵境 Setup 1.71.0.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.71.0-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.71.0-linux-x86_64.AppImage",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.71.0-android.apk",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.71.0-linux-x86_64.deb"
+      }
+    },
+    {
+      "version": "1.70.2",
+      "status": "published",
+      "releaseDate": "2026-06-05",
+      "releaseNotes": "审计收尾：Checkpoint密钥持久化 + Token时序安全修复 + InlineChat竞态修复 (3项高危缺陷)",
+      "platforms": {
+        "win-x64": {
+          "sha512": "9215d2d9592de710f0c2366cb9211b971e6cbae0a3dac6c55100f98cd9881d983a4f105d7f22d2f271f8ca32789f80ab2858a0d28ee5e15de4caeaa68b6e457b",
+          "size": 133165854
+        },
+        "win-x64-portable": {
+          "sha512": "879954b25e380ce894797d0d7fd7341a6f342c91cee177249f6d3940ee7dec403ca9388948c269400f0b9bec695ff575cdbebfdb8dc4adae70862b695336ee92",
+          "size": 132936047
+        },
+        "linux-x64": {
+          "sha512": "5dcf79461716224feb8c2004b8407e268c943a72b448e4e265c2d553c2d63eccd46ec455960bd6768aca2eea773f938e8a2bdbad52200bdaf944be539c63f390",
+          "size": 189748122
+        },
+        "linux-deb": {
+          "sha512": "c8f1aa93921b51f816747852c6bcdc644c246c1777c3adc0439de172dcf0796337cb34bde7aa87fff0c0004f2643f7fc3c244f19e454e4971bd9e3143384e611",
+          "size": 115038540
+        },
+        "android": {
+          "sha512": "92bea1bf1823260aa6931464feed21c2abfd9159f2b0f5771871e25ec5d91223b5c5e8dca04c26e057fc288c0d8338310bc7add8ce24cdf9db3a1286088e8894",
+          "size": 33022586
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/灵境 Setup 1.70.2.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.70.2-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.2-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.2-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.70.2-android.apk"
+      }
+    },
+    {
+      "version": "1.70.1",
+      "status": "published",
+      "releaseDate": "2026-06-04",
+      "releaseNotes": "修复 Agent/Session IPC 重复注册 + session:list handler 补全",
+      "platforms": {
+        "win-x64": {
+          "sha512": "9b860558a7f822f90c4f6c7626871334732b0b866e4dc414ac11f718681094db0c414b375a3b6b5d953c7b07eec526bf460aaa036ec2924713fb0d5bab10e8e1",
+          "size": 142391701
+        },
+        "win-x64-portable": {
+          "sha512": "be16d71d4fc345eb417270d0954a16bddbae2d7e6060f1628bd9c01f9b023272a4c8a8bbdee281f76e69f6131789b541bf3fda1e59aba83257ce401db91e8159",
+          "size": 142163986
+        },
+        "linux-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.1-linux-x86_64.AppImage",
+          "size": 181437954,
+          "sha512": "6e10434f19b0b527f0192258257abb6f00738e7e3714578d9b75a329a0282a19d8f2c3ebe04cb43e146f1568c51089b8bc493d7e1a32d7a112089b4a2f270de0"
+        },
+        "linux-deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.1-linux-x86_64.deb",
+          "size": 137017892,
+          "sha512": "618c3a4b5ba7c8080646dfac213fdd6fede584de93eb6abe420485f878ee0e9b3141d6b03641f2f61ae08213fffd21544597f1654b91a337c03b5d2c8b1fb7b0"
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/灵境 Setup 1.70.1.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.70.1-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.1-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.1-linux-x86_64.deb"
+      }
+    },
+    {
+      "version": "1.70.0",
+      "platforms": {
+        "win-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/灵境 Setup 1.70.0.exe",
+          "size": 142392092,
+          "sha512": "999a98eef26002ae09f6955d818abe887f2e2ca79c4134441d67aeb1b5f93982c03c51da284beca5bff9251020bd697b128b2a53383fd98bb1ced6950587b8ce"
+        },
+        "win-x64-portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.70.0-win-x64.exe",
+          "size": 142164403,
+          "sha512": "2eb38a713ecd356e1fcfad825efdbf959f35640c3cbb7c430c5ef592f5c40c2392e5b5af2b0a759f1fbefd97ed77132c24791ad9844d4bbe861f7b568ba8fa06"
+        },
+        "linux-x64": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.0-linux-x86_64.AppImage",
+          "size": 179978249,
+          "sha512": "ebac69882d6ee2d1f13bb23c05b62536e144587c1fefb6af5e3f03eef682cd0ca314df46abc35cb4d92de337909f6d271851c93f73a7d78b518a3dcfcf2c9d70"
+        },
+        "linux-deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.0-linux-x86_64.deb",
+          "size": 108941772,
+          "sha512": "1f535df7ba84896f5194bc1ca682c7be13f4a95d62f5ad14bfcbea1169bd1646c6c6ad4cc3721b4d16b2555f84cc1caddd41366b8edbff73ba3e29538aafe1e7"
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.70.0-android.apk",
+          "size": 82542307,
+          "sha512": "55b00f0b6f2ec4f24877bef99ff91474413247b352deb48df07cf35fb21b1627859a2bcf2c59d5203cd0845b62feb80c73b3044fe484c9d876a342fe8ea97ff9"
+        }
+      },
+      "files": {
+        "win-x64": "https://ide.zhejiangjinmo.com/downloads/灵境 Setup 1.70.0.exe",
+        "win-x64-portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.70.0-win-x64.exe",
+        "linux-x64": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.0-linux-x86_64.AppImage",
+        "linux-deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.70.0-linux-x86_64.deb",
+        "android": "https://ide.zhejiangjinmo.com/downloads/lingjing-1.70.0-android.apk"
+      },
+      "status": "published",
+      "releaseDate": "2026-06-04",
+      "releaseNotes": "FC31租户配额管理 + 看板CRUD补全 (quality/attendance/consumables PUT+DELETE)"
+    },
+    {
+      "version": "1.69.1",
+      "releaseDate": "2026-06-04T13:46:18.000Z",
+      "releaseNotes": "v1.69.1: FC06 tools/builtin源文件补全 + FC10 skills源文件补全 + FC18迁移命名标准化",
+      "status": "pending_review",
+      "files": {
+        "win-x64": {
+          "url": "灵境 Setup 1.69.1.exe",
+          "size": 142392215,
+          "sha512": "24b932fa0267b59323e657d25aa807c7eb2527d1edabe7d41d61bb0c5400a0fdbd2b02caa422030a16c1a5f1cdeb57b6f063a5f76063514e2056ded049976ee2"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.69.1-win-x64.exe",
+          "size": 142164530,
+          "sha512": "5760cec3369adfff76b56dff5e88c41893de04a5bf041f526b718db3d3f342e209124ed4e92cee3ada9231d383cc15af7d42a0437e077347eef7208c0293fb26"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.69.1-linux-x86_64.AppImage",
+          "size": 180618276,
+          "sha512": "27fb1a623035b236b04a64857f674bd789ba1bcff77c0ae4707e41b200667d1654c6cbfa644a38e16d9bae611bd163c5973dbcf565345441ba2cac9178609efd"
+        },
+        "android-x64": {
+          "url": "LingJing-1.69.1-android.apk",
+          "size": 82542307,
+          "sha512": "55b00f0b6f2ec4f24877bef99ff91474413247b352deb48df07cf35fb21b1627859a2bcf2c59d5203cd0845b62feb80c73b3044fe484c9d876a342fe8ea97ff9"
+        },
+        "linux-x64-deb": {
+          "url": "lingjing-ide_1.69.1_amd64.deb",
+          "size": 121029876,
+          "sha512": "2e844ca5e46d73ad7f8625f762526e439e4af8356ed4637d385b3e3e013683f8823292c92ab9d247457fc627e02f420537000413eb11bad451f8bb32d45259dc"
+        }
+      }
+    },
+    {
+      "version": "1.68.0",
+      "releaseDate": "2026-06-04T02:40:00.000Z",
+      "releaseNotes": "v1.68.0: OpenSpace融合层命名空间修复(openspace-register)",
+      "status": "published",
+      "files": {
+        "win-x64": {
+          "url": "灵境 Setup 1.68.0.exe",
+          "size": 142035165,
+          "sha512": "fdfbd3b3293981afc99c5298911af8c2b71f0c909a036f1dc5aefa94b522d2846e1844816241f915d23a643b568b8c3404c241d2329047086f59aaa5515fe01f"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.68.0-win-x64.exe",
+          "size": 141807454,
+          "sha512": "c4358d6c3cfdf6e813ed4e9e73768dd3827033bb99af71a942a231aa0d7fc8f4c8eae34fbbfe1418cf95563d72aa32a6fabec12589bd5bf6835d3b568358ff78"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.68.0-linux-x86_64.AppImage",
+          "size": 120565330,
+          "sha512": "zFjkHbcQ+z9lf1Hl5br6W/9wjponVZhKZJACBTf/5JBC7BOHaWLQuW7nfv9tUdB1PwzexFILPINzznDjCX9Odg=="
+        },
+        "linux-x64-deb": {
+          "url": "lingjing-ide_1.68.0_amd64.deb",
+          "size": 94436136,
+          "sha512": "AhYgToMJumPpu3Vjf1gvVAOpONIsQvVH1I0hx7E0ShDipIDqSllg0vkdXxHVJn3zTqcus6L4h5zAcnvHduu5dw=="
+        },
+        "android-x64": {
+          "url": "lingjing-1.67.0-android.apk",
+          "size": 82539136,
+          "sha512": "ef8ba6d29dbf54e4be0594f4670ef60955f16b4d8dd6c21a0b6ec4e0bacf4041e5003fdb2d0d61c3bcf5fdf9d7f2c03e4e2841c21fbd20be58f52a8bdb858636"
+        }
+      }
+    },
+    {
+      "version": "1.67.0",
+      "releaseDate": "2026-06-04T02:30:00.000Z",
+      "releaseNotes": "v1.67.0: Webhook配置管理界面 + 版本更新弹窗24h抑制",
+      "status": "published",
+      "files": {
+        "win-x64": {
+          "url": "灵境 Setup 1.67.0.exe",
+          "size": 142035368,
+          "sha512": "60079c2e9a4bc0a81201dfe2f00d6c940cfa98982e7d785f0600ef8cd6b6326c9295701b31d32bfedf34ead4d9af171e8574884d464ccb97462975d95f348ea7"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.67.0-win-x64.exe",
+          "size": 141807638,
+          "sha512": "2c52cb6736410bfc265386074d909885c7341a8be9bb7186b0f19bc64dd991f0c0885788d24cab26439b0ec981243eb7cf68ae90af2fa18ae5bf3ae1a1711df2"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.67.0-linux-x86_64.AppImage",
+          "size": 179965769,
+          "sha512": "3e02dd93967d45946711bfeb49b6cf8bb980e331a8486cb976f4085bd54a9df44919db9bfa9410ff6a2d5e15dba4ffda3dfe62ae9ec4890c9230883dadd849b3"
+        },
+        "linux-x64-deb": {
+          "url": "LingJing-1.66.0-linux-x86_64.deb",
+          "size": 108861196,
+          "sha512": "26ce9d7dbcfad00411a45a60f7f583b24bbe7a5527ec93c68d6e83f281af374ff7af6904d4c194e3703eed515a400f1b4eecce3c8c3d5a923eaac54e4291a187"
+        },
+        "android-x64": {
+          "url": "lingjing-1.67.0-android.apk",
+          "size": 82539136,
+          "sha512": "ef8ba6d29dbf54e4be0594f4670ef609873801faa64d92d3571fc937142a558d878d34ba52fc14cbbe77d8e0cd17b29d7c534021728d2158af2212e3f17ad009"
+        }
+      }
+    },
+    {
+      "version": "1.66.0",
+      "releaseDate": "2026-06-04T01:30:00.000Z",
+      "releaseNotes": "v1.66.0: 技能评分系统 + Migration008(skill_reviews/usage_stats/push_log) + db:health IPC增强",
+      "status": "published",
+      "files": {
+        "win-x64": {
+          "url": "灵境 Setup 1.66.0.exe",
+          "size": 142033879,
+          "sha512": "10a730371105a5cf9b71e79e7966add1957a215e534a5b9b91846e81bd76f7dd32a6da12241162be88742a9199b80cfcb2739efe734cbd9a900b355f1037ef6b"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.66.0-win-x64.exe",
+          "size": 141806183,
+          "sha512": "cb18049ed81af2f2ae5bd7988cc77de9d5a230727f2fc32a2d0c07cdda6103fa7a1f661ff8e1d07349bd0a449e64b9ad59ac738f503dda75245a31b5dd92fb7c"
+        },
+        "android-x64": {
+          "url": "lingjing-1.66.0-android.apk",
+          "size": 82539136,
+          "sha512": "0ca1926c9dc2f462491faca3c3f6788f4217ef564621e6bceace20b9b5933d1780ab1af3d702681e7e6fb5dc86b3e372859ded443d8081d8f45bea095fd86a9b"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.66.0-linux-x86_64.AppImage",
+          "size": 179946458,
+          "sha512": "5b0ba063e9e25635dd8ff206c183e6f31119fe7ec86a669d010e8a01c29e2b743683f149cece68c82d580da36aaf4b78c58fb36f3d66593e93a0f87007077204"
+        },
+        "linux-x64-deb": {
+          "url": "LingJing-1.66.0-linux-x86_64.deb",
+          "size": 108861196,
+          "sha512": "26ce9d7dbcfad00411a45a60f7f583b24bbe7a5527ec93c68d6e83f281af374ff7af6904d4c194e3703eed515a400f1b4eecce3c8c3d5a923eaac54e4291a187"
+        }
+      }
+    },
+    {
+      "version": "1.65.1",
+      "releaseDate": "2026-06-03T15:06:00.000Z",
+      "releaseNotes": "v1.65.1: Quest任务创建修复(数据库诊断增强) - db:health IPC + quest_tasks预检查 + 分类错误消息",
+      "status": "published",
+      "files": {
+        "win-x64": {
+          "url": "灵境 Setup 1.65.1.exe",
+          "size": 142031577,
+          "sha512": "7d10c20fdb683cc0151de98c0c3ec018181ceeae1594b80c117222b5a9c6167bb97949a4dc5974a450efb9879bb21961080c847c9d77ec1df84f1285e43c47cf"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.65.1-win-x64.exe",
+          "size": 141803875,
+          "sha512": "3142a7488f74d6cc91e9731a06a9954585cd8e76251788255455a1c09589bdd3079aa428b75367efdfc0e27ad814c02928cba016c790204b87b06913a9546547"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.65.1-linux-x86_64.AppImage",
+          "size": 180236080,
+          "sha512": "8546f73404ffcc2a201a57bf5c29afd66b24d229858c725c557201216fd7abd68bc0bbdbab09fa06318f1fdd7854285a75c08b4503c1a1de3613a67ba13bf20b"
+        },
+        "linux-x64-deb": {
+          "url": "LingJing-1.65.1-linux-x86_64.deb",
+          "size": 108881348,
+          "sha512": "d66eca00ccc3c0161277e7bbfd913d70c043dcf71d4f7d6540ab073326b48f581000765a2cfc634694e9a544623ead8d5af67cca177362b8c7c4dec8f1a1cc3b"
+        },
+        "android-x64": {
+          "url": "lingjing-1.64.51-android.apk",
+          "size": 82542303,
+          "version": "1.64.51"
+        }
+      }
+    },
+    {
+      "version": "1.65.0",
+      "releaseDate": "2026-06-03T14:00:00.000Z",
+      "releaseNotes": "v1.65.0: IDE增强(6模块)+硬件设计技能(3技能包) - 会话AES-256加密持久化+移动端远程控制+技能市场+推送通知+KiCad/OpenSCAD/Wokwi",
+      "status": "published",
+      "files": {
+        "win-x64": {
+          "url": "灵境 Setup 1.65.0.exe",
+          "size": 142019104,
+          "sha512": "ee63787d708220e45996ecdceebb8e9f7a2f1ab7c589abcbddec3ecc71b7d8922fb12196b0c9d876eda032195a0cfbb1c58988632d2ad039f0771b75a8b5dd6b"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.65.0-win-x64.exe",
+          "size": 141791408,
+          "sha512": "19e9f9a8d8fa9b3d9cf305d1f95c3a194089030784f0c9c540bea47719992726c658c8c818f4b62a022a957567e7d25132d2e4d94724f495858d6116e30bca51"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.65.0-linux-x86_64.AppImage",
+          "size": 168001654,
+          "sha512": "728477e3dece333b2a36d39e323b68f4be1f5a4b23b4a9a4ada8885e912b1a0fb7f4c450239d4ab8d81b8bef0c7f1a44e157df7386b5e172e85c7f767f7d163b"
+        },
+        "linux-deb": {
+          "url": "LingJing-1.65.0-linux-x86_64.deb",
+          "size": 126562904,
+          "sha512": "fc733f00801379b1740506fdd52e868105dc2b5339d211ad862627cade0174b5f38fce5aeedd4b8a6c6f0ec09f01c0b837445f456ca2133f3c50b113f0a42e47"
+        }
+      },
+      "platforms": {
+        "win-x64": {
+          "url": "灵境 Setup 1.65.0.exe",
+          "size": 142019104,
+          "sha512": "ee63787d708220e45996ecdceebb8e9f7a2f1ab7c589abcbddec3ecc71b7d8922fb12196b0c9d876eda032195a0cfbb1c58988632d2ad039f0771b75a8b5dd6b"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.65.0-win-x64.exe",
+          "size": 141791408,
+          "sha512": "19e9f9a8d8fa9b3d9cf305d1f95c3a194089030784f0c9c540bea47719992726c658c8c818f4b62a022a957567e7d25132d2e4d94724f495858d6116e30bca51"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.65.0-linux-x86_64.AppImage",
+          "size": 168001654,
+          "sha512": "728477e3dece333b2a36d39e323b68f4be1f5a4b23b4a9a4ada8885e912b1a0fb7f4c450239d4ab8d81b8bef0c7f1a44e157df7386b5e172e85c7f767f7d163b"
+        },
+        "linux-deb": {
+          "url": "LingJing-1.65.0-linux-x86_64.deb",
+          "size": 126562904,
+          "sha512": "fc733f00801379b1740506fdd52e868105dc2b5339d211ad862627cade0174b5f38fce5aeedd4b8a6c6f0ec09f01c0b837445f456ca2133f3c50b113f0a42e47"
+        }
+      }
+    },
+    {
+      "version": "1.64.51",
+      "releaseDate": "2026-06-03T12:03:24.000Z",
+      "releaseNotes": "v1.64.51: Quest任务创建失败Bug修复 - 数据库初始化失败保护 + saveLock恢复 + 错误诊断增强",
+      "status": "published",
+      "files": {
+        "win-x64": {
+          "url": "灵境 Setup 1.64.51.exe",
+          "size": 142019000,
+          "sha512": "ae36ee33270d922c20c43e014e5fa119da42bd4fbc09fc11fdcfed9b4707abbf018667d6813c2c6271f9c21bee101d40828c393a9bbcdb498a756885bbd15d04"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.64.51-win-x64.exe",
+          "size": 141791332,
+          "sha512": "564817197dcb6afc1aeba342c44768d515a7556fdc8fec67913ac947c11b9b3cdbe83b8c73a6ca62582eea5d72ab1cb27bf71b5efe21351634054c8c437e993e"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.64.51-linux-x86_64.AppImage",
+          "size": 168001642,
+          "sha512": "272d7a0539f271a92cf44dd7639c9f8de8cc77013ef0e5c0746777a30b6eb3abfc6afcc5ebfffd7058f792ef5e413b832b58c3cb8b59f2ca9067601376402658"
+        },
+        "linux-deb": {
+          "url": "LingJing-1.64.51-linux-x86_64.deb",
+          "size": 126562460,
+          "sha512": "a6540427d278d9854ea9b1dd3c4638f17afef4a98312ef81dc40a4750f0bebe6ac0c6fb95afefb42c3d67f88b6b93b61aff63c20bd520e6f0f6e2d5cc2f9c89d"
+        },
+        "android": {
+          "url": "lingjing-1.64.51-android.apk",
+          "size": 82542303,
+          "sha512": "5d4040e99e9ac94bbda685e3dd4c90d4a094fe551c828af8753fb7c33ac3e17d0fdfa09e3de52f82966514d3fcc8ffee4ac1b2e569c63310039c6d5c713d5858"
+        }
+      },
+      "publishedAt": "2026-06-03T12:05:23.156Z",
+      "platforms": {
+        "android": {
+          "url": "lingjing-1.64.51-android.apk",
+          "size": 82542303,
+          "sha512": "5d4040e99e9ac94bbda685e3dd4c90d4a094fe551c828af8753fb7c33ac3e17d0fdfa09e3de52f82966514d3fcc8ffee4ac1b2e569c63310039c6d5c713d5858"
+        },
+        "linux-x64": {
+          "url": "LingJing-1.64.51-linux-x86_64.AppImage",
+          "size": 168001642,
+          "sha512": "272d7a0539f271a92cf44dd7639c9f8de8cc77013ef0e5c0746777a30b6eb3abfc6afcc5ebfffd7058f792ef5e413b832b58c3cb8b59f2ca9067601376402658"
+        },
+        "linux-deb": {
+          "url": "LingJing-1.64.51-linux-x86_64.deb",
+          "size": 126562460,
+          "sha512": "a6540427d278d9854ea9b1dd3c4638f17afef4a98312ef81dc40a4750f0bebe6ac0c6fb95afefb42c3d67f88b6b93b61aff63c20bd520e6f0f6e2d5cc2f9c89d"
+        },
+        "win-x64": {
+          "url": "灵境 Setup 1.64.51.exe",
+          "size": 142019000,
+          "sha512": "ae36ee33270d922c20c43e014e5fa119da42bd4fbc09fc11fdcfed9b4707abbf018667d6813c2c6271f9c21bee101d40828c393a9bbcdb498a756885bbd15d04"
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.64.51-win-x64.exe",
+          "size": 141791332,
+          "sha512": "564817197dcb6afc1aeba342c44768d515a7556fdc8fec67913ac947c11b9b3cdbe83b8c73a6ca62582eea5d72ab1cb27bf71b5efe21351634054c8c437e993e"
+        }
+      }
+    },
+    {
+      "version": "1.64.46",
+      "releaseDate": "2026-06-03T05:43:39.000Z",
+      "releaseNotes": "Docker构建修复+Win交叉编译支持: 修复docker-build.sh/docker-compose.yml拼写错误, 新增Dockerfile.win(Wine交叉编译)",
+      "status": "published",
+      "platforms": {
+        "win-x64": {
+          "url": "LingJing-Setup-1.64.46-win-x64.exe",
+          "sha512": "d590e66649ae25d7cbd2e0325dcb223cb0e442908bca4468e0e95be573fceaa03ae94c70036eb2eeaae9894169754fde2b87f04b6a6221b92854bb6115b4015f",
+          "size": 142521032
+        },
+        "win-x64-portable": {
+          "url": "LingJing-Portable-1.64.46-win-x64.exe",
+          "sha512": "0f672adf70679dcc2afaefc58404b4f819f1872a2d816daac0b8cd42f3cfa3e17ee8d3f5d1dc43fba74d1cc640982929929357526a9d3495be9819820306e523",
+          "size": 142179532
+        },
+        "linux-x64": {
+          "url": "LingJing-1.64.46-linux-x86_64.AppImage",
+          "sha512": "8ccb8a38e193038941a4f131e07461047c70c1536fe07117e19ee9decdce211c609ea98fa4e0130fda51e87d036fa5b6484c1e860eb94b3385f2605161d98262",
+          "size": 182635506
+        },
+        "linux-deb": {
+          "url": "LingJing-1.64.46-linux-x86_64.deb",
+          "sha512": "acf074149dd21abc325c9781000e6bf4c4a8f9509b294bb712821a1e19237c3f957597722692c3817568b5a2080bfbcf4199f19e07a23c67ca2f36edbf5f229a",
+          "size": 111085794
+        }
+      },
+      "files": {
+        "win-x64": "LingJing-Setup-1.64.46-win-x64.exe",
+        "win-x64-portable": "LingJing-Portable-1.64.46-win-x64.exe",
+        "linux-x64": "LingJing-1.64.46-linux-x86_64.AppImage",
+        "linux-deb": "LingJing-1.64.46-linux-x86_64.deb"
+      }
+    }
+  ]
+}

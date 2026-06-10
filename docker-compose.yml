@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  android-build:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.android
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["./android/gradlew assembleRelease && cp android/app/build/outputs/apk/release/app-release.apk packages/electron/release/lingjing-android-v1.64.45.apk"]
+
+  electron-build:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.electron
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["pnpm install && node packages/electron/scripts/pre-package.mjs && npx electron-builder build --linux --x64 --config electron-builder.json"]
+
+  electron-win-build:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.win
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    entrypoint: ["/bin/bash", "-c"]
+    command: ["pnpm install && node packages/electron/scripts/pre-package.mjs && npx electron-builder build --win --x64 --config electron-builder.json"]

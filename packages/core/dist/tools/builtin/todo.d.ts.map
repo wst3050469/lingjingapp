@@ -1,0 +1,1 @@
+{"version":3,"file":"todo.d.ts","sourceRoot":"","sources":["../../../src/tools/builtin/todo.ts"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,IAAI,EAA2B,MAAM,aAAa,CAAC;AAEjE,MAAM,WAAW,QAAQ;IACvB,OAAO,EAAE,MAAM,CAAC;IAChB,MAAM,EAAE,SAAS,GAAG,aAAa,GAAG,WAAW,CAAC;CACjD;AAKD,wBAAgB,WAAW,IAAI,QAAQ,EAAE,CAExC;AAED,wBAAgB,cAAc,IAAI,MAAM,CAQvC;AAED,eAAO,MAAM,QAAQ,EAAE,IA4CtB,CAAC"}

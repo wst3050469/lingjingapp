@@ -1,0 +1,7 @@
+{
+  "allowedCommands": ["kicad-cli schematic", "kicad-cli pcb", "kicad-cli drc", "kicad-cli export", "kicad-cli render"],
+  "filesystemAccess": "workspace-only",
+  "networkAccess": false,
+  "maxMemoryMB": 512,
+  "forbiddenPatterns": []
+}

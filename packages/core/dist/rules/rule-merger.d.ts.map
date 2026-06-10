@@ -1,0 +1,1 @@
+{"version":3,"file":"rule-merger.d.ts","sourceRoot":"","sources":["../../src/rules/rule-merger.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,IAAI,EAAgB,aAAa,EAAgB,MAAM,YAAY,CAAC;AAElF,qBAAa,UAAU;IACrB,KAAK,CAAC,WAAW,EAAE,IAAI,EAAE,EAAE,YAAY,EAAE,IAAI,EAAE,GAAG,aAAa;CAyBhE"}

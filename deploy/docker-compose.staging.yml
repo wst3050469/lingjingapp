@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  cloud-server:
+    environment:
+      NODE_ENV: staging
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+
+  cloud-admin:
+    ports:
+      - "8080:80"

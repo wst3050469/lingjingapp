@@ -1,0 +1,11 @@
+packages:
+  - 'packages/*'
+allowBuilds:
+  'electron': true
+  'esbuild': true
+  'ssh2': true
+  'cpu-features': true
+  'keytar': true
+  'unrs-resolver': true
+  '@vscode/vsce-sign': true
+  node-pty: set this to true or false

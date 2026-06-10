@@ -1,0 +1,154 @@
+node_modules/
+dist/
+!packages/core/dist/
+.expo/
+*.jks
+*.p8
+_*.js
+_*.cjs
+_*.mjs
+_*.txt
+*.tar.gz
+release-v*/
+release/
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Android native (rely on CNG)
+android/
+
+# Android signing
+keystore.properties
+*.keystore
+
+# electron-builder release output
+packages/electron/release-*/
+packages/electron/mcp-packages/
+
+# Local fix scripts
+packages/electron/_*.cjs
+packages/electron/release*/
+
+# pnpm symlinks
+packages/electron/node_modules/@codepilot/
+packages/electron/node_modules/@codepilot/*
+
+# Renderer build output (copy to electron/renderer during pre-package)
+packages/electron/renderer/assets/
+packages/electron/renderer/index.html
+
+# Temporary push artifacts
+_git_push.bundle
+_patches.patch
+_push_tmp/
+
+# Temporary helper scripts
+scripts/_*.cjs
+
+# Local dev/deploy utility scripts (underscore-prefixed)
+_*.bat
+_*.py
+_*.sh
+
+# electron-builder dist_release output
+packages/electron/dist_release/
+
+# Stale extraResources (not tracked in git, no runtime usage)
+packages/electron/skills/
+packages/electron/prompts/
+
+# Mobile submodule (stale gitlink - suppressed, 已合并到根app.json)
+git-sync.sh
+dist.bak
+
+# Auto-build artifacts
+auto-build.sh
+auto-build.log
+.last_build_commit
+post-deploy.sh
+
+# Downloaded packages (not part of the project)
+code-server.deb
+
+# Archive directory (backup bundles, old APKs - large binaries)
+archive/
+
+# Mobile APK files (large binaries)
+*.apk
+
+# Python server artifacts
+server/venv/
+server/app/__pycache__/
+server/app/ai/__pycache__/
+server/app/routers/__pycache__/
+server/app/services/__pycache__/
+**/__pycache__/
+*.pyc
+server/tts_cache/
+
+# Local dev scripts
+scripts/codeserver-info.txt
+scripts/tunnel-codeserver.bat
+downloads/*.AppImage
+downloads/*.deb
+downloads/*.exe
+downloads/*.blockmap
+""  
+# build artifacts  
+packages/electron/build_output/  
+packages/electron/build_portable/  
+packages/release/  
+clean_build.py
+# temp build scripts
+rebuild-deb.*
+update-versions.py
+build-deb.py
+
+# 日志和临时文件
+*.log
+*.tmp
+.arts/  
+.opencode/  
+electron-v*.zip  
+
+# 环境变量文件
+.env
+.env.local
+.env.staging
+.env.production
+android-source.zip 
+mobile-source.zip 
+ 
+# Diagnostic scripts 
+*-diag*.sh 
+*-diag*.py 
+*-fix*.sh 
+*-fix*.py 
+*check-*.sh 
+*verify-*.sh 
+*dbg-*.sh 
+*test-*.sh 
+temp_check/ 
+diag*.sh 
+diag*.py 
+fix*.sh 
+fix*.py 
+*verify*.sh 
+done.sh 
+final-*.sh 
+bump.py 
+ba2.sh 
+build-admin.sh 
+add-ssh-key.sh 
+commit-release.sh 
+health-check.sh 
+read-conf.sh 
+revert-ipv6.sh 
+sync-all-data.sh 
+deep-verify.sh 
+e2e-verify.sh 
+test-real.js 
+test-render.js 

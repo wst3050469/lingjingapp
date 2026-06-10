@@ -1,0 +1,1 @@
+{"version":3,"file":"loop-detector.d.ts","sourceRoot":"","sources":["../../src/agent-mode/loop-detector.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,aAAa,EAAE,mBAAmB,EAAE,MAAM,YAAY,CAAC;AAErE,qBAAa,YAAY;IACvB,OAAO,CAAC,OAAO,CAAkC;IACjD,OAAO,CAAC,QAAQ,CAAC,UAAU,CAAS;gBAExB,UAAU,GAAE,MAAU;IAIlC,KAAK,CAAC,IAAI,EAAE,aAAa,GAAG,mBAAmB,GAAG,IAAI;IAgBtD,KAAK,IAAI,IAAI;CAGd"}

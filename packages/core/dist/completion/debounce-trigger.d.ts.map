@@ -1,0 +1,1 @@
+{"version":3,"file":"debounce-trigger.d.ts","sourceRoot":"","sources":["../../src/completion/debounce-trigger.ts"],"names":[],"mappings":"AAAA,qBAAa,eAAe;IAC1B,OAAO,CAAC,KAAK,CAA8C;IAC3D,OAAO,CAAC,QAAQ,CAAC,OAAO,CAAS;gBAErB,OAAO,GAAE,MAAY;IAIjC,OAAO,CAAC,QAAQ,EAAE,MAAM,IAAI,GAAG,IAAI;IAQnC,MAAM,IAAI,IAAI;IAOd,SAAS,IAAI,OAAO;CAGrB"}

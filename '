@@ -1,0 +1,10 @@
+=== DEB Build 2026年 06月 09日 星期二 14:59:38 CST ===
+  • electron-builder  version=25.1.8 os=6.17.0-29-generic
+  • loaded configuration  file=/home/liuhui/lingjing/packages/electron/electron-builder.yml
+  • skipped dependencies rebuild  reason=npmRebuild is set to false
+  • packaging       platform=linux arch=x64 electron=39.8.10 appOutDir=release-v17220/linux-unpacked
+  • building        target=deb arch=x64 file=release-v17220/LingJing-1.72.20-linux-x86_64.deb
+  • adding autoupdate files for: deb. (Beta feature)  resourceDir=release-v17220/linux-unpacked/resources
+  • default Electron icon is used  reason=application icon is not set
+=== DEB Build Exit: 0 ===
+-rw-rw-r-- 1 liuhui liuhui 72K  6月  9 15:00 release-v17220/LingJing-1.72.20-linux-x86_64.deb

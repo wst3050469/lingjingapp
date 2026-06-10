@@ -1,0 +1,50 @@
+{
+  "kicad_schematic_edit": {
+    "name": "kicad_schematic_edit",
+    "description": "编辑KiCad原理图文件",
+    "parameters": { "type": "object", "properties": { "filePath": { "type": "string", "description": "原理图文件路径(.kicad_sch)" }, "action": { "type": "string", "enum": ["open", "export", "annotate"], "description": "操作类型" } }, "required": ["filePath", "action"] },
+    "returns": { "type": "object", "properties": { "success": { "type": "boolean" }, "output": { "type": "string" } } },
+    "cliCommand": "kicad-cli schematic",
+    "timeout": 30000
+  },
+  "kicad_pcb_edit": {
+    "name": "kicad_pcb_edit",
+    "description": "编辑KiCad PCB布局文件",
+    "parameters": { "type": "object", "properties": { "filePath": { "type": "string", "description": "PCB文件路径(.kicad_pcb)" }, "action": { "type": "string", "enum": ["open", "export", "fill-zones"], "description": "操作类型" } }, "required": ["filePath", "action"] },
+    "returns": { "type": "object", "properties": { "success": { "type": "boolean" }, "output": { "type": "string" } } },
+    "cliCommand": "kicad-cli pcb",
+    "timeout": 30000
+  },
+  "kicad_drc_check": {
+    "name": "kicad_drc_check",
+    "description": "执行DRC设计规则检查",
+    "parameters": { "type": "object", "properties": { "filePath": { "type": "string", "description": "PCB文件路径(.kicad_pcb)" }, "outputFormat": { "type": "string", "enum": ["json", "report"], "default": "json" } }, "required": ["filePath"] },
+    "returns": { "type": "object", "properties": { "success": { "type": "boolean" }, "violations": { "type": "array" } } },
+    "cliCommand": "kicad-cli drc",
+    "timeout": 60000
+  },
+  "kicad_bom_export": {
+    "name": "kicad_bom_export",
+    "description": "导出BOM物料清单",
+    "parameters": { "type": "object", "properties": { "filePath": { "type": "string", "description": "原理图文件路径" }, "outputPath": { "type": "string", "description": "输出文件路径" }, "format": { "type": "string", "enum": ["csv", "xml", "json"], "default": "csv" } }, "required": ["filePath"] },
+    "returns": { "type": "object", "properties": { "success": { "type": "boolean" }, "outputPath": { "type": "string" } } },
+    "cliCommand": "kicad-cli export bom",
+    "timeout": 30000
+  },
+  "kicad_gerber_export": {
+    "name": "kicad_gerber_export",
+    "description": "生成Gerber制造文件",
+    "parameters": { "type": "object", "properties": { "filePath": { "type": "string", "description": "PCB文件路径" }, "outputDir": { "type": "string", "description": "输出目录" } }, "required": ["filePath"] },
+    "returns": { "type": "object", "properties": { "success": { "type": "boolean" }, "files": { "type": "array" } } },
+    "cliCommand": "kicad-cli export gerbers",
+    "timeout": 30000
+  },
+  "kicad_3d_view": {
+    "name": "kicad_3d_view",
+    "description": "3D查看PCB渲染",
+    "parameters": { "type": "object", "properties": { "filePath": { "type": "string", "description": "PCB文件路径" } }, "required": ["filePath"] },
+    "returns": { "type": "object", "properties": { "success": { "type": "boolean" }, "renderPath": { "type": "string" } } },
+    "cliCommand": "kicad-cli render",
+    "timeout": 60000
+  }
+}

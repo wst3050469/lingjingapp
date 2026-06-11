@@ -294,16 +294,20 @@ class ApiService {
       const data: any = await res.json();
       if (!res.ok) return null;
       const hasUpdate = data.hasUpdate === true || (data.version && data.version !== currentVersion);
+      const androidUrl = typeof data.files?.android === 'string'
+        ? data.files.android
+        : data.files?.android?.url
+          ? `https://ide.zhejiangjinmo.com/downloads/${data.files.android.url}`
+          : null;
+      const androidSize = data.platforms?.android?.size || data.files?.android?.size || 0;
       return {
         hasUpdate,
         version: data.version || '',
         status: data.status || '',
         releaseDate: data.releaseDate || '',
         releaseNotes: data.releaseNotes || '',
-        downloadUrl: data.files?.android?.url
-          ? `https://ide.zhejiangjinmo.com/downloads/${data.files.android.url}`
-          : null,
-        fileSize: data.files?.android?.size || 0,
+        downloadUrl: androidUrl,
+        fileSize: androidSize,
       };
     } catch {
       return null;

@@ -1,0 +1,12 @@
+version: 1.72.33
+files:
+  - url: LingJing-1.72.31-linux-x86_64.AppImage
+    sha512: QysiAEJAbxiMs7mBOcYB7yOyWmQw+k0H0j5Xfkia2Up0tbUojybPSppIvHS6L6SUbIl1admFW8pnrruPBUQnzQ==
+    size: 180798330
+    blockMapSize: 189326
+  - url: LingJing-1.72.31-linux-x86_64.deb
+    sha512: gJsWIdJc8YiNNLOwzRVJlldWZduzaHny9iSpJhBqbJg42eV83/f0wefePUCNj1blp9UTy2qpat0wP7oWc3kdTg==
+    size: 109336546
+path: LingJing-1.72.31-linux-x86_64.AppImage
+sha512: QysiAEJAbxiMs7mBOcYB7yOyWmQw+k0H0j5Xfkia2Up0tbUojybPSppIvHS6L6SUbIl1admFW8pnrruPBUQnzQ==
+releaseDate: '2026-06-11T13:15:00.000Z'

@@ -31,9 +31,11 @@ export default function ChatDetailScreen({ route }: any) {
   async function loadSession() {
     try {
       const data = await api.getSession(sessionId);
-      setMessages(data.messages || []);
+      if (data?.messages) {
+        setMessages(data.messages);
+      }
     } catch (e) {
-      console.log('Failed to load session:', e);
+      console.log('Failed to load session (using local):', e);
     } finally {
       setLoading(false);
     }

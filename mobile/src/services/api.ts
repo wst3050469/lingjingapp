@@ -25,7 +25,7 @@ type WsCallback = (data: WsResponse) => void;
 
 
 class ApiService {
- private config: ApiConfig = { baseUrl: '', token: '', wsUrl: '' };
+ private config: ApiConfig = { baseUrl: 'https://ide.zhejiangjinmo.com', token: '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws', apiKey: 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8' };
  private ws: WebSocket|null = null;
  private wsCallbacks: Map<string, Function> = new Map();
  private wsSubscriptions: Set<string> = new Set();

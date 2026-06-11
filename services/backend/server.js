@@ -2606,8 +2606,8 @@ app.put('/api/v1/devices/:id/token', authenticate, async (req, res) => {
   }
 });
 
-// ── Mobile Chat Fallback (no subscription required, rate-limited) ──
-app.post('/api/mobile/chat', auth, async (req, res) => {
+// ── Mobile Chat (public, no auth required) ──
+app.post('/api/mobile/chat', (req, res) => {
   const { message, conversationId, platform } = req.body;
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message required' });
@@ -2616,7 +2616,7 @@ app.post('/api/mobile/chat', auth, async (req, res) => {
     return res.status(503).json({ error: 'DeepSeek API key not configured' });
   }
   try {
-    const convId = conversationId || 'mobile-' + (req.userId || 'anon');
+    const convId = conversationId || 'mobile-' + (req.ip || Date.now().toString(36));
     const history = db.prepare('SELECT messages FROM conversations WHERE id = ?').get(convId) || { messages: '[]' };
     let prevMessages = [];
     try { prevMessages = JSON.parse(history.messages); } catch(e) { prevMessages = []; }
@@ -2633,8 +2633,7 @@ app.post('/api/mobile/chat', auth, async (req, res) => {
     db.prepare('INSERT OR REPLACE INTO conversations (id, messages, updated_at) VALUES (?, ?, ?)')
       .run(convId, JSON.stringify(newMessages), new Date().toISOString());
     
-    console.log('[MobileChat] ' + (req.userId || 'anon') + ': ' + message.slice(0, 60) + ' -> ' + reply.slice(0, 60));
-    if (req.userId) incrementDailyApiCalls(req.userId);
+    console.log('[MobileChat] ' + (req.ip || 'anon') + ': ' + message.slice(0, 60) + ' -> ' + reply.slice(0, 60));
 
     // Broadcast to all connected clients so desktop/tasks stay in sync
     const syncPayload = {

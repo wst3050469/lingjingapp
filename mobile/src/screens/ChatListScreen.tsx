@@ -36,23 +36,12 @@ export default function ChatListScreen() {
 
   async function createNewSession() {
     if (creating) return;
-    // Check if API is configured (baseUrl must be present)
-    const cfg = api.getConfig();
-    if (!cfg.baseUrl) {
-      console.log('[ChatList] API not configured, cannot create session');
-      return;
-    }
     setCreating(true);
     try {
       const newId = 'chat_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-      await api.upsertSession({
-        id: newId,
-        title: '新对话',
-        messages: [],
-      });
+      const newSession: Session = { id: newId, title: '新对话', created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+      setSessions([newSession, ...sessions]);
       navigation.navigate('ChatDetail', { sessionId: newId, title: '新对话' });
-    } catch (e) {
-      console.log('Failed to create session:', e);
     } finally {
       setCreating(false);
     }

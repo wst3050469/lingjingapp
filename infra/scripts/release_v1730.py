@@ -27,11 +27,13 @@ new_ver = {
 }
 data['versions'].insert(0, new_ver)
 
-with open('/var/www/html/downloads/versions.json', 'w') as f:
-    json.dump(data, f, indent=2, ensure_ascii=False)
+# Write to ALL paths that serve versions.json
+paths = [
+    '/var/www/html/versions.json',
+    '/var/www/downloads/versions.json',
+]
+for p in paths:
+    with open(p, 'w') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
-# Also sync to nginx root
-with open('/var/www/downloads/versions.json', 'w') as f:
-    json.dump(data, f, indent=2, ensure_ascii=False)
-
-print('versions.json updated: latest=1.73.0')
+print(f'versions.json updated: latest={data["latest"]} → synced to {len(paths)} paths')

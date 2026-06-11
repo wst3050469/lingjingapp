@@ -1,15 +1,15 @@
 {
   "appId": "com.lingjing.ide",
-  "productName": "\u7075\u5883",
+  "productName": "灵境",
   "directories": {
-    "output": "release"
+    "output": "release-v17228"
   },
   "files": [
     "dist/**/*",
     "renderer/**/*",
     "node_modules/**/*",
     "package.json",
-    "assets/**/*"
+    "prompts/**/*"
   ],
   "win": {
     "target": [
@@ -35,8 +35,7 @@
     "uninstallerIcon": "assets/icon.ico",
     "installerHeaderIcon": "assets/icon.ico",
     "createDesktopShortcut": true,
-    "createStartMenuShortcut": true,
-    "artifactName": "LingJing-Setup-${version}-win-x64.${ext}"
+    "createStartMenuShortcut": true
   },
   "portable": {
     "artifactName": "LingJing-Portable-${version}-win-x64.${ext}"
@@ -57,13 +56,46 @@
       }
     ],
     "icon": "assets",
+    "maintainer": "LingJing AI <support@lingjing.ai>",
     "category": "Development",
     "executableName": "lingjing",
     "artifactName": "LingJing-${version}-linux-x86_64.${ext}"
   },
+  "mac": {
+    "target": [
+      {
+        "target": "zip",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      }
+    ],
+    "icon": "assets/icon.png",
+    "category": "public.app-category.developer-tools",
+    "artifactName": "LingJing-${version}-mac-${arch}.${ext}",
+    "hardenedRuntime": false,
+    "gatekeeperAssess": false
+  },
+  "extraResources": [
+    {
+      "from": "prompts",
+      "to": "prompts",
+      "filter": [
+        "**/*"
+      ]
+    },
+    {
+      "from": "skills",
+      "to": "skills",
+      "filter": [
+        "**/*"
+      ]
+    }
+  ],
+  "npmRebuild": false,
   "publish": {
     "provider": "generic",
-    "url": "https://ide.zhejiangjinmo.com/downloads"
-  },
-  "npmRebuild": false
+    "url": "https://ide.zhejiangjinmo.com/downloads/"
+  }
 }

@@ -99,21 +99,12 @@ class ApiService {
  async getSessions(limit = 50) { return this.request<any>('/sessions?limit=' + limit); }
  async getSession(id: string) { return this.request<any>('/sessions/' + id); }
  async sendMessage(conversationId: string, message: string) {
-   try {
-     // Try desktop relay first
-     return await this.request<any>('/sessions/' + conversationId + '/send', { method: 'POST', body: JSON.stringify({ message }) });
-   } catch (e: any) {
-     // Desktop offline → fallback to cloud AI
-     const errMsg = e.message || '';
-     if (e.status === 503 || errMsg.includes('no_desktop') || errMsg.includes('desktop_offline')) {
-       console.log('[Mobile API] Desktop offline, cloud AI fallback...');
-       return await this.request<any>('/mobile/chat', {
-         method: 'POST',
-         body: JSON.stringify({ message, conversationId, platform: 'mobile' }),
-       });
-     }
-     throw e;
-   }
+   // Directly use cloud AI — faster and works without desktop
+   console.log('[Mobile API] Sending via cloud AI...');
+   return this.request<any>('/mobile/chat', {
+     method: 'POST',
+     body: JSON.stringify({ message, conversationId, platform: 'mobile' }),
+   });
  }
 
  // --- Plans ---
@@ -288,30 +279,39 @@ class ApiService {
     return this.request<any>('/ci/status');
   }
 
+  // ── Desktop Online Check ──
+  async getDesktopStatus(): Promise<{hasDesktop: boolean; onlineCount: number; devices: any[]; message: string}> {
+    try {
+      return await this.request<any>('/desktop/status');
+    } catch {
+      return { hasDesktop: false, onlineCount: 0, devices: [], message: '无法检查桌面状态' };
+    }
+  }
+
   async checkForUpdates(currentVersion: string): Promise<UpdateInfo | null> {
     try {
       const res = await fetch('https://ide.zhejiangjinmo.com/api/latest');
       const data: any = await res.json();
       if (!res.ok) return null;
-      const hasUpdate = data.hasUpdate === true || (data.version && data.version !== currentVersion);
+      // Use proper semver comparison (only newer, not equal)
+      const latest = data.version || '';
+      const isNewer = (a: string, b: string) => {
+        const pa = a.split('.').map(Number), pb = b.split('.').map(Number);
+        for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+          if ((pa[i] || 0) > (pb[i] || 0)) return true;
+          if ((pa[i] || 0) < (pb[i] || 0)) return false;
+        }
+        return false;
+      };
+      const hasUpdate = data.hasUpdate === true && isNewer(latest, currentVersion);
       const androidUrl = typeof data.files?.android === 'string'
         ? data.files.android
-        : data.files?.android?.url
-          ? `https://ide.zhejiangjinmo.com/downloads/${data.files.android.url}`
-          : null;
+        : data.files?.android?.url?.startsWith('http')
+          ? data.files.android.url
+          : `https://ide.zhejiangjinmo.com/downloads/lingjing-v${latest}.apk`;
       const androidSize = data.platforms?.android?.size || data.files?.android?.size || 0;
-      return {
-        hasUpdate,
-        version: data.version || '',
-        status: data.status || '',
-        releaseDate: data.releaseDate || '',
-        releaseNotes: data.releaseNotes || '',
-        downloadUrl: androidUrl,
-        fileSize: androidSize,
-      };
-    } catch {
-      return null;
-    }
+      return { hasUpdate, version: latest, status: data.status || '', releaseDate: data.releaseDate || '', releaseNotes: data.releaseNotes || '', downloadUrl: androidUrl, fileSize: androidSize };
+    } catch { return null; }
   }
 }
 

@@ -2635,10 +2635,52 @@ app.post('/api/mobile/chat', auth, async (req, res) => {
     
     console.log('[MobileChat] ' + (req.userId || 'anon') + ': ' + message.slice(0, 60) + ' -> ' + reply.slice(0, 60));
     if (req.userId) incrementDailyApiCalls(req.userId);
+
+    // Broadcast to all connected clients so desktop/tasks stay in sync
+    const syncPayload = {
+      type: 'push',
+      channel: 'chat',
+      event: 'message',
+      data: {
+        conversationId: convId,
+        message: { role: 'assistant', content: reply, created_at: new Date().toISOString() },
+      },
+    };
+    wss?.clients.forEach(c => {
+      if (c.readyState === 1) c.send(JSON.stringify(syncPayload));
+    });
+
     res.json({ reply, conversationId: convId });
   } catch (err) {
     console.error('[MobileChat] Error:', err.message);
     res.status(500).json({ error: 'Chat service unavailable' });
+  }
+});
+
+// ── Desktop Status API ──
+app.get('/api/desktop/status', auth, (req, res) => {
+  try {
+    const userId = req.userId || req.query.userId;
+    const relays = userId ? desktopRelays.get(userId) : null;
+    const onlineCount = relays ? relays.size : 0;
+    const devices = [];
+    if (relays) {
+      for (const entry of relays) {
+        devices.push({
+          deviceId: entry.deviceId,
+          online: entry.ws?.readyState === 1,
+          connectedAt: entry.connectedAt || null,
+        });
+      }
+    }
+    res.json({
+      hasDesktop: onlineCount > 0,
+      onlineCount,
+      devices,
+      message: onlineCount > 0 ? `${onlineCount}台桌面在线` : '无桌面在线',
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

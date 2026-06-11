@@ -21,16 +21,15 @@ import PipelineScreen from './src/screens/PipelineScreen';
 import RequirementScreen from './src/screens/RequirementScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SubscriptionScreen from './src/screens/SubscriptionScreen';
-import PairingScreen from './src/screens/PairingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import ConnectionBanner from './src/components/ConnectionBanner';
 import UpdateChecker from './src/components/UpdateChecker';
-import { loadPersistedAuth, loadPersistedPairing } from './src/stores/app-store';
+import { loadPersistedAuth } from './src/stores/app-store';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, Platform } from 'react-native';
 
 // ── Connection Constants (from shared constants file) ──
-import { CLOUD_SERVER_URL, CLOUD_SERVER_WS, FRP_RELAY_URL, FRP_RELAY_WS } from './src/constants';
+import { CLOUD_SERVER_URL, CLOUD_SERVER_WS } from './src/constants';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -75,10 +74,9 @@ function DevStackScreen() {
 }
 
 export default function App() {
-  const { connected, mode, token, lanIp, setConnection, setToken, setLanIp, setStatus, setAuth, setUser } = useAppStore();
+  const { connected, setConnection, setAuth, setUser } = useAppStore();
   const [initializing, setInitializing] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
-  const [showPairing, setShowPairing] = useState(false);
   const [loadingText, setLoadingText] = useState('正在连接灵境...');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -88,17 +86,10 @@ export default function App() {
   }, []);
 
   async function initConnection() {
-    // Phase 0: Load persisted pairing info (separate from cloud auth)
-    const pairing = await loadPersistedPairing();
-    if (pairing) {
-      setToken(pairing.token);
-      setLanIp(pairing.lanIp);
-    }
-
-    // Phase 1: Check for persisted cloud account token (JWT)
+    // Auto-configure from cloud account — no manual pairing needed
     const persisted = await loadPersistedAuth();
     if (persisted?.token) {
-      setLoadingText('正在验证云账号...');
+      setLoadingText('正在连接灵境云...');
       api.configure({
         baseUrl: CLOUD_SERVER_URL,
         token: persisted.token,
@@ -107,128 +98,24 @@ export default function App() {
       try {
         const me = await api.verifyToken();
         if (me && me.ok !== false) {
-          // Token is valid, use cloud mode
           setAuth(me.user?.id || 'cloud_user', persisted.token);
           if (persisted.user) setUser(persisted.user);
-          // If pairing exists, use local web-server for sessions (higher priority for data access)
-          if (pairing) {
-            const pairingUrl = `http://${pairing.lanIp}:3001`;
-            // Verify pairing token against desktop web-server before using it
-            try {
-              const statusRes = await fetch(`${pairingUrl}/api/status`, {
-                headers: { Authorization: `Bearer ${pairing.token}` },
-              });
-              if (statusRes.ok) {
-                api.configure({ baseUrl: pairingUrl, token: pairing.token, wsUrl: `ws://${pairing.lanIp}:3001/ws` });
-                api.connectWs();
-                const statusData = await statusRes.json();
-                setStatus(statusData);
-                setConnection(true, 'cloud_account', pairingUrl);
-                setInitializing(false);
-                Notifications.registerPushToken(pairing.token, '灵境 Mobile').catch(() => {});
-                return;
-              }
-            } catch { /* LAN unreachable, use cloud server */ }
-          }
-          // Fallback: use cloud server directly
-          api.configure({ baseUrl: CLOUD_SERVER_URL, token: persisted.token, wsUrl: CLOUD_SERVER_WS });
-          api.connectWs();
           setConnection(true, 'cloud_account', CLOUD_SERVER_URL);
-          setInitializing(false);
-          return;
-        }
-      } catch { /* token invalid or expired, fall through to pairing or login */ }
-    }
-
-    // Phase 2: Pairing mode — try to connect to desktop via LAN or FRP relay
-    const storedToken = token || pairing?.token || '';
-    const storedIp = lanIp || pairing?.lanIp || '';
-
-    if (storedToken) {
-      // ── Attempt 1: LAN direct ──
-      if (storedIp) {
-        setLoadingText('正在连接局域网...');
-        try {
-          const lanUrl = `http://${storedIp}:3001`;
-          api.configure({ baseUrl: lanUrl, token: storedToken, wsUrl: `ws://${storedIp}:3001/ws` });
-          const res = await fetch(`${lanUrl}/api/status`, {
-            headers: { Authorization: `Bearer ${storedToken}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            api.connectWs();
-            setConnection(true, 'lan', lanUrl);
-            setStatus(data);
-            setInitializing(false);
-            Notifications.registerPushToken(storedToken, '灵境 Mobile').catch(() => {});
-            return;
-          }
-        } catch { /* LAN failed */ }
-      }
-
-      // ── Attempt 2: FRP relay (cloud tunnel to desktop) ──
-      setLoadingText('正在通过中转连接...');
-      try {
-        api.configure({ baseUrl: FRP_RELAY_URL, token: storedToken, wsUrl: FRP_RELAY_WS });
-        const res = await fetch(`${FRP_RELAY_URL}/api/sessions?limit=1`, {
-          headers: { Authorization: `Bearer ${storedToken}` },
-        });
-        if (res.ok) {
-          const data = await res.json();
           api.connectWs();
-          setConnection(true, 'cloud', FRP_RELAY_URL);
-          if (data && data.device) setStatus(data);
           setInitializing(false);
-          Notifications.registerPushToken(storedToken, '灵境 Mobile').catch(() => {});
           return;
         }
-      } catch { /* FRP relay also failed */ }
-
-      // ── Both LAN and FRP failed → show pairing screen to retry ──
-      setLoadingText('连接失败，请重新配对');
-      setShowPairing(true);
-      setInitializing(false);
-      return;
+      } catch { /* token expired, proceed to login */ }
     }
 
-    // Phase 3: No auth info at all → show login
+    // No valid token → show login
     setShowLogin(true);
     setInitializing(false);
-  }
-
-  async function handlePaired(newToken: string, newIp: string) {
-    setToken(newToken);
-    setLanIp(newIp);
-    useAppStore.setState({ pairingToken: newToken, pairingLanIp: newIp });
-    setShowPairing(false);
-    try {
-      const s = await api.getStatus();
-      setStatus(s);
-    } catch { /* ignore */ }
-    Notifications.registerPushToken(newToken, '灵境 Mobile').catch(() => {});
   }
 
   async function handleLoginSuccess() {
     setShowLogin(false);
     const state = useAppStore.getState();
-    if (state.pairingToken && state.pairingLanIp) {
-      const pairingUrl = `http://${state.pairingLanIp}:3001`;
-      api.configure({
-        baseUrl: pairingUrl,
-        token: state.pairingToken,
-        wsUrl: `ws://${state.pairingLanIp}:3001/ws`,
-      });
-      try {
-        const status = await api.getStatus();
-        api.connectWs();
-        setConnection(true, 'cloud_account', pairingUrl);
-        setStatus(status);
-        Notifications.registerPushToken(state.pairingToken, '灵境 Mobile').catch(() => {});
-        return;
-      } catch {
-        console.log('[App] Pairing unreachable after login, using cloud server');
-      }
-    }
     const cloudToken = state.cloudToken || state.token;
     api.configure({
       baseUrl: CLOUD_SERVER_URL,
@@ -237,20 +124,6 @@ export default function App() {
     });
     api.connectWs();
     setConnection(true, 'cloud_account', CLOUD_SERVER_URL);
-    try {
-      api.getStatus().then(setStatus).catch(() => {});
-    } catch { /* ignore */ }
-    Notifications.registerPushToken(cloudToken, '灵境 Mobile').catch(() => {});
-  }
-
-  function switchToPairing() {
-    setShowLogin(false);
-    setShowPairing(true);
-  }
-
-  function switchToLogin() {
-    setShowPairing(false);
-    setShowLogin(true);
   }
 
   if (initializing) {
@@ -263,11 +136,7 @@ export default function App() {
   }
 
   if (showLogin) {
-    return <LoginScreen onSuccess={handleLoginSuccess} onSwitchToPairing={switchToPairing} />;
-  }
-
-  if (showPairing) {
-    return <PairingScreen onSuccess={handlePaired} onSwitchToLogin={switchToLogin} />;
+    return <LoginScreen onSuccess={handleLoginSuccess} />;
   }
 
   return (

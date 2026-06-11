@@ -25,6 +25,7 @@ import PairingScreen from './src/screens/PairingScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import ConnectionBanner from './src/components/ConnectionBanner';
+import UpdateChecker from './src/components/UpdateChecker';
 import { loadPersistedAuth, loadPersistedPairing } from './src/stores/app-store';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme, Platform } from 'react-native';
 
@@ -271,6 +272,7 @@ export default function App() {
 
   return (
     <ErrorBoundary><SafeAreaProvider>
+      <UpdateChecker />
       <NavigationContainer theme={{
         dark: isDark,
         fonts: {

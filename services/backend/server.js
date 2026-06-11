@@ -2607,7 +2607,7 @@ app.put('/api/v1/devices/:id/token', authenticate, async (req, res) => {
 });
 
 // ── Mobile Chat (public, no auth required) ──
-app.post('/api/mobile/chat', (req, res) => {
+app.post('/api/mobile/chat', async (req, res) => {
   const { message, conversationId, platform } = req.body;
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message required' });

@@ -1,4 +1,4 @@
-version: 1.73.0
+version: 1.72.31
 files:
   - url: LingJing-1.72.31-linux-x86_64.AppImage
     sha512: QysiAEJAbxiMs7mBOcYB7yOyWmQw+k0H0j5Xfkia2Up0tbUojybPSppIvHS6L6SUbIl1admFW8pnrruPBUQnzQ==
@@ -9,4 +9,4 @@ files:
     size: 109336546
 path: LingJing-1.72.31-linux-x86_64.AppImage
 sha512: QysiAEJAbxiMs7mBOcYB7yOyWmQw+k0H0j5Xfkia2Up0tbUojybPSppIvHS6L6SUbIl1admFW8pnrruPBUQnzQ==
-releaseDate: '2026-06-11T14:00:00.000Z'
+releaseDate: '2026-06-11T08:42:32.065Z'

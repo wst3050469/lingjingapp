@@ -1,4 +1,5 @@
-// Stub for vitest - real implementation is in Electron context
+// Secure token storage - stub implementation
+// Real implementation uses Electron's safeStorage API in the main process
 export class SecureTokenStorage {
     _store = new Map();
     async saveToken(key, value) {

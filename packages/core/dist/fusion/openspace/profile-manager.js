@@ -197,6 +197,13 @@ export class OpenSpaceProfileManager {
     setFileSystem(fs) {
         this.fs = fs;
     }
+    async deleteProfile(name) {
+        this.profileCache.delete(name);
+        if (this.currentProfile === name) {
+            this.currentProfile = null;
+        }
+        logger.info(`[ProfileManager] deleted profile: ${name}`);
+    }
     async readProfileFromDir(name, dirPath) {
         if (!this.fs)
             return null;

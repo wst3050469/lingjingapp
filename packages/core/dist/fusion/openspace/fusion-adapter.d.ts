@@ -12,6 +12,8 @@ export interface OpenSpaceFusionStatus {
     compatible: boolean;
     health: HealthCheckResult | null;
     wsPort: number | null;
+    degraded: boolean;
+    platformSupported: boolean;
 }
 /**
  * OpenSpaceFusionAdapter — wires OpenSpaceProcessManager and OpenSpaceBridge together.
@@ -30,6 +32,9 @@ export declare class OpenSpaceFusionAdapter {
     private tools;
     private initialized;
     private unregisterStateChange;
+    private degraded;
+    private platformSupported;
+    private exitCheckTimer;
     constructor(eventBus?: IEventBus);
     get processManagerInstance(): OpenSpaceProcessManager;
     get bridgeInstance(): OpenSpaceBridge;
@@ -55,6 +60,12 @@ export declare class OpenSpaceFusionAdapter {
      * Get comprehensive fusion status.
      */
     getStatus(): OpenSpaceFusionStatus;
+    isDegraded(): boolean;
+    isPlatformSupported(): boolean;
+    /**
+     * Schedule exit notification for crash detection (within 10 seconds).
+     */
+    private scheduleExitNotification;
     /**
      * Clean up all resources.
      */

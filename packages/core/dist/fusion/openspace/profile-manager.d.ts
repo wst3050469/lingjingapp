@@ -30,6 +30,7 @@ export declare class OpenSpaceProfileManager {
     getCurrentProfile(): string | null;
     setBridge(bridge: OpenSpaceBridge): void;
     setFileSystem(fs: IFileSystem): void;
+    deleteProfile(name: string): Promise<void>;
     private readProfileFromDir;
     private generateSceneContent;
     private formatLuaValue;

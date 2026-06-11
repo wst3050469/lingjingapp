@@ -2,8 +2,8 @@ import { SecureTokenStorage } from '../electron-deps/secure-storage.js';
 import { AccountStatus } from '../types/github.types.js';
 const DEFAULT_CONFIG = {
     autoRefresh: true,
-    refreshThreshold: 300000,
-    maxTokenAge: 86400000
+    refreshThreshold: 300_000, // 5 minutes
+    maxTokenAge: 86_400_000, // 24 hours
 };
 export class TokenManager {
     storage;
@@ -88,12 +88,13 @@ export class TokenManager {
         }
         try {
             console.log(`[TokenManager] Refreshing token for account ${account.username}`);
+            // In real Electron context, this would make an API call to refresh the token.
+            // For now, just extend the expiry.
             return {
+                ...account,
                 accessToken: account.accessToken,
                 refreshToken: account.refreshToken,
                 expiresAt: Date.now() + this.config.maxTokenAge,
-                tokenType: 'bearer',
-                scope: account.scope
             };
         }
         catch (err) {

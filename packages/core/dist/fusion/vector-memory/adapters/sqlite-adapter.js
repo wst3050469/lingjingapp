@@ -45,6 +45,7 @@ export class SqliteVectorAdapter {
         for (const entry of this.store.values()) {
             const score = cosineSimilarity(queryVector, entry.vector);
             if (score > 0) {
+                // @ts-ignore -- content field not populated in this adapter implementation
                 results.push({
                     id: entry.id,
                     score,

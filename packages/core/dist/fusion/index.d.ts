@@ -15,7 +15,9 @@ export { SlidingWindowMemoryManager } from './sliding-window/sliding-window-mana
 export type { SlidingWindowConfig, CompactResult, ISlidingWindowMemoryManager } from './sliding-window/types.js';
 export { DEFAULT_SLIDING_WINDOW_CONFIG } from './sliding-window/types.js';
 export { VectorMemoryStore } from './vector-memory/vector-memory-store.js';
+export type { EmbedFn } from './vector-memory/vector-memory-store.js';
 export { InMemoryVectorAdapter } from './vector-memory/adapters/in-memory-adapter.js';
+export { SqliteVectorAdapter } from './vector-memory/adapters/sqlite-adapter.js';
 export { createRememberVectorTool } from './vector-memory/tools/remember-vector.js';
 export { createRecallVectorTool } from './vector-memory/tools/recall-vector.js';
 export { createParallelExecuteTool } from './multi-agent/tools/parallel-execute.js';

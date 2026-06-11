@@ -35,6 +35,9 @@ export class OpenSpaceFusionAdapter {
     tools = null;
     initialized = false;
     unregisterStateChange = null;
+    degraded = false;
+    platformSupported = true;
+    exitCheckTimer = null;
     constructor(eventBus) {
         this.config = { ...DEFAULT_FUSION_CONFIG };
         this.eventBus = eventBus ?? null;
@@ -69,15 +72,58 @@ export class OpenSpaceFusionAdapter {
         this.bridge.updateConfig(this.config.bridgeConfig);
         // Detect installation
         this.processManager.detectInstallation();
+        // Platform check: macOS is not supported (no OpenGL 4.6 on Apple Silicon)
+        this.platformSupported = process.platform !== 'darwin';
+        if (!this.platformSupported) {
+            this.degraded = true;
+            logger.warn('[OpenSpaceFusionAdapter] macOS is not supported (no OpenGL 4.6)');
+            if (this.eventBus) {
+                // @ts-ignore -- runtime event topic, not in EventTopic union
+                this.eventBus.publish('openspace:health_changed', {
+                    healthy: false,
+                    reason: 'platform_unsupported',
+                    detail: 'macOS/Apple Silicon does not support OpenGL 4.6',
+                }, 'openspace-fusion-adapter');
+            }
+        }
+        // Check if degraded (not installed or incompatible version)
+        if (this.platformSupported && (!this.processManager.installation.found || !this.processManager.installation.compatible)) {
+            this.degraded = true;
+        }
         // Register state change handler
         this.unregisterStateChange = this.processManager.onStateChange((state, _prev) => {
-            if (state === 'running' && this.config.autoStart) {
-                this.connectBridge().catch((err) => {
-                    logger.warn(`[OpenSpaceFusionAdapter] auto bridge connect failed: ${err.message}`);
-                });
+            if (state === 'running') {
+                // Publish skill availability event
+                if (this.eventBus) {
+                    // @ts-ignore -- runtime event topic, not in EventTopic union
+                    this.eventBus.publish('openspace:skills_available', {
+                        skills: ['openspace-navigation', 'openspace-scene-management', 'openspace-recording'],
+                        timestamp: Date.now(),
+                    }, 'openspace-fusion-adapter');
+                }
+                if (this.config.autoStart) {
+                    this.connectBridge().catch((err) => {
+                        logger.warn(`[OpenSpaceFusionAdapter] auto bridge connect failed: ${err.message}`);
+                    });
+                }
+            }
+            if (state !== 'running' && _prev === 'running') {
+                // Publish skill unavailability event
+                if (this.eventBus) {
+                    // @ts-ignore -- runtime event topic, not in EventTopic union
+                    this.eventBus.publish('openspace:skills_unavailable', {
+                        skills: ['openspace-navigation', 'openspace-scene-management', 'openspace-recording'],
+                        reason: `openspace state: ${state}`,
+                        timestamp: Date.now(),
+                    }, 'openspace-fusion-adapter');
+                }
             }
             if (state === 'stopped') {
                 this.bridge.disconnect();
+                // Schedule exit check — if process exited unexpectedly, notify within 10s
+                if (this.eventBus && _prev === 'running') {
+                    this.scheduleExitNotification(state);
+                }
             }
         });
         // Create tool set
@@ -136,7 +182,34 @@ export class OpenSpaceFusionAdapter {
             compatible: this.processManager.installation.compatible,
             health: this.processManager.health,
             wsPort: this.processManager.getWebSocketPort(),
+            degraded: this.degraded,
+            platformSupported: this.platformSupported,
         };
+    }
+    isDegraded() {
+        return this.degraded;
+    }
+    isPlatformSupported() {
+        return this.platformSupported;
+    }
+    /**
+     * Schedule exit notification for crash detection (within 10 seconds).
+     */
+    scheduleExitNotification(state) {
+        if (this.exitCheckTimer)
+            clearTimeout(this.exitCheckTimer);
+        this.exitCheckTimer = setTimeout(() => {
+            if (this.eventBus) {
+                // @ts-ignore -- runtime event topic, not in EventTopic union
+                this.eventBus.publish('openspace:health_changed', {
+                    healthy: false,
+                    state,
+                    reason: 'process_exited',
+                    detail: 'OpenSpace process exited unexpectedly. Restart required.',
+                    timestamp: Date.now(),
+                }, 'openspace-fusion-adapter');
+            }
+        }, 10000);
     }
     /**
      * Clean up all resources.
@@ -147,6 +220,10 @@ export class OpenSpaceFusionAdapter {
         if (this.unregisterStateChange) {
             this.unregisterStateChange();
             this.unregisterStateChange = null;
+        }
+        if (this.exitCheckTimer) {
+            clearTimeout(this.exitCheckTimer);
+            this.exitCheckTimer = null;
         }
         this.initialized = false;
         this.tools = null;

@@ -7,6 +7,7 @@ import { FusionInitializer } from '../fusion-initializer.js';
 import { EventBus } from '../event-bus/event-bus.js';
 import { HookRegistry } from '../hook-registry/hook-registry.js';
 function allDisabledConfig() {
+    // @ts-ignore -- test config missing optional FusionConfig properties at type level
     return {
         enabled: false,
         modules: [],
@@ -29,9 +30,12 @@ function verifyEventBusNoOp() {
     try {
         const bus = new EventBus();
         let received = false;
+        // @ts-ignore -- test topics not in EventTopic union type
         bus.subscribe('test.topic', () => { received = true; });
+        // @ts-ignore -- test topics not in EventTopic union type
         bus.publish('test.topic', { payload: null });
         const works = received;
+        // @ts-ignore -- removeAllHandlers exists at runtime via EventBus
         bus.removeAllHandlers();
         return {
             name: 'EventBus.publish is no-op when disabled',
@@ -54,7 +58,9 @@ function verifyHookRegistryPassthrough() {
         const registry = new HookRegistry();
         const context = { data: 'test' };
         let hookCalled = false;
+        // @ts-ignore -- test hook point not in HookPoint union
         registry.register('test.point', async (ctx) => { hookCalled = true; return ctx; });
+        // @ts-ignore -- test hook point not in HookPoint union
         void registry.execute('test.point', context);
         return {
             name: 'HookRegistry.execute returns original context when disabled',

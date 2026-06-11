@@ -8,10 +8,10 @@ export class GitHubClient {
     constructor(tokenManager, oauthConfig = {}) {
         this.tokenManager = tokenManager;
         this.oauthConfig = {
+            ...DEFAULT_GITHUB_OAUTH_CONFIG,
             clientId: oauthConfig.clientId || process.env.GITHUB_CLIENT_ID || '',
             clientSecret: oauthConfig.clientSecret || process.env.GITHUB_CLIENT_SECRET || '',
-            ...DEFAULT_GITHUB_OAUTH_CONFIG,
-            ...oauthConfig
+            ...oauthConfig,
         };
     }
     generateAuthUrl(scopes) {
@@ -22,7 +22,7 @@ export class GitHubClient {
             codeVerifier,
             redirectUri: this.oauthConfig.redirectUri,
             createdAt: Date.now(),
-            expiresAt: Date.now() + 600000
+            expiresAt: Date.now() + 600_000, // 10 minutes
         };
         this.pendingStates.set(state, oauthState);
         const scope = (scopes || this.oauthConfig.scope).join(' ');
@@ -48,15 +48,15 @@ export class GitHubClient {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
             },
             body: JSON.stringify({
                 client_id: this.oauthConfig.clientId,
                 client_secret: this.oauthConfig.clientSecret,
                 code,
                 redirect_uri: oauthState.redirectUri,
-                state
-            })
+                state,
+            }),
         });
         const tokenData = await tokenResponse.json();
         if (tokenData.error) {
@@ -76,7 +76,7 @@ export class GitHubClient {
             status: AccountStatus.ACTIVE,
             addedAt: Date.now(),
             isDefault: false,
-            avatarUrl: user.avatar_url
+            avatarUrl: user.avatar_url,
         };
         await this.tokenManager.saveAccount(account);
         if (account.expiresAt) {
@@ -90,7 +90,7 @@ export class GitHubClient {
             throw new Error('No GitHub token available');
         }
         return githubClient.get('/user', {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
         });
     }
     async fetchRepositories(accessToken) {
@@ -102,8 +102,8 @@ export class GitHubClient {
             headers: { Authorization: `Bearer ${token}` },
             params: {
                 sort: 'updated',
-                per_page: 100
-            }
+                per_page: 100,
+            },
         });
     }
     async createRepository(name, options = {}, accessToken) {
@@ -115,9 +115,9 @@ export class GitHubClient {
             name,
             description: options.description,
             private: options.private || false,
-            auto_init: options.autoInit || true
+            auto_init: options.autoInit || true,
         }, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
         });
     }
     async getFileContent(owner, repo, path, ref, accessToken) {
@@ -129,11 +129,11 @@ export class GitHubClient {
         const params = ref ? { ref } : {};
         const response = await githubClient.get(url, {
             headers: { Authorization: `Bearer ${token}` },
-            params
+            params,
         });
         return {
             content: Buffer.from(response.content, 'base64').toString('utf-8'),
-            sha: response.sha
+            sha: response.sha,
         };
     }
     async createOrUpdateFile(owner, repo, path, content, message, sha, accessToken) {
@@ -144,13 +144,13 @@ export class GitHubClient {
         const url = `/repos/${owner}/${repo}/contents/${path}`;
         const body = {
             message,
-            content: Buffer.from(content).toString('base64')
+            content: Buffer.from(content).toString('base64'),
         };
         if (sha) {
             body.sha = sha;
         }
         return githubClient.put(url, body, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
         });
     }
     async getDefaultToken() {

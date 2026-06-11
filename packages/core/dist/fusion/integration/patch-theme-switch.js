@@ -1,8 +1,21 @@
+/**
+ * scifi-dark 主题切换入口 — 纯数据（无 React 依赖）
+ *
+ * 此文件是 patch-theme-switch.tsx 的无 JSX 存根，
+ * 仅导出 CSS 变量和主题选项常量，供 Electron 主进程和 Node.js 上下文中使用。
+ *
+ * 集成说明：
+ * 1. ThemeContext.tsx → 在 themes 对象中添加 'scifi-dark' 主题定义
+ * 2. ThemeName 类型 → 扩展为 'dark' | 'light' | 'scifi-dark'
+ * 3. StatusBar.tsx → 主题切换菜单中添加 scifi-dark 选项（下拉选择替代简单 toggle）
+ * 4. ui-store.ts → ThemeMode 类型扩展为 'dark' | 'light' | 'scifi-dark'
+ */
 export const SCIFI_THEME_OPTION = {
     id: 'scifi-dark',
-    label: 'Sci-Fi \u6DF1\u7A7A',
-    icon: '\uD83D\uDE80',
+    label: 'Sci-Fi 深空',
+    icon: '🚀',
 };
+// scifi-dark 主题的 CSS 变量映射
 export const SCIFI_DARK_CSS_VARS = {
     '--cp-bg': '#0a0e1a',
     '--cp-sidebar': '#0f1428',
@@ -21,8 +34,10 @@ export const SCIFI_DARK_CSS_VARS = {
     '--cp-warning': '#feca57',
     '--cp-info': '#48dbfb',
 };
+// 主题选项列表（用于 StatusBar 下拉选择）
 export const THEME_OPTIONS = [
-    { id: 'dark', label: '\u6DF1\u8272', icon: '\uD83C\uDF19' },
-    { id: 'light', label: '\u6D45\u8272', icon: '\u2600\uFE0F' },
+    { id: 'dark', label: '深色', icon: '🌙' },
+    { id: 'light', label: '浅色', icon: '☀️' },
     SCIFI_THEME_OPTION,
 ];
+//# sourceMappingURL=patch-theme-switch.js.map

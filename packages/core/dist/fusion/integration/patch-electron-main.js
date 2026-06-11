@@ -11,7 +11,8 @@
  * Current state in main.ts (line 914-919):
  *   // Fusion IPC
  *   try {
- *     registerFusionIPC(mainWindow);
+ *     // @ts-ignore -- dynamic import to electron/src, resolved at runtime in Electron main process
+    registerFusionIPC(mainWindow);
  *   } catch (err) {
  *     console.error('[Main] registerFusionIPC failed:', err);
  *   }
@@ -49,7 +50,9 @@ export async function patchElectronMain(mainWindow, fusionConfig, deps = {}) {
     try {
         const registerFusionIPC = deps.loadRegisterFusionIPC
             ? await deps.loadRegisterFusionIPC()
-            : (await import('../../../electron/src/ipc/fusion/register.js')).registerFusionIPC;
+            :
+                // @ts-ignore -- dynamic import resolved at runtime in Electron main process only
+                (await import('../../../electron/src/ipc/fusion/register.js')).registerFusionIPC;
         registerFusionIPC(mainWindow);
         logger.info('[Fusion] Fusion IPC registered');
     }
@@ -60,7 +63,9 @@ export async function patchElectronMain(mainWindow, fusionConfig, deps = {}) {
     try {
         const registerOpenSpaceIPC = deps.loadRegisterOpenSpaceIPC
             ? await deps.loadRegisterOpenSpaceIPC()
-            : (await import('../../../electron/src/ipc/fusion/openspace-register.js')).registerOpenSpaceIPC;
+            :
+                // @ts-ignore -- dynamic import resolved at runtime in Electron main process only
+                (await import('../../../electron/src/ipc/fusion/openspace-register.js')).registerOpenSpaceIPC;
         registerOpenSpaceIPC(mainWindow);
         logger.info('[Fusion] OpenSpace IPC registered');
     }

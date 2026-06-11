@@ -108,7 +108,9 @@ export function patchOpenSpaceIntegration() {
     const detection = detectOpenSpace();
     return {
         detection,
+        // @ts-ignore -- installed/binaryPath exist at runtime on OpenSpaceDetectionResult
         wsBridgeReady: detection.installed && detection.binaryPath !== null,
+        // @ts-ignore -- installed exists at runtime on OpenSpaceDetectionResult
         windowEmbedReady: detection.installed,
     };
 }

@@ -1,0 +1,522 @@
+src/agent/agent.ts(4,15): error TS2305: Module '"./message-types.js"' has no exported member 'ToolCall'.
+src/agent/agent.ts(4,25): error TS2305: Module '"./message-types.js"' has no exported member 'ToolResult'.
+src/agent/agent.ts(9,15): error TS2305: Module '"../tools/builtin/code-review.js"' has no exported member 'CodeReviewReport'.
+src/agent/agent.ts(316,25): error TS2554: Expected 2 arguments, but got 1.
+src/agent/agent.ts(382,28): error TS2554: Expected 2 arguments, but got 1.
+src/agent/agent.ts(529,21): error TS2339: Property 'role' does not exist on type 'never'.
+src/agent/agent.ts(530,24): error TS2339: Property 'content' does not exist on type 'never'.
+src/agent/agent.ts(553,29): error TS2554: Expected 2 arguments, but got 1.
+src/agent/agent.ts(575,31): error TS2554: Expected 2 arguments, but got 1.
+src/agent/agent.ts(580,29): error TS2554: Expected 2 arguments, but got 1.
+src/agent/agent.ts(618,27): error TS2554: Expected 2 arguments, but got 1.
+src/agent/agent.ts(737,21): error TS2339: Property 'role' does not exist on type 'never'.
+src/agent/agent.ts(738,53): error TS2339: Property 'content' does not exist on type 'never'.
+src/agent/conversation.ts(2,32): error TS2307: Cannot find module './token-counter.js' or its corresponding type declarations.
+src/agent/conversation.ts(8,20): error TS7006: Parameter 'content' implicitly has an 'any' type.
+src/agent/conversation.ts(8,29): error TS7006: Parameter 'images' implicitly has an 'any' type.
+src/agent/conversation.ts(17,33): error TS2345: Argument of type '{ role: string; content: ({ type: string; text: any; } | { type: string; data: any; mediaType: any; })[]; }' is not assignable to parameter of type 'never'.
+src/agent/conversation.ts(20,33): error TS2345: Argument of type '{ role: string; content: any; }' is not assignable to parameter of type 'never'.
+src/agent/conversation.ts(23,25): error TS7006: Parameter 'content' implicitly has an 'any' type.
+src/agent/conversation.ts(23,34): error TS7006: Parameter 'toolCalls' implicitly has an 'any' type.
+src/agent/conversation.ts(23,45): error TS7006: Parameter 'reasoningContent' implicitly has an 'any' type.
+src/agent/conversation.ts(27,17): error TS2339: Property 'reasoningContent' does not exist on type '{ role: string; content: any; toolCalls: any; }'.
+src/agent/conversation.ts(29,29): error TS2345: Argument of type '{ role: string; content: any; toolCalls: any; }' is not assignable to parameter of type 'never'.
+src/agent/conversation.ts(31,19): error TS7006: Parameter 'toolCallId' implicitly has an 'any' type.
+src/agent/conversation.ts(31,31): error TS7006: Parameter 'result' implicitly has an 'any' type.
+src/agent/conversation.ts(32,29): error TS2345: Argument of type '{ role: string; toolCallId: any; content: any; isError: any; }' is not assignable to parameter of type 'never'.
+src/agent/conversation.ts(46,23): error TS7006: Parameter 'maxTokens' implicitly has an 'any' type.
+src/agent/conversation.ts(61,15): error TS7034: Variable 'recentMessages' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/agent/conversation.ts(77,24): error TS7005: Variable 'recentMessages' implicitly has an 'any[]' type.
+src/agent/conversation.ts(84,21): error TS7006: Parameter 'maxContextTokens' implicitly has an 'any' type.
+src/agent/conversation.ts(97,13): error TS7006: Parameter 'summary' implicitly has an 'any' type.
+src/agent/conversation.ts(106,93): error TS2339: Property 'role' does not exist on type 'never'.
+src/agent/conversation.ts(112,13): error TS2322: Type '{ role: string; content: string; }' is not assignable to type 'never'.
+src/agent/conversation.ts(130,30): error TS2339: Property 'role' does not exist on type 'never'.
+src/agent/conversation.ts(131,23): error TS2339: Property 'role' does not exist on type 'never'.
+src/agent/conversation.ts(133,58): error TS2339: Property 'content' does not exist on type 'never'.
+src/agent/conversation.ts(135,21): error TS2339: Property 'role' does not exist on type 'never'.
+src/agent/conversation.ts(150,13): error TS7006: Parameter 'messages' implicitly has an 'any' type.
+src/agent/conversation.ts(151,39): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+src/agent/conversation.ts(170,26): error TS7006: Parameter 'content' implicitly has an 'any' type.
+src/agent/conversation.ts(174,31): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/agent/conversation.ts(174,59): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/agent/conversation.ts(176,21): error TS7006: Parameter 'msg' implicitly has an 'any' type.
+src/memory/nudger.ts(29,12): error TS7006: Parameter 'conversation' implicitly has an 'any' type.
+src/skills/harvester.ts(58,17): error TS7006: Parameter 'config' implicitly has an 'any' type.
+src/skills/harvester.ts(65,19): error TS7006: Parameter 'conversation' implicitly has an 'any' type.
+src/skills/harvester.ts(65,33): error TS7006: Parameter 'durationMs' implicitly has an 'any' type.
+src/skills/harvester.ts(86,19): error TS7006: Parameter 'conversation' implicitly has an 'any' type.
+src/skills/harvester.ts(86,33): error TS7006: Parameter 'durationMs' implicitly has an 'any' type.
+src/skills/harvester.ts(118,21): error TS7006: Parameter 'conversation' implicitly has an 'any' type.
+src/skills/harvester.ts(138,71): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/skills/harvester.ts(161,27): error TS7006: Parameter 'transcript' implicitly has an 'any' type.
+src/skills/loader.ts(78,23): error TS7006: Parameter 'content' implicitly has an 'any' type.
+src/skills/loader.ts(78,32): error TS7006: Parameter 'filePath' implicitly has an 'any' type.
+src/skills/loader.ts(78,42): error TS7006: Parameter 'level' implicitly has an 'any' type.
+src/skills/loader.ts(104,21): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/skills/loader.ts(119,21): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/skills/loader.ts(123,21): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/skills/loader.ts(127,21): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/skills/loader.ts(131,21): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/skills/loader.ts(148,13): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/skills/loader.ts(152,34): error TS2339: Property 'name' does not exist on type '{}'.
+src/skills/loader.ts(153,41): error TS2339: Property 'description' does not exist on type '{}'.
+src/skills/loader.ts(154,54): error TS2339: Property 'triggers' does not exist on type '{}'.
+src/skills/loader.ts(154,84): error TS2339: Property 'triggers' does not exist on type '{}'.
+src/skills/loader.ts(155,51): error TS2339: Property 'tools' does not exist on type '{}'.
+src/skills/loader.ts(155,78): error TS2339: Property 'tools' does not exist on type '{}'.
+src/skills/loader.ts(201,30): error TS7006: Parameter 'dir' implicitly has an 'any' type.
+src/skills/loader.ts(201,35): error TS7006: Parameter 'level' implicitly has an 'any' type.
+src/skills/loader.ts(235,37): error TS7006: Parameter 'workspace' implicitly has an 'any' type.
+src/skills/loader.ts(271,32): error TS7006: Parameter 'workspace' implicitly has an 'any' type.
+src/skills/loader.ts(271,43): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/skills/loader.ts(278,39): error TS7006: Parameter 'workspace' implicitly has an 'any' type.
+src/tools/builtin/ask-user.ts(15,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/ask-user.ts(15,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/bash-output-store.ts(5,7): error TS7034: Variable 'orderQueue' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/bash-output-store.ts(10,33): error TS7006: Parameter 'entry' implicitly has an 'any' type.
+src/tools/builtin/bash-output-store.ts(13,24): error TS7005: Variable 'orderQueue' implicitly has an 'any[]' type.
+src/tools/builtin/bash-output-store.ts(18,10): error TS7005: Variable 'orderQueue' implicitly has an 'any[]' type.
+src/tools/builtin/bash-output-store.ts(22,31): error TS7006: Parameter 'commandId' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(3,32): error TS2307: Cannot find module '../../utils/truncate.js' or its corresponding type declarations.
+src/tools/builtin/bash.ts(4,30): error TS2307: Cannot find module '../../utils/encoding.js' or its corresponding type declarations.
+src/tools/builtin/bash.ts(6,38): error TS2307: Cannot find module '../sandbox/docker-manager.js' or its corresponding type declarations.
+src/tools/builtin/bash.ts(11,5): error TS7034: Variable 'sandboxManager' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/bash.ts(12,34): error TS7006: Parameter 'config' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(31,26): error TS7006: Parameter 'pid' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(63,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(63,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(74,39): error TS7005: Variable 'sandboxManager' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(78,13): error TS7005: Variable 'sandboxManager' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(92,19): error TS7034: Variable 'stdoutBufs' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/bash.ts(93,19): error TS7034: Variable 'stderrBufs' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/bash.ts(96,17): error TS7034: Variable 'killReason' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/bash.ts(122,48): error TS7005: Variable 'killReason' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(148,59): error TS7005: Variable 'stdoutBufs' implicitly has an 'any[]' type.
+src/tools/builtin/bash.ts(149,59): error TS7005: Variable 'stderrBufs' implicitly has an 'any[]' type.
+src/tools/builtin/bash.ts(168,21): error TS7005: Variable 'killReason' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(171,26): error TS7005: Variable 'killReason' implicitly has an 'any' type.
+src/tools/builtin/bash.ts(174,26): error TS7005: Variable 'killReason' implicitly has an 'any' type.
+src/tools/builtin/ci.ts(7,26): error TS7006: Parameter 'path' implicitly has an 'any' type.
+src/tools/builtin/ci.ts(7,48): error TS7006: Parameter 'body' implicitly has an 'any' type.
+src/tools/builtin/ci.ts(16,14): error TS2339: Property 'body' does not exist on type '{ method: string; headers: { 'Content-Type': string; 'x-api-key': string; }; }'.
+src/tools/builtin/ci.ts(83,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/ci.ts(110,40): error TS2554: Expected 3 arguments, but got 1.
+src/tools/builtin/ci.ts(117,39): error TS2554: Expected 3 arguments, but got 1.
+src/tools/builtin/ci.ts(124,40): error TS2554: Expected 3 arguments, but got 1.
+src/tools/builtin/ci.ts(153,55): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/cloud-memory.ts(6,37): error TS7006: Parameter 'enabled' implicitly has an 'any' type.
+src/tools/builtin/cloud-memory.ts(10,27): error TS7006: Parameter 'path' implicitly has an 'any' type.
+src/tools/builtin/cloud-memory.ts(10,49): error TS7006: Parameter 'body' implicitly has an 'any' type.
+src/tools/builtin/cloud-memory.ts(61,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/cloud-memory.ts(61,27): error TS7006: Parameter '_context' implicitly has an 'any' type.
+src/tools/builtin/cloud-memory.ts(72,43): error TS2554: Expected 3 arguments, but got 1.
+src/tools/builtin/cloud-memory.ts(95,27): error TS2554: Expected 3 arguments, but got 2.
+src/tools/builtin/cloud-session.ts(6,38): error TS7006: Parameter 'enabled' implicitly has an 'any' type.
+src/tools/builtin/cloud-session.ts(10,27): error TS7006: Parameter 'path' implicitly has an 'any' type.
+src/tools/builtin/cloud-session.ts(10,49): error TS7006: Parameter 'body' implicitly has an 'any' type.
+src/tools/builtin/cloud-session.ts(48,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/cloud-session.ts(48,27): error TS7006: Parameter '_context' implicitly has an 'any' type.
+src/tools/builtin/cloud-session.ts(56,44): error TS2554: Expected 3 arguments, but got 1.
+src/tools/builtin/cloud-session.ts(79,43): error TS2554: Expected 3 arguments, but got 1.
+src/tools/builtin/cloud-session.ts(81,59): error TS7006: Parameter 'm' implicitly has an 'any' type.
+src/tools/builtin/cloud-session.ts(90,27): error TS2554: Expected 3 arguments, but got 2.
+src/tools/builtin/cloud-webhook.ts(6,38): error TS7006: Parameter 'enabled' implicitly has an 'any' type.
+src/tools/builtin/cloud-webhook.ts(32,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/cloud-webhook.ts(32,27): error TS7006: Parameter '_context' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(2,39): error TS7006: Parameter 'provider' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(39,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(39,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(69,17): error TS7034: Variable 'dependencies' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/code-explainer.ts(78,75): error TS7005: Variable 'dependencies' implicitly has an 'any[]' type.
+src/tools/builtin/code-explainer.ts(88,25): error TS7005: Variable 'dependencies' implicitly has an 'any[]' type.
+src/tools/builtin/code-explainer.ts(105,28): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(105,34): error TS7006: Parameter 'ext' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(147,38): error TS7006: Parameter 'lines' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(147,45): error TS7006: Parameter 'startIndex' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(173,28): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(195,30): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(195,36): error TS7006: Parameter 'fileName' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(218,34): error TS7006: Parameter 'dependencies' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(218,48): error TS7006: Parameter 'fileName' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(231,30): error TS7006: Parameter 'elements' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(231,40): error TS7006: Parameter 'complexity' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(231,52): error TS7006: Parameter 'dependencies' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(231,66): error TS7006: Parameter 'detailLevel' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(231,79): error TS7006: Parameter 'fileName' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(234,39): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(235,37): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(236,37): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/tools/builtin/code-explainer.ts(237,37): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(2,39): error TS7006: Parameter 'provider' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(35,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(35,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(54,17): error TS7034: Variable 'codeSmells' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/code-optimizer.ts(78,17): error TS7005: Variable 'codeSmells' implicitly has an 'any[]' type.
+src/tools/builtin/code-optimizer.ts(95,22): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(95,28): error TS7006: Parameter 'ext' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(95,33): error TS7006: Parameter 'focusArea' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(122,36): error TS7006: Parameter 'l' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(197,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ high: number; medium: number; low: number; }'.
+  No index signature with a parameter of type 'string' was found on type '{ high: number; medium: number; low: number; }'.
+src/tools/builtin/code-optimizer.ts(197,44): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ high: number; medium: number; low: number; }'.
+  No index signature with a parameter of type 'string' was found on type '{ high: number; medium: number; low: number; }'.
+src/tools/builtin/code-optimizer.ts(200,27): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(200,33): error TS7006: Parameter 'ext' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(259,29): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/code-optimizer.ts(259,35): error TS7006: Parameter 'suggestions' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(6,30): error TS2307: Cannot find module '../../utils/encoding.js' or its corresponding type declarations.
+src/tools/builtin/code-review.ts(9,5): error TS7034: Variable '_subAgentExecute' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/code-review.ts(10,36): error TS7006: Parameter 'subAgentExecute' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(14,35): error TS7006: Parameter 'workingDir' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(23,65): error TS2339: Property 'stderr' does not exist on type 'Error'.
+src/tools/builtin/code-review.ts(27,35): error TS7006: Parameter 'filePath' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(27,45): error TS7006: Parameter 'workingDir' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(40,33): error TS7006: Parameter 'prIdentifier' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(40,47): error TS7006: Parameter 'workingDir' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(50,65): error TS2339: Property 'stderr' does not exist on type 'Error'.
+src/tools/builtin/code-review.ts(54,38): error TS7006: Parameter 'workingDir' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(79,39): error TS7006: Parameter 'text' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(97,20): error TS2551: Property 'score' does not exist on type '{ summary: string; total_issues: number; severity_counts: { critical: number; major: number; minor: number; info: number; }; issues: never[]; positives: never[]; scope: string; }'. Did you mean 'scope'?
+src/tools/builtin/code-review.ts(125,38): error TS2339: Property 'title' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(127,44): error TS2345: Argument of type '{ severity: any; category: any; }' is not assignable to parameter of type 'never'.
+src/tools/builtin/code-review.ts(129,52): error TS2339: Property 'severity' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(130,52): error TS2339: Property 'category' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(144,30): error TS2339: Property 'title' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(146,34): error TS2339: Property 'description' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(149,34): error TS2339: Property 'suggestion' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(156,47): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/tools/builtin/code-review.ts(165,26): error TS2339: Property 'title' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(166,32): error TS2345: Argument of type '{ severity: any; category: any; }' is not assignable to parameter of type 'never'.
+src/tools/builtin/code-review.ts(168,40): error TS2339: Property 'severity' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(169,40): error TS2339: Property 'category' does not exist on type '{}'.
+src/tools/builtin/code-review.ts(174,13): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ critical: number; major: number; minor: number; info: number; }'.
+src/tools/builtin/code-review.ts(174,42): error TS2339: Property 'severity' does not exist on type 'never'.
+src/tools/builtin/code-review.ts(224,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(224,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/code-review.ts(225,14): error TS7005: Variable '_subAgentExecute' implicitly has an 'any' type.
+src/tools/builtin/codebase-search.ts(3,5): error TS7034: Variable '_searchFn' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/codebase-search.ts(7,40): error TS7006: Parameter 'searchFn' implicitly has an 'any' type.
+src/tools/builtin/codebase-search.ts(31,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/codebase-search.ts(31,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/codebase-search.ts(38,14): error TS7005: Variable '_searchFn' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(2,42): error TS7006: Parameter 'provider' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(44,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(44,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(102,29): error TS7006: Parameter 'ext' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(111,12): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ '.ts': string; '.tsx': string; '.js': string; '.jsx': string; '.py': string; '.java': string; }'.
+src/tools/builtin/comment-generator.ts(113,28): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(113,34): error TS7006: Parameter 'ext' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(131,49): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(131,71): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(141,49): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(141,71): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(156,27): error TS7006: Parameter 'elements' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(156,37): error TS7006: Parameter 'config' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(178,24): error TS7006: Parameter 'element' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(178,33): error TS7006: Parameter 'config' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(200,26): error TS7006: Parameter 'element' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(200,35): error TS7006: Parameter 'config' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(214,28): error TS7006: Parameter 'element' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(214,37): error TS7006: Parameter 'config' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(231,24): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(231,30): error TS7006: Parameter 'comments' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(240,30): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/comment-generator.ts(240,36): error TS7006: Parameter 'elements' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(3,51): error TS2307: Cannot find module '../../agents/presets.js' or its corresponding type declarations.
+src/tools/builtin/dispatch-experts.ts(4,27): error TS2307: Cannot find module '../../agent/prompts.js' or its corresponding type declarations.
+src/tools/builtin/dispatch-experts.ts(6,5): error TS7034: Variable '_provider' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/dispatch-experts.ts(7,5): error TS7034: Variable '_parentRegistry' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/dispatch-experts.ts(8,41): error TS7006: Parameter 'provider' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(8,51): error TS7006: Parameter 'registry' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(12,54): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(56,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(56,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(57,14): error TS7005: Variable '_provider' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(57,28): error TS7005: Variable '_parentRegistry' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(149,31): error TS7006: Parameter 'task' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(149,37): error TS7006: Parameter 'preset' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(149,45): error TS7006: Parameter 'sharedContext' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(149,60): error TS7006: Parameter 'parentContext' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(149,75): error TS7006: Parameter 'previousResults' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(150,10): error TS7005: Variable '_provider' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(150,24): error TS7005: Variable '_parentRegistry' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(194,20): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(194,29): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(201,23): error TS7006: Parameter 'tasks' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(201,30): error TS7006: Parameter 'taskMap' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(204,41): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(213,48): error TS7006: Parameter 'd' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(230,22): error TS7006: Parameter 'results' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(230,31): error TS7006: Parameter 'total' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(230,38): error TS7006: Parameter 'succeeded' implicitly has an 'any' type.
+src/tools/builtin/dispatch-experts.ts(230,49): error TS7006: Parameter 'failed' implicitly has an 'any' type.
+src/tools/builtin/file-edit.ts(29,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/file-edit.ts(29,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/file-read.ts(25,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/file-read.ts(25,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/file-write.ts(21,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/file-write.ts(21,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/get-problems.ts(3,5): error TS7034: Variable '_getDiagnosticsFn' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/get-problems.ts(7,37): error TS7006: Parameter 'getDiagnosticsFn' implicitly has an 'any' type.
+src/tools/builtin/get-problems.ts(28,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/get-problems.ts(28,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/get-problems.ts(31,14): error TS7005: Variable '_getDiagnosticsFn' implicitly has an 'any' type.
+src/tools/builtin/get-terminal-output.ts(20,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/get-terminal-output.ts(20,27): error TS7006: Parameter '_context' implicitly has an 'any' type.
+src/tools/builtin/git-auto-commit.ts(4,33): error TS7006: Parameter 'cwd' implicitly has an 'any' type.
+src/tools/builtin/git-auto-commit.ts(10,13): error TS2339: Property 'autoMessage' does not exist on type '{}'.
+src/tools/builtin/git-auto-commit.ts(10,33): error TS2339: Property 'message' does not exist on type '{}'.
+src/tools/builtin/git-auto-commit.ts(10,42): error TS2339: Property 'addAll' does not exist on type '{}'.
+src/tools/builtin/git-auto-commit.ts(10,57): error TS2339: Property 'excludePatterns' does not exist on type '{}'.
+src/tools/builtin/git-auto-commit.ts(10,79): error TS2339: Property 'requireTests' does not exist on type '{}'.
+src/tools/builtin/git-auto-commit.ts(10,101): error TS2339: Property 'conventionalCommit' does not exist on type '{}'.
+src/tools/builtin/git-auto-commit.ts(30,56): error TS7006: Parameter 'pattern' implicitly has an 'any' type.
+src/tools/builtin/git-auto-commit.ts(38,37): error TS2345: Argument of type '{ status: string; file: string; }' is not assignable to parameter of type 'never'.
+src/tools/builtin/git-auto-commit.ts(46,60): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(47,19): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(48,19): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(49,60): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(50,20): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(51,20): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(52,20): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(52,46): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(52,73): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(65,36): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(67,28): error TS2339: Property 'status' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(68,47): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(71,33): error TS7006: Parameter 'status' implicitly has an 'any' type.
+src/tools/builtin/git-auto-commit.ts(79,53): error TS2339: Property 'status' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(82,48): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(82,77): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(85,53): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(85,79): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(88,53): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(88,88): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(95,42): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(118,48): error TS2339: Property 'status' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(118,65): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(128,58): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(145,16): error TS2339: Property 'commitHash' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; }'.
+src/tools/builtin/git-auto-commit.ts(146,16): error TS2339: Property 'commitMessage' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; }'.
+src/tools/builtin/git-auto-commit.ts(150,52): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/git-auto-commit.ts(186,19): error TS7006: Parameter 'args' implicitly has an 'any' type.
+src/tools/builtin/git-auto-commit.ts(186,25): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/git-auto-commit.ts(210,44): error TS2339: Property 'status' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(210,62): error TS2339: Property 'file' does not exist on type 'never'.
+src/tools/builtin/git-auto-commit.ts(214,24): error TS2339: Property 'commitHash' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; } | { commitMessage: string; hasChanges: boolean; changes: never[]; branch: string; }'.
+  Property 'commitHash' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; }'.
+src/tools/builtin/git-auto-commit.ts(216,49): error TS2339: Property 'commitHash' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; } | { commitMessage: string; hasChanges: boolean; changes: never[]; branch: string; }'.
+  Property 'commitHash' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; }'.
+src/tools/builtin/git-auto-commit.ts(217,61): error TS2339: Property 'commitMessage' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; } | { commitMessage: string; hasChanges: boolean; changes: never[]; branch: string; }'.
+  Property 'commitMessage' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; }'.
+src/tools/builtin/git-auto-commit.ts(219,29): error TS2339: Property 'commitMessage' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; } | { commitMessage: string; hasChanges: boolean; changes: never[]; branch: string; }'.
+  Property 'commitMessage' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; }'.
+src/tools/builtin/git-auto-commit.ts(220,39): error TS2339: Property 'commitMessage' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; } | { commitMessage: string; hasChanges: boolean; changes: never[]; branch: string; }'.
+  Property 'commitMessage' does not exist on type '{ hasChanges: boolean; changes: never[]; branch: string; }'.
+src/tools/builtin/git-auto-commit.ts(232,53): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/glob.ts(21,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/glob.ts(21,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/grep.ts(34,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/grep.ts(34,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/lint-fix.ts(4,31): error TS7006: Parameter 'cwd' implicitly has an 'any' type.
+src/tools/builtin/lint-fix.ts(12,13): error TS2339: Property 'linter' does not exist on type '{}'.
+src/tools/builtin/lint-fix.ts(12,30): error TS2339: Property 'fix' does not exist on type '{}'.
+src/tools/builtin/lint-fix.ts(12,42): error TS2339: Property 'files' does not exist on type '{}'.
+src/tools/builtin/lint-fix.ts(12,57): error TS2339: Property 'config' does not exist on type '{}'.
+src/tools/builtin/lint-fix.ts(49,60): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(52,62): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(58,51): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(64,36): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(65,36): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(73,60): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(76,62): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(81,55): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(86,48): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(86,86): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(90,44): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(90,96): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(110,25): error TS2322: Type 'string[]' is not assignable to type 'never[]'.
+  Type 'string' is not assignable to type 'never'.
+src/tools/builtin/lint-fix.ts(114,36): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(115,36): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(117,75): error TS7006: Parameter 'line' implicitly has an 'any' type.
+src/tools/builtin/lint-fix.ts(118,46): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(122,66): error TS7006: Parameter 'line' implicitly has an 'any' type.
+src/tools/builtin/lint-fix.ts(128,44): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(128,84): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(156,36): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(157,36): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(162,52): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(165,54): error TS2345: Argument of type 'any' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(170,44): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(170,81): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(178,28): error TS2345: Argument of type 'string' is not assignable to parameter of type 'never'.
+src/tools/builtin/lint-fix.ts(178,49): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/lint-fix.ts(208,19): error TS7006: Parameter 'args' implicitly has an 'any' type.
+src/tools/builtin/lint-fix.ts(208,25): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/lint-fix.ts(256,46): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/list-dir.ts(10,21): error TS7006: Parameter 'bytes' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(19,30): error TS7006: Parameter 'dirPath' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(19,39): error TS7006: Parameter 'basePath' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(19,49): error TS7006: Parameter 'depth' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(19,56): error TS7006: Parameter 'maxDepth' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(19,66): error TS7006: Parameter 'showHidden' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(19,78): error TS7006: Parameter 'entries' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(19,87): error TS7006: Parameter 'prefix' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(88,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(88,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/list-dir.ts(105,15): error TS7034: Variable 'entries' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/list-dir.ts(106,73): error TS7005: Variable 'entries' implicitly has an 'any[]' type.
+src/tools/builtin/list-dir.ts(112,19): error TS7005: Variable 'entries' implicitly has an 'any[]' type.
+src/tools/builtin/multi-agent.ts(2,5): error TS7034: Variable '_provider' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/multi-agent.ts(3,5): error TS7034: Variable '_parentRegistry' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/multi-agent.ts(4,36): error TS7006: Parameter 'provider' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(4,46): error TS7006: Parameter 'registry' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(61,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(61,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(62,14): error TS7005: Variable '_provider' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(62,28): error TS7005: Variable '_parentRegistry' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(76,37): error TS7006: Parameter 'agentTask' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(99,31): error TS7005: Variable '_provider' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(100,28): error TS7005: Variable '_parentRegistry' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(109,24): error TS2339: Property 'output' does not exist on type '{ agentId: any; status: string; }'.
+src/tools/builtin/multi-agent.ts(110,24): error TS2339: Property 'duration' does not exist on type '{ agentId: any; status: string; }'.
+src/tools/builtin/multi-agent.ts(114,24): error TS2339: Property 'error' does not exist on type '{ agentId: any; status: string; }'.
+src/tools/builtin/multi-agent.ts(114,32): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/multi-agent.ts(115,24): error TS2339: Property 'duration' does not exist on type '{ agentId: any; status: string; }'.
+src/tools/builtin/multi-agent.ts(119,29): error TS7006: Parameter 'agentTask' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(123,49): error TS7006: Parameter 'depId' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(129,41): error TS7006: Parameter 'agent' implicitly has an 'any' type.
+src/tools/builtin/multi-agent.ts(146,96): error TS7006: Parameter 'depId' implicitly has an 'any' type.
+src/tools/builtin/plan.ts(21,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/schedule.ts(7,26): error TS7006: Parameter 'path' implicitly has an 'any' type.
+src/tools/builtin/schedule.ts(7,48): error TS7006: Parameter 'body' implicitly has an 'any' type.
+src/tools/builtin/schedule.ts(16,14): error TS2339: Property 'body' does not exist on type '{ method: string; headers: { 'Content-Type': string; 'x-api-key': string; }; }'.
+src/tools/builtin/schedule.ts(64,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/schedule.ts(69,40): error TS2554: Expected 3 arguments, but got 1.
+src/tools/builtin/schedule.ts(93,29): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/tools/builtin/schedule.ts(104,27): error TS2554: Expected 3 arguments, but got 2.
+src/tools/builtin/schedule.ts(111,42): error TS2554: Expected 3 arguments, but got 2.
+src/tools/builtin/schedule.ts(118,40): error TS2554: Expected 3 arguments, but got 1.
+src/tools/builtin/schedule.ts(126,61): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/slack.ts(7,26): error TS7006: Parameter 'path' implicitly has an 'any' type.
+src/tools/builtin/slack.ts(7,48): error TS7006: Parameter 'body' implicitly has an 'any' type.
+src/tools/builtin/slack.ts(16,14): error TS2339: Property 'body' does not exist on type '{ method: string; headers: { 'Content-Type': string; 'x-api-key': string; }; }'.
+src/tools/builtin/slack.ts(61,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/slack.ts(84,58): error TS18046: 'err' is of type 'unknown'.
+src/tools/builtin/sub-agent.ts(3,40): error TS2307: Cannot find module '../../agents/presets.js' or its corresponding type declarations.
+src/tools/builtin/sub-agent.ts(4,27): error TS2307: Cannot find module '../../agent/prompts.js' or its corresponding type declarations.
+src/tools/builtin/sub-agent.ts(5,37): error TS2307: Cannot find module '../../agents/loader.js' or its corresponding type declarations.
+src/tools/builtin/sub-agent.ts(7,5): error TS7034: Variable '_provider' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/sub-agent.ts(8,5): error TS7034: Variable '_parentRegistry' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/sub-agent.ts(10,34): error TS7006: Parameter 'provider' implicitly has an 'any' type.
+src/tools/builtin/sub-agent.ts(10,44): error TS7006: Parameter 'registry' implicitly has an 'any' type.
+src/tools/builtin/sub-agent.ts(20,45): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/tools/builtin/sub-agent.ts(26,31): error TS18046: 'a' is of type 'unknown'.
+src/tools/builtin/sub-agent.ts(26,43): error TS18046: 'a' is of type 'unknown'.
+src/tools/builtin/sub-agent.ts(52,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/sub-agent.ts(52,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/sub-agent.ts(55,14): error TS7005: Variable '_provider' implicitly has an 'any' type.
+src/tools/builtin/sub-agent.ts(55,28): error TS7005: Variable '_parentRegistry' implicitly has an 'any' type.
+src/tools/builtin/sub-agent.ts(111,38): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(2,39): error TS7006: Parameter 'provider' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(40,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(40,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(90,26): error TS7006: Parameter 'ext' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(101,12): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ '.ts': string; '.tsx': string; '.js': string; '.jsx': string; '.py': string; '.java': string; '.cpp': string; '.cc': string; }'.
+src/tools/builtin/test-generator.ts(103,22): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(103,28): error TS7006: Parameter 'ext' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(130,28): error TS7006: Parameter 'analysis' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(130,38): error TS7006: Parameter 'methodName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(130,50): error TS7006: Parameter 'includeEdgeCases' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(133,37): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(169,27): error TS7006: Parameter 'sourceCode' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(169,39): error TS7006: Parameter 'testCases' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(169,50): error TS7006: Parameter 'framework' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(169,61): error TS7006: Parameter 'sourceFileName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(169,77): error TS7006: Parameter 'methodName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(181,27): error TS7006: Parameter 'testCases' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(181,38): error TS7006: Parameter 'sourceFileName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(181,54): error TS7006: Parameter 'methodName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(200,29): error TS7006: Parameter 'testCases' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(200,40): error TS7006: Parameter 'sourceFileName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(200,56): error TS7006: Parameter 'methodName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(218,28): error TS7006: Parameter 'testCases' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(218,39): error TS7006: Parameter 'sourceFileName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(218,55): error TS7006: Parameter 'methodName' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(239,31): error TS7006: Parameter 'sourcePath' implicitly has an 'any' type.
+src/tools/builtin/test-generator.ts(239,43): error TS7006: Parameter 'framework' implicitly has an 'any' type.
+src/tools/builtin/todo.ts(3,5): error TS7034: Variable 'todoList' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/todo.ts(5,12): error TS7005: Variable 'todoList' implicitly has an 'any[]' type.
+src/tools/builtin/todo.ts(10,12): error TS7005: Variable 'todoList' implicitly has an 'any[]' type.
+src/tools/builtin/todo.ts(35,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/update-memory.ts(4,5): error TS7034: Variable '_getDatabase' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/update-memory.ts(5,5): error TS7034: Variable '_saveDatabase' implicitly has type 'any' in some locations where its type cannot be determined.
+src/tools/builtin/update-memory.ts(6,38): error TS7006: Parameter 'getDatabase' implicitly has an 'any' type.
+src/tools/builtin/update-memory.ts(6,51): error TS7006: Parameter 'saveDatabase' implicitly has an 'any' type.
+src/tools/builtin/update-memory.ts(49,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/update-memory.ts(49,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/update-memory.ts(50,14): error TS7005: Variable '_getDatabase' implicitly has an 'any' type.
+src/tools/builtin/update-memory.ts(50,31): error TS7005: Variable '_saveDatabase' implicitly has an 'any' type.
+src/tools/builtin/web-fetch.ts(2,32): error TS2307: Cannot find module '../../utils/truncate.js' or its corresponding type declarations.
+src/tools/builtin/web-fetch.ts(17,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/web-fetch.ts(17,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/web-fetch.ts(49,20): error TS7006: Parameter 'html' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(22,19): error TS7006: Parameter 'params' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(22,27): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(50,35): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(51,11): error TS7034: Variable 'results' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/web-search.ts(59,20): error TS7005: Variable 'results' implicitly has an 'any[]' type.
+src/tools/builtin/web-search.ts(125,32): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(125,39): error TS7006: Parameter 'numResults' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(126,11): error TS7034: Variable 'results' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/tools/builtin/web-search.ts(139,20): error TS7005: Variable 'results' implicitly has an 'any[]' type.
+src/tools/builtin/web-search.ts(150,23): error TS7006: Parameter 'html' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(150,29): error TS7006: Parameter 'maxResults' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(182,23): error TS7006: Parameter 'instant' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(182,32): error TS7006: Parameter 'html' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(182,38): error TS7006: Parameter 'maxResults' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(196,23): error TS7006: Parameter 'text' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(206,24): error TS7006: Parameter 'str' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(220,23): error TS7006: Parameter 'rawUrl' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(237,24): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(237,31): error TS7006: Parameter 'results' implicitly has an 'any' type.
+src/tools/builtin/web-search.ts(256,28): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/tools/executor.ts(4,33): error TS2307: Cannot find module '../errors/index.js' or its corresponding type declarations.
+src/tools/executor.ts(11,17): error TS7006: Parameter 'deps' implicitly has an 'any' type.
+src/tools/executor.ts(22,19): error TS7006: Parameter 'toolCall' implicitly has an 'any' type.
+src/tools/executor.ts(22,29): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/executor.ts(26,113): error TS7006: Parameter 't' implicitly has an 'any' type.
+src/tools/executor.ts(112,22): error TS7006: Parameter 'toolCalls' implicitly has an 'any' type.
+src/tools/executor.ts(112,33): error TS7006: Parameter 'context' implicitly has an 'any' type.
+src/tools/executor.ts(114,71): error TS7006: Parameter 'tc' implicitly has an 'any' type.
+src/tools/registry.ts(7,14): error TS7006: Parameter 'tool' implicitly has an 'any' type.
+src/tools/registry.ts(7,20): error TS7006: Parameter 'mcpServerName' implicitly has an 'any' type.
+src/tools/registry.ts(13,9): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/tools/registry.ts(16,9): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/tools/registry.ts(25,15): error TS7006: Parameter 'names' implicitly has an 'any' type.
+src/tools/registry.ts(30,24): error TS2554: Expected 2 arguments, but got 1.
+src/tools/registry.ts(34,12): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/tools/registry.ts(39,27): error TS7006: Parameter 'mcpServerName' implicitly has an 'any' type.
+src/tools/registry.ts(51,18): error TS7006: Parameter 'toolName' implicitly has an 'any' type.
+src/tools/registry.ts(54,20): error TS7006: Parameter 'mcpServerName' implicitly has an 'any' type.
+src/tools/registry.ts(65,26): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/tools/registry.ts(76,23): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/types/conflict.types.ts(1,12): error TS7005: Variable 'ConflictType' implicitly has an 'any' type.
+src/types/conflict.types.ts(9,12): error TS7005: Variable 'ResolutionStrategy' implicitly has an 'any' type.
+src/types/queue.types.ts(1,12): error TS7005: Variable 'QueueItemStatus' implicitly has an 'any' type.
+src/types/sync.types.ts(1,12): error TS7005: Variable 'DataType' implicitly has an 'any' type.
+src/types/sync.types.ts(10,12): error TS7005: Variable 'SyncStatus' implicitly has an 'any' type.
+src/types/sync.types.ts(19,12): error TS7005: Variable 'OperationType' implicitly has an 'any' type.
+src/workflow/task-complexity-analyzer.ts(23,20): error TS7006: Parameter 'userMessage' implicitly has an 'any' type.
+src/workflow/task-complexity-analyzer.ts(79,31): error TS7006: Parameter 'message' implicitly has an 'any' type.
+src/workflow/task-complexity-analyzer.ts(79,40): error TS7006: Parameter 'keyword' implicitly has an 'any' type.
+src/workflow/task-complexity-analyzer.ts(98,31): error TS7006: Parameter 'message' implicitly has an 'any' type.

@@ -16,7 +16,7 @@ asarUnpack:
   - "node_modules/**/*.wasm"
 
 directories:
-  output: release-v17227
+  output: release-v17228
 
 files:
   - dist/**/*

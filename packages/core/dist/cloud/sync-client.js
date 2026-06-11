@@ -27,6 +27,9 @@ export class CloudSyncClient {
     listeners = new Map();
     queue;
     _online = false;
+    /** Reconnection backoff state */
+    _reconnectAttempts = 0;
+    _maxReconnectAttempts = 10;
     constructor(options = {}) {
         this.url = (options.url || DEFAULT_SERVER).replace(/\/$/, '');
         this.apiKey = options.apiKey || DEFAULT_API_KEY;
@@ -233,8 +236,9 @@ export class CloudSyncClient {
         this.ws = new WS(wsUrl);
         this.ws.onopen = () => {
             console.info('[CloudSync] WebSocket connected');
-            this._reconnectAttempts = 0;
+            this._reconnectAttempts = 0; // Reset backoff on successful connection
             this._startHeartbeat();
+            this._sendRaw({ type: 'desktop:register', deviceId: this.deviceId });
             this.emit('connected', { url: this.url, deviceId: this.deviceId });
         };
         this.ws.onmessage = (event) => {
@@ -247,6 +251,12 @@ export class CloudSyncClient {
                 }
                 else if (data.type === 'webhook') {
                     this.emit('webhook', data);
+                }
+                else if (data.type === 'relay:from-mobile') {
+                    this.emit('relay:from-mobile', data);
+                }
+                else if (data.type === 'relay:from-desktop') {
+                    this.emit('relay:from-desktop', data);
                 }
             }
             catch { /* ignore */ }
@@ -264,23 +274,35 @@ export class CloudSyncClient {
     scheduleReconnect() {
         if (this.wsReconnectTimer)
             return;
-        this._reconnectAttempts = (this._reconnectAttempts || 0) + 1;
-        const maxReconnect = this._maxReconnectAttempts || 10;
-        if (this._reconnectAttempts > maxReconnect) {
-            console.warn(`[CloudSync] Max reconnect attempts (${maxReconnect}) reached, giving up`);
+        this._reconnectAttempts++;
+        if (this._reconnectAttempts > this._maxReconnectAttempts) {
+            console.warn(`[CloudSync] Max reconnect attempts (${this._maxReconnectAttempts}) reached, giving up`);
             return;
         }
-        // Exponential backoff: 1s, 2s, 4s, 8s, ... max 60s
+        // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s, 512s (=~8.5min)
         const delay = Math.min(1000 * Math.pow(2, this._reconnectAttempts - 1), 60000);
-        console.info(`[CloudSync] Reconnecting in ${delay / 1000}s (attempt ${this._reconnectAttempts}/${maxReconnect})`);
+        console.info(`[CloudSync] Reconnecting in ${delay / 1000}s (attempt ${this._reconnectAttempts}/${this._maxReconnectAttempts})`);
         this.wsReconnectTimer = setTimeout(() => {
             this.wsReconnectTimer = null;
             this.connectWebSocket();
         }, delay);
     }
+    /** Send raw JSON to WebSocket (safe wrapper) */
+    _sendRaw(data) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            try {
+                this.ws.send(JSON.stringify(data));
+            }
+            catch { /* ignore */ }
+        }
+    }
+    /** Send a relay message (desktop → cloud → mobile or vice versa) */
+    sendRelayMessage(type, payload, correlationId) {
+        this._sendRaw({ type, payload, correlationId, deviceId: this.deviceId });
+    }
     disconnectWebSocket() {
         this._stopHeartbeat();
-        this._reconnectAttempts = 0;
+        this._reconnectAttempts = 0; // Reset for next explicit connect
         if (this.wsReconnectTimer) {
             clearTimeout(this.wsReconnectTimer);
             this.wsReconnectTimer = null;

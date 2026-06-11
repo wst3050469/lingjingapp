@@ -1,4 +1,4 @@
-import type { LLMProvider } from '../llm/types.js';
+import type { LLMProvider } from '../fusion/adapters/types.js';
 import type { ToolResult } from './message-types.js';
 import { Conversation } from './conversation.js';
 import { ToolRegistry } from '../tools/registry.js';

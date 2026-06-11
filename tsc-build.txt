@@ -1,0 +1,2 @@
+error TS5055: Cannot write file 'D:/lingjing/lingjing/packages/core/dist/llm/types.d.ts' because it would overwrite input file.
+error TS5055: Cannot write file 'D:/lingjing/lingjing/packages/core/dist/tools/types.d.ts' because it would overwrite input file.

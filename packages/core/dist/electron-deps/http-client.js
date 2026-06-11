@@ -1,4 +1,4 @@
-// Stub for vitest - real implementation is in Electron context
+// HTTP client stubs - real implementations are in Electron context
 class StubHttpClient {
     on(_event, _handler) { }
     emit(_event, ..._args) { }

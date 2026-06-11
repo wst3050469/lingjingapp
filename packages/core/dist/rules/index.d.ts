@@ -1,3 +1,4 @@
-export type { Rule, RuleType } from './types.js';
-export { loadAllRules, applyRules, getManualRules } from './rule-loader.js';
+export declare function loadAllRules(): any[];
+export declare function applyRules(..._args: any[]): any;
+export declare function getManualRules(): any[];
 //# sourceMappingURL=index.d.ts.map

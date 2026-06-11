@@ -1,0 +1,70 @@
+src/tools/builtin/code-review.ts(106,13): error TS1161: Unterminated regular expression literal.
+src/tools/builtin/code-review.ts(107,9): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(122,47): error TS1161: Unterminated regular expression literal.
+src/tools/builtin/code-review.ts(122,103): error TS1005: ')' expected.
+src/tools/builtin/code-review.ts(126,29): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(127,37): error TS1005: ';' expected.
+src/tools/builtin/code-review.ts(128,37): error TS1005: ';' expected.
+src/tools/builtin/code-review.ts(129,25): error TS1109: Expression expected.
+src/tools/builtin/code-review.ts(129,26): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(142,13): error TS1472: 'catch' or 'finally' expected.
+src/tools/builtin/code-review.ts(160,9): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(167,9): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(175,9): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(176,5): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(177,5): error TS1005: 'try' expected.
+src/tools/builtin/code-review.ts(183,1): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(270,17): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(336,9): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(337,9): error TS1005: 'try' expected.
+src/tools/builtin/code-review.ts(344,5): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(344,6): error TS1128: Declaration or statement expected.
+src/tools/builtin/code-review.ts(345,1): error TS1128: Declaration or statement expected.
+src/tools/builtin/web-search.ts(218,34): error TS1002: Unterminated string literal.
+src/tools/builtin/web-search.ts(219,34): error TS1002: Unterminated string literal.
+src/tools/builtin/web-search.ts(221,16): error TS1005: ')' expected.
+src/workflow/task-complexity-analyzer.ts(10,31): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,34): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,38): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,41): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,45): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,51): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,55): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,61): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,65): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(10,66): error TS1127: Invalid character.
+src/workflow/task-complexity-analyzer.ts(10,93): error TS1442: Expected '=' for property initializer.
+src/workflow/task-complexity-analyzer.ts(11,57): error TS1442: Expected '=' for property initializer.
+src/workflow/task-complexity-analyzer.ts(12,45): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(12,48): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(12,51): error TS1002: Unterminated string literal.
+src/workflow/task-complexity-analyzer.ts(13,9): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(13,50): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(13,54): error TS1127: Invalid character.
+src/workflow/task-complexity-analyzer.ts(13,56): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(13,59): error TS1002: Unterminated string literal.
+src/workflow/task-complexity-analyzer.ts(14,5): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(16,5): error TS1128: Declaration or statement expected.
+src/workflow/task-complexity-analyzer.ts(18,24): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(18,27): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(18,31): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(18,34): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(18,38): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(18,41): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(18,43): error TS1002: Unterminated string literal.
+src/workflow/task-complexity-analyzer.ts(19,9): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(19,30): error TS1002: Unterminated string literal.
+src/workflow/task-complexity-analyzer.ts(20,9): error TS1005: ',' expected.
+src/workflow/task-complexity-analyzer.ts(24,5): error TS1128: Declaration or statement expected.
+src/workflow/task-complexity-analyzer.ts(24,33): error TS1005: ';' expected.
+src/workflow/task-complexity-analyzer.ts(58,60): error TS1161: Unterminated regular expression literal.
+src/workflow/task-complexity-analyzer.ts(58,91): error TS1005: ')' expected.
+src/workflow/task-complexity-analyzer.ts(71,23): error TS1005: ';' expected.
+src/workflow/task-complexity-analyzer.ts(72,9): error TS1109: Expression expected.
+src/workflow/task-complexity-analyzer.ts(73,5): error TS1128: Declaration or statement expected.
+src/workflow/task-complexity-analyzer.ts(77,5): error TS1128: Declaration or statement expected.
+src/workflow/task-complexity-analyzer.ts(77,49): error TS1005: ';' expected.
+src/workflow/task-complexity-analyzer.ts(82,9): error TS1109: Expression expected.
+src/workflow/task-complexity-analyzer.ts(94,5): error TS1128: Declaration or statement expected.
+src/workflow/task-complexity-analyzer.ts(94,40): error TS1005: ';' expected.
+src/workflow/task-complexity-analyzer.ts(102,1): error TS1128: Declaration or statement expected.

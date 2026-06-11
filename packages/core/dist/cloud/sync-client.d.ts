@@ -23,6 +23,9 @@ export declare class CloudSyncClient {
     listeners: Map<string, Set<EventListener>>;
     queue: OfflineQueue;
     private _online;
+    /** Reconnection backoff state */
+    private _reconnectAttempts;
+    private _maxReconnectAttempts;
     constructor(options?: CloudSyncClientOptions);
     /** Auto-register device and get JWT token */
     autoRegister(): Promise<boolean>;
@@ -53,6 +56,10 @@ export declare class CloudSyncClient {
     private _stopHeartbeat;
     connectWebSocket(): void;
     scheduleReconnect(): void;
+    /** Send raw JSON to WebSocket (safe wrapper) */
+    private _sendRaw;
+    /** Send a relay message (desktop → cloud → mobile or vice versa) */
+    sendRelayMessage(type: string, payload: any, correlationId?: string): void;
     disconnectWebSocket(): void;
     queueOperation(type: string, action: string, payload: any): string;
     getQueueStats(): {

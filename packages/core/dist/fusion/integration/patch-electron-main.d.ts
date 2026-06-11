@@ -11,7 +11,8 @@
  * Current state in main.ts (line 914-919):
  *   // Fusion IPC
  *   try {
- *     registerFusionIPC(mainWindow);
+ *     // @ts-ignore -- dynamic import to electron/src, resolved at runtime in Electron main process
+    registerFusionIPC(mainWindow);
  *   } catch (err) {
  *     console.error('[Main] registerFusionIPC failed:', err);
  *   }

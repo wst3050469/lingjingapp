@@ -1,59 +1,70 @@
-import React from 'react';
+/**
+ * Fusion & OpenSpace Renderer UI 路由注册补丁 — 类型 & 静态数据（无 React 依赖）
+ *
+ * ⚠️ 此文件被 Electron 主进程间接加载（通过 @codepilot/core/fusion → integration/index）。
+ *    严禁在此文件顶层导入 React 或任何仅在渲染进程中可用的包！
+ *
+ * 集成说明：
+ * 1. ActivityBar.tsx → 在 sidebarIcons 数组中追加 Fusion/OpenSpace 图标按钮
+ * 2. SidebarContainer.tsx → 在条件渲染中追加面板路由 (activeSidebarPanel === 'xxx' && <Component/>)
+ * 3. ui-store.ts → 扩展 SidebarPanel 联合类型，添加 Fusion/OpenSpace 面板 ID
+ */
+// ─── Fusion 侧栏面板注册 ────────────────────────────────────────
 export const FUSION_SIDEBAR_PANELS = {
-    fusion: { id: 'fusion', icon: '\u26A1', label: '\u878D\u5408\u589E\u5F3A', component: 'FusionSettings' },
-    vectorMemory: { id: 'vector-memory', icon: '\uD83E\uDDE0', label: '\u5411\u91CF\u8BB0\u5FC6', component: 'VectorMemoryPanel' },
-    dag: { id: 'dag-orchestrator', icon: '\uD83D\uDD00', label: 'DAG\u7F16\u6392', component: 'DAGCanvas' },
-    multiAgent: { id: 'multi-agent', icon: '\uD83D\uDC65', label: '\u591AAgent', component: 'MultiAgentPanel' },
-    modelRouter: { id: 'model-router', icon: '\uD83E\uDDED', label: '\u6A21\u578B\u8DEF\u7531', component: 'ModelRouterConfig' },
-    cronSchedule: { id: 'cron-schedule', icon: '\u23F0', label: 'Cron\u8C03\u5EA6', component: 'CronScheduleManager' },
-    reviewReport: { id: 'review-report', icon: '\uD83D\uDD0D', label: '\u5BA1\u67E5\u62A5\u544A', component: 'ReviewReportPanel' },
-    userProfile: { id: 'user-profile', icon: '\uD83D\uDC64', label: '\u7528\u6237\u753B\u50CF', component: 'UserProfilePanel' },
+    fusion: { id: 'fusion', icon: '⚡', label: '融合增强', component: 'FusionSettings' },
+    vectorMemory: { id: 'vector-memory', icon: '🧠', label: '向量记忆', component: 'VectorMemoryPanel' },
+    dag: { id: 'dag-orchestrator', icon: '🔀', label: 'DAG编排', component: 'DAGCanvas' },
+    multiAgent: { id: 'multi-agent', icon: '👥', label: '多Agent', component: 'MultiAgentPanel' },
+    modelRouter: { id: 'model-router', icon: '🧭', label: '模型路由', component: 'ModelRouterConfig' },
+    cronSchedule: { id: 'cron-schedule', icon: '⏰', label: 'Cron调度', component: 'CronScheduleManager' },
+    reviewReport: { id: 'review-report', icon: '🔍', label: '审查报告', component: 'ReviewReportPanel' },
+    userProfile: { id: 'user-profile', icon: '👤', label: '用户画像', component: 'UserProfilePanel' },
 };
+// ─── OpenSpace 侧栏面板注册 ─────────────────────────────────────
 export const OPENSPACE_SIDEBAR_PANELS = {
-    openspace: { id: 'openspace', icon: '\uD83C\uDF0C', label: 'OpenSpace', component: 'OpenSpacePanel' },
-    openspaceScript: { id: 'openspace-script', icon: '\uD83D\uDCDD', label: 'OS\u811A\u672C', component: 'OpenSpaceScriptEditor' },
-    openspaceDataset: { id: 'openspace-dataset', icon: '\uD83D\uDCC1', label: 'OS\u6570\u636E\u96C6', component: 'OpenSpaceDatasetTree' },
-    openspaceProfile: { id: 'openspace-profile', icon: '\uD83C\uDFAF', label: 'OS\u573A\u666F', component: 'OpenSpaceProfileManager' },
-    openspaceRecorder: { id: 'openspace-recorder', icon: '\uD83C\uDFAC', label: 'OS\u5F55\u5236', component: 'OpenSpaceRecorderPanel' },
+    openspace: { id: 'openspace', icon: '🌌', label: 'OpenSpace', component: 'OpenSpacePanel' },
+    openspaceScript: { id: 'openspace-script', icon: '📝', label: 'OS脚本', component: 'OpenSpaceScriptEditor' },
+    openspaceDataset: { id: 'openspace-dataset', icon: '📁', label: 'OS数据集', component: 'OpenSpaceDatasetTree' },
+    openspaceProfile: { id: 'openspace-profile', icon: '🎯', label: 'OS场景', component: 'OpenSpaceProfileManager' },
+    openspaceRecorder: { id: 'openspace-recorder', icon: '🎬', label: 'OS录制', component: 'OpenSpaceRecorderPanel' },
 };
-const LazyFusionSettings = React.lazy(() => import('../../../../renderer/src/components/fusion/FusionSettings.js').then((m) => ({ default: m.FusionSettings })));
-const LazyVectorMemoryPanel = React.lazy(() => import('../../../../renderer/src/components/fusion/VectorMemoryPanel.js').then((m) => ({ default: m.VectorMemoryPanel })));
-const LazyDAGCanvas = React.lazy(() => import('../../../../renderer/src/components/fusion/DAGCanvas.js').then((m) => ({ default: m.DAGCanvas })));
-const LazyMultiAgentPanel = React.lazy(() => import('../../../../renderer/src/components/fusion/MultiAgentPanel.js').then((m) => ({ default: m.MultiAgentPanel })));
-const LazyModelRouterConfig = React.lazy(() => import('../../../../renderer/src/components/fusion/ModelRouterConfig.js').then((m) => ({ default: m.ModelRouterConfig })));
-const LazyCronScheduleManager = React.lazy(() => import('../../../../renderer/src/components/fusion/CronScheduleManager.js').then((m) => ({ default: m.CronScheduleManager })));
-const LazyReviewReportPanel = React.lazy(() => import('../../../../renderer/src/components/fusion/ReviewReportPanel.js').then((m) => ({ default: m.ReviewReportPanel })));
-const LazyUserProfilePanel = React.lazy(() => import('../../../../renderer/src/components/fusion/UserProfilePanel.js').then((m) => ({ default: m.UserProfilePanel })));
-export const FUSION_PANEL_COMPONENTS = {
-    FusionSettings: LazyFusionSettings,
-    VectorMemoryPanel: LazyVectorMemoryPanel,
-    DAGCanvas: LazyDAGCanvas,
-    MultiAgentPanel: LazyMultiAgentPanel,
-    ModelRouterConfig: LazyModelRouterConfig,
-    CronScheduleManager: LazyCronScheduleManager,
-    ReviewReportPanel: LazyReviewReportPanel,
-    UserProfilePanel: LazyUserProfilePanel,
-};
-const LazyOpenSpacePanel = React.lazy(() => import('../../../../renderer/src/components/openspace/OpenSpacePanel.js').then((m) => ({ default: m.OpenSpacePanel })));
-const LazyOpenSpaceScriptEditor = React.lazy(() => import('../../../../renderer/src/components/openspace/OpenSpaceScriptEditor.js').then((m) => ({ default: m.OpenSpaceScriptEditor })));
-const LazyOpenSpaceDatasetTree = React.lazy(() => import('../../../../renderer/src/components/openspace/OpenSpaceDatasetTree.js').then((m) => ({ default: m.OpenSpaceDatasetTree })));
-const LazyOpenSpaceProfileManager = React.lazy(() => import('../../../../renderer/src/components/openspace/OpenSpaceProfileManager.js').then((m) => ({ default: m.OpenSpaceProfileManager })));
-const LazyOpenSpaceRecorderPanel = React.lazy(() => import('../../../../renderer/src/components/openspace/OpenSpaceRecorderPanel.js').then((m) => ({ default: m.OpenSpaceRecorderPanel })));
-export const OPENSPACE_PANEL_COMPONENTS = {
-    OpenSpacePanel: LazyOpenSpacePanel,
-    OpenSpaceScriptEditor: LazyOpenSpaceScriptEditor,
-    OpenSpaceDatasetTree: LazyOpenSpaceDatasetTree,
-    OpenSpaceProfileManager: LazyOpenSpaceProfileManager,
-    OpenSpaceRecorderPanel: LazyOpenSpaceRecorderPanel,
-};
+// ─── 合并面板注册表 ─────────────────────────────────────────────
 export const ALL_SIDEBAR_PANELS = {
     ...FUSION_SIDEBAR_PANELS,
     ...OPENSPACE_SIDEBAR_PANELS,
+};
+// ─── Fusion Panel Components (React 懒加载占位 — Electron 主进程不可用) ──
+// 这些组件仅在渲染进程中被使用，在 Electron 主进程/Node.js 上下文中为空对象
+// 实际 React 懒加载实现在 patch-renderer.tsx 中
+const _NoopComponent = {};
+export const FUSION_PANEL_COMPONENTS = {
+    FusionSettings: _NoopComponent,
+    VectorMemoryPanel: _NoopComponent,
+    DAGCanvas: _NoopComponent,
+    MultiAgentPanel: _NoopComponent,
+    ModelRouterConfig: _NoopComponent,
+    CronScheduleManager: _NoopComponent,
+    ReviewReportPanel: _NoopComponent,
+    UserProfilePanel: _NoopComponent,
+};
+export const OPENSPACE_PANEL_COMPONENTS = {
+    OpenSpacePanel: _NoopComponent,
+    OpenSpaceScriptEditor: _NoopComponent,
+    OpenSpaceDatasetTree: _NoopComponent,
+    OpenSpaceProfileManager: _NoopComponent,
+    OpenSpaceRecorderPanel: _NoopComponent,
 };
 export const ALL_PANEL_COMPONENTS = {
     ...FUSION_PANEL_COMPONENTS,
     ...OPENSPACE_PANEL_COMPONENTS,
 };
+// ─── ActivityBar 图标注册辅助 ───────────────────────────────────
+// 在 ActivityBar.tsx 的 sidebarIcons 数组中追加:
+//   ...Object.values(ALL_SIDEBAR_PANELS).map(def => ({
+//     id: def.id as SidebarPanel,
+//     title: def.label,
+//     icon: <span className="text-lg">{def.icon}</span>,
+//   }))
 export function getPanelIconEntries() {
     return Object.values(ALL_SIDEBAR_PANELS).map((def) => ({
         id: def.id,
@@ -61,3 +72,4 @@ export function getPanelIconEntries() {
         icon: def.icon,
     }));
 }
+//# sourceMappingURL=patch-renderer.js.map

@@ -1,8 +1,8 @@
-// 文件浏览器页 — 浏览桌面端项目文件树 + 点击文件进入代码编辑器
+// 文件浏览器页 — 浏览桌面端项目文件树 + 云端超时回退
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,26 +23,38 @@ export default function FileTreeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const [cloudMode, setCloudMode] = useState(false);
 
   const loadDir = useCallback(async (path: string) => {
     try {
-      // Use WebSocket to browse files
+      // Try WebSocket (desktop) first
       const result = await api.wsCommand('file', 'list', { path });
       if (result?.entries) {
         setEntries(result.entries);
+        setCloudMode(false);
       } else {
         setEntries([]);
       }
     } catch (e) {
       console.log('Failed to load directory:', e);
-      setEntries([]);
+      // If WebSocket fails, try to read directory structure via HTTP
+      try {
+        const fileResult = await api.readFile(path || '/README.md');
+        if (fileResult?.content) {
+          setEntries([{ name: 'README.md', path: path || '/README.md', type: 'file', size: fileResult.size }]);
+        } else {
+          setEntries([]);
+        }
+      } catch {
+        setEntries([]);
+      }
+      setCloudMode(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
 
-  // On mount, load root
   React.useEffect(() => { loadDir(currentPath); }, [currentPath, loadDir]);
 
   const toggleDir = async (node: FileNode) => {
@@ -53,11 +65,6 @@ export default function FileTreeScreen() {
     } else {
       setExpandedDirs(prev => new Set(prev).add(key));
     }
-  };
-
-  const navigateToDir = (path: string) => {
-    setCurrentPath(path);
-    setLoading(true);
   };
 
   const goUp = () => {
@@ -90,22 +97,24 @@ export default function FileTreeScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#58a6ff" />
-        <Text style={styles.loadingText}>正在加载文件...</Text>
+        <Text style={styles.loadingText}>正在连接桌面端...</Text>
       </View>
     );
   }
 
-  const allEntries = entries;
-  const sorted = [...allEntries].sort((a, b) => {
+  const sorted = [...entries].sort((a, b) => {
     if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
     return a.name.localeCompare(b.name);
   });
 
-  // Combine current entries with expanded subdirectories' children
-  const displayEntries = sorted;
-
   return (
     <View style={styles.container}>
+      {cloudMode && (
+        <View style={styles.cloudBanner}>
+          <Text style={styles.cloudBannerText}>⚠ 桌面端离线 — 文件浏览不可用，请在电脑端启动灵境IDE</Text>
+        </View>
+      )}
+
       {/* Breadcrumb */}
       <View style={styles.breadcrumb}>
         <TouchableOpacity onPress={() => { setCurrentPath('/'); setLoading(true); }}>
@@ -121,13 +130,12 @@ export default function FileTreeScreen() {
 
       {/* File list */}
       <FlatList
-        data={displayEntries}
+        data={sorted}
         keyExtractor={item => item.path || item.name}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
             onPress={() => item.type === 'dir' ? toggleDir(item) : navigation.navigate('CodeEditor', { filePath: item.path, fileName: item.name })}
-          >
           >
             <Ionicons
               name={getFileIcon(item.name, item.type)}
@@ -147,14 +155,15 @@ export default function FileTreeScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="folder-open-outline" size={48} color="#30363d" />
-            <Text style={styles.emptyText}>空目录</Text>
+            <Ionicons name="cloud-offline-outline" size={48} color="#30363d" />
+            <Text style={styles.emptyText}>无法连接桌面端</Text>
+            <Text style={styles.emptySub}>请在电脑上启动灵境IDE并登录云账号，即可浏览项目文件</Text>
           </View>
         }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadDir(currentPath); }} tintColor="#58a6ff" />
         }
-        contentContainerStyle={displayEntries.length === 0 ? styles.emptyContainer : undefined}
+        contentContainerStyle={sorted.length === 0 ? styles.emptyContainer : undefined}
       />
     </View>
   );
@@ -164,6 +173,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0d1117' },
   center: { flex: 1, backgroundColor: '#0d1117', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#8b949e', marginTop: 8, fontSize: 13 },
+  cloudBanner: { backgroundColor: '#3d2c1c', padding: 8, alignItems: 'center' },
+  cloudBannerText: { color: '#d29922', fontSize: 12 },
   breadcrumb: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 12, paddingVertical: 10,
@@ -180,7 +191,8 @@ const styles = StyleSheet.create({
   itemName: { color: '#c9d1d9', fontSize: 14, flex: 1 },
   dirName: { color: '#58a6ff', fontWeight: '500' },
   itemSize: { color: '#484f58', fontSize: 12, marginRight: 4 },
-  empty: { alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
+  empty: { alignItems: 'center', justifyContent: 'center', paddingTop: 60, paddingHorizontal: 40 },
   emptyContainer: { flex: 1, justifyContent: 'center' },
-  emptyText: { color: '#484f58', fontSize: 14, marginTop: 8 },
+  emptyText: { color: '#484f58', fontSize: 16, marginTop: 8 },
+  emptySub: { color: '#30363d', fontSize: 13, marginTop: 8, textAlign: 'center', lineHeight: 18 },
 });

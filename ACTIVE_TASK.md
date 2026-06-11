@@ -1,7 +1,13 @@
 # v1.72.26 全平台部署 ✅
 
 **时间**: 2026-06-12
-**状态**: ✅ 全部完成 (8/8)
+**状态**: ✅ 全部完成 (含 GitHub 同步 + Mac 构建修复)
+
+## 后续补充 (6/12)
+- ✅ GitHub 干净历史推送 (orphan branch, 10.43GiB→~100MB)
+- ✅ Mac 构建修复 (49 stubs .ts→.d.ts, remove clean from build)
+- ✅ 三节点同步 (本地/生产/GitHub 一致 e5419e7aa)
+- ✅ auto-push-gh cron 已自清理
 
 ## 完成事项
 1. v1.72.26 Windows (Setup + Portable) — 本地 Electron Builder

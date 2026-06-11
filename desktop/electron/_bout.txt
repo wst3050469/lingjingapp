@@ -1,0 +1,576 @@
+[build-main] ⚠️ @codepilot/core dist not found at one of:
+  src: D:\lingjing\lingjing\node_modules\@codepilot\core\dist (exists: false)
+  dst: D:\lingjing\lingjing\packages\electron\node_modules\@codepilot\core\dist (exists: true)
+[build-main] ✅ Synced renderer dist (23 assets)
+[build-main] Building Electron main process with esbuild...
+X [ERROR] Could not resolve "./agent/conversation.js"
+
+    ../core/dist/index.js:5:29:
+      5 │ export { Conversation } from './agent/conversation.js';
+        ╵                              ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./agent/token-counter.js"
+
+    ../core/dist/index.js:6:31:
+      6 │ export { estimateTokens } from './agent/token-counter.js';
+        ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/context"
+
+    src/ipc/register-new-features.ts:2:31:
+      2 │ import { ContextManager } from '@codepilot/core/context';
+        ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/context/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:11:17:
+      11 │     "./context": "./dist/context/index.js",
+         ╵                  ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/context" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "@codepilot/core/checkpoint"
+
+    src/ipc/checkpoint-ipc.ts:2:57:
+      2 │ ...Manager, FileCheckpointStorage } from '@codepilot/core/checkpoint';
+        ╵                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/checkpoint/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:9:20:
+      9 │     "./checkpoint": "./dist/checkpoint/index.js",
+        ╵                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/checkpoint" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./agent/prompts.js"
+
+    ../core/dist/index.js:7:91:
+      7 │ ... CODE_REVIEWER_PROMPT, EXPLORER_PROMPT } from './agent/prompts.js';
+        ╵                                                  ~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/rules"
+
+    src/ipc/context-ipc.ts:11:29:
+      11 │ import { loadAllRules } from '@codepilot/core/rules';
+         ╵                              ~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/rules/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:19:15:
+      19 │     "./rules": "./dist/rules/index.js",
+         ╵                ~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/rules" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "@codepilot/core/voice"
+
+    src/voice/voice-engine-manager.ts:4:44:
+      4 │ import { DEFAULT_VOICE_ENGINE_CONFIG } from '@codepilot/core/voice';
+        ╵                                             ~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/voice/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:25:15:
+      25 │     "./voice": "./dist/voice/index.js",
+         ╵                ~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/voice" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "@codepilot/core/intent"
+
+    src/ipc/register-new-features.ts:3:31:
+      3 │ import { IntentDetector } from '@codepilot/core/intent';
+        ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/intent/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:13:16:
+      13 │     "./intent": "./dist/intent/index.js",
+         ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/intent" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./agent/agent-scheduler.js"
+
+    ../core/dist/index.js:8:31:
+      8 │ export { AgentScheduler } from './agent/agent-scheduler.js';
+        ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./agent/agent-core.js"
+
+    ../core/dist/index.js:9:26:
+      9 │ export { AgentCore } from './agent/agent-core.js';
+        ╵                           ~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/terminal-suggester"
+
+    src/ipc/register-new-features.ts:5:34:
+      5 │ ...rt { TerminalSuggester } from '@codepilot/core/terminal-suggester';
+        ╵                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/terminal-suggester/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:21:28:
+      21 │     "./terminal-suggester": "./dist/terminal-suggester/index.js",
+         ╵                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/terminal-suggester" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./agent/agent-factory.js"
+
+    ../core/dist/index.js:10:29:
+      10 │ export { AgentFactory } from './agent/agent-factory.js';
+         ╵                              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./agent/dag-executor.js"
+
+    ../core/dist/index.js:11:28:
+      11 │ export { DAGExecutor } from './agent/dag-executor.js';
+         ╵                             ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/rules"
+
+    src/ipc/quest-ipc.ts:83:57:
+      83 │ ...lRules, applyRules, getManualRules } from '@codepilot/core/rules';
+         ╵                                              ~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/rules/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:19:15:
+      19 │     "./rules": "./dist/rules/index.js",
+         ╵                ~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/rules" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "@codepilot/core/auto-fix"
+
+    src/ipc/register-new-features.ts:6:30:
+      6 │ import { AutoFixEngine } from '@codepilot/core/auto-fix';
+        ╵                               ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/auto-fix/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:8:18:
+      8 │     "./auto-fix": "./dist/auto-fix/index.js",
+        ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/auto-fix" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "@codepilot/core/utils"
+
+    src/admin/version-module.ts:3:30:
+      3 │ import { VersionParser } from '@codepilot/core/utils';
+        ╵                               ~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/utils/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:23:15:
+      23 │     "./utils": "./dist/utils/index.js",
+         ╵                ~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/utils" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./agent/context-compressor.js"
+
+    ../core/dist/index.js:12:34:
+      12 │ export { ContextCompressor } from './agent/context-compressor.js';
+         ╵                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/agent-mode"
+
+    src/ipc/register-new-features.ts:7:34:
+      7 │ import { AgentModeEnhancer } from '@codepilot/core/agent-mode';
+        ╵                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/agent-mode/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:7:20:
+      7 │     "./agent-mode": "./dist/agent-mode/index.js",
+        ╵                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/agent-mode" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./llm/openai.js"
+
+    ../core/dist/index.js:14:31:
+      14 │ export { OpenAIProvider } from './llm/openai.js';
+         ╵                                ~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./llm/anthropic.js"
+
+    ../core/dist/index.js:15:34:
+      15 │ export { AnthropicProvider } from './llm/anthropic.js';
+         ╵                                   ~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/multi-file-edit"
+
+    src/ipc/register-new-features.ts:8:36:
+      8 │ import { MultiFileEditEngine } from '@codepilot/core/multi-file-edit';
+        ╵                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/multi-file-edit/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:15:25:
+      15 │     "./multi-file-edit": "./dist/multi-file-edit/index.js",
+         ╵                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/multi-file-edit" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./llm/ollama.js"
+
+    ../core/dist/index.js:16:31:
+      16 │ export { OllamaProvider } from './llm/ollama.js';
+         ╵                                ~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/utils"
+
+    src/services/version-service.ts:2:47:
+      2 │ ...rt { VersionParser, SemanticVersion } from '@codepilot/core/utils';
+        ╵                                               ~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/utils/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:23:15:
+      23 │     "./utils": "./dist/utils/index.js",
+         ╵                ~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/utils" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./llm/provider-factory.js"
+
+    ../core/dist/index.js:17:83:
+      17 │ ...OVIDERS, getModelContextWindow } from './llm/provider-factory.js';
+         ╵                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./llm/sse-parser.js"
+
+    ../core/dist/index.js:18:31:
+      18 │ export { parseSSEStream } from './llm/sse-parser.js';
+         ╵                                ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/rules/rule-merger"
+
+    src/ipc/register-new-features.ts:9:27:
+      9 │ import { RuleMerger } from '@codepilot/core/rules/rule-merger';
+        ╵                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/rules/rule-merger/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:27:6:
+      27 │       "./dist/*/index.js",
+         ╵       ~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/rules/rule-merger" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./tools/registry.js"
+
+    ../core/dist/index.js:23:29:
+      23 │ export { ToolRegistry } from './tools/registry.js';
+         ╵                              ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./tools/executor.js"
+
+    ../core/dist/index.js:24:29:
+      24 │ export { ToolExecutor } from './tools/executor.js';
+         ╵                              ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./tools/tool-permission.js"
+
+    ../core/dist/index.js:25:31:
+      25 │ export { ToolPermission } from './tools/tool-permission.js';
+         ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/pipeline"
+
+    src/pipeline/pipeline-service.ts:1:58:
+      1 │ ...ngine, DslParser, TriggerManager } from '@codepilot/core/pipeline';
+        ╵                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/pipeline/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:16:18:
+      16 │     "./pipeline": "./dist/pipeline/index.js",
+         ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/pipeline" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "@codepilot/core/review"
+
+    src/review/review-service.ts:1:29:
+      1 │ import { ReviewEngine } from '@codepilot/core/review';
+        ╵                              ~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/review/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:18:16:
+      18 │     "./review": "./dist/review/index.js",
+         ╵                 ~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/review" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./tools/sandbox/bash-whitelist.js"
+
+    ../core/dist/index.js:26:30:
+      26 │ export { BashWhitelist } from './tools/sandbox/bash-whitelist.js';
+         ╵                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/pm"
+
+    src/pm/pm-service.ts:1:37:
+      1 │ import { WorkItemStateMachine } from '@codepilot/core/pm';
+        ╵                                      ~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/pm/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:17:12:
+      17 │     "./pm": "./dist/pm/index.js",
+         ╵             ~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/pm" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./tools/index.js"
+
+    ../core/dist/index.js:27:38:
+      27 │ export { createDefaultRegistry } from './tools/index.js';
+         ╵                                       ~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "@codepilot/core/security"
+
+    src/security/security-service.ts:1:56:
+      1 │ ...yScanner, SecurityFixIntegration } from '@codepilot/core/security';
+        ╵                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./dist/security/index.js" was not found on the file system:
+
+    node_modules/@codepilot/core/package.json:20:18:
+      20 │     "./security": "./dist/security/index.js",
+         ╵                   ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  You can mark the path "@codepilot/core/security" as external to exclude it from the bundle, which will remove this error and leave the unresolved path in the bundle.
+
+X [ERROR] Could not resolve "./patch-theme-switch.js"
+
+    ../core/dist/fusion/integration/index.js:27:72:
+      27 │ ...FI_DARK_CSS_VARS, THEME_OPTIONS, } from './patch-theme-switch.js';
+         ╵                                            ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./tools/builtin/codebase-search/chunker.js"
+
+    ../core/dist/index.js:32:47:
+      32 │ ...nkFileContent } from './tools/builtin/codebase-search/chunker.js';
+         ╵                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./tools/builtin/browser/index.js"
+
+    ../core/dist/index.js:34:33:
+      34 │ export { initBrowserTools } from './tools/builtin/browser/index.js';
+         ╵                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./agents/presets.js"
+
+    ../core/dist/index.js:41:105:
+      41 │ ...S, getExpertPreset, getExpertPresets } from './agents/presets.js';
+         ╵                                                ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./agents/loader.js"
+
+    ../core/dist/index.js:42:66:
+      42 │ ...mAgents, getCustomAgent, parseAgentMd } from './agents/loader.js';
+         ╵                                                 ~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./config/schema.js"
+
+    ../core/dist/index.js:44:32:
+      44 │ export { AppConfigSchema } from './config/schema.js';
+         ╵                                 ~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./config/defaults.js"
+
+    ../core/dist/index.js:45:31:
+      45 │ export { DEFAULT_CONFIG } from './config/defaults.js';
+         ╵                                ~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./config/loader.js"
+
+    ../core/dist/index.js:46:27:
+      46 │ export { loadConfig } from './config/loader.js';
+         ╵                            ~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./git/operations.js"
+
+    ../core/dist/index.js:48:106:
+      48 │ ...po, gitRevParseHead, gitDiffNameOnly } from './git/operations.js';
+         ╵                                                ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./git/pr.js"
+
+    ../core/dist/index.js:49:25:
+      49 │ export { createPR } from './git/pr.js';
+         ╵                          ~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./utils/truncate.js"
+
+    ../core/dist/index.js:52:46:
+      52 │ export { truncateString, truncateLines } from './utils/truncate.js';
+         ╵                                               ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./utils/encoding.js"
+
+    ../core/dist/index.js:53:43:
+      53 │ export { decodeBuffer, fixGbkString } from './utils/encoding.js';
+         ╵                                            ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./utils/retry.js"
+
+    ../core/dist/index.js:54:26:
+      54 │ export { withRetry } from './utils/retry.js';
+         ╵                           ~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./utils/index.js"
+
+    ../core/dist/index.js:55:14:
+      55 │ export * from './utils/index.js';
+         ╵               ~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./planning/plan-manager.js"
+
+    ../core/dist/index.js:64:31:
+      64 │ export { getPlanManager } from './planning/plan-manager.js';
+         ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./completion/completion-engine.js"
+
+    ../core/dist/index.js:68:33:
+      68 │ export { CompletionEngine } from './completion/completion-engine.js';
+         ╵                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./context/context-manager.js"
+
+    ../core/dist/index.js:70:31:
+      70 │ export { ContextManager } from './context/context-manager.js';
+         ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./intent/intent-detector.js"
+
+    ../core/dist/index.js:72:31:
+      72 │ export { IntentDetector } from './intent/intent-detector.js';
+         ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./rules/index.js"
+
+    ../core/dist/index.js:74:57:
+      74 │ ...oadAllRules, getManualRules, applyRules } from './rules/index.js';
+         ╵                                                   ~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./checkpoint/manager.js"
+
+    ../core/dist/index.js:76:34:
+      76 │ export { CheckpointManager } from './checkpoint/manager.js';
+         ╵                                   ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./checkpoint/rollback-executor.js"
+
+    ../core/dist/index.js:77:33:
+      77 │ export { RollbackExecutor } from './checkpoint/rollback-executor.js';
+         ╵                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./pipeline/index.js"
+
+    ../core/dist/index.js:79:58:
+      79 │ ...ineEngine, DslParser, TriggerManager } from './pipeline/index.js';
+         ╵                                                ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./security/data-sanitizer.js"
+
+    ../core/dist/index.js:83:30:
+      83 │ export { DataSanitizer } from './security/data-sanitizer.js';
+         ╵                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./security/index.js"
+
+    ../core/dist/index.js:84:14:
+      84 │ export * from './security/index.js';
+         ╵               ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./errors/index.js"
+
+    ../core/dist/index.js:86:14:
+      86 │ export * from './errors/index.js';
+         ╵               ~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./observability/index.js"
+
+    ../core/dist/index.js:88:14:
+      88 │ export * from './observability/index.js';
+         ╵               ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./lifecycle/index.js"
+
+    ../core/dist/index.js:90:14:
+      90 │ export * from './lifecycle/index.js';
+         ╵               ~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./cross-session/index.js"
+
+    ../core/dist/index.js:92:14:
+      92 │ export * from './cross-session/index.js';
+         ╵               ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "../../../dist/skills/loader.js"
+
+    ../core/dist/skills/loader.js:5:57:
+      5 │ ... getSkill, getSkillCatalog } from '../../../dist/skills/loader.js';
+        ╵                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "./conversation.js"
+
+    ../core/dist/agent/agent.js:2:29:
+      2 │ import { Conversation } from './conversation.js';
+        ╵                              ~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "../tools/executor.js"
+
+    ../core/dist/agent/agent.js:3:29:
+      3 │ import { ToolExecutor } from '../tools/executor.js';
+        ╵                              ~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "../memory/nudger.js"
+
+    ../core/dist/agent/agent.js:6:29:
+      6 │ import { MemoryNudger } from '../memory/nudger.js';
+        ╵                              ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "../workflow/task-complexity-analyzer.js"
+
+    ../core/dist/agent/agent.js:8:39:
+      8 │ ...omplexityAnalyzer } from '../workflow/task-complexity-analyzer.js';
+        ╵                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] Could not resolve "../../../dist/skills/harvester.js"
+
+    ../core/dist/skills/harvester.js:5:31:
+      5 │ export { SkillHarvester } from '../../../dist/skills/harvester.js';
+        ╵                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+69 errors
+[build-main] Build failed: Error: Build failed with 69 errors:
+../core/dist/agent/agent.js:2:29: ERROR: Could not resolve "./conversation.js"
+../core/dist/agent/agent.js:3:29: ERROR: Could not resolve "../tools/executor.js"
+../core/dist/agent/agent.js:6:29: ERROR: Could not resolve "../memory/nudger.js"
+../core/dist/agent/agent.js:8:39: ERROR: Could not resolve "../workflow/task-complexity-analyzer.js"
+../core/dist/fusion/integration/index.js:27:72: ERROR: Could not resolve "./patch-theme-switch.js"
+...
+    at failureErrorWithLog (D:\lingjing\lingjing\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:1467:15)
+    at D:\lingjing\lingjing\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:926:25
+    at runOnEndCallbacks (D:\lingjing\lingjing\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:1307:45)
+    at buildResponseToResult (D:\lingjing\lingjing\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:924:7)
+    at D:\lingjing\lingjing\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:951:16
+    at responseCallbacks.<computed> (D:\lingjing\lingjing\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (D:\lingjing\lingjing\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (D:\lingjing\lingjing\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:563:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}

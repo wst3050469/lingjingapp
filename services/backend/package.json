@@ -1,0 +1,14 @@
+{
+  "name": "lingjing-cloud-server",
+  "version": "1.72.21",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "express": "^4.21.0",
+    "ws": "^8.18.0",
+    "better-sqlite3": "^11.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

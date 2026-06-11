@@ -1,0 +1,5 @@
+upstream cloud_server {
+    server lingjing-server:8000 weight=${STABLE_WEIGHT};
+    server lingjing-canary-server:8000 weight=${CANARY_WEIGHT};
+    keepalive 32;
+}

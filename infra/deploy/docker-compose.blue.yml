@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  cloud-server:
+    container_name: lingjing-blue-server
+    volumes:
+      - lingjing-data-blue:/app/data
+
+  cloud-admin:
+    container_name: lingjing-blue-admin
+    ports:
+      - "8081:80"
+
+volumes:
+  lingjing-data-blue:

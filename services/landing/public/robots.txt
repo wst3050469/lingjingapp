@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /api/
+Disallow: /ws
+
+Sitemap: https://ide.zhejiangjinmo.com/sitemap.xml

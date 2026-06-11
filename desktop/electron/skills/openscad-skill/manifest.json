@@ -1,0 +1,16 @@
+{
+  "id": "openscad-skill",
+  "name": "OpenSCAD 3D建模",
+  "version": "1.0.0",
+  "description": "OpenSCAD参数化3D建模封装，支持脚本编辑、CSG渲染预览、STL/3MF导出、KiCad 3D联动",
+  "category": "hardware_design",
+  "author": "Lingjing Team",
+  "entryPoint": "adapter.js",
+  "cliDependencies": [
+    { "command": "openscad", "versionRange": ">=2021.01", "required": true, "installGuide": "https://openscad.org/downloads.html", "detectionCommand": "openscad --version" }
+  ],
+  "fileAssociations": [
+    { "extension": ".scad", "mimeType": "text/x-openscad", "openCommand": "openscad_edit" }
+  ],
+  "sidebarPanels": ["openscad-preview"]
+}

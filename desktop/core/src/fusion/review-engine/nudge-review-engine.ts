@@ -1,0 +1,127 @@
+import type { IEventBus } from '../event-bus/types.js';
+import type { ILLMAdapter, ChatRequest, Message } from '../adapters/types.js';
+import type { ReviewConfig, ReviewReport, INudgeReviewEngine } from './types.js';
+import { DEFAULT_REVIEW_CONFIG } from './types.js';
+import { LLMQuotaManager } from './llm-quota-manager.js';
+
+const REVIEW_SYSTEM_PROMPT = `You are a code review assistant. Review the following content and provide:
+1. A quality score from 0 to 10
+2. Specific improvement suggestions
+3. Any risk flags
+
+Respond in this exact JSON format:
+{"score": <number>, "suggestions": [<string>], "riskFlags": [<string>]}`;
+
+export class NudgeReviewEngine implements INudgeReviewEngine {
+  private config: ReviewConfig;
+  private eventBus: IEventBus | null = null;
+  private llmAdapter: ILLMAdapter | null = null;
+  private quotaManager: LLMQuotaManager;
+  private enabled = true;
+
+  constructor(config?: Partial<ReviewConfig>) {
+    this.config = { ...DEFAULT_REVIEW_CONFIG, ...config };
+    this.enabled = this.config.enabled;
+    this.quotaManager = new LLMQuotaManager(this.config.maxLLMConcurrency);
+  }
+
+  initialize(eventBus: IEventBus, llmAdapter: ILLMAdapter): void {
+    this.eventBus = eventBus;
+    this.llmAdapter = llmAdapter;
+
+    this.eventBus.subscribe('agent:message_end', async (event) => {
+      const data = event.data as { messageId?: string; content?: string };
+      if (data.messageId && data.content) {
+        this.startReview(data.messageId, data.content).catch(() => {});
+      }
+    });
+  }
+
+  async startReview(messageId: string, content: string): Promise<ReviewReport | null> {
+    if (!this.enabled || !this.llmAdapter || !this.eventBus) {
+      return null;
+    }
+
+    if (!this.quotaManager.acquire()) {
+      return null;
+    }
+
+    try {
+      const report = await this.executeReview(messageId, content);
+      if (report) {
+        this.eventBus.publish('review:completed', report, 'NudgeReviewEngine');
+      }
+      return report;
+    } catch (err) {
+      this.eventBus.publish('review:failed', {
+        messageId,
+        error: (err as Error).message,
+      }, 'NudgeReviewEngine');
+      return null;
+    } finally {
+      this.quotaManager.release();
+    }
+  }
+
+  healthCheck(): { healthy: boolean } {
+    return { healthy: this.enabled && this.llmAdapter !== null };
+  }
+
+  private async executeReview(messageId: string, content: string): Promise<ReviewReport | null> {
+    if (!this.llmAdapter) return null;
+
+    const messages: Message[] = [
+      { role: 'user', content },
+    ];
+
+    const request: ChatRequest = {
+      messages,
+      systemPrompt: REVIEW_SYSTEM_PROMPT,
+      maxTokens: 1024,
+      temperature: 0.3,
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.reviewTimeout);
+
+    let responseText = '';
+    try {
+      const stream = this.llmAdapter.chat({ ...request, signal: controller.signal });
+      for await (const event of stream) {
+        if (event.type === 'text_delta') {
+          responseText += event.text;
+        }
+        if (event.type === 'done') break;
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    return this.parseReviewResponse(messageId, responseText);
+  }
+
+  private parseReviewResponse(messageId: string, responseText: string): ReviewReport | null {
+    try {
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) return null;
+
+      const parsed = JSON.parse(jsonMatch[0]) as {
+        score?: number;
+        suggestions?: string[];
+        riskFlags?: string[];
+      };
+
+      return {
+        reviewId: `review_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        originalMessageId: messageId,
+        score: typeof parsed.score === 'number' ? parsed.score : 0,
+        suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+        riskFlags: Array.isArray(parsed.riskFlags) ? parsed.riskFlags : [],
+        reviewedAt: new Date(),
+        label: '审查建议',
+      };
+    } catch {
+      return null;
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "apps": [
+    {
+      "name": "cloud-server",
+      "script": "/root/cloud-server/server.js",
+      "cwd": "/root/cloud-server",
+      "instances": 1,
+      "exec_mode": "fork",
+      "max_memory_restart": "512M",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 8000,
+        "API_KEY": "lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8",
+        "JWT_SECRET": "lingjing-jwt-secret-v2-h8g7f6e5d4c3b2a1"
+      },
+      "watch": false,
+      "autorestart": true,
+      "max_restarts": 10,
+      "restart_delay": 5000,
+      "min_uptime": "10s",
+      "listen_timeout": 10000,
+      "kill_timeout": 5000,
+      "merge_logs": true,
+      "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
+      "error_file": "/var/log/lingjing/cloud-error.log",
+      "out_file": "/var/log/lingjing/cloud-out.log",
+      "pid_file": "/var/run/lingjing/cloud.pid"
+    },
+    {
+      "name": "update-server",
+      "script": "/opt/lingjing/update-server/app.js",
+      "cwd": "/opt/lingjing/update-server",
+      "instances": 1,
+      "exec_mode": "fork",
+      "max_memory_restart": "256M",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": 3000
+      },
+      "watch": false,
+      "autorestart": true,
+      "max_restarts": 5,
+      "restart_delay": 5000,
+      "error_file": "/var/log/lingjing/update-error.log",
+      "out_file": "/var/log/lingjing/update-out.log"
+    }
+  ]
+}

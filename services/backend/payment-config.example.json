@@ -1,0 +1,36 @@
+{
+  "//": "==============================================================",
+  "//": "灵境 Cloud — 支付网关配置模板",
+  "//": "复制此文件为 payment-config.json 并填写真实密钥",
+  "//": "==============================================================",
+
+  "//_test": "test 模式始终可用，无需配置",
+
+  "alipay": {
+    "enabled": false,
+    "//_appId": "支付宝开放平台 APP_ID（需要开通电脑网站支付/扫码支付）",
+    "appId": "请填写支付宝APP_ID",
+    "//_privateKey": "应用私钥（RSA2），用于签名请求 — 从支付宝开放平台获取",
+    "privateKey": "请填写RSA2应用私钥",
+    "//_publicKey": "支付宝公钥，用于验证支付宝的回调通知签名",
+    "publicKey": "请填写支付宝公钥",
+    "//_gatewayUrl": "支付宝 API 网关（沙箱环境用 openapi-sandbox.dl.alipaydev.com）",
+    "gatewayUrl": "https://openapi.alipay.com/gateway.do",
+    "//_notifyUrl": "支付回调通知地址（需公网可访问）",
+    "notifyUrl": "https://ide.zhejiangjinmo.com/api/payments/notify/alipay"
+  },
+
+  "wechat": {
+    "enabled": false,
+    "//_appId": "微信开放平台/公众号 APP_ID",
+    "appId": "请填写微信APP_ID",
+    "//_mchId": "微信支付商户号（MCH_ID）",
+    "mchId": "请填写商户号",
+    "//_apiKey": "APIv2密钥（在微信支付商户平台设置 — 32位HMAC-SHA256密钥）",
+    "apiKey": "请填写API密钥",
+    "//_gatewayUrl": "微信支付 API 网关",
+    "gatewayUrl": "https://api.mch.weixin.qq.com",
+    "//_notifyUrl": "支付回调通知地址（需公网可访问）",
+    "notifyUrl": "https://ide.zhejiangjinmo.com/api/payments/notify/wechat"
+  }
+}

@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  cloud-server:
+    container_name: lingjing-green-server
+    volumes:
+      - lingjing-data-green:/app/data
+
+  cloud-admin:
+    container_name: lingjing-green-admin
+    ports:
+      - "8082:80"
+
+volumes:
+  lingjing-data-green:

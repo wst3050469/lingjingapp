@@ -1,0 +1,44 @@
+{
+  "name": "@codepilot/core",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./fusion": "./dist/fusion/index.js",
+    "./fusion/*": "./dist/fusion/*",
+    "./hw-skill": "./dist/hw-skill/index.js",
+    "./hw-skill/*": "./dist/hw-skill/*.js",
+    "./mcp": "./dist/mcp/index.js",
+    "./mcp/*": "./dist/mcp/*.js",
+    "./types": "./dist/types/index.js",
+    "./types/*": "./dist/types/*.js",
+    "./utils/logger": "./dist/utils/logger.js",
+    "./workflow": "./dist/workflow/index.js",
+    "./workflow/*": "./dist/workflow/*.js",
+    "./*": [
+      "./dist/*/index.js",
+      "./dist/*.js"
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\""
+  },
+  "dependencies": {
+    "cron-parser": "^4.9.0",
+    "fast-glob": "^3.3.0",
+    "gpt-tokenizer": "^2.8.0",
+    "picocolors": "^1.1.0",
+    "yaml": "^2.7.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.8"
+  },
+  "private": true,
+  "version": "1.72.28"
+}

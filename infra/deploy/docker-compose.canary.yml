@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  cloud-server:
+    container_name: lingjing-canary-server
+    volumes:
+      - lingjing-data-canary:/app/data
+
+  cloud-admin:
+    container_name: lingjing-canary-admin
+    ports:
+      - "8083:80"
+
+volumes:
+  lingjing-data-canary:

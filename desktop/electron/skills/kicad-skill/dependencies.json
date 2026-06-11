@@ -1,0 +1,5 @@
+{
+  "cli": [
+    { "command": "kicad-cli", "versionRange": ">=7.0.0 <9.0.0", "required": true, "installGuide": "https://www.kicad.org/download/", "detectionCommand": "kicad-cli --version" }
+  ]
+}

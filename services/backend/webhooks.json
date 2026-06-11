@@ -1,0 +1,21 @@
+{
+  "_comment": "灵境 Cloud Webhook Forwarding Config — Add your real webhook URLs here",
+  "slack": {
+    "slack": "https://hooks.slack.com/services/YOUR/WEBHOOK/URL",
+    "slackText": "灵境 Cloud Notification"
+  },
+  "discord": {
+    "discord": "https://discord.com/api/webhooks/YOUR/WEBHOOK/URL"
+  },
+  "github-ci": {
+    "github": {
+      "owner": "your-org",
+      "repo": "your-repo",
+      "token": "ghp_xxxxxxxxxxxx",
+      "event_type": "lingjing-ci"
+    }
+  },
+  "deploy": {
+    "url": "https://your-cicd-service.com/hooks/lingjing"
+  }
+}

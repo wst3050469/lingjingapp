@@ -1,0 +1,46 @@
+# Dockerfile.win
+# Electron Windows 交叉编译容器 (基于 Linux + Wine)
+FROM node:20-slim
+
+# 启用 i386 架构并安装 Wine
+RUN dpkg --add-architecture i386 && \
+    apt-get update && apt-get install -y \
+    git \
+    python3 \
+    python3-pip \
+    curl \
+    ca-certificates \
+    build-essential \
+    # Wine 及依赖
+    wine64 \
+    wine32 \
+    wine \
+    cabextract \
+    xvfb \
+    # electron-builder Windows 构建依赖
+    mono-complete \
+    rpm \
+    fakeroot \
+    # 图形/字体 (避免 Wine 崩溃)
+    libgtk-3-0 \
+    libnotify4 \
+    libnss3 \
+    libxss1 \
+    libxtst6 \
+    xdg-utils \
+    libatspi2.0-0 \
+    libsecret-1-0 \
+    fonts-wine \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装 pnpm
+RUN npm install -g pnpm
+
+# 初始化 Wine 环境 (避免首次运行卡住)
+ENV WINEDEBUG=-all
+ENV WINEARCH=win64
+ENV DISPLAY=:99
+RUN winecfg || true
+
+# 设置工作目录
+WORKDIR /workspace

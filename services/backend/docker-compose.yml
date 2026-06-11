@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  cloud-server:
+    image: lingjing-server:${IMAGE_TAG:-latest}
+    container_name: lingjing-server
+    restart: unless-stopped
+    env_file: ${ENV_FILE:-.env}
+    environment:
+      NODE_ENV: production
+      PORT: 8000
+    volumes:
+      - lingjing-data:/app/data
+    networks:
+      - lingjing-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cloud-landing:
+    image: lingjing-landing:${IMAGE_TAG:-latest}
+    container_name: lingjing-landing
+    restart: unless-stopped
+    volumes:
+      - landing-static:/usr/share/nginx/html/landing
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+  cloud-admin:
+    image: lingjing-admin:${IMAGE_TAG:-latest}
+    container_name: lingjing-admin
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - landing-static:/usr/share/nginx/html/landing:ro
+    networks:
+      - lingjing-net
+    depends_on:
+      cloud-server:
+        condition: service_healthy
+      cloud-landing:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+volumes:
+  lingjing-data:
+  landing-static:
+
+networks:
+  lingjing-net:
+    driver: bridge

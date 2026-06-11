@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+release/
+*.asar
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Expo
+.expo/
+*.jks
+*.keystore
+
+# Android
+android/app/build/
+android/.gradle/
+android/build/
+android/captures/
+*.apk
+*.aab
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Temp
+tmp/
+temp/
+*.tmp
+
+# Large binaries
+*.AppImage
+*.deb
+*.exe
+*.zip
+*.tar.gz
+
+# Backup
+backups/
+*.bak

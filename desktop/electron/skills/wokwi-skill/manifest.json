@@ -1,0 +1,14 @@
+{
+  "id": "wokwi-skill",
+  "name": "Wokwi 电路仿真",
+  "version": "1.0.0",
+  "description": "Wokwi在线电路仿真器封装，支持Arduino/ESP32仿真、实时波形、KiCad原理图互转",
+  "category": "hardware_design",
+  "author": "Lingjing Team",
+  "entryPoint": "adapter.js",
+  "cliDependencies": [],
+  "fileAssociations": [
+    { "extension": ".wokwi", "mimeType": "application/x-wokwi", "openCommand": "wokwi_simulate" }
+  ],
+  "sidebarPanels": ["wokwi-waveform"]
+}

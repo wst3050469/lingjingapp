@@ -52,7 +52,6 @@ class ApiService {
  private async request<T>(path: string, options?: RequestInit): Promise<T> {
  const baseUrl = this.config.baseUrl || 'https://ide.zhejiangjinmo.com';
  const url = baseUrl + '/api' + path;
- // 15s timeout using AbortController
  const controller = new AbortController();
  const timeoutId = setTimeout(() => controller.abort(), 15000);
  try {
@@ -96,11 +95,25 @@ class ApiService {
  this._jwtToken = null; this._cloudUser = null; this.disconnectWs();
  }
 
- // --- Sessions ---
+ // --- Sessions (with cloud AI fallback) ---
  async getSessions(limit = 50) { return this.request<any>('/sessions?limit=' + limit); }
  async getSession(id: string) { return this.request<any>('/sessions/' + id); }
  async sendMessage(conversationId: string, message: string) {
- return this.request<any>('/sessions/' + conversationId + '/send', { method: 'POST', body: JSON.stringify({ message }) });
+   try {
+     // Try desktop relay first
+     return await this.request<any>('/sessions/' + conversationId + '/send', { method: 'POST', body: JSON.stringify({ message }) });
+   } catch (e: any) {
+     // Desktop offline → fallback to cloud AI
+     const errMsg = e.message || '';
+     if (e.status === 503 || errMsg.includes('no_desktop') || errMsg.includes('desktop_offline')) {
+       console.log('[Mobile API] Desktop offline, cloud AI fallback...');
+       return await this.request<any>('/mobile/chat', {
+         method: 'POST',
+         body: JSON.stringify({ message, conversationId, platform: 'mobile' }),
+       });
+     }
+     throw e;
+   }
  }
 
  // --- Plans ---
@@ -239,7 +252,7 @@ class ApiService {
  }
  listDesktops() { this.wsSend({ type: 'desktop:list' }); }
 
-  // ── File Operations ──
+ // ── File Operations ──
   async readFile(path: string): Promise<{path: string; content: string; size: number; mtime: string}> {
     return this.request<any>('/files/read?path=' + encodeURIComponent(path));
   }

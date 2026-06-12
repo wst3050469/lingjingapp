@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "灵境AI编程助手",
+    "slug": "lingjing-dieapp",
+    "version": "1.73.36",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "backgroundColor": "#0d1117",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zhejiangjinmo.lingjing.dieapp"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0d1117"
+      },
+      "package": "com.zhejiangjinmo.lingjing.dieapp",
+      "permissions": ["CAMERA", "RECORD_AUDIO", "INTERNET", "VIBRATE"]
+    },
+    "plugins": [
+      ["expo-image-picker", {
+        "photosPermission": "需要访问相册用于发送图片",
+        "cameraPermission": "需要访问相机用于拍摄图片"
+      }]
+    ],
+    "owner": "wst3050469",
+    "versionCode": 1
+  },
+  "version": "1.73.36"
+}

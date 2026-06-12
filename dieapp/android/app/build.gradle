@@ -87,12 +87,12 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.zhejiangjinmo.lingjing.mobile'
+    namespace 'com.zhejiangjinmo.lingjing.dieapp'
     defaultConfig {
-        applicationId 'com.zhejiangjinmo.lingjing.mobile'
+        applicationId 'com.zhejiangjinmo.lingjing.dieapp'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 68
+        versionCode 1
         versionName "1.73.36"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""

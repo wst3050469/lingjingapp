@@ -40,15 +40,19 @@ curl http://localhost:3000/latest.yml   # electron-updater
 
 ```bash
 # SSH到服务器后执行
-grep '"latest"' /var/www/lingjing/versions.json \
-               /var/www/html/versions.json \
-               /opt/lingjing/update-server/data/versions.json
+# 权威数据源（Admin发布写入 + CI/CD写入）
+cat /var/www/html/versions.json | python3 -c "import sys,json;print(json.load(sys.stdin)['latest'])"
 
-head -1 /var/www/lingjing/latest.yml
-head -1 /var/www/downloads/latest.yml
+# 所有同步路径统一检查
+for f in /var/www/html/versions.json /var/www/html/downloads/versions.json /var/www/lingjing/versions.json /opt/lingjing/update-server/data/versions.json /root/lingjing-update/data/versions.json; do
+  echo -n "$f: "
+  python3 -c "import json;print(json.load(open('$f'))['latest'])" 2>/dev/null || echo "MISSING"
+done
 ```
 
-**预期**: 所有文件的 `latest` 字段一致。
+**预期**: 所有文件的 `latest` 字段一致为最新版本号。
+
+> **注意**: 自 v1.73.35 起，Admin 发布版本时自动同步全部 5 个 versions.json 路径，无需手动逐个同步。
 
 ### Step 4: 检查服务状态
 
@@ -83,20 +87,19 @@ if (serverVersion <= localVersion) → 不提示
 
 ## 一键修复（SSH到服务器）
 
-```bash
-# 1. 同步版本文件
-cp /var/www/html/versions.json /var/www/lingjing/versions.json
-cp /var/www/downloads/latest.yml /var/www/lingjing/latest.yml
+> **v1.73.35+**: Admin 发布版本已自动同步所有路径，通常无需手动执行此步骤。
 
-# 2. 同步所有 update-server 的 versions.json
-for dir in /opt/lingjing/update-server/data /root/lingjing-update/data /var/www/update-server/data /opt/lingjing-update/data; do
-  cp /var/www/html/versions.json "$dir/versions.json"
+```bash
+# 1. 同步版本文件（从权威源复制到所有路径）
+SRC=/var/www/html/versions.json
+for dir in /var/www/html/downloads /var/www/lingjing /opt/lingjing/update-server/data /root/lingjing-update/data; do
+  cp "$SRC" "$dir/versions.json"
 done
 
-# 3. 重启所有服务
+# 2. 重启所有服务
 pm2 restart cloud-server update-server lingjing-update-server
 
-# 4. 验证
+# 3. 验证
 curl https://ide.zhejiangjinmo.com/api/latest
 ```
 
@@ -104,16 +107,28 @@ curl https://ide.zhejiangjinmo.com/api/latest
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                      版本检测数据流                                │
+│                      版本检测数据流 (v1.73.35+)                    │
 ├──────────────┬───────────────────┬───────────────────────────────┤
 │ 数据源        │ 路径               │ 使用者                         │
 ├──────────────┼───────────────────┼───────────────────────────────┤
-│ versions.json│ /var/www/lingjing/  │ cloud-server (端口3002)        │
-│              │                   │ lingjing-update-server         │
-│ versions.json│ /var/www/html/     │ Web下载页                      │
-│ versions.json│ /opt/../data/      │ update-server (端口3000)       │
+│ versions.json│ /var/www/html/     │ ★ 权威数据源                   │
+│              │                   │ cloud-server (主)              │
+│              │                   │ Web下载页                      │
+│ versions.json│ /var/www/html/     │ 下载页备用                     │
+│              │   downloads/      │                               │
+│ versions.json│ /var/www/lingjing/ │ lingjing-update-server        │
+│ versions.json│ /opt/lingjing/     │ update-server (端口3000)       │
+│              │   update-server/   │                               │
+│              │   data/            │                               │
+│ versions.json│ /root/lingjing-    │ update-server备用              │
+│              │   update/data/     │                               │
+├──────────────┴───────────────────┴───────────────────────────────┤
+│ ★ Admin发布/CI-CD → 自动同步全部5个versions.json路径               │
+├──────────────┬───────────────────┬───────────────────────────────┤
 │ latest.yml   │ /var/www/downloads/│ electron-updater (桌面端)      │
 │ latest.yml   │ /var/www/lingjing/ │ electron-updater 备用          │
+│ latest.yml   │ /var/www/html/     │ electron-updater 备用          │
+│              │   downloads/       │                               │
 ├──────────────┴───────────────────┴───────────────────────────────┤
 │                      客户端请求路径                                │
 ├──────────────┬───────────────────┬───────────────────────────────┤

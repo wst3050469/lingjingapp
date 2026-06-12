@@ -521,15 +521,35 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Version Info (for electron-updater) ──
+// Simple semver comparison: >0 if a > b, <0 if a < b, 0 if equal
+function compareVersions(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0;
+    const nb = pb[i] || 0;
+    if (na > nb) return 1;
+    if (na < nb) return -1;
+  }
+  return 0;
+}
+
 // Reads from versions.json (supports both download-list and update-server formats)
-function readVersionInfo() {
+// currentVersion: optional client version for smart hasUpdate comparison
+function readVersionInfo(currentVersion) {
   const _now = Date.now();
-  if (_verCache && _now - _verCacheTime < _verTTL) { console.log('[Version] CACHE HIT'); return _verCache; }
+  if (_verCache && _now - _verCacheTime < _verTTL && !currentVersion) {
+    console.log('[Version] CACHE HIT (no current param)');
+    return _verCache;
+  }
   try {
     // Try multiple paths to find versions.json
     const searchPaths = [
-      '/var/www/html/downloads/versions.json',
+      '/var/www/lingjing/versions.json',        // Primary: admin publish flow
+      '/var/www/html/versions.json',             // Web download page
+      '/var/www/html/downloads/versions.json',   // Legacy download-list format
       '/root/lingjing-update/data/versions.json',
+      '/opt/lingjing/update-server/data/versions.json',
       '/var/www/update-server/data/versions.json',
       '/opt/lingjing-update/data/versions.json',
       resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
@@ -565,7 +585,7 @@ function readVersionInfo() {
         }
       }
       return {
-        hasUpdate: true,
+        hasUpdate: currentVersion ? compareVersions(versionStr, currentVersion) > 0 : true,
         version: versionStr,
         status: 'published',
         releaseDate: new Date().toISOString(),
@@ -582,9 +602,10 @@ function readVersionInfo() {
       const latestEntry = data.versions.find(v => v.version === data.latest && v.status === 'published');
       const latest = latestEntry || publishedVersions[0];
       if (latest) {
+        const ver = latest.version || '1.4.0';
         _verCache = {
-          hasUpdate: true,
-          version: latest.version || '1.4.0',
+          hasUpdate: currentVersion ? compareVersions(ver, currentVersion) > 0 : true,
+          version: ver,
           status: 'published',
           releaseDate: latest.releaseDate || new Date().toISOString(),
           releaseNotes: latest.releaseNotes || ('灵境AI v' + (latest.version || '1.4.0')),
@@ -606,7 +627,7 @@ function readVersionInfo() {
   return { hasUpdate: false, version: '0.0.0' };
 }
 app.get('/api/latest', (req, res) => {
-  res.json(readVersionInfo());
+  res.json(readVersionInfo(req.query.current || ''));
 });
 
 // ── Auth: Device Registration ──

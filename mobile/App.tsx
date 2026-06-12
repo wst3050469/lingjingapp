@@ -22,6 +22,7 @@ import RequirementScreen from './src/screens/RequirementScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SubscriptionScreen from './src/screens/SubscriptionScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import PairingScreen from './src/screens/PairingScreen';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import ConnectionBanner from './src/components/ConnectionBanner';
 import UpdateChecker from './src/components/UpdateChecker';
@@ -77,6 +78,7 @@ export default function App() {
   const { connected, setConnection, setAuth, setUser } = useAppStore();
   const [initializing, setInitializing] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
+  const [showPairing, setShowPairing] = useState(false);
   const [loadingText, setLoadingText] = useState('正在连接灵境...');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -86,7 +88,7 @@ export default function App() {
   }, []);
 
   async function initConnection() {
-    // Auto-configure from cloud account — no manual pairing needed
+    // Auto-configure from cloud account
     const persisted = await loadPersistedAuth();
     if (persisted?.token) {
       setLoadingText('正在连接灵境云...');
@@ -108,13 +110,14 @@ export default function App() {
       } catch { /* token expired, proceed to login */ }
     }
 
-    // No valid token → show login
+    // No valid token → show login as default entry
     setShowLogin(true);
     setInitializing(false);
   }
 
   async function handleLoginSuccess() {
     setShowLogin(false);
+    setShowPairing(false);
     const state = useAppStore.getState();
     const cloudToken = state.cloudToken || state.token;
     api.configure({
@@ -126,6 +129,21 @@ export default function App() {
     setConnection(true, 'cloud_account', CLOUD_SERVER_URL);
   }
 
+  function handlePairingSuccess() {
+    setShowPairing(false);
+    setShowLogin(false);
+  }
+
+  function switchToPairing() {
+    setShowLogin(false);
+    setShowPairing(true);
+  }
+
+  function switchToLogin() {
+    setShowPairing(false);
+    setShowLogin(true);
+  }
+
   if (initializing) {
     return (
       <View style={styles.loading}>
@@ -135,8 +153,24 @@ export default function App() {
     );
   }
 
+  // ── 配对连接桌面端 ──
+  if (showPairing) {
+    return (
+      <PairingScreen
+        onSuccess={handlePairingSuccess}
+        onSwitchToLogin={switchToLogin}
+      />
+    );
+  }
+
+  // ── 云账号登录 ──
   if (showLogin) {
-    return <LoginScreen onSuccess={handleLoginSuccess} />;
+    return (
+      <LoginScreen
+        onSuccess={handleLoginSuccess}
+        onSwitchToPairing={switchToPairing}
+      />
+    );
   }
 
   return (

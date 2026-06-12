@@ -1542,6 +1542,22 @@ export function registerAdminAPI(app, db) {
   });
 
 
+  // ====== Sync versions.json to all paths (用于 manual deploy 后同步) ======
+  app.post('/api/admin/sync-versions', adminAuth, (req, res) => {
+    try {
+      const data = readVersionsJson();
+      const ok = writeVersionsJson(data);
+      if (ok) {
+        console.log('[Admin API] Manual sync: versions.json propagated to all paths, latest=' + data.latest);
+        res.json({ ok: true, latest: data.latest, message: 'versions.json 已同步到全部路径' });
+      } else {
+        res.status(500).json({ error: 'sync_failed', message: '写入失败，检查服务器日志' });
+      }
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // ====== Sync Status ======
   app.get('/api/sync', adminAuth, (req, res) => {
     try {

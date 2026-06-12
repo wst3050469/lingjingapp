@@ -1959,17 +1959,39 @@ export function registerAdminAPI(app, db) {
     return data;
   }
 
+  // All known versions.json paths on production — sync all on publish
+  function getAllVersionsJsonPaths() {
+    return [
+      '/var/www/html/versions.json',              // Primary: Nginx download page (authoritative)
+      '/var/www/html/downloads/versions.json',    // Legacy download-list format
+      '/var/www/lingjing/versions.json',          // cloud-server API read path
+      '/opt/lingjing/update-server/data/versions.json',  // update-server:3000
+      '/root/lingjing-update/data/versions.json', // update-server backup
+    ];
+  }
+
   function writeVersionsJson(data) {
-    const apiPath = findVersionsJsonPath();
-    const dlPath = findVersionsJsonDownloadPath();
     const json = JSON.stringify(data, null, 2);
-    if (apiPath) {
-      fs.writeFileSync(apiPath, json, 'utf8');
-      console.log('[Admin API] Updated versions.json:', apiPath);
+    let written = 0;
+    const allPaths = getAllVersionsJsonPaths();
+    for (const p of allPaths) {
+      try {
+        // Ensure parent directory exists
+        const dir = path.dirname(p);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(p, json, 'utf8');
+        written++;
+        console.log('[Admin API] Updated versions.json:', p);
+      } catch (e) {
+        // Non-fatal: some paths may be on different mount points or read-only
+        console.warn('[Admin API] Failed to write versions.json to', p, ':', e.message);
+      }
     }
-    if (dlPath) {
-      fs.writeFileSync(dlPath, json, 'utf8');
-      console.log('[Admin API] Updated download versions.json:', dlPath);
+    if (written === 0) {
+      console.error('[Admin API] CRITICAL: Failed to write versions.json to any path!');
+      return false;
     }
     return true;
   }

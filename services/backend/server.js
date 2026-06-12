@@ -544,9 +544,11 @@ function readVersionInfo(currentVersion) {
   }
   try {
     // Try multiple paths to find versions.json
+    // Primary: /var/www/html/versions.json is the authoritative source
+    // (synced by Admin publish flow, served by Nginx download page)
     const searchPaths = [
-      '/var/www/lingjing/versions.json',        // Primary: admin publish flow
-      '/var/www/html/versions.json',             // Web download page
+      '/var/www/html/versions.json',             // PRIMARY: authoritative source (Admin + Nginx)
+      '/var/www/lingjing/versions.json',         // cloud-server legacy path
       '/var/www/html/downloads/versions.json',   // Legacy download-list format
       '/root/lingjing-update/data/versions.json',
       '/opt/lingjing/update-server/data/versions.json',

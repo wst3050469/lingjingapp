@@ -1226,6 +1226,43 @@ export function registerAdminAPI(app, db) {
     }
   }
 
+  // Helper: validate sha512 uniqueness in draft yml (prevent copy-paste errors)
+  function validateYamlSha512(ymlPath) {
+    if (!fs.existsSync(ymlPath)) return;
+    try {
+      const content = fs.readFileSync(ymlPath, 'utf8');
+      const lines = content.split('\n');
+      const shaEntries = []; // { url, sha512 }
+      for (let i = 0; i < lines.length; i++) {
+        const shaMatch = lines[i].match(/sha512:\s*(\S+)/);
+        if (shaMatch) {
+          // Find the preceding url line
+          let url = 'unknown';
+          for (let j = i - 1; j >= 0 && j >= i - 3; j--) {
+            const urlMatch = lines[j].match(/url:\s*(\S+)/);
+            if (urlMatch) { url = urlMatch[1]; break; }
+          }
+          shaEntries.push({ url, sha: shaMatch[1] });
+        }
+      }
+      // Check for duplicate sha512 values
+      const seen = {};
+      for (const entry of shaEntries) {
+        const shortSha = entry.sha.substring(0, 16);
+        if (seen[entry.sha]) {
+          console.warn('[Admin API] ⚠️ SHA512 COLLISION in', ymlPath + ':');
+          console.warn('  File A:', seen[entry.sha], '(sha=' + shortSha + '...)');
+          console.warn('  File B:', entry.url, '(sha=' + shortSha + '...)');
+          console.warn('  → Different files have identical sha512! Possible copy-paste error.');
+        } else {
+          seen[entry.sha] = entry.url;
+        }
+      }
+    } catch (e) {
+      console.warn('[Admin API] Failed to validate yml sha512:', e.message);
+    }
+  }
+
   // Helper: promote draft latest.yml to live latest.yml on approve
   function promoteYamlFiles(version) {
     const downloadDirs = [
@@ -1238,6 +1275,8 @@ export function registerAdminAPI(app, db) {
         const draftYml = path.join(downloadDir, 'latest-draft-' + version + '.yml');
         const liveYml = path.join(downloadDir, 'latest.yml');
         if (fs.existsSync(draftYml)) {
+          // Validate sha512 uniqueness before promoting
+          validateYamlSha512(draftYml);
           if (fs.existsSync(liveYml)) fs.copyFileSync(liveYml, liveYml + '.bak');
           fs.copyFileSync(draftYml, liveYml);
           fs.unlinkSync(draftYml);
@@ -1246,6 +1285,7 @@ export function registerAdminAPI(app, db) {
         const draftLinuxYml = path.join(downloadDir, 'latest-linux-draft-' + version + '.yml');
         const liveLinuxYml = path.join(downloadDir, 'latest-linux.yml');
         if (fs.existsSync(draftLinuxYml)) {
+          validateYamlSha512(draftLinuxYml);
           if (fs.existsSync(liveLinuxYml)) fs.copyFileSync(liveLinuxYml, liveLinuxYml + '.bak');
           fs.copyFileSync(draftLinuxYml, liveLinuxYml);
           fs.unlinkSync(draftLinuxYml);

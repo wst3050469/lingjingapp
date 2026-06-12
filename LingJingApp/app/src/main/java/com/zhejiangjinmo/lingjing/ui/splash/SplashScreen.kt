@@ -18,8 +18,8 @@ import com.zhejiangjinmo.lingjing.ui.navigation.Routes
 import com.zhejiangjinmo.lingjing.ui.theme.DarkBg
 import com.zhejiangjinmo.lingjing.ui.theme.DarkTextSecondary
 import com.zhejiangjinmo.lingjing.ui.theme.PrimaryBlue
-import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun SplashScreen(navController: NavController) {
@@ -29,15 +29,30 @@ fun SplashScreen(navController: NavController) {
         delay(1500)
         loadingText = "正在验证身份..."
 
-        val context = navController.context
-        val entryPoint = EntryPointAccessors.fromApplication(
-            context.applicationContext,
-            dagger.hilt.android.internal.managers.ViewComponentManager.FragmentContextWrapper::class.java
-        )
-        // Use hiltViewModel-like pattern
+        val context = navController.context.applicationContext
+        val dataStore = AuthDataStore(context)
+        val token = dataStore.tokenFlow.first()
+
         delay(500)
 
-        // Navigate to welcome for now (auth check will be added later)
+        if (!token.isNullOrBlank()) {
+            val api = LingJingApi()
+            api.setToken(token)
+            try {
+                val verify = api.verifyToken()
+                if (verify.ok) {
+                    api.connectWs()
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                    return@LaunchedEffect
+                }
+            } catch (_: Exception) {
+                // Token invalid, clear and proceed to welcome
+                dataStore.clear()
+            }
+        }
+
         navController.navigate(Routes.WELCOME) {
             popUpTo(Routes.SPLASH) { inclusive = true }
         }

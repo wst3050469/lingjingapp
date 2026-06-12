@@ -3,6 +3,7 @@ package com.zhejiangjinmo.lingjing.data.api
 import com.zhejiangjinmo.lingjing.BuildConfig
 import com.zhejiangjinmo.lingjing.data.model.*
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -14,8 +15,8 @@ import javax.inject.Singleton
 @Singleton
 class LingJingApi @Inject constructor() {
 
-    private val json = Json { ignoreUnknownKeys = true; isLenient = true }
-    private val mediaType = "application/json".toMediaType()
+    @PublishedApi internal val json = Json { ignoreUnknownKeys = true; isLenient = true }
+    @PublishedApi internal val mediaType = "application/json".toMediaType()
 
     private var token: String? = null
     private var wsUrl: String = BuildConfig.CLOUD_SERVER_WS
@@ -52,23 +53,30 @@ class LingJingApi @Inject constructor() {
         return execute(req)
     }
 
-    suspend fun post(path: String, body: Any? = null): String {
+    suspend inline fun <reified T> post(path: String, body: T): String {
         val url = buildUrl(path)
-        val bodyStr = body?.let { json.encodeToString(kotlinx.serialization.serializer(), it) } ?: ""
+        val bodyStr = json.encodeToString(body)
         val reqBody = bodyStr.toRequestBody(mediaType)
         val req = Request.Builder().url(url).post(reqBody).build()
         return execute(req)
     }
 
-    suspend fun put(path: String, body: Any? = null): String {
+    suspend fun postEmpty(path: String): String {
         val url = buildUrl(path)
-        val bodyStr = body?.let { json.encodeToString(kotlinx.serialization.serializer(), it) } ?: ""
+        val reqBody = "{}".toRequestBody(mediaType)
+        val req = Request.Builder().url(url).post(reqBody).build()
+        return execute(req)
+    }
+
+    suspend inline fun <reified T> put(path: String, body: T): String {
+        val url = buildUrl(path)
+        val bodyStr = json.encodeToString(body)
         val reqBody = bodyStr.toRequestBody(mediaType)
         val req = Request.Builder().url(url).put(reqBody).build()
         return execute(req)
     }
 
-    private suspend fun execute(req: Request): String {
+    @PublishedApi internal suspend fun execute(req: Request): String {
         return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             okHttpClient.newCall(req).execute().use { response ->
                 if (response.isSuccessful) response.body?.string() ?: "{}"
@@ -141,7 +149,7 @@ class LingJingApi @Inject constructor() {
         json.decodeFromString(post("/api/sessions", data))
 
     suspend fun archiveSession(id: String): SimpleResponse =
-        json.decodeFromString(post("/api/sessions/archive", mapOf("id" to id)))
+        json.decodeFromString(post("/api/sessions/archive", ArchiveRequest(id)))
 
     // ── Tasks ──
     suspend fun getTasks(tab: String? = null): List<Task> {
@@ -150,7 +158,7 @@ class LingJingApi @Inject constructor() {
     }
 
     suspend fun sendMessage(sessionId: String, content: String): SimpleResponse =
-        json.decodeFromString(post("/api/conversations", mapOf("sessionId" to sessionId, "content" to content)))
+        json.decodeFromString(post("/api/conversations", MessageRequest(sessionId, content)))
 
     // ── Usage ──
     suspend fun getUsage(): UsageInfo =
@@ -165,7 +173,7 @@ class LingJingApi @Inject constructor() {
         json.decodeFromString(get("/api/requirements"))
 
     // ── Helper ──
-    private fun buildUrl(path: String, params: Map<String, String> = emptyMap()): HttpUrl {
+    @PublishedApi internal fun buildUrl(path: String, params: Map<String, String> = emptyMap()): HttpUrl {
         val builder = "${BuildConfig.CLOUD_SERVER_URL}$path".toHttpUrl().newBuilder()
         params.forEach { (k, v) -> builder.addQueryParameter(k, v) }
         return builder.build()

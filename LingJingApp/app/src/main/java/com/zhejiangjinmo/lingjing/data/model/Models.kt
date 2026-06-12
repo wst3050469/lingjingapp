@@ -150,3 +150,10 @@ data class ApiError(val error: String = "")
 
 @Serializable
 data class SimpleResponse(val ok: Boolean = false, val error: String? = null)
+
+// ── 请求体辅助模型 ──
+@Serializable
+data class ArchiveRequest(val id: String)
+
+@Serializable
+data class MessageRequest(@SerialName("sessionId") val sessionId: String, val content: String)

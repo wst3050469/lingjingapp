@@ -70,3 +70,4 @@ temp/
 # Backup
 backups/
 *.bak
+"tmp-update-versions.py"  

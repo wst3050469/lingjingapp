@@ -10,7 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,11 +18,36 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.zhejiangjinmo.lingjing.data.api.LingJingApi
+import com.zhejiangjinmo.lingjing.data.local.AuthDataStore
+import com.zhejiangjinmo.lingjing.data.model.UsageInfo
+import com.zhejiangjinmo.lingjing.data.model.UserInfo
 import com.zhejiangjinmo.lingjing.ui.navigation.Routes
 import com.zhejiangjinmo.lingjing.ui.theme.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(navController: NavController) {
+    var userName by remember { mutableStateOf("") }
+    var usageInfo by remember { mutableStateOf<UsageInfo?>(null) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val context = navController.context.applicationContext
+                val dataStore = AuthDataStore(context)
+                val user = dataStore.userFlow.first()
+                userName = user?.displayName ?: user?.username ?: ""
+
+                val api = LingJingApi()
+                dataStore.tokenFlow.first()?.let { api.setToken(it) }
+                usageInfo = api.getUsage()
+            } catch (_: Exception) {}
+        }
+    }
+
     Scaffold(
         containerColor = DarkBg,
         bottomBar = { BottomNavBar(navController) }
@@ -33,11 +58,14 @@ fun HomeScreen(navController: NavController) {
         ) {
             // 问候语
             Spacer(modifier = Modifier.height(16.dp))
-            Text("你好 👋", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = DarkText)
+            Text(
+                if (userName.isNotBlank()) "你好 $userName 👋" else "你好 👋",
+                fontSize = 28.sp, fontWeight = FontWeight.Bold, color = DarkText
+            )
             Text("灵境可以帮你做什么？", fontSize = 16.sp, color = DarkTextSecondary)
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 积分横幅
+            // 积分/用量横幅
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = PrimaryBlueBg),
@@ -50,8 +78,20 @@ fun HomeScreen(navController: NavController) {
                     Icon(Icons.Filled.CardGiftcard, null, tint = PrimaryBlue, modifier = Modifier.size(32.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("300 积分已到账", fontWeight = FontWeight.Bold, color = PrimaryBlue, fontSize = 16.sp)
-                        Text("快开始一个任务体验一下吧！", color = DarkTextSecondary, fontSize = 14.sp)
+                        val used = usageInfo?.used ?: 0
+                        val cap = usageInfo?.cap ?: 0
+                        val remaining = (cap - used).coerceAtLeast(0)
+                        Text(
+                            "$remaining 积分可用",
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryBlue,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            "已用 $used / $cap 积分 · 快开始一个任务体验一下吧！",
+                            color = DarkTextSecondary,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             }

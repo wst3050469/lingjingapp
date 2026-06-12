@@ -7,18 +7,33 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.zhejiangjinmo.lingjing.BuildConfig
+import com.zhejiangjinmo.lingjing.data.local.AuthDataStore
 import com.zhejiangjinmo.lingjing.ui.navigation.Routes
 import com.zhejiangjinmo.lingjing.ui.theme.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(navController: NavController) {
+    val scope = rememberCoroutineScope()
+
+    fun doLogout() {
+        scope.launch {
+            val dataStore = AuthDataStore(navController.context.applicationContext)
+            dataStore.clear()
+            navController.navigate(Routes.LOGIN) {
+                popUpTo(Routes.HOME) { inclusive = true }
+            }
+        }
+    }
+
     Scaffold(containerColor = DarkBg) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -43,12 +58,12 @@ fun SettingsScreen(navController: NavController) {
                     SettingsRow(Icons.Filled.Extension, "插件市场") { navController.navigate(Routes.PLUGINS) }
                 }
                 SettingsGroup("其他") {
-                    SettingsRow(Icons.Filled.SystemUpdate, "检查更新", "版本 1.0.0") { navController.navigate(Routes.UPDATE) }
+                    SettingsRow(Icons.Filled.SystemUpdate, "检查更新", "版本 ${BuildConfig.VERSION_NAME}") { navController.navigate(Routes.UPDATE) }
                     SettingsRow(Icons.Filled.Info, "关于灵境", "了解更多") { }
                 }
                 Spacer(modifier = Modifier.height(20.dp))
                 OutlinedButton(
-                    onClick = { navController.navigate(Routes.LOGIN) { popUpTo(Routes.HOME) { inclusive = true } } },
+                    onClick = { doLogout() },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = DangerRed),
                     shape = RoundedCornerShape(12.dp)

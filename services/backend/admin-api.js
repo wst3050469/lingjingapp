@@ -1228,23 +1228,31 @@ export function registerAdminAPI(app, db) {
 
   // Helper: promote draft latest.yml to live latest.yml on approve
   function promoteYamlFiles(version) {
-    const downloadDirs = ['/var/www/downloads/', '/var/www/lingjing/'];
+    const downloadDirs = [
+      '/var/www/downloads/',
+      '/var/www/html/downloads/',
+      '/var/www/lingjing/',
+    ];
     for (const downloadDir of downloadDirs) {
-      const draftYml = path.join(downloadDir, 'latest-draft-' + version + '.yml');
-      const liveYml = path.join(downloadDir, 'latest.yml');
-      if (fs.existsSync(draftYml)) {
-        if (fs.existsSync(liveYml)) fs.copyFileSync(liveYml, liveYml + '.bak');
-        fs.copyFileSync(draftYml, liveYml);
-        fs.unlinkSync(draftYml);
-        console.log('[Admin API] latest.yml promoted to:', version, 'in', downloadDir);
-      }
-      const draftLinuxYml = path.join(downloadDir, 'latest-linux-draft-' + version + '.yml');
-      const liveLinuxYml = path.join(downloadDir, 'latest-linux.yml');
-      if (fs.existsSync(draftLinuxYml)) {
-        if (fs.existsSync(liveLinuxYml)) fs.copyFileSync(liveLinuxYml, liveLinuxYml + '.bak');
-        fs.copyFileSync(draftLinuxYml, liveLinuxYml);
-        fs.unlinkSync(draftLinuxYml);
-        console.log('[Admin API] latest-linux.yml promoted to:', version, 'in', downloadDir);
+      try {
+        const draftYml = path.join(downloadDir, 'latest-draft-' + version + '.yml');
+        const liveYml = path.join(downloadDir, 'latest.yml');
+        if (fs.existsSync(draftYml)) {
+          if (fs.existsSync(liveYml)) fs.copyFileSync(liveYml, liveYml + '.bak');
+          fs.copyFileSync(draftYml, liveYml);
+          fs.unlinkSync(draftYml);
+          console.log('[Admin API] latest.yml promoted to:', version, 'in', downloadDir);
+        }
+        const draftLinuxYml = path.join(downloadDir, 'latest-linux-draft-' + version + '.yml');
+        const liveLinuxYml = path.join(downloadDir, 'latest-linux.yml');
+        if (fs.existsSync(draftLinuxYml)) {
+          if (fs.existsSync(liveLinuxYml)) fs.copyFileSync(liveLinuxYml, liveLinuxYml + '.bak');
+          fs.copyFileSync(draftLinuxYml, liveLinuxYml);
+          fs.unlinkSync(draftLinuxYml);
+          console.log('[Admin API] latest-linux.yml promoted to:', version, 'in', downloadDir);
+        }
+      } catch (e) {
+        console.warn('[Admin API] Failed to promote yml in', downloadDir, ':', e.message);
       }
     }
   }

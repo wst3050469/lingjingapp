@@ -124,7 +124,8 @@ data class UsageInfo(
 data class UpdateInfo(
     val hasUpdate: Boolean = false,
     val version: String? = null,
-    val files: UpdateFiles? = null
+    val files: UpdateFiles? = null,
+    val releaseNotes: String? = null
 )
 
 @Serializable
@@ -157,3 +158,18 @@ data class ArchiveRequest(val id: String)
 
 @Serializable
 data class MessageRequest(@SerialName("sessionId") val sessionId: String, val content: String)
+
+// ── 通知模型 ──
+@Serializable
+data class StoredNotification(
+    val id: String = "",
+    val title: String = "",
+    val body: String = "",
+    val time: String = "",
+    val read: Boolean = false,
+    val route: String? = null
+)
+
+// ── 配对模型 ──
+@Serializable
+data class PairingRequest(val code: String)

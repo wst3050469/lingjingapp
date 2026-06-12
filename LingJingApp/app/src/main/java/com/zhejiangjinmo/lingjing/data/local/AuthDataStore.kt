@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
+import com.zhejiangjinmo.lingjing.data.model.StoredNotification
 import com.zhejiangjinmo.lingjing.data.model.UserInfo
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
@@ -28,6 +30,7 @@ class AuthDataStore @Inject constructor(
         private val KEY_NOTIFICATION_SYSTEM = booleanPreferencesKey("notification_system")
         private val KEY_NOTIFICATION_TASKS = booleanPreferencesKey("notification_tasks")
         private val KEY_NOTIFICATION_APPROVAL = booleanPreferencesKey("notification_approval")
+        private val KEY_NOTIFICATIONS = stringPreferencesKey("notifications_list")
     }
 
     // Token
@@ -67,5 +70,34 @@ class AuthDataStore @Inject constructor(
 
     suspend fun clear() {
         context.authDataStore.edit { it.clear() }
+    }
+
+    // Notification items
+    suspend fun saveNotifications(list: List<StoredNotification>) {
+        context.authDataStore.edit { it[KEY_NOTIFICATIONS] = json.encodeToString(list) }
+    }
+
+    suspend fun getNotifications(): List<StoredNotification> {
+        return try {
+            val raw = context.authDataStore.data.first()[KEY_NOTIFICATIONS]
+            raw?.let { json.decodeFromString(it) } ?: emptyList()
+        } catch (_: Exception) { emptyList() }
+    }
+
+    // Plugin states
+    suspend fun savePluginStates(states: Map<String, Boolean>) {
+        context.authDataStore.edit { it[stringPreferencesKey("plugin_states")] = json.encodeToString(states) }
+    }
+
+    suspend fun getPluginStates(): Map<String, Boolean> {
+        return try {
+            val raw = context.authDataStore.data.first()[stringPreferencesKey("plugin_states")]
+            raw?.let { json.decodeFromString(it) } ?: emptyMap()
+        } catch (_: Exception) { emptyMap() }
+    }
+
+    // Paired desktop
+    suspend fun savePairedDesktop(paired: Boolean) {
+        context.authDataStore.edit { it[booleanPreferencesKey("paired_desktop")] = paired }
     }
 }

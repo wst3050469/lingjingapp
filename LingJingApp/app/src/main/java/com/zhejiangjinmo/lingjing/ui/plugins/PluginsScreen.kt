@@ -18,26 +18,55 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.zhejiangjinmo.lingjing.data.local.AuthDataStore
 import com.zhejiangjinmo.lingjing.ui.theme.*
+import kotlinx.coroutines.launch
 
 data class PluginInfo(
+    val id: String,
     val name: String,
     val description: String,
     val icon: String,
     val installed: Boolean
 )
 
+private val defaultPlugins = listOf(
+    PluginInfo("python", "Python", "Python语言支持，包括代码补全和语法高亮", "code", true),
+    PluginInfo("git", "Git", "内置Git支持，查看状态、提交、推送", "source", true),
+    PluginInfo("docker", "Docker", "Docker容器管理，构建和部署", "deployed_code", false),
+    PluginInfo("database", "数据库", "SQL数据库连接和管理工具", "storage", false),
+    PluginInfo("ai_model", "AI模型", "本地AI模型运行和推理", "psychology", true),
+    PluginInfo("terminal_theme", "终端主题", "自定义终端配色方案", "palette", false),
+    PluginInfo("copilot", "代码助手", "AI代码补全和智能提示", "lightbulb", false),
+    PluginInfo("linter", "代码检查", "实时代码质量检查和修复建议", "bug_report", false)
+)
+
 @Composable
 fun PluginsScreen(navController: NavController) {
-    val plugins = remember {
-        listOf(
-            PluginInfo("Python", "Python语言支持，包括代码补全和语法高亮", "code", true),
-            PluginInfo("Git", "内置Git支持，查看状态、提交、推送", "source", true),
-            PluginInfo("Docker", "Docker容器管理，构建和部署", "deployed_code", false),
-            PluginInfo("数据库", "SQL数据库连接和管理工具", "storage", false),
-            PluginInfo("AI模型", "本地AI模型运行和推理", "psychology", true),
-            PluginInfo("终端主题", "自定义终端配色方案", "palette", false)
-        )
+    var plugins by remember { mutableStateOf(defaultPlugins) }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                val ds = AuthDataStore(navController.context.applicationContext)
+                val saved = ds.getPluginStates()
+                if (saved.isNotEmpty()) {
+                    plugins = defaultPlugins.map { p ->
+                        p.copy(installed = saved[p.id] ?: p.installed)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    fun toggle(plugin: PluginInfo) {
+        val updated = plugins.map { if (it.id == plugin.id) it.copy(installed = !it.installed) else it }
+        plugins = updated
+        scope.launch {
+            val ds = AuthDataStore(navController.context.applicationContext)
+            ds.savePluginStates(updated.associate { it.id to it.installed })
+        }
     }
 
     Scaffold(containerColor = DarkBg) { padding ->
@@ -60,7 +89,7 @@ fun PluginsScreen(navController: NavController) {
             ) {
                 items(plugins) { plugin ->
                     Card(
-                        modifier = Modifier.fillMaxWidth().clickable { /* toggle */ },
+                        modifier = Modifier.fillMaxWidth().clickable { toggle(plugin) },
                         colors = CardDefaults.cardColors(containerColor = DarkSurface),
                         shape = RoundedCornerShape(12.dp)
                     ) {

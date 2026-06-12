@@ -17,19 +17,40 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.zhejiangjinmo.lingjing.data.local.AuthDataStore
+import com.zhejiangjinmo.lingjing.data.model.StoredNotification
 import com.zhejiangjinmo.lingjing.ui.theme.*
-
-data class NotificationItem(val title: String, val body: String, val time: String, val read: Boolean)
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @Composable
 fun NotificationScreen(navController: NavController) {
-    val notifications = remember {
-        listOf(
-            NotificationItem("任务完成", "「修复登录Bug」任务已成功完成", "5分钟前", false),
-            NotificationItem("积分到账", "300积分已成功充值到你的账户", "1小时前", true),
-            NotificationItem("新版本", "灵境IDE v1.0.1 已发布", "3小时前", true),
-            NotificationItem("构建成功", "LingJingApp 构建成功", "昨天", true)
-        )
+    var notifications by remember { mutableStateOf<List<StoredNotification>>(emptyList()) }
+    val scope = rememberCoroutineScope()
+
+    // Load from DataStore or use defaults
+    LaunchedEffect(Unit) {
+        scope.launch {
+            val ds = AuthDataStore(navController.context.applicationContext)
+            val saved = ds.getNotifications()
+            notifications = if (saved.isNotEmpty()) saved else defaultNotifications()
+        }
+    }
+
+    val unreadCount = notifications.count { !it.read }
+
+    fun markAllRead() {
+        notifications = notifications.map { it.copy(read = true) }
+        scope.launch {
+            AuthDataStore(navController.context.applicationContext).saveNotifications(notifications)
+        }
+    }
+
+    fun markRead(item: StoredNotification) {
+        notifications = notifications.map { if (it.id == item.id) it.copy(read = true) else it }
+        scope.launch {
+            AuthDataStore(navController.context.applicationContext).saveNotifications(notifications)
+        }
     }
 
     Scaffold(containerColor = DarkBg) { padding ->
@@ -41,8 +62,22 @@ fun NotificationScreen(navController: NavController) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = DarkText)
                 }
                 Text("通知", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = DarkText)
+                if (unreadCount > 0) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(shape = RoundedCornerShape(10.dp), color = DangerRed) {
+                        Text(
+                            "$unreadCount",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            fontSize = 12.sp, color = DarkText
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = { }) { Text("全部已读", color = PrimaryBlue, fontSize = 14.sp) }
+                if (unreadCount > 0) {
+                    TextButton(onClick = { markAllRead() }) {
+                        Text("全部已读", color = PrimaryBlue, fontSize = 14.sp)
+                    }
+                }
             }
 
             if (notifications.isEmpty()) {
@@ -57,7 +92,10 @@ fun NotificationScreen(navController: NavController) {
                 LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(notifications) { notification ->
                         Card(
-                            modifier = Modifier.fillMaxWidth().clickable { },
+                            modifier = Modifier.fillMaxWidth().clickable {
+                                markRead(notification)
+                                notification.route?.let { navController.navigate(it) }
+                            },
                             colors = CardDefaults.cardColors(containerColor =
                                 if (notification.read) DarkSurface else DarkSurface2),
                             shape = RoundedCornerShape(10.dp)
@@ -80,3 +118,8 @@ fun NotificationScreen(navController: NavController) {
         }
     }
 }
+
+private fun defaultNotifications() = listOf(
+    StoredNotification(id = "1", title = "欢迎使用灵境", body = "灵境IDE已就绪，开始你的开发之旅吧", time = "刚刚"),
+    StoredNotification(id = "2", title = "功能提示", body = "点击「快捷提示词」开始新任务，或切换到任务页查看进度", time = "刚刚")
+)

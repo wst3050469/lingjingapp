@@ -168,6 +168,10 @@ class LingJingApi @Inject constructor() {
     suspend fun checkUpdate(current: String): UpdateInfo =
         json.decodeFromString(get("/api/latest", mapOf("current" to current)))
 
+    // ── Pairing ──
+    suspend fun pairDesktop(code: String): SimpleResponse =
+        json.decodeFromString(post("/api/pairing/desktop", PairingRequest(code)))
+
     // ── Requirements ──
     suspend fun getRequirements(): List<Requirement> =
         json.decodeFromString(get("/api/requirements"))

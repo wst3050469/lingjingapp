@@ -21,10 +21,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.zhejiangjinmo.lingjing.data.api.LingJingApi
+import com.zhejiangjinmo.lingjing.data.model.Message
 import com.zhejiangjinmo.lingjing.ui.components.MarkdownText
 import com.zhejiangjinmo.lingjing.ui.components.VoiceInputBar
 import com.zhejiangjinmo.lingjing.ui.theme.*
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 data class ChatMessage(
     val id: String,
@@ -44,12 +48,45 @@ fun WorkspaceScreen(navController: NavController, sessionId: String) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val api = remember { LingJingApi() }
+    val wsJson = remember { Json { ignoreUnknownKeys = true; isLenient = true } }
 
+    // 加载历史消息
     LaunchedEffect(sessionId) {
-        if (messages.isEmpty()) {
-            messages = listOf(ChatMessage("welcome", "assistant",
-                "你好！我是灵境 AI 编程助手。\n\n我可以帮你：\n- 编写和调试代码\n- 审查代码质量\n- 解释项目结构\n- 执行命令和脚本\n\n请告诉我你需要什么帮助？"))
+        try {
+            val session = api.getSession(sessionId)
+            val historyMsgs = session.messages.map { m ->
+                ChatMessage(m.id, m.role, m.content)
+            }
+            messages = if (historyMsgs.isNotEmpty()) historyMsgs else listOf(
+                ChatMessage("welcome", "assistant",
+                    "你好！我是灵境 AI 编程助手。\n\n我可以帮你：\n- 编写和调试代码\n- 审查代码质量\n- 解释项目结构\n- 执行命令和脚本\n\n请告诉我你需要什么帮助？")
+            )
+        } catch (_: Exception) {
+            if (messages.isEmpty()) {
+                messages = listOf(ChatMessage("welcome", "assistant",
+                    "你好！我是灵境 AI 编程助手。\n\n我可以帮你：\n- 编写和调试代码\n- 审查代码质量\n- 解释项目结构\n- 执行命令和脚本\n\n请告诉我你需要什么帮助？"))
+            }
         }
+    }
+
+    // WebSocket 实时消息监听
+    DisposableEffect(sessionId) {
+        val listener: (String) -> Unit = { data ->
+            try {
+                val obj = wsJson.parseToJsonElement(data).jsonObject
+                val type = obj["type"]?.jsonPrimitive?.content ?: ""
+                if (type == "message" || type == "reply") {
+                    val content = obj["content"]?.jsonPrimitive?.content
+                        ?: obj["message"]?.jsonPrimitive?.content ?: ""
+                    if (content.isNotEmpty()) {
+                        val msgId = System.currentTimeMillis().toString()
+                        messages = messages + ChatMessage(msgId, "assistant", content)
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        api.onWsEvent("message", listener)
+        onDispose { api.offWsEvent("message", listener) }
     }
 
     fun send() {
@@ -62,9 +99,33 @@ fun WorkspaceScreen(navController: NavController, sessionId: String) {
 
         scope.launch {
             try {
-                api.sendMessage(sessionId, text)
-            } catch (_: Exception) {}
+                val resp = api.sendMessage(sessionId, text, selectedModel)
+                if (resp.ok != true) {
+                    // 发送失败提示
+                    messages = messages + ChatMessage(
+                        System.currentTimeMillis().toString(), "system",
+                        "⚠️ 消息发送失败：${resp.error ?: "未知错误"}"
+                    )
+                }
+            } catch (e: Exception) {
+                messages = messages + ChatMessage(
+                    System.currentTimeMillis().toString(), "system",
+                    "⚠️ 发送异常：${e.message}"
+                )
+            }
             sending = false
+        }
+
+        // 自动滚动
+        scope.launch {
+            listState.animateScrollToItem(messages.size)
+        }
+    }
+
+    // 自动滚动到底部
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(messages.size - 1)
         }
     }
 
@@ -166,7 +227,10 @@ fun WorkspaceScreen(navController: NavController, sessionId: String) {
                         disabledContainerColor = DarkSurface2
                     )
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, "发送", tint = DarkBg)
+                    if (sending)
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = DarkBg, strokeWidth = 2.dp)
+                    else
+                        Icon(Icons.AutoMirrored.Filled.Send, "发送", tint = DarkBg)
                 }
             }
         }
@@ -177,11 +241,12 @@ fun WorkspaceScreen(navController: NavController, sessionId: String) {
 @Composable
 fun MessageBubble(msg: ChatMessage) {
     val isUser = msg.role == "user"
+    val isSystem = msg.role == "system"
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
     ) {
-        if (!isUser) {
+        if (!isUser && !isSystem) {
             Box(
                 modifier = Modifier.size(30.dp).clip(CircleShape).background(PrimaryBlueBg),
                 contentAlignment = Alignment.Center
@@ -197,8 +262,12 @@ fun MessageBubble(msg: ChatMessage) {
                 RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 12.dp, bottomEnd = 4.dp)
             else
                 RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 4.dp, bottomEnd = 12.dp),
-            color = if (isUser) PrimaryBlue else DarkSurface2,
-            border = if (isUser) null else androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
+            color = when {
+                isSystem -> WarningBg
+                isUser -> PrimaryBlue
+                else -> DarkSurface2
+            },
+            border = if (isUser || isSystem) null else androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
         ) {
             if (isUser) {
                 Text(
@@ -207,6 +276,14 @@ fun MessageBubble(msg: ChatMessage) {
                     color = DarkBg,
                     fontSize = 15.sp,
                     lineHeight = 22.sp
+                )
+            } else if (isSystem) {
+                Text(
+                    text = msg.content,
+                    modifier = Modifier.padding(12.dp),
+                    color = WarningYellow,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
                 )
             } else {
                 MarkdownText(

@@ -16,8 +16,8 @@ android {
         applicationId = "com.zhejiangjinmo.lingjing"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.73.41"
+        versionCode = 6
+        versionName = "1.73.42"
 
         buildConfigField("String", "CLOUD_SERVER_URL", "\"https://ide.zhejiangjinmo.com\"")
         buildConfigField("String", "CLOUD_SERVER_WS", "\"wss://ide.zhejiangjinmo.com/ws\"")

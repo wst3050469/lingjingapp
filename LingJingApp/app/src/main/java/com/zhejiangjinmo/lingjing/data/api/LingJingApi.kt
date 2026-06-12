@@ -157,8 +157,28 @@ class LingJingApi @Inject constructor() {
         return json.decodeFromString(get("/api/tasks", params))
     }
 
-    suspend fun sendMessage(sessionId: String, content: String): SimpleResponse =
-        json.decodeFromString(post("/api/conversations", MessageRequest(sessionId, content)))
+    // 🔧 v1.73.42: 修复端点 → /api/sessions/:id/send，传入 message + model
+    suspend fun sendMessage(sessionId: String, content: String, model: String = "灵境 AI"): SimpleResponse =
+        json.decodeFromString(post("/api/sessions/$sessionId/send", SendMsgRequest(content, model)))
+
+    suspend fun getSession(id: String): SessionDetail =
+        json.decodeFromString(get("/api/sessions/$id"))
+
+    suspend fun deleteSession(id: String): SimpleResponse {
+        val url = buildUrl("/api/sessions/$id")
+        val req = Request.Builder().url(url).delete().build()
+        return json.decodeFromString(execute(req))
+    }
+
+    // ── Files ──
+    suspend fun listFiles(dirPath: String): FileListResponse =
+        json.decodeFromString(get("/api/files/list", mapOf("path" to dirPath)))
+
+    suspend fun readFile(filePath: String): FileContentResponse =
+        json.decodeFromString(get("/api/files/read", mapOf("path" to filePath)))
+
+    suspend fun writeFile(filePath: String, content: String): SimpleResponse =
+        json.decodeFromString(put("/api/files/write", FileWriteRequest(filePath, content)))
 
     // ── Usage ──
     suspend fun getUsage(): UsageInfo =

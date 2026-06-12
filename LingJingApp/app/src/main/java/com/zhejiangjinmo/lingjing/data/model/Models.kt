@@ -159,6 +159,45 @@ data class ArchiveRequest(val id: String)
 @Serializable
 data class MessageRequest(@SerialName("sessionId") val sessionId: String, val content: String)
 
+// ── v1.73.42: 消息发送/文件模型 ──
+@Serializable
+data class SendMsgRequest(val message: String, val model: String = "灵境 AI")
+
+@Serializable
+data class SessionDetail(
+    val id: String = "",
+    val title: String? = null,
+    val messages: List<Message> = emptyList(),
+    val metadata: Map<String, String>? = null,
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null
+)
+
+@Serializable
+data class FileEntry(
+    val name: String = "",
+    val path: String = "",
+    val type: String = "file",
+    val size: Long = 0
+)
+
+@Serializable
+data class FileListResponse(
+    val path: String = "",
+    val entries: List<FileEntry> = emptyList()
+)
+
+@Serializable
+data class FileContentResponse(
+    val path: String = "",
+    val content: String = "",
+    val size: Long = 0,
+    val mtime: String? = null
+)
+
+@Serializable
+data class FileWriteRequest(val path: String, val content: String)
+
 // ── 通知模型 ──
 @Serializable
 data class StoredNotification(

@@ -75,8 +75,22 @@ fun TasksScreen(navController: NavController) {
                 }
             } else {
                 LazyColumn(contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(tasks) { task ->
-                        TaskCard(task, navController)
+                    items(tasks, key = { it.id }) { task ->
+                        TaskCard(
+                            task = task,
+                            navController = navController,
+                            onDelete = {
+                                // 删除后从本地列表移除
+                                tasks = tasks.filter { t -> t.id != task.id }
+                            },
+                            onArchive = {
+                                // 归档后刷新
+                                val tab = when (selectedTab) { 1->"active"; 2->"pending"; 3->"running"; 4->"idle"; 5->"archived"; else->null }
+                                scope.launch {
+                                    try { tasks = LingJingApi().getTasks(tab) } catch (_: Exception) {}
+                                }
+                            }
+                        )
                     }
                 }
             }
@@ -86,8 +100,9 @@ fun TasksScreen(navController: NavController) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TaskCard(task: Task, navController: NavController) {
+fun TaskCard(task: Task, navController: NavController, onDelete: () -> Unit = {}, onArchive: () -> Unit = {}) {
     var showContextMenu by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val phaseColor = when (task.phase) {
         "running" -> SuccessGreen
@@ -147,7 +162,7 @@ fun TaskCard(task: Task, navController: NavController) {
                     onClick = {
                         showContextMenu = false
                         scope.launch {
-                            try { LingJingApi().archiveSession(task.id) } catch (_: Exception) {}
+                            try { LingJingApi().archiveSession(task.id); onArchive() } catch (_: Exception) {}
                         }
                     },
                     leadingIcon = { Icon(Icons.Filled.Archive, null, tint = WarningYellow) }
@@ -155,8 +170,35 @@ fun TaskCard(task: Task, navController: NavController) {
             }
             DropdownMenuItem(
                 text = { Text("删除任务", color = DangerRed) },
-                onClick = { showContextMenu = false },
+                onClick = {
+                    showContextMenu = false
+                    showDeleteConfirm = true
+                },
                 leadingIcon = { Icon(Icons.Filled.Delete, null, tint = DangerRed) }
+            )
+        }
+
+        // 删除确认对话框
+        if (showDeleteConfirm) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirm = false },
+                title = { Text("确认删除", color = DarkText) },
+                text = { Text("确定要删除任务「${task.title ?: "未命名"}」吗？此操作不可撤销。", color = DarkTextSecondary) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showDeleteConfirm = false
+                        scope.launch {
+                            try {
+                                LingJingApi().deleteSession(task.id)
+                                onDelete()
+                            } catch (_: Exception) {}
+                        }
+                    }) { Text("删除", color = DangerRed) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirm = false }) { Text("取消", color = DarkTextSecondary) }
+                },
+                containerColor = DarkSurface
             )
         }
     }

@@ -8,16 +8,28 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3002;
-const VERSIONS_FILE = '/var/www/lingjing/versions.json';
+const VERSION_SEARCH_PATHS = [
+  '/var/www/html/versions.json',                       // PRIMARY: authoritative source
+  '/var/www/lingjing/versions.json',                   // Default path
+  '/opt/lingjing-update-server/versions.json',         // Local fallback
+  '/opt/lingjing-update-server/data/versions.json',    // Data dir fallback
+  '/opt/lingjing/update-server/versions.json',         // Update-server
+  '/var/www/downloads/versions.json',                  // Downloads
+];
 
 function getVersions() {
-  try {
-    if (fs.existsSync(VERSIONS_FILE)) {
-      return JSON.parse(fs.readFileSync(VERSIONS_FILE, 'utf8'));
+  for (const p of VERSION_SEARCH_PATHS) {
+    try {
+      if (fs.existsSync(p)) {
+        const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+        console.error('[LingJing Update] Loaded versions.json from:', p);
+        return data;
+      }
+    } catch (e) {
+      // try next path
     }
-  } catch (e) {
-    console.error('[LingJing Update] Failed to read versions.json:', e.message);
   }
+  console.error('[LingJing Update] No versions.json found, using default');
   return { latest: '1.52.3', versions: [{ version: '1.52.3' }] };
 }
 

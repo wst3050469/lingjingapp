@@ -14,21 +14,30 @@ const PORT = process.env.PORT || 3000;
 // OSS base URL for download fallback (configurable via env)
 const OSS_BASE_URL = process.env.OSS_BASE_URL || 'https://zhejiangjinmo.oss-cn-shenzhen.aliyuncs.com';
 
-// 版本数据路径
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
-const VERSIONS_FILE = path.join(DATA_DIR, 'versions.json');
+// 版本数据路径 — 多路径回退
+const VERSION_SEARCH_PATHS = [
+  path.join(__dirname, 'data', 'versions.json'),           // Primary: local data dir
+  '/var/www/html/versions.json',                            // Authoritative source
+  '/opt/lingjing/update-server/data/versions.json',        // Standard path
+  '/opt/lingjing/update-server/versions.json',             // Alternate
+  '/var/www/lingjing/versions.json',                       // Legacy
+  '/root/lingjing-update/data/versions.json',              // Fallback
+];
 
 // 读取版本信息
 function getLatestVersion() {
-  try {
-    if (fs.existsSync(VERSIONS_FILE)) {
-      const data = JSON.parse(fs.readFileSync(VERSIONS_FILE, 'utf8'));
-      return data;
+  for (const p of VERSION_SEARCH_PATHS) {
+    try {
+      if (fs.existsSync(p)) {
+        const data = JSON.parse(fs.readFileSync(p, 'utf8'));
+        console.log('[Update] Loaded versions.json from:', p);
+        return data;
+      }
+    } catch (e) {
+      // try next path
     }
-  } catch (e) {
-    console.error('[Update] Failed to read versions.json:', e.message);
   }
-  // 默认返回最新版本
+  console.error('[Update] No versions.json found in any path, using default');
   return { latest: '1.0.32', versions: [{ version: '1.0.32' }] };
 }
 

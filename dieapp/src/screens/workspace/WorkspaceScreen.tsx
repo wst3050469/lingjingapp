@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Keyboard
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../../stores/app-store';
 import { api } from '../../services/api';
+import { useVoiceRecorder } from '../../services/voice';
 import { Colors, FontSize as FS, BorderRadius as BR } from '../../constants';
 
 interface Message {
@@ -18,18 +19,19 @@ export default function WorkspaceScreen() {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const voice = useVoiceRecorder();
 
-  const sendMessage = useCallback(async () => {
-    const text = input.trim(); if (!text || sending) return;
+  const sendMessage = useCallback(async (text?: string) => {
+    const msg = (text || input).trim(); if (!msg || sending) return;
     setSending(true);
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: msg, timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]); setInput('');
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
     // 尝试发送到后端
     if (activeSessionId) {
       try {
-        const res = await api.sendMessage(activeSessionId, text);
+        const res = await api.sendMessage(activeSessionId, msg);
         if (res.ok && res.data) {
           const data = res.data as any;
           const aiMsg: Message = { id: (Date.now() + 1).toString(), role: 'assistant', content: data.content || '收到你的消息', timestamp: Date.now() };
@@ -39,12 +41,22 @@ export default function WorkspaceScreen() {
     }
     // 模拟AI回复
     setTimeout(() => {
-      const mockMsg: Message = { id: (Date.now() + 2).toString(), role: 'assistant', content: `收到你的消息：「${text}」\n\n这是一个模拟回复。在真实环境中，这里会显示 AI 助手的智能回复，支持 Markdown 格式、代码高亮和 Diff 预览。`, timestamp: Date.now() };
+      const mockMsg: Message = { id: (Date.now() + 2).toString(), role: 'assistant', content: `收到你的消息：「${msg}」\n\n这是一个模拟回复。在真实环境中，这里会显示 AI 助手的智能回复，支持 Markdown 格式、代码高亮和 Diff 预览。`, timestamp: Date.now() };
       setMessages(prev => [...prev, mockMsg]);
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     }, 1000);
     setSending(false);
   }, [input, sending, activeSessionId]);
+
+  // 语音录制完成回调
+  const handleVoiceStop = useCallback(async () => {
+    const uri = await voice.stopRecording();
+    if (uri) {
+      // 录音完成，将URI作为附件发送
+      setInput(prev => prev + (prev ? ' ' : '') + '[语音消息]');
+      Alert.alert('录音完成', '语音消息已准备好发送');
+    }
+  }, [voice]);
 
   const renderMessage = ({ item }: { item: Message }) => {
     const isUser = item.role === 'user';
@@ -79,15 +91,46 @@ export default function WorkspaceScreen() {
         </View>
       )}
 
+      {/* 录音状态指示器 */}
+      {voice.isRecording && (
+        <View style={s.recordingBar}>
+          <View style={s.recDot} />
+          <Text style={s.recText}>
+            {voice.isPaused ? '已暂停' : `录音中 ${(voice.durationMs / 1000).toFixed(1)}s`}
+          </Text>
+          {voice.isPaused ? (
+            <TouchableOpacity style={s.recBtn} onPress={voice.resumeRecording}>
+              <Ionicons name="play" size={20} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={s.recBtn} onPress={voice.pauseRecording}>
+              <Ionicons name="pause" size={20} color="#fff" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={[s.recBtn, { backgroundColor: Colors.dark.danger }]} onPress={voice.cancelRecording}>
+            <Ionicons name="close" size={20} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.recBtn, { backgroundColor: Colors.dark.success }]} onPress={handleVoiceStop}>
+            <Ionicons name="checkmark" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* 输入栏 */}
       <View style={s.composer}>
-        <TouchableOpacity style={s.attachBtn}><Ionicons name="add-circle-outline" size={24} color={Colors.dark.textSecondary} /></TouchableOpacity>
-        <TextInput style={s.input} placeholder="输入消息或按住说话…" placeholderTextColor={Colors.dark.textTertiary}
-          value={input} onChangeText={setInput} multiline maxLength={4000}
-          onSubmitEditing={sendMessage} returnKeyType="send" blurOnSubmit />
-        <TouchableOpacity style={[s.sendBtn, (!input.trim() || sending) && s.sendDisabled]} onPress={sendMessage} disabled={!input.trim() || sending}>
-          <Ionicons name="send" size={20} color={input.trim() && !sending ? '#fff' : Colors.dark.textTertiary} />
-        </TouchableOpacity>
+        {voice.isRecording ? null : (
+          <>
+            <TouchableOpacity style={s.attachBtn} onPress={voice.startRecording}>
+              <Ionicons name="mic-outline" size={24} color={Colors.dark.textSecondary} />
+            </TouchableOpacity>
+            <TextInput style={s.input} placeholder="输入消息或点击麦克风说话…" placeholderTextColor={Colors.dark.textTertiary}
+              value={input} onChangeText={setInput} multiline maxLength={4000}
+              onSubmitEditing={() => sendMessage()} returnKeyType="send" blurOnSubmit />
+            <TouchableOpacity style={[s.sendBtn, (!input.trim() || sending) && s.sendDisabled]} onPress={() => sendMessage()} disabled={!input.trim() || sending}>
+              <Ionicons name="send" size={20} color={input.trim() && !sending ? '#fff' : Colors.dark.textTertiary} />
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </KeyboardAvoidingView>
   );
@@ -113,4 +156,8 @@ const s = StyleSheet.create({
   input: { flex: 1, backgroundColor: Colors.dark.bg, borderRadius: BR.lg, borderWidth: 1, borderColor: Colors.dark.border, color: Colors.dark.text, fontSize: FS.md, paddingHorizontal: 14, paddingVertical: 10, maxHeight: 120 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.dark.primary, alignItems: 'center', justifyContent: 'center' },
   sendDisabled: { backgroundColor: Colors.dark.surface2 },
+  recordingBar: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: Colors.dark.surface, borderTopWidth: 1, borderTopColor: Colors.dark.border, gap: 10 },
+  recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.dark.danger },
+  recText: { color: Colors.dark.text, fontSize: FS.sm, flex: 1 },
+  recBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.dark.primaryBg, alignItems: 'center', justifyContent: 'center' },
 });

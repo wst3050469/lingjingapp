@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <title>Qoder Captcha</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        overflow: hidden;
+        background: transparent;
+        color: #1f2937;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      }
+
+      #captcha-shell {
+        width: 100%;
+        min-height: 100%;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: transparent;
+      }
+
+      #captcha-element {
+        width: 100%;
+        min-height: 1px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: transparent;
+      }
+
+      #trigger {
+        display: none;
+      }
+
+      /* Override Alibaba Captcha SDK popup mask / overlay */
+      [class*="mask"],
+      [class*="Mask"],
+      [class*="overlay"],
+      [class*="Overlay"],
+      [style*="position: fixed"],
+      [style*="position:fixed"] {
+        background: transparent !important;
+        background-color: transparent !important;
+      }
+    </style>
+    <script>
+      (function bootstrap() {
+        var nativeConfig = window.__QODER_CAPTCHA_CONFIG__ || {};
+        window.AliyunCaptchaConfig = {
+          region: nativeConfig.region || "sgp",
+          prefix: nativeConfig.prefix || ""
+        };
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="captcha-shell">
+      <div id="captcha-element"></div>
+    </div>
+    <button id="trigger" type="button">Start</button>
+    <script>
+      (function setupCaptcha() {
+        var handler = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.qoderCaptcha;
+        var instance = null;
+        var hasInitializedCaptcha = false;
+        var pendingStart = false;
+        var initializedAt = 0;
+        var appearanceObserver = null;
+
+        function sliderWidth() {
+          return Math.max(288, Math.min(320, window.innerWidth - 24));
+        }
+
+        function post(type, payload) {
+          if (!handler) {
+            return;
+          }
+
+          handler.postMessage(
+            Object.assign(
+              {
+                type: type
+              },
+              payload || {}
+            )
+          );
+        }
+
+        function errorMessage(error, fallback) {
+          if (error && typeof error === "object") {
+            if (typeof error.message === "string" && error.message) {
+              return error.message;
+            }
+
+            if (typeof error.reason === "string" && error.reason) {
+              return error.reason;
+            }
+          }
+
+          return fallback;
+        }
+
+        function reportError(error, fallback) {
+          post("error", {
+            message: errorMessage(error, fallback)
+          });
+        }
+
+        function ensureTransparentShell() {
+          document.documentElement.style.background = "transparent";
+          document.body.style.background = "transparent";
+          document.body.style.overflow = "hidden";
+        }
+
+        function isDarkBackground(color) {
+          if (!color || color === "transparent" || color === "rgba(0, 0, 0, 0)") {
+            return false;
+          }
+
+          var match = color.match(/rgba?\(([^)]+)\)/i);
+          if (!match) {
+            return false;
+          }
+
+          var channels = match[1].split(",").map(function (value) {
+            return Number(value.trim());
+          });
+          var alpha = channels.length > 3 ? channels[3] : 1;
+          if (!isFinite(alpha) || alpha <= 0.01) {
+            return false;
+          }
+
+          return channels[0] < 80 && channels[1] < 80 && channels[2] < 80;
+        }
+
+        function applyAppearanceOverrides(root) {
+          var scope = root && root.querySelectorAll ? root : document;
+          ensureTransparentShell();
+
+          Array.prototype.forEach.call(
+            scope.querySelectorAll(".captcha-front, .captcha-normal, .captcha-open"),
+            function (node) {
+              node.style.boxShadow = "none";
+              node.style.webkitBoxShadow = "none";
+            }
+          );
+
+          // Remove dark mask/overlay backgrounds injected by the SDK
+          Array.prototype.forEach.call(
+            scope.querySelectorAll('[class*="mask"], [class*="Mask"], [class*="overlay"], [class*="Overlay"]'),
+            function (node) {
+              if (node instanceof HTMLElement) {
+                node.style.background = "transparent";
+                node.style.backgroundColor = "transparent";
+              }
+            }
+          );
+
+          // Catch fixed-position full-screen overlays by style
+          Array.prototype.forEach.call(
+            scope.querySelectorAll('div'),
+            function (node) {
+              if (!(node instanceof HTMLElement)) return;
+              var style = window.getComputedStyle(node);
+              if (style.position === "fixed" && isDarkBackground(style.backgroundColor)) {
+                node.style.background = "transparent";
+                node.style.backgroundColor = "transparent";
+              }
+            }
+          );
+
+          Array.prototype.forEach.call(
+            scope.querySelectorAll('[class*="captcha"], [id*="captcha"], [style*="box-shadow"]'),
+            function (node) {
+              if (!(node instanceof HTMLElement)) {
+                return;
+              }
+
+              var style = window.getComputedStyle(node);
+              var rect = node.getBoundingClientRect();
+              var isWideEnough = rect.width >= window.innerWidth * 0.55;
+
+              if (style.boxShadow && style.boxShadow !== "none" && isWideEnough) {
+                node.style.boxShadow = "none";
+                node.style.webkitBoxShadow = "none";
+              }
+
+              if (isDarkBackground(style.backgroundColor) && isWideEnough) {
+                node.style.background = "transparent";
+              }
+            }
+          );
+        }
+
+        function startAppearanceObserver() {
+          if (appearanceObserver || typeof MutationObserver !== "function") {
+            return;
+          }
+
+          appearanceObserver = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+              Array.prototype.forEach.call(mutation.addedNodes, function (node) {
+                if (!(node instanceof HTMLElement)) {
+                  return;
+                }
+
+                applyAppearanceOverrides(node);
+              });
+            });
+          });
+
+          appearanceObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+          });
+        }
+
+        function loadCaptchaScript() {
+          return new Promise(function (resolve, reject) {
+            if (typeof window.initAliyunCaptcha === "function") {
+              resolve();
+              return;
+            }
+
+            var existingScript = document.querySelector('script[data-qoder-captcha-script="true"]');
+            if (existingScript) {
+              existingScript.addEventListener("load", function handleLoad() {
+                existingScript.removeEventListener("load", handleLoad);
+                resolve();
+              });
+              existingScript.addEventListener("error", function handleError() {
+                existingScript.removeEventListener("error", handleError);
+                reject(new Error("Aliyun Captcha JS failed to load."));
+              });
+              return;
+            }
+
+            var script = document.createElement("script");
+            script.type = "text/javascript";
+            script.async = true;
+            script.dataset.qoderCaptchaScript = "true";
+            script.src = "https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js";
+            script.onload = function () {
+              resolve();
+            };
+            script.onerror = function () {
+              reject(new Error("Aliyun Captcha JS failed to load."));
+            };
+            document.head.appendChild(script);
+          });
+        }
+
+        function showCaptcha() {
+          if (!instance) {
+            pendingStart = true;
+            return;
+          }
+
+          var delay = Math.max(0, 2000 - (Date.now() - initializedAt));
+          window.setTimeout(function () {
+            try {
+              if (typeof instance.show === "function") {
+                instance.show();
+              }
+              // Override mask/overlay immediately after popup opens
+              window.setTimeout(function () {
+                applyAppearanceOverrides(document);
+              }, 50);
+              window.setTimeout(function () {
+                applyAppearanceOverrides(document);
+              }, 300);
+            } catch (error) {
+              reportError(error, "Captcha failed to start.");
+            }
+          }, delay);
+        }
+
+        window.qoderCaptcha = {
+          start: function () {
+            showCaptcha();
+          }
+        };
+
+        function initializeCaptcha() {
+          if (hasInitializedCaptcha) {
+            return;
+          }
+
+          hasInitializedCaptcha = true;
+          ensureTransparentShell();
+          startAppearanceObserver();
+
+          if (typeof window.initAliyunCaptcha !== "function") {
+            throw new Error("Aliyun Captcha JS is unavailable.");
+          }
+
+          var nativeConfig = window.__QODER_CAPTCHA_CONFIG__ || {};
+
+          window.initAliyunCaptcha({
+            SceneId: nativeConfig.sceneId || "",
+            mode: "popup",
+            element: "#captcha-element",
+            button: "#trigger",
+            language: nativeConfig.language || "en",
+            getInstance: function (captcha) {
+              instance = captcha;
+              initializedAt = Date.now();
+              window.setTimeout(function () {
+                applyAppearanceOverrides(document);
+              }, 0);
+              window.setTimeout(function () {
+                applyAppearanceOverrides(document);
+              }, 250);
+              window.setTimeout(function () {
+                applyAppearanceOverrides(document);
+              }, 600);
+              post("ready");
+
+              if (pendingStart) {
+                pendingStart = false;
+                showCaptcha();
+              }
+            },
+            success: function (captchaVerifyParam) {
+              post("success", {
+                captchaVerifyParam: captchaVerifyParam
+              });
+            },
+            fail: function (result) {
+              if (window.console && console.warn) {
+                console.warn("Captcha failed", result);
+              }
+            },
+            onClose: function () {
+              post("closed");
+            },
+            onError: function (error) {
+              reportError(error, "Captcha failed to initialize.");
+            },
+            slideStyle: {
+              width: sliderWidth(),
+              height: 48
+            },
+            rem: Math.min(1, Math.max(0.84, (window.innerWidth - 24) / 320))
+          });
+        }
+
+        window.addEventListener("error", function (event) {
+          reportError(event.error || event, "Captcha failed to initialize.");
+        });
+
+        window.addEventListener("unhandledrejection", function (event) {
+          reportError(event.reason || event, "Captcha failed to initialize.");
+        });
+
+        loadCaptchaScript()
+          .then(initializeCaptcha)
+          .catch(function (error) {
+            reportError(error, "Captcha failed to initialize.");
+          });
+      })();
+    </script>
+  </body>
+</html>

@@ -26,6 +26,9 @@
       ["expo-image-picker", {
         "photosPermission": "需要访问相册用于发送图片",
         "cameraPermission": "需要访问相机用于拍摄图片"
+      }],
+      ["expo-av", {
+        "microphonePermission": "需要访问麦克风用于语音输入"
       }]
     ],
     "owner": "wst3050469",

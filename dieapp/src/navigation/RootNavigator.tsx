@@ -5,6 +5,7 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { useAppStore, loadPersistedAuth } from '../stores/app-store';
 import { api } from '../services/api';
 import { CLOUD_SERVER_URL, CLOUD_SERVER_WS, Colors } from '../constants';
+import { registerPushToken } from '../services/notifications';
 import AuthNavigator from './AuthNavigator';
 import MainNavigator from './MainNavigator';
 import SplashScreen from '../screens/SplashScreen';
@@ -17,6 +18,13 @@ export default function RootNavigator() {
   useEffect(() => {
     initApp();
   }, []);
+
+  // 登录成功后注册推送Token
+  useEffect(() => {
+    if (isLoggedIn && token) {
+      registerPushToken(token).catch(() => {});
+    }
+  }, [isLoggedIn, token]);
 
   async function initApp() {
     // 闪屏展示 1.5s
@@ -34,6 +42,7 @@ export default function RootNavigator() {
           if (persisted.user) setUser(persisted.user);
           setConnection(true, 'cloud_account', CLOUD_SERVER_URL);
           api.connectWs();
+          registerPushToken(persisted.token).catch(() => {}); // 注册推送Token
           setPhase('main');
           return;
         }

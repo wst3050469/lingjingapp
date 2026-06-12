@@ -2635,20 +2635,6 @@ app.post('/api/mobile/chat', async (req, res) => {
     
     console.log('[MobileChat] ' + (req.ip || 'anon') + ': ' + message.slice(0, 60) + ' -> ' + reply.slice(0, 60));
 
-    // Broadcast to all connected clients so desktop/tasks stay in sync
-    const syncPayload = {
-      type: 'push',
-      channel: 'chat',
-      event: 'message',
-      data: {
-        conversationId: convId,
-        message: { role: 'assistant', content: reply, created_at: new Date().toISOString() },
-      },
-    };
-    wss?.clients.forEach(c => {
-      if (c.readyState === 1) c.send(JSON.stringify(syncPayload));
-    });
-
     res.json({ reply, conversationId: convId });
   } catch (err) {
     console.error('[MobileChat] Error:', err.message);

@@ -1,9 +1,14 @@
-// 对话详情页 — 云AI直连（无需桌面端）
+// 对话详情页 — 云AI直连 + 模型选择
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView, Alert } from 'react-native';
+import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { api } from '../services/api';
 import { useAppStore, Message } from '../stores/app-store';
 import { Ionicons } from '@expo/vector-icons';
+
+const MODELS = [
+  { id: 'deepseek', name: 'DeepSeek', icon: 'bulb-outline' },
+  { id: 'thinking', name: '深度思考', icon: 'git-branch-outline' },
+];
 
 export default function ChatDetailScreen({ route }: any) {
   if (!route?.params) { return null; }
@@ -12,30 +17,17 @@ export default function ChatDetailScreen({ route }: any) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('deepseek');
   const flatListRef = useRef<FlatList>(null);
-  const wsUnsubRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
-    loadSession();
-    wsUnsubRef.current = api.subscribeWs((data) => {
-      if (data.type === 'push' && data.channel === 'chat' && data.data?.conversationId === sessionId) {
-        if (data.data?.message) {
-          setMessages(prev => [...prev, data.data.message]);
-        }
-        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
-      }
-    });
-    return () => { wsUnsubRef.current?.(); };
-  }, [sessionId]);
+  useEffect(() => { loadSession(); }, [sessionId]);
 
   async function loadSession() {
     try {
       const data = await api.getSession(sessionId);
-      if (data?.messages) {
-        setMessages(data.messages);
-      }
+      if (data?.messages) setMessages(data.messages);
     } catch (e) {
-      console.log('Failed to load session (using local):', e);
+      console.log('Failed to load session:', e);
     } finally {
       setLoading(false);
     }
@@ -52,20 +44,43 @@ export default function ChatDetailScreen({ route }: any) {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
     try {
-      // Direct cloud AI — fast, no WS dependency
-      const result = await api.sendMessage(sessionId, msg);
+      let result: any;
 
-      if (result?.reply) {
-        const aiMsg: Message = {
-          role: 'assistant',
-          content: result.reply,
+      if (selectedModel === 'thinking') {
+        // Show thinking indicator
+        const thinkingMsg: Message = {
+          role: 'assistant' as const,
+          content: '🤔 深度思考中...',
           created_at: new Date().toISOString(),
         };
-        setMessages(prev => [...prev, aiMsg]);
+        setMessages(prev => [...prev, thinkingMsg]);
+
+        result = await api.sendMessage(sessionId, '请逐步思考后回答：' + msg);
+
+        // Remove thinking indicator and add real reply
+        setMessages(prev => {
+          const filtered = prev.filter(m => m !== thinkingMsg);
+          const aiMsg: Message = {
+            role: 'assistant' as const,
+            content: result?.reply || '思考完毕',
+            created_at: new Date().toISOString(),
+          };
+          return [...filtered, aiMsg];
+        });
+      } else {
+        result = await api.sendMessage(sessionId, msg);
+        if (result?.reply) {
+          const aiMsg: Message = {
+            role: 'assistant',
+            content: result.reply,
+            created_at: new Date().toISOString(),
+          };
+          setMessages(prev => [...prev, aiMsg]);
+        }
       }
+
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (e: any) {
-      console.log('Send failed:', e.message);
       const errMsg: Message = {
         role: 'assistant' as const,
         content: '❌ ' + (e.message || '发送失败'),
@@ -97,10 +112,23 @@ export default function ChatDetailScreen({ route }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        {/* Model selector */}
+        <View style={styles.modelBar}>
+          {MODELS.map(m => (
+            <TouchableOpacity
+              key={m.id}
+              style={[styles.modelBtn, selectedModel === m.id && styles.modelBtnActive]}
+              onPress={() => setSelectedModel(m.id)}
+            >
+              <Ionicons name={m.icon as any} size={14} color={selectedModel === m.id ? '#fff' : '#8b949e'} />
+              <Text style={[styles.modelText, selectedModel === m.id && styles.modelTextActive]}>
+                {m.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -142,12 +170,15 @@ export default function ChatDetailScreen({ route }: any) {
   );
 }
 
-import { ActivityIndicator } from 'react-native';
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0d1117' },
   center: { flex: 1, backgroundColor: '#0d1117', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#8b949e', fontSize: 14 },
+  modelBar: { flexDirection: 'row', padding: 6, gap: 6, backgroundColor: '#161b22', borderBottomWidth: 1, borderBottomColor: '#21262d', justifyContent: 'center' },
+  modelBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#21262d' },
+  modelBtnActive: { backgroundColor: '#1f6feb' },
+  modelText: { color: '#8b949e', fontSize: 12 },
+  modelTextActive: { color: '#fff', fontWeight: '600' },
   list: { flex: 1 },
   listContent: { padding: 12, paddingBottom: 20 },
   emptyContainer: { flex: 1 },
@@ -163,18 +194,8 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: 14, lineHeight: 20 },
   userText: { color: '#fff' },
   aiText: { color: '#c9d1d9' },
-  inputBar: {
-    flexDirection: 'row', alignItems: 'flex-end', padding: 8, gap: 8,
-    backgroundColor: '#161b22', borderTopWidth: 1, borderTopColor: '#21262d',
-  },
-  input: {
-    flex: 1, color: '#c9d1d9', fontSize: 14,
-    backgroundColor: '#0d1117', borderRadius: 10, padding: 10,
-    maxHeight: 100, borderWidth: 1, borderColor: '#21262d',
-  },
-  sendBtn: {
-    backgroundColor: '#1f6feb', borderRadius: 20,
-    padding: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
-  },
+  inputBar: { flexDirection: 'row', alignItems: 'flex-end', padding: 8, gap: 8, backgroundColor: '#161b22', borderTopWidth: 1, borderTopColor: '#21262d' },
+  input: { flex: 1, color: '#c9d1d9', fontSize: 14, backgroundColor: '#0d1117', borderRadius: 10, padding: 10, maxHeight: 100, borderWidth: 1, borderColor: '#21262d' },
+  sendBtn: { backgroundColor: '#1f6feb', borderRadius: 20, padding: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   sendBtnDisabled: { backgroundColor: '#21262d' },
 });

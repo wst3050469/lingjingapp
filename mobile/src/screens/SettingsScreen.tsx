@@ -240,7 +240,8 @@ export default function SettingsScreen() {
         </View>
       )}
 
-      {/* Settings */}
+      {/* 连接设置 - 云账号已连接则自动隐藏 */}
+      {mode !== 'cloud_account' && (
       <View style={styles.card}>
         <Text style={styles.cardTitle}>连接设置</Text>
         <Text style={styles.label}>配对 Token</Text>
@@ -265,6 +266,7 @@ export default function SettingsScreen() {
           <Text style={styles.btnText}>保存并重新连接</Text>
         </TouchableOpacity>
       </View>
+      )}
 
       {/* Version Check */}
       <View style={styles.card}>

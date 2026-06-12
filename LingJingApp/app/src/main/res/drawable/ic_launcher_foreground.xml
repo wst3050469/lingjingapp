@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- "灵" character simplified icon -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,20 L54,88 M34,38 L74,38 M34,54 L74,54 M34,70 L74,70" />
+    <path
+        android:fillColor="#58a6ff"
+        android:pathData="M42,20 L30,35 L78,35 L66,20 Z" />
+    <path
+        android:fillColor="#3fb950"
+        android:pathData="M42,35 L30,50 L78,50 L66,35 Z" />
+    <path
+        android:fillColor="#d29922"
+        android:pathData="M42,50 L30,65 L78,65 L66,50 Z" />
+</vector>

@@ -33,6 +33,10 @@ pnpm-debug.log*
 .expo/
 *.jks
 *.keystore
+eas
+eas.cmd
+eas.ps1
+.eas-build/
 
 # Android
 android/app/build/

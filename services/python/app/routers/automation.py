@@ -8,6 +8,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import db as database
 from routers.auth import get_current_user
 
+def _get_next_run_time(cron_expr: str) -> str:
+    """简单计算下次运行时间（占位实现）"""
+    from datetime import datetime, timedelta
+    return (datetime.now() + timedelta(minutes=5)).isoformat()
+
 router = APIRouter(prefix="/api/v1/automation", tags=["automation"])
 
 
@@ -80,8 +85,7 @@ async def create_task(req: CreateAutomationRequest, user: dict = Depends(get_cur
     """创建自动化任务"""
     admin = _require_tenant_admin(user)
     tid = admin["tenant_id"]
-    from services.automation_engine import get_next_run_time
-    next_run = get_next_run_time(req.cron_expr)
+    next_run = _get_next_run_time(req.cron_expr)
     async with database.pool.acquire() as conn:
         row = await conn.fetchrow(
             """INSERT INTO automated_tasks (tenant_id, name, description_nl, cron_expr, task_type,
@@ -99,8 +103,7 @@ async def update_task(task_id: int, req: CreateAutomationRequest, user: dict = D
     """更新自动化任务"""
     admin = _require_tenant_admin(user)
     tid = admin["tenant_id"]
-    from services.automation_engine import get_next_run_time
-    next_run = get_next_run_time(req.cron_expr)
+    next_run = _get_next_run_time(req.cron_expr)
     async with database.pool.acquire() as conn:
         existing = await conn.fetchrow(
             "SELECT id FROM automated_tasks WHERE id = $1 AND tenant_id = $2", task_id, tid,
@@ -147,8 +150,7 @@ async def trigger_task(task_id: int, user: dict = Depends(get_current_user)):
         )
         if not row:
             raise HTTPException(status_code=404, detail="任务不存在")
-        from services.automation_engine import _execute_task
-        result = await _execute_task(dict(row))
+        result = {"status": "not_implemented", "msg": "自动化引擎已移除"}
     return {"code": 0, "data": result}
 
 

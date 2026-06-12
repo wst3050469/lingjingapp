@@ -53,7 +53,6 @@ class Project(BaseModel):
     no: Optional[str] = None  # 项目编号
     status: str = "pending"  # pending/in_progress/completed/finished
     owner_id: Optional[str] = None  # 负责人
-    manager_id: Optional[str] = None  # 项目经理
     progress: float = 0
     budget: float = 0
     start_date: Optional[datetime] = None

@@ -25,10 +25,6 @@ _QUERY_PERMISSIONS = {
         "wage", "team_members", "supplier", "recipe", "sample",
         "customer", "my_expense", "wechat_messages",
     },
-    "technician":      {
-        "dashboard", "recipe", "sample", "customer", "supplier",
-    },
-    "worker":          {"wage", "attendance"},
     "member":          set(),
 }
 
@@ -1526,8 +1522,6 @@ async def _query_team_members(conn, message: str, tenant_id: str, **kwargs) -> s
     role_keywords = {
         "项目经理": "project_manager",
         "管理员": "admin", "admin": "admin",
-        "技术员": "technician",
-        "工人": "worker",
         "老板": "owner", "负责人": "owner",
     }
     _is_role_specific_query = any(kw in message for kw in role_keywords)
@@ -1547,15 +1541,13 @@ async def _query_team_members(conn, message: str, tenant_id: str, **kwargs) -> s
 
     role_names = {
         "owner": "老板", "admin": "管理员", "project_manager": "项目经理",
-        "worker": "工人", "member": "待分配", "technician": "技术员",
+        "member": "成员",
         "customer": "客户",
     }
     # 角色反向映射：中文角色名 → 英文角色code
     role_keywords = {
         "项目经理": "project_manager",
         "管理员": "admin", "admin": "admin",
-        "技术员": "technician",
-        "工人": "worker",
         "老板": "owner", "负责人": "owner",
     }
     # 从消息中检测是否指定了角色

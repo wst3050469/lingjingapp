@@ -483,16 +483,10 @@ def build_messages(
             identity = f"用户是{owner}，{company}的管理员。"
         elif tenant_role == "project_manager":
             identity = f"用户是{nickname}，{company}的项目经理。"
-        elif tenant_role == "worker":
-            identity = f"用户是{nickname}，{company}的工人。"
-        elif tenant_role == "technician":
-            identity = f"用户是{nickname}，{company}的技术员（负责产品研发和配方管理）。"
+        elif tenant_role == "member":
+            identity = f"用户是{nickname}，{company}的成员（尚未分配角色）。"
             system_content += """
 
-你可以帮技术员完成以下操作：
-- 录入样板（说「录样板」+ 拍照上传 + 说配方 → 照片和配方一同保存）
-- 调出/查找样板（说「水磨石面层样板」「3号样板」→ 模糊搜索，图片和配方一起显示）
-- 录入新客户（说「录个客户叫XX，电话1XX」→ 样板需要绑定客户）
 - 查客户信息（说「客户有哪些」→ 查看已录入的客户列表，含优先级排序）
 - 更新客户状态（说「把XX的状态改为洽谈中」→ 支持9种状态：咨询中/待跟进/洽谈中/已签约/施工中/已交付/质保中/休眠客户/无效客户）
 - 录入新产品配方（说「新增配方叫XX」，说原料配比）
@@ -515,10 +509,8 @@ def build_messages(
             system_content += """
 
 你可以帮管理员完成以下操作：
-- 录客户、录供应商、报工、记费用、建项目（用户不需要打开任何后台或网页）
+- 录客户、录供应商、更新项目进度、建项目（用户不需要打开任何后台或网页）
 - 管理供应商（录入、归类、查报价），说"采购XX"自动调出相关供应商
-- 设定团队成员角色（工人/项目经理/管理员/技术员）
-- 绑定/解绑成员到项目（一人一项目）
 - 查询团队打卡和工资情况、客户、合同、财务、供应商等所有业务数据
 - 查询费用记录时，如费用关联了单据图片，要主动告知用户"这笔费用有X张单据"
 - 当看到 [灵境待办事项] 时，在回复中提及最重要的2-3项待办，引导用户处理
@@ -526,7 +518,6 @@ def build_messages(
 - 完成待办：用户说"完成待办3"时执行 complete_todo，也可说"搞定了"标记最近的
 - 生成合同：用户说「帮我做一份合同」「生成施工合同」→ 自动调用模板生成，包含项目/甲方/乙方/金额/地址/工期
 - 审核合同：用户说「审核这个合同」并上传合同文件 → 以甲方立场法务审核，逐条列出风险点和修改建议
-设定工人角色时，要追问工种和日薪。绑定项目时要确认具体哪个项目。
 
 ⚠️ 重要：客户/供应商/项目等信息只能从系统查询结果中引用。当用户询问"有哪些客户/供应商"时，先执行查询，然后严格按照查询结果回答。如果查询结果是"暂无数据"，就说"系统中暂无记录"。严禁自己编造客户名、公司名、联系人等信息。"""
 
@@ -535,55 +526,31 @@ def build_messages(
                 notif_text = "\n\n[灵境团队通知]\n"
                 for n in team_notifications:
                     if n["type"] == "new_member":
-                        notif_text += f"- 新成员「{n['target_user_name']}」通过邀请码加入了团队，请告诉我给他设定什么角色（如：工人、项目经理等）\n"
+                        notif_text += f"- 新成员「{n['target_user_name']}」通过邀请码加入了团队，请告诉我给他设定什么角色\n"
                 system_content += notif_text
 
         elif tenant_role == "project_manager":
             system_content += """
 
 你可以帮项目经理完成以下操作：
-- 打卡、报工、费用记录、更新项目进度、录入供应商
+- 打卡、更新项目进度、录入供应商
 - 申请备用金
-- 绑定/解绑工人到本项目
 - 查询本项目的考勤、工资、财务、工序进展、供应商等数据
 - 查询费用时如有关联单据图片，主动告知用户
-注意：创建项目、录入客户、设定角色等操作需要联系管理员。"""
+注意：创建项目、录入客户等操作需要联系管理员。"""
 
-        elif tenant_role == "worker":
-            system_content += """
-
-你可以帮工人完成以下操作：
-- 打卡（说"到了"或"打卡"上班，说"下班"或"收工"下班）
-- 申请备用金
-- 查询自己的考勤和工资
-其他操作（报工、记费用、建项目等）需要联系管理员或项目经理。"""
-
-        elif tenant_role == "technician":
-            # 技术员的能力提示在角色注入前已添加（见上面 technician block）
-            pass
-        else:
-            # member: 尚未分配角色
+        elif tenant_role == "member":
             system_content += """
 
 该用户刚刚通过邀请码加入团队，尚未被管理员分配角色。
 目前只能进行普通对话，无法执行任何业务操作。
-请引导用户联系管理员分配角色（工人、项目经理等）后才能使用业务功能。"""
+请引导用户联系管理员分配角色后才能使用业务功能。"""
 
-        # 工人/项目经理/技术员：注入项目信息和打卡引导
         if user_project_info and user_project_info.get("project_name"):
             pname = user_project_info["project_name"]
             system_content += f"\n\n用户当前绑定的项目是「{pname}」。"
-            if tenant_role == "worker":
-                wtype = user_project_info.get("worker_type", "")
-                wage = user_project_info.get("daily_wage", "")
-                if wtype:
-                    system_content += f"工种：{wtype}。"
-                if wage:
-                    system_content += f"日薪：{wage}元。"
-            elif tenant_role == "technician":
-                system_content += "上传样板时，请关联到此项目的打样需求。"
             system_content += "用户可以说'打卡'或'到了'来记录出勤，说'下班'或'收工'记录下班。"
-        elif tenant_role in ("worker", "project_manager", "technician") and not user_project_info:
+        elif tenant_role in ("project_manager", "member") and not user_project_info:
             system_content += "\n\n用户还没有绑定项目，打卡前需要联系管理员安排项目。"
 
         # 注入业务数据

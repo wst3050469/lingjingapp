@@ -1,4 +1,4 @@
-"""灵境 - 企业数字大脑 主入口"""
+"""灵境IDE 主入口"""
 import os
 import sys
 import logging
@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fastapi.staticfiles import StaticFiles
 from config import UPLOAD_DIR, ADMIN_DIR, DIST_DIR, APK_DIR
 import db as database
-from routers import auth, user, user_settings, project, attendance, task, approval, ai, app_version, memories, chat, profile, files, search, technician, consensus, system, webhook, partners, push, admin, oss, platform_admin, notification, automation, hardware_voice, ha_conversation, import_data, call_analysis, voice_asr, wechat, wechat_mp, wecom
+from routers import auth, user, user_settings, project, task, approval, ai, app_version, memories, chat, profile, files, search, consensus, system, webhook, partners, push, admin, oss, platform_admin, notification, automation, hardware_voice, ha_conversation, call_analysis, voice_asr
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("启动灵境企业管理系统...")
+    logger.info("启动灵境IDE...")
 
     # 启动前关键配置检查
     import config
@@ -45,14 +45,10 @@ async def lifespan(app: FastAPI):
     _asyncio.create_task(_preload_whisper())
     _asyncio.create_task(_preload_ollama())
     _asyncio.create_task(_preload_tts())
-    # 启动 AI 主动提醒引擎 + 自动化任务引擎 + 个人成长报告调度器 + 背景思考引擎 + 自动同步引擎
-    from services.ai_reminder import start_reminder_scheduler, stop_reminder_scheduler
-    from services.automation_engine import start_automation_engine, stop_automation_engine
+    # 启动个人成长报告调度器 + 背景思考引擎 + 自动同步引擎
     from services.personal_report_service import start_report_scheduler, stop_report_scheduler
     from services.subconscious_engine import start_subconscious_engine, stop_subconscious_engine
     from services.auto_fetch_service import start_auto_fetch, stop_auto_fetch
-    _asyncio.create_task(start_reminder_scheduler())
-    _asyncio.create_task(start_automation_engine())
     _asyncio.create_task(start_report_scheduler())
     start_subconscious_engine()
     start_auto_fetch()
@@ -60,9 +56,7 @@ async def lifespan(app: FastAPI):
     from services.file_service import start_vision_health_check
     start_vision_health_check()
     yield
-    logger.info("关闭灵境企业管理系统...")
-    await stop_reminder_scheduler()
-    await stop_automation_engine()
+    logger.info("关闭灵境IDE...")
     await stop_report_scheduler()
     await stop_subconscious_engine()
     await stop_auto_fetch()
@@ -140,7 +134,6 @@ app.include_router(ai.router)
 app.include_router(user.router)
 app.include_router(user_settings.router)
 app.include_router(project.router)
-app.include_router(attendance.router)
 app.include_router(task.router)
 app.include_router(approval.router)
 app.include_router(app_version.router)
@@ -150,7 +143,6 @@ app.include_router(profile.router)
 app.include_router(files.router)
 app.include_router(admin.router)
 app.include_router(search.router)
-app.include_router(technician.router)
 app.include_router(consensus.router)
 app.include_router(system.router)
 app.include_router(platform_admin.router)
@@ -162,12 +154,8 @@ app.include_router(notification.router)
 app.include_router(automation.router)
 app.include_router(hardware_voice.router)
 app.include_router(ha_conversation.router)
-app.include_router(import_data.router)
 app.include_router(call_analysis.router)
 app.include_router(voice_asr.router)
-app.include_router(wechat.router)
-app.include_router(wechat_mp.router)
-app.include_router(wecom.router)
 
 # 静态文件服务 - 上传的文件
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -211,20 +199,12 @@ async def ws_endpoint(websocket: WebSocket, token: str):
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "service": "灵境企业管理系统"}
+    return {"status": "healthy", "service": "灵境IDE"}
 
-@app.get("/WW_verify_xteLOMYFbau0PLmR.txt")
 
-async def wecom_verify():
-
-    from fastapi.responses import PlainTextResponse
-
-    return PlainTextResponse("xteLOMYFbau0PLmR")
-
-    
 @app.get("/")
 async def root():
-    return {"name": "灵境 - 企业数字大脑", "version": "1.72.16"}
+    return {"name": "灵境IDE", "version": "1.72.16"}
 
 if __name__ == "__main__":
     import uvicorn

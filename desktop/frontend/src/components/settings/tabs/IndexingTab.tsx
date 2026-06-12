@@ -48,6 +48,18 @@ export function IndexingTab({ config, saveKey }: IndexingTabProps) {
 
   useEffect(() => { loadStatus(); }, []);
 
+  // Auto file watcher: start/stop based on autoIndex config
+  useEffect(() => {
+    if (autoIndex) {
+      window.electronAPI.indexing?.startWatcher?.().catch(() => {});
+    } else {
+      window.electronAPI.indexing?.stopWatcher?.().catch(() => {});
+    }
+    return () => {
+      // Don't stop on unmount — watcher persists across tab switches
+    };
+  }, [autoIndex]);
+
   // Reset building state when global store reports indexing complete
   useEffect(() => {
     if (!storeIsIndexing) {

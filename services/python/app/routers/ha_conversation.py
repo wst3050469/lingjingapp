@@ -203,8 +203,8 @@ async def _ha_ai_chat(user_text: str, tenant_id: str = None, session_id: str = N
                     )
                     if rows:
                         role_names = {
-                            "owner": "老板", "admin": "管理员", "project_manager": "项目经理",
-                            "worker": "工人", "member": "成员", "technician": "技术员",
+                            "owner": "老板", "admin": "管理员",
+                            "member": "成员",
                         }
                         members = []
                         for r in rows:

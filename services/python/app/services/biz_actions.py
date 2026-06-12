@@ -28,28 +28,13 @@ _ROLE_PERMISSIONS = {
     "admin":           {"*"},
     "project_manager": {
         "self_checkin", "fund_request", "submit_expense",
-        "record_workers", "update_progress",
-        "bind_project", "unbind_project",
-        "add_customer", "add_supplier", "add_template_image",
-        "update_sample", "change_own_password",
+        "update_progress",
+        "add_customer", "add_supplier",
+        "change_own_password",
         "generate_contract", "review_contract", "calc_material",
         "web_search", "add_invoice",
-        "import_sms", "import_wechat", "import_contacts", "query_import_data",
-        "analyze_wechat",
     },
-    "technician":      {
-        "self_checkin", "add_recipe", "add_template_image",
-        "add_customer", "add_supplier", "submit_expense", "send_to_factory",
-        "update_sample", "change_own_password",
-        "generate_contract", "review_contract", "calc_material",
-        "web_search", "add_invoice",
-        "import_sms", "import_wechat", "import_contacts", "query_import_data",
-        "analyze_wechat",
-    },
-    "worker":          {"self_checkin", "fund_request", "change_own_password", "web_search",
-                        "import_sms", "import_wechat", "import_contacts", "query_import_data"},
-    "member":          {"change_own_password", "web_search",
-                        "import_sms", "import_wechat", "import_contacts", "query_import_data"},
+    "member":          {"change_own_password", "web_search"},
 }
 
 
@@ -59,8 +44,7 @@ def _check_permission(user: dict, action_id: str) -> str | None:
     allowed = _ROLE_PERMISSIONS.get(role, set())
     if "*" in allowed or action_id in allowed:
         return None
-    _CN = {"worker": "工人", "project_manager": "项目经理",
-           "member": "待分配成员", "technician": "技术员"}
+    _CN = {"member": "成员"}
     return f"您当前是「{_CN.get(role, role)}」角色，没有执行此操作的权限。请联系管理员。"
 
 
@@ -106,15 +90,6 @@ ACTION_PATTERNS = {
         ],
         "description": "录入供应商",
     },
-    "record_workers": {
-        "triggers": [
-            r"(?:来了|到了|到场|上工)\s*\d+\s*(?:个|名|位)?(?:工人|人)",
-            r"\d+\s*(?:个|名|位)?(?:大工|小工|工人|师傅).*(?:到|来|上工)",
-            r"报工",
-            r"(?:今[天日]|现在).*(?:工人|师傅|大工|小工)",
-        ],
-        "description": "工人报工/到场记录",
-    },
     "submit_expense": {
         "triggers": [
             r"(?:采购了?|买了|购买了?|进了|花了|支出|付了|付款|开了|开支|批了|日结|日付).*\d",
@@ -152,23 +127,6 @@ ACTION_PATTERNS = {
             r"(?:状态|阶段|进度).*(?:改为|改成|变为|更新|设置|设|修改)",
         ],
         "description": "推进客户阶段 / 设置客户状态",
-    },
-    "assign_role": {
-        "triggers": [
-            # 模式1: "设李阳技术员" / "设为项目经理" / "分配为管理员" / "改成技术员"
-            r"(?:设[定为]?|分配|指定|改[为成]?).*(?:工人|项目经理|管理员|技术员)",
-            # 模式2: "他是项目经理" / "这个是技术员" / "那位是工人"
-            r"(?:这个是|他是|她是|那个是|那位是).*(?:工人|项目经理|管理员|技术员)",
-            # 模式3: "李阳是项目经理" / "新来的是技术员" / "新来的当工人"（名称+是/当/做+角色）
-            r"[\u4e00-\u9fff]{2,6}[是当就做].{0,4}(?:工人|项目经理|管理员|技术员)",
-            # 模式4: "角色/身份"相关：角色为管理员 / 修改角色 / 设定身份
-            r"(?:角色|身份).{0,10}(?:工人|项目经理|管理员|技术员|设|改|定|分配|给)",
-            # 模式5: "给XX" + 角色身份
-            r"给[\u4e00-\u9fff]{2,6}.*(?:角色|身份|当|做|设为|分配)",
-            # 模式6: 工人日薪（带工种和金额，日薪可在数字前面或后面）
-            r"(?:大工|小工|电工|水电工|油漆工|泥水工|杂工).*(?:\d+.*(?:天|一天|每天|日薪)|日薪.*\d+)",
-        ],
-        "description": "设定团队成员角色",
     },
     "bind_project": {
         "triggers": [
@@ -358,24 +316,6 @@ ACTION_PATTERNS = {
             r"微信消息.{0,6}(?:归类|整理|分类|分析)",
         ],
         "description": "分析微信群聊消息（自动归类/摘要/项目关联）",
-    },
-    "import_sms": {
-        "triggers": [
-            r"(?:帮[我]?|把|将|给\s*我)?(?:读取|导入|导进|导入|读|取|载入|拿).*(?:短信|SMS|信息)",
-            r"短信.*(?:导入|导进|读取|读|取|载入)",
-            r"(?:我要|我想|帮我|请帮我).{0,6}(?:导入|读取|导进).{0,4}(?:短信|SMS)",
-            r"(?:把|将).{0,8}(?:短信|SMS).{0,6}(?:导[入进]|读[取入]|载入)",
-        ],
-        "description": "导入手机短信（读取短信提取联系人）",
-    },
-    "import_wechat": {
-        "triggers": [
-            r"(?:帮[我]?|把|将|给\s*我)?(?:导入|导进|读取|读|取|载入).*(?:微信|聊天记录|WeChat)",
-            r"(?:微信|聊天记录|WeChat).*(?:导入|导进|读取|读|取|载入)",
-            r"(?:我要|我想|帮我|请帮我).{0,6}(?:导入|读取|导进).{0,4}(?:微信|聊天记录)",
-            r"(?:把|将).{0,8}(?:微信|聊天记录).{0,6}(?:导[入进]|读[取入]|载入)",
-        ],
-        "description": "导入微信聊天记录（提取联系人与沟通记录）",
     },
     "import_contacts": {
         "triggers": [
@@ -2092,13 +2032,11 @@ _EXECUTORS = {
     "add_customer": _execute_add_customer,
     "add_invoice": _execute_add_invoice,
     "add_supplier": _execute_add_supplier,
-    "record_workers": _execute_record_workers,
     "submit_expense": _execute_submit_expense,
     "fund_request": _execute_fund_request,
     "create_project": _execute_create_project,
     "update_progress": _execute_update_progress,
     "advance_customer": _execute_advance_customer,
-    "assign_role": _execute_assign_role,
     "bind_project": _execute_bind_project,
     "unbind_project": _execute_unbind_project,
     "self_checkin": _execute_self_checkin,
@@ -2107,9 +2045,6 @@ _EXECUTORS = {
     "approve_finance": _execute_approve_finance,
     "reject_finance": _execute_reject_finance,
     "complete_todo": _execute_complete_todo,
-    "import_sms": _execute_import_sms,
-    "import_wechat": _execute_import_wechat,
-    "import_contacts": _execute_import_contacts,
     "query_import_data": _execute_query_import_data,
 }
 
@@ -2164,15 +2099,6 @@ def format_action_result(result: dict) -> str:
             parts.append(f"，地址 {result['address']}")
         parts.append(f"（编号:{result['id']}）")
         return "[灵境已执行] " + "".join(parts)
-
-    if action == "record_workers":
-        desc = "、".join(f"{w['type']}{w['count']}人" for w in result["workers"])
-        s = f"已记录 {result['date']} 工人到场：{desc}，共{result['total']}人"
-        if result.get("project"):
-            s += f"，项目：{result['project']}"
-        if result.get("daily_wage"):
-            s += f"，日薪{result['daily_wage']}元"
-        return f"[灵境已执行] {s}"
 
     if action == "submit_expense":
         cat_zh = {"原料采购": "原料采购", "零星采购": "零星采购", "临时工零星支付": "临时工零星支付"}
@@ -2987,8 +2913,8 @@ async def execute_business_actions(
     if not intents:
         return None
 
-    # web_search / import 不需要租户，个人用户可用
-    no_tenant_actions = {"web_search", "change_own_password", "import_sms", "import_wechat", "import_contacts"}
+    # web_search 不需要租户，个人用户可用
+    no_tenant_actions = {"web_search", "change_own_password"}
     if not tenant_id:
         intents = [i for i in intents if i in no_tenant_actions]
         if not intents:
@@ -3009,9 +2935,8 @@ async def execute_business_actions(
     results = []
     notification_calls = []
 
-    # 分离需要DB和不需要DB的动作（import/web_search/密码不需要数据库）
-    _IMPORT_ACTIONS = {"import_sms", "import_wechat", "import_contacts"}
-    no_db_actions = {"web_search", "change_own_password"} | _IMPORT_ACTIONS
+    # 分离需要DB和不需要DB的动作
+    no_db_actions = {"web_search", "change_own_password"}
     db_intents = [i for i in intents if i not in no_db_actions]
     no_db_intents = [i for i in intents if i in no_db_actions]
 

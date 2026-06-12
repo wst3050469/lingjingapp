@@ -10,7 +10,6 @@ from datetime import date
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import db as database, config
-from .approval_engine import get_weather
 
 
 async def collect_daily_data(tenant_id: str) -> dict:
@@ -53,13 +52,9 @@ async def collect_daily_data(tenant_id: str) -> dict:
             WHERE bf.tenant_id=$1 AND bf.created_at > NOW() - interval '7 days'
         """, tenant_id)
 
-        # 各项目天气
+        # 各项目天气（天气服务已移除）
         weather_data = {}
-        for p in projects:
-            if p["location"]:
-                w = await get_weather(p["location"])
-                if w.get("available"):
-                    weather_data[p["name"]] = w
+        # weather API previously: w = await get_weather(p["location"])
 
     return {
         "date": str(date.today()),

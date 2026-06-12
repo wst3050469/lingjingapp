@@ -53,7 +53,7 @@ export function QuestTab({ config, saveKey }: QuestTabProps) {
   const [dockerDirty, setDockerDirty] = useState(false);
 
   // File change behavior
-  const [fileChangeBehavior, setFileChangeBehavior] = useState<string>(q.fileChangeBehavior ?? 'ask');
+  const [fileChangeBehavior, setFileChangeBehavior] = useState<string>(q.fileChangeBehavior ?? 'auto-accept');
 
   const handleSaveWorktreeScript = () => {
     saveKey('quest.worktreeScript', worktreeScript);

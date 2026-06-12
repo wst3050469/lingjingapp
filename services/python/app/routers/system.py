@@ -159,28 +159,10 @@ async def engine_status():
                 "status": "running" if _is_alive(af_task) else "stopped",
                 "poll_interval": "1800s",
             },
-            "ai_reminder": {"status": "running" if _is_alive(_get_reminder_task()) else "stopped"},
-            "automation_engine": {"status": "running" if _is_alive(_get_auto_task()) else "stopped"},
             "report_scheduler": {"status": "running" if _is_alive(_get_report_task()) else "stopped"},
         },
         "timestamp": now.isoformat(),
     }
-
-
-def _get_reminder_task():
-    try:
-        from services.ai_reminder import _reminder_task
-        return _reminder_task
-    except ImportError:
-        return None
-
-
-def _get_auto_task():
-    try:
-        from services.automation_engine import _engine_task
-        return _engine_task
-    except ImportError:
-        return None
 
 
 def _get_report_task():

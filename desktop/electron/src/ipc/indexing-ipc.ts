@@ -4,6 +4,7 @@ import { ipcMain, BrowserWindow } from 'electron';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import chokidar from 'chokidar';
 import { loadConfig } from '@codepilot/core';
 import { runIndexingPipeline, type IndexingProgress } from '../services/indexing-pipeline.js';
 import { getDatabase, saveDatabase } from '../db/database.js';
@@ -269,5 +270,112 @@ export function registerIndexingIpc(getWorkspace: () => string, mainWindow: Brow
       console.error('indexing:set-ignore error:', err);
       return { success: false, error: String(err instanceof Error ? err.message : err) };
     }
+  });
+
+  // ── File watcher: auto-trigger incremental indexing on file changes ──
+  let fileWatcher: chokidar.FSWatcher | null = null;
+  let watcherDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  async function triggerIncrementalIndex() {
+    const workspace = getWorkspace();
+    if (!workspace || !existsSync(workspace)) return;
+    try {
+      const loaded = await loadConfig();
+      const autoIndex = (loaded.config as any)?.indexing?.autoIndex ?? true;
+      const threshold = (loaded.config as any)?.indexing?.autoIndexThreshold ?? 10000;
+      if (!autoIndex) return;
+
+      const gitignore = await readGitignore(workspace);
+      const lingjingIgnore = await readLingjingIgnore(workspace);
+      const allIgnore = [...gitignore, ...lingjingIgnore];
+      const fileCount = await countFiles(workspace, allIgnore, threshold);
+      if (fileCount > threshold) return; // Too many files, skip auto-index
+
+      console.log(`[indexing:watcher] Incremental indexing triggered, ~${fileCount} files`);
+      await runIndexingPipeline(
+        workspace,
+        loaded.config,
+        getDatabase(),
+        saveDatabase,
+        (progress: IndexingProgress) => {
+          latestProgress = progress;
+          if (progress.phase === 'done' || progress.phase === 'error') {
+            indexStates.set(workspace, {
+              indexed: progress.totalChunks > 0,
+              indexedCount: progress.totalChunks,
+              lastUpdated: new Date().toISOString(),
+            });
+          }
+          try {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              mainWindow.webContents.send('indexing:progress', progress);
+            }
+          } catch { /* ignored */ }
+        },
+      );
+    } catch (err) {
+      console.error('[indexing:watcher] Incremental indexing failed:', err);
+    }
+  }
+
+  ipcMain.handle('indexing:start-watcher', async () => {
+    const workspace = getWorkspace();
+    if (!workspace || !existsSync(workspace)) {
+      return { success: false, error: 'No workspace set' };
+    }
+    if (fileWatcher) {
+      return { success: true, msg: 'Watcher already running' };
+    }
+    try {
+      const gitignore = await readGitignore(workspace);
+      const lingjingIgnore = await readLingjingIgnore(workspace);
+      const ignored = [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/.lingjing/**',
+        '**/dist/**',
+        '**/build/**',
+        '**/__pycache__/**',
+        '**/.cache/**',
+        ...gitignore.map((p) => `**/${p}`),
+        ...lingjingIgnore.map((p) => `**/${p}`),
+      ];
+      fileWatcher = chokidar.watch(workspace, {
+        ignored,
+        ignoreInitial: true,
+        persistent: true,
+        depth: 15,
+      });
+      const scheduleIndex = () => {
+        if (watcherDebounceTimer) clearTimeout(watcherDebounceTimer);
+        watcherDebounceTimer = setTimeout(triggerIncrementalIndex, 2000);
+      };
+      fileWatcher.on('add', scheduleIndex);
+      fileWatcher.on('change', scheduleIndex);
+      fileWatcher.on('unlink', scheduleIndex);
+      fileWatcher.on('addDir', scheduleIndex);
+      console.log('[indexing:watcher] File watcher started');
+      return { success: true };
+    } catch (err) {
+      console.error('[indexing:watcher] Failed to start:', err);
+      return { success: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle('indexing:stop-watcher', async () => {
+    if (fileWatcher) {
+      await fileWatcher.close();
+      fileWatcher = null;
+      if (watcherDebounceTimer) {
+        clearTimeout(watcherDebounceTimer);
+        watcherDebounceTimer = null;
+      }
+      console.log('[indexing:watcher] File watcher stopped');
+    }
+    return { success: true };
+  });
+
+  ipcMain.handle('indexing:watcher-status', async () => {
+    return { active: fileWatcher !== null };
   });
 }

@@ -43,7 +43,6 @@ EVENT_ROUTE = {
     "automation_task":         ["owner", "admin"],            # 自动化任务报告
     # 系统通知
     "system_announcement":     ["*"],                         # 全员
-    "ai_reminder":             ["owner", "admin"],            # AI主动提醒
     "member_added":            ["owner", "admin"],
     "role_changed":            ["owner", "admin"],
 }
@@ -69,7 +68,6 @@ EVENT_PRIORITY = {
     "customer_stale":        PRIORITY_NORMAL,
     "customer_added":        PRIORITY_NORMAL,
     "system_announcement":   PRIORITY_LOW,
-    "ai_reminder":           PRIORITY_NORMAL,
     "automation_task":       PRIORITY_NORMAL,
     "member_added":          PRIORITY_LOW,
     "role_changed":          PRIORITY_LOW,

@@ -248,6 +248,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getIgnore: () => ipcRenderer.invoke('indexing:get-ignore'),
     setIgnore: (content: string) => ipcRenderer.invoke('indexing:set-ignore', { content }),
     liveProgress: () => ipcRenderer.invoke('indexing:live-progress'),
+    startWatcher: () => ipcRenderer.invoke('indexing:start-watcher'),
+    stopWatcher: () => ipcRenderer.invoke('indexing:stop-watcher'),
+    watcherStatus: () => ipcRenderer.invoke('indexing:watcher-status'),
     onProgress: (callback: (progress: any) => void) => {
       const handler = (_event: any, data: any) => callback(data);
       ipcRenderer.on('indexing:progress', handler);

@@ -9,12 +9,20 @@ import { useTodoStore } from '../stores/todo-store';
 
 export function useQuestEvents(): void {
   useEffect(() => {
-    // Load maxContextTokens from config for context meter + auto-compact
+    // Load config for context meter + auto-compact + file change behavior
+    let fileChangeBehavior: string = 'auto-accept';
     window.electronAPI.config.get().then((cfg: any) => {
       if (cfg?.maxContextTokens) {
         useQuestStore.getState().setMaxContextTokens(cfg.maxContextTokens);
       }
+      fileChangeBehavior = cfg?.quest?.fileChangeBehavior ?? 'auto-accept';
     }).catch(() => { /* ignore */ });
+
+    // Listen for config changes
+    const onBehaviorChange = (e: CustomEvent) => {
+      if (e.detail?.behavior) fileChangeBehavior = e.detail.behavior;
+    };
+    window.addEventListener('quest:file-behavior-changed', onBehaviorChange as EventListener);
 
     const unsubEvent = window.electronAPI.quest.onEvent((event: any) => {
       const store = useQuestStore.getState();
@@ -200,12 +208,16 @@ export function useQuestEvents(): void {
               event.isNewFile ?? false
             );
 
-            // Auto-accept file changes when task is in auto mode
-            if (event.taskId) {
-              const currentTask = useQuestStore.getState().tasks.find((t) => t.id === event.taskId);
-              if (currentTask?.autoMode === 'auto') {
-                useQuestDiffStore.getState().acceptFile(event.filePath);
-              }
+            // Auto-accept file changes based on config or task auto-mode
+            const shouldAutoAccept =
+              fileChangeBehavior === 'auto-accept' ||
+              (event.taskId && useQuestStore.getState().tasks.find((t) => t.id === event.taskId)?.autoMode === 'auto');
+
+            if (shouldAutoAccept) {
+              useQuestDiffStore.getState().acceptFile(event.filePath);
+            } else if (fileChangeBehavior === 'auto-reject') {
+              useQuestDiffStore.getState().rejectFile(event.filePath);
+              window.electronAPI.quest.revertFile(event.filePath, event.beforeContent ?? null).catch(() => {});
             }
           }
           break;
@@ -244,6 +256,7 @@ export function useQuestEvents(): void {
       unsubEvent();
       unsubAsk();
       unsubConfirm();
+      window.removeEventListener('quest:file-behavior-changed', onBehaviorChange as EventListener);
     };
   }, []);
 }

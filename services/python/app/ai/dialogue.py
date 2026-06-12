@@ -188,9 +188,8 @@ class DialogueManager:
 
     def _handle_help(self, user_id: str, tenant_id: str, intent: Intent, entities: Dict) -> Dict:
         help_text = """灵境AI助手可以帮您：
-• 添加用户：添加一个项目经理，叫张三
 • 查看项目：查看所有项目
-• 上班打卡：到了，打上班卡
+• 智能问答：问我任何问题
 • 下班打卡：下班了，打下班卡
 • 查看考勤：查看今天考勤
 • 本月统计：本月出勤多少天

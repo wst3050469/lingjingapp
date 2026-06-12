@@ -26,7 +26,7 @@ class IntentClassifier:
 
     # 目标类型关键词
     TARGET_PATTERNS = {
-        TargetType.USER: ["用户", "员工", "工人", "经理", "管理员", "人"],
+        TargetType.USER: ["用户", "员工", "管理员", "人"],
         TargetType.PROJECT: ["项目", "工地", "工程", "活"],
         TargetType.TASK: ["任务", "工作", "活儿", "事情"],
         TargetType.ATTENDANCE: ["打卡", "考勤", "签到"],

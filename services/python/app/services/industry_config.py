@@ -106,14 +106,7 @@ def get_welcome_chips(code: str, role: str = "owner") -> list[str]:
             "帮我录个物料采购",
             "我要报销一笔费用",
             "最近有什么质检问题？",
-            "看看工人排班情况",
-        ]
-    if role == "technician":
-        return [
-            "帮我录入一个样板",
-            "查一下磨石面层配方",
-            "今天有哪些项目要打样？",
-            "看看最近的样板记录",
+            "看看排班情况",
         ]
     # owner / admin — 原行业 chips
     cfg = _INDEX.get(code)

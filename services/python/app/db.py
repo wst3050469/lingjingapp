@@ -312,7 +312,7 @@ async def create_tables():
                 created_at TIMESTAMPTZ DEFAULT NOW()
             );
 
-            -- 待办事项（被 todo_service, auto_fetch_service, ai_reminder, biz_actions 等大量引用）
+            -- 待办事项（被 todo_service, auto_fetch_service, biz_actions 等大量引用）
             CREATE TABLE IF NOT EXISTS todo_items (
                 id SERIAL PRIMARY KEY,
                 tenant_id VARCHAR(64) NOT NULL,

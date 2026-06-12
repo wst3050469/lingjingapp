@@ -22,7 +22,6 @@ from services.biz_actions import execute_business_actions
 from services.biz_flow import get_flow_summary
 from services.memory_extractor import extract_and_store
 from services.file_service import get_file_contexts, wait_for_processing
-from services.attendance_approval import evaluate_checkin
 from services.transcribe import transcribe_base64
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
@@ -220,16 +219,11 @@ async def send_message(
     flow_summary = await _safe("flow_summary",
         get_flow_summary(tenant_id, industry) if tenant_id and industry else None)
 
-    # 管理员：获取团队通知；工人/项目经理：获取项目信息
+    # 获取团队通知
     team_notifications = None
-    user_project_info = None
-    if tenant_id:
-        if tenant_role in ("owner", "admin"):
-            team_notifications = await _safe("team_notifications",
-                context_builder.get_team_notifications(tenant_id))
-        if username:
-            user_project_info = await _safe("user_project_info",
-                context_builder.get_user_project_info(tenant_id, username))
+    if tenant_id and tenant_role in ("owner", "admin"):
+        team_notifications = await _safe("team_notifications",
+            context_builder.get_team_notifications(tenant_id))
 
     # 将动作执行结果和流程提醒合并到业务上下文中
     user["_session_id"] = req.session_id  # 传给 action 用于回查最近消息
@@ -247,9 +241,6 @@ async def send_message(
     elif tenant_id and re.search(r'(?:收货人|收件人)[：:\s]*[\u4e00-\u9fff].*1[3-9]\d{9}', req.content):
         # 用户粘贴了收货地址+手机号但引擎未触发（异常情况）
         business_context = (business_context or "") + "\n\n[灵境系统提示] ⚠️ 检测到用户发送了收货人+手机号信息，但系统未能自动录入。请引导用户明确说明意图。"
-    elif tenant_id and re.search(r'(?:设[定为]|分配|指定|改[为成]|当|做).{0,10}(?:工人|项目经理|管理员|技术员)|(?:角色|身份).{0,6}(?:设|改|定|分配|给)', req.content):
-        # ⚠️ 防幻觉guardrail: 用户想分配角色但引擎未检测到或执行失败
-        business_context = (business_context or "") + "\n\n[灵境系统提示] ⚠️ 重要：系统未执行角色分配操作。请勿声称「已设定」或「已完成」！请引导用户明确指定成员名称和角色（如「把李阳设为项目经理」）。"
     elif tenant_id and re.search(r'(?:把|将|给)\s*\S+\s*(?:改[成为回]|改为|改成|改回|名字改[成为回]|更名为|改名[为成回]|名字改成|名称改成)', req.content):
         # ⚠️ 防幻觉guardrail: 用户想改成员名但引擎未执行
         business_context = (business_context or "") + "\n\n[灵境系统提示] ⚠️ 重要：系统未执行改名操作。请勿声称「已改名」「已修改」「已完成」或任何表示操作成功的表述！请明确告诉用户系统未能执行，并引导用户检查名称是否正确后重试。"
@@ -297,7 +288,6 @@ async def send_message(
         tenant_info=user,
         file_contexts=file_contexts,
         team_notifications=team_notifications,
-        user_project_info=user_project_info,
         trading_review=trading_review,
         cross_session_memories=cross_session_memories,
         weekly_report=weekly_report,
@@ -496,101 +486,6 @@ async def sync_memories(user: dict = Depends(get_current_user)):
     }
 
 
-# ── 快速打卡 ──────────────────────────────────────────
-
-class QuickCheckinRequest(BaseModel):
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    address: str = ""
-    check_type: str = "check_in"  # check_in / check_out
-
-
-@router.post("/quick-checkin")
-async def quick_checkin(req: QuickCheckinRequest, user: dict = Depends(get_current_user)):
-    """快速打卡 - 自动关联绑定的项目"""
-    tenant_id = user.get("tenant_id")
-    if not tenant_id:
-        raise HTTPException(status_code=403, detail="非企业用户，无法打卡")
-
-    username = user.get("code", "").replace("u_", "")
-    if not username:
-        raise HTTPException(status_code=400, detail="无法识别用户身份")
-
-    async with database.pool.acquire() as conn:
-        # 查找用户绑定的项目
-        tu = await conn.fetchrow(
-            "SELECT user_id, name, role, ext_data FROM tenant_users WHERE tenant_id=$1 AND user_id=$2",
-            tenant_id, username,
-        )
-        if not tu:
-            raise HTTPException(status_code=404, detail="您不在当前团队中")
-
-        ext = json.loads(tu["ext_data"]) if isinstance(tu["ext_data"], str) else (tu["ext_data"] or {})
-        project_id = ext.get("project_id")
-        project_name = ext.get("project_name", "")
-
-        if not project_id:
-            return {"code": -1, "msg": "您还没有绑定项目，请联系管理员安排项目后再打卡"}
-
-        # 防重复打卡
-        existing = await conn.fetchval(
-            """SELECT id FROM biz_attendance
-               WHERE tenant_id=$1 AND user_id=$2 AND project_id=$3
-               AND type=$4 AND check_time::date = CURRENT_DATE""",
-            tenant_id, username, project_id, req.check_type,
-        )
-        type_name = "上班" if req.check_type == "check_in" else "下班"
-        if existing:
-            return {"code": -1, "msg": f"您今天已经打过{type_name}卡了"}
-
-        now = datetime.now()
-
-        # AI审批
-        approval = await evaluate_checkin(
-            tenant_id, username, project_id, now,
-            latitude=req.latitude, longitude=req.longitude,
-        )
-        status = approval["result"]  # normal / flagged
-
-        await conn.execute(
-            """INSERT INTO biz_attendance
-               (tenant_id, project_id, user_id, user_name, type,
-                check_time, latitude, longitude, address, status)
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)""",
-            tenant_id, project_id, username, tu["name"], req.check_type,
-            now, req.latitude, req.longitude, req.address, status,
-        )
-
-        # 如果异常，生成管理员通知
-        if status == "flagged":
-            reasons = [c["reason"] for c in approval["checks"] if not c.get("pass") and c.get("reason")]
-            await conn.execute(
-                """INSERT INTO tenant_notifications
-                   (tenant_id, type, target_user_id, target_user_name, data)
-                   VALUES ($1, 'attendance_flagged', $2, $3, $4)""",
-                tenant_id, username, tu["name"],
-                json.dumps({
-                    "check_type": req.check_type,
-                    "time": now.isoformat(),
-                    "reasons": reasons,
-                    "project_name": project_name,
-                }, ensure_ascii=False),
-            )
-
-    result = {
-        "code": 0,
-        "msg": f"{type_name}打卡成功",
-        "data": {
-            "check_type": type_name,
-            "time": now.strftime("%H:%M"),
-            "project": project_name,
-            "status": status,
-        },
-    }
-    if status == "flagged":
-        flagged_reasons = [c.get("reason", "") for c in approval["checks"] if not c.get("pass")]
-        result["data"]["warning"] = "；".join(r for r in flagged_reasons if r)
-    return result
 
 
 class TranscribeRequest(BaseModel):

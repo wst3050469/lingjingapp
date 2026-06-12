@@ -106,9 +106,7 @@ class EntityExtractor:
         role_map = {
             "管理员": "admin",
             "超级管理员": "super_admin",
-            "项目经理": "project_manager",
             "经理": "manager",
-            "工人": "worker",
             "员工": "employee",
             "财务": "finance",
             "客户": "customer",

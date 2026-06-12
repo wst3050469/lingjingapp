@@ -141,7 +141,7 @@ app.get('/health', (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`灵境 Update Server running on http://0.0.0.0:${PORT}`);
-  console.log(`Data directory: ${DATA_DIR}`);
+  console.log(`Search paths: ${VERSION_SEARCH_PATHS.length} configured`);
   const data = getLatestVersion();
   console.log(`Latest version: ${data.latest}`);
 });

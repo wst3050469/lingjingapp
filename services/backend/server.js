@@ -613,7 +613,7 @@ function readVersionInfo(currentVersion) {
       const latest = latestEntry || publishedVersions[0];
       if (latest) {
         const ver = latest.version || '1.4.0';
-        _verCache = {
+        const result = {
           hasUpdate: currentVersion ? compareVersions(ver, currentVersion) > 0 : true,
           version: ver,
           status: 'published',
@@ -621,8 +621,12 @@ function readVersionInfo(currentVersion) {
           releaseNotes: latest.releaseNotes || ('灵境AI v' + (latest.version || '1.4.0')),
           files: latest.files || {},
         };
-        _verCacheTime = _now;
-        return _verCache;
+        // Only cache when no currentVersion (generic query), not when comparing specific versions
+        if (!currentVersion) {
+          _verCache = result;
+          _verCacheTime = _now;
+        }
+        return result;
       }
       // No published version found — no public update available
       _verCache = { hasUpdate: false, version: '0.0.0', releaseNotes: '暂无已发布的更新' };

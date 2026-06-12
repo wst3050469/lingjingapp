@@ -1,6 +1,6 @@
 {
   "name": "lingjing-cloud-server",
-  "version": "1.73.36",
+  "version": "1.73.35",
   "private": true,
   "type": "module",
   "dependencies": {

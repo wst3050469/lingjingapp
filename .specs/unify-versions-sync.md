@@ -27,11 +27,21 @@
 - 将 `/var/www/html/versions.json` 提升为第一优先搜索路径（因为它是 Nginx 直接暴露的，也是 Admin `writeVersionsJson` 写入的路径之一）
 - 缓存逻辑不变
 
+### 修改 3：`admin-api.js` — `promoteYamlFiles()` 扩展 + 容错
+- 新增 `/var/www/html/downloads/` 目录，与 versions.json 同步范围对齐
+- 新增 try-catch 容错，单个目录失败不阻塞其他目录
+
+### 修改 4：`server.js` — `/api/notifications/version-update` CI/CD端点修复
+- 搜索路径列表与 `readVersionInfo()` 和 `getAllVersionsJsonPaths()` 对齐
+- 修复只写单个路径的缺陷 → 遍历写入全部 9 个路径
+- 兼容两种 versions.json 格式（flat array / `{latest, versions}`）
+- 新增 `mkdirSync` 导入 + 目录自动创建
+
 ## 影响文件
 | 文件 | 改动类型 |
 |------|----------|
-| `services/backend/admin-api.js` | `writeVersionsJson()` 扩展写入目标 |
-| `services/backend/server.js` | `readVersionInfo()` 搜索路径优先级调整 |
+| `services/backend/admin-api.js` | `writeVersionsJson()` 扩展写入目标 + `promoteYamlFiles()` 扩展目录 |
+| `services/backend/server.js` | `readVersionInfo()` 路径优先级 + CI/CD端点全路径同步 |
 
 ## 调用链分析
 ```

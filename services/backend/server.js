@@ -6,7 +6,7 @@
 
 import http from 'node:http';
 import { randomUUID, createHmac, scryptSync, randomBytes } from 'node:crypto';
-import { readFileSync, existsSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 
 // Load .env file (simple loader, no dependency needed)
@@ -1930,9 +1930,13 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
   const { version, size, releaseNotes } = req.body;
   if (!version) return res.status(400).json({ error: 'version required' });
 
-  // Search for existing versions.json using same paths as readVersionInfo()
+  // Unified search paths (aligned with readVersionInfo + admin-api getAllVersionsJsonPaths)
   const searchPaths = [
+    '/var/www/html/versions.json',             // PRIMARY: authoritative source
+    '/var/www/lingjing/versions.json',
+    '/var/www/html/downloads/versions.json',
     '/root/lingjing-update/data/versions.json',
+    '/opt/lingjing/update-server/data/versions.json',
     '/var/www/update-server/data/versions.json',
     '/opt/lingjing-update/data/versions.json',
     resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
@@ -1940,19 +1944,28 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
   ];
 
   let versionsPath = null;
-  let versions = [];
+  let data = null;
   for (const p of searchPaths) {
     if (existsSync(p)) {
       versionsPath = p;
       try {
-        versions = JSON.parse(readFileSync(p, 'utf8'));
-        if (!Array.isArray(versions)) versions = [];
+        data = JSON.parse(readFileSync(p, 'utf8'));
         break;
       } catch { continue; }
     }
   }
-  if (!versionsPath) {
+  if (!versionsPath || !data) {
     return res.status(404).json({ error: 'versions.json not found' });
+  }
+
+  // Handle both formats: flat array vs {latest, versions:[...]}
+  let versions;
+  if (Array.isArray(data)) {
+    versions = data;
+  } else if (data.versions && Array.isArray(data.versions)) {
+    versions = data.versions;
+  } else {
+    versions = [];
   }
 
   const idx = versions.findIndex(v => v.version === version);
@@ -1973,9 +1986,27 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
     versions.splice(1, 0, entry);
   }
 
-  writeFileSync(versionsPath, JSON.stringify(versions, null, 2));
-  console.log(`[Version] Updated ${versionsPath} with ${version}`);
-  res.json({ ok: true, version });
+  // Reconstruct in unified format
+  const latestVer = version; // newest is the one just added/updated
+  const output = Array.isArray(data)
+    ? versions  // keep flat array format if that's what was there
+    : { latest: latestVer, versions };
+
+  // Write to ALL known paths (aligned with admin-api writeVersionsJson)
+  const json = JSON.stringify(output, null, 2);
+  let written = 0;
+  for (const p of searchPaths) {
+    try {
+      const dir = resolve(p, '..');
+      if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+      writeFileSync(p, json, 'utf8');
+      written++;
+    } catch (e) {
+      // Non-fatal: some paths may not be writable
+    }
+  }
+  console.log(`[Version] CI/CD updated ${written} versions.json files with ${version}`);
+  res.json({ ok: true, version, synced: written });
 });
 
 // ====== Scheduler ======

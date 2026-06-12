@@ -547,13 +547,21 @@ function readVersionInfo(currentVersion) {
     // Primary: /var/www/html/versions.json is the authoritative source
     // (synced by Admin publish flow, served by Nginx download page)
     const searchPaths = [
-      '/var/www/html/versions.json',             // PRIMARY: authoritative source (Admin + Nginx)
-      '/var/www/lingjing/versions.json',         // cloud-server legacy path
-      '/var/www/html/downloads/versions.json',   // Legacy download-list format
-      '/root/lingjing-update/data/versions.json',
-      '/opt/lingjing/update-server/data/versions.json',
-      '/var/www/update-server/data/versions.json',
-      '/opt/lingjing-update/data/versions.json',
+      '/var/www/html/versions.json',                       // PRIMARY: authoritative source (Admin + Nginx)
+      '/var/www/downloads/versions.json',                  // Legacy download-list
+      '/var/www/lingjing/versions.json',                   // cloud-server legacy path
+      '/var/www/update-server/data/versions.json',         // update-server:3000
+      '/root/cloud-admin/server/data/versions.json',       // cloud-admin
+      '/root/lingjing/update-server/data/versions.json',   // legacy update-server
+      '/root/lingjing/versions.json',                      // legacy root
+      '/root/lingjing-update/data/versions.json',          // lingjing-update
+      '/root/lingjing-build/update-server/data/versions.json', // build server
+      '/opt/lingjing-update-server/data/versions.json',    // update-server v2
+      '/opt/lingjing-update-server/versions.json',         // update-server v2 root
+      '/opt/lingjing-cloud-server/versions.json',          // cloud-server legacy
+      '/opt/lingjing/update-server/data/versions.json',    // primary update-server
+      '/opt/lingjing/update-server/versions.json',         // update-server root
+      '/opt/lingjing-update/data/versions.json',           // lingjing-update data
       resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
       resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
     ];
@@ -1932,13 +1940,21 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
 
   // Unified search paths (aligned with readVersionInfo + admin-api getAllVersionsJsonPaths)
   const searchPaths = [
-    '/var/www/html/versions.json',             // PRIMARY: authoritative source
-    '/var/www/lingjing/versions.json',
-    '/var/www/html/downloads/versions.json',
-    '/root/lingjing-update/data/versions.json',
-    '/opt/lingjing/update-server/data/versions.json',
-    '/var/www/update-server/data/versions.json',
-    '/opt/lingjing-update/data/versions.json',
+    '/var/www/html/versions.json',                       // PRIMARY: authoritative source
+    '/var/www/downloads/versions.json',                  // Legacy download-list
+    '/var/www/lingjing/versions.json',                   // cloud-server / lingjing-update-server
+    '/var/www/update-server/data/versions.json',         // update-server:3000
+    '/root/cloud-admin/server/data/versions.json',       // cloud-admin
+    '/root/lingjing/update-server/data/versions.json',   // legacy update-server
+    '/root/lingjing/versions.json',                      // legacy root
+    '/root/lingjing-update/data/versions.json',          // lingjing-update
+    '/root/lingjing-build/update-server/data/versions.json', // build server
+    '/opt/lingjing-update-server/data/versions.json',    // update-server v2 data
+    '/opt/lingjing-update-server/versions.json',         // update-server v2 root
+    '/opt/lingjing-cloud-server/versions.json',          // cloud-server legacy
+    '/opt/lingjing/update-server/data/versions.json',    // primary update-server
+    '/opt/lingjing/update-server/versions.json',         // update-server root
+    '/opt/lingjing-update/data/versions.json',           // lingjing-update data
     resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
     resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
   ];

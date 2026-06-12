@@ -1970,11 +1970,21 @@ export function registerAdminAPI(app, db) {
   // All known versions.json paths on production — sync all on publish
   function getAllVersionsJsonPaths() {
     return [
-      '/var/www/html/versions.json',              // Primary: Nginx download page (authoritative)
-      '/var/www/html/downloads/versions.json',    // Legacy download-list format
-      '/var/www/lingjing/versions.json',          // cloud-server API read path
-      '/opt/lingjing/update-server/data/versions.json',  // update-server:3000
-      '/root/lingjing-update/data/versions.json', // update-server backup
+      '/var/www/html/versions.json',                       // PRIMARY: Nginx download page (authoritative)
+      '/var/www/downloads/versions.json',                  // Legacy download-list
+      '/var/www/lingjing/versions.json',                   // cloud-server / lingjing-update-server
+      '/var/www/update-server/data/versions.json',         // update-server:3000 fallback
+      '/root/cloud-admin/server/data/versions.json',       // cloud-admin
+      '/root/lingjing/update-server/data/versions.json',   // legacy update-server
+      '/root/lingjing/versions.json',                      // legacy root
+      '/root/lingjing-update/data/versions.json',          // lingjing-update
+      '/root/lingjing-build/update-server/data/versions.json', // build server
+      '/opt/lingjing-update-server/data/versions.json',    // update-server v2 data
+      '/opt/lingjing-update-server/versions.json',         // update-server v2 root
+      '/opt/lingjing-cloud-server/versions.json',          // cloud-server legacy
+      '/opt/lingjing/update-server/data/versions.json',    // primary update-server
+      '/opt/lingjing/update-server/versions.json',         // update-server root
+      '/opt/lingjing-update/data/versions.json',           // lingjing-update data
     ];
   }
 

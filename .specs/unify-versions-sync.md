@@ -33,15 +33,22 @@
 
 ### 修改 4：`server.js` — `/api/notifications/version-update` CI/CD端点修复
 - 搜索路径列表与 `readVersionInfo()` 和 `getAllVersionsJsonPaths()` 对齐
-- 修复只写单个路径的缺陷 → 遍历写入全部 9 个路径
+- 修复只写单个路径的缺陷 → 遍历写入全部 15 个路径
 - 兼容两种 versions.json 格式（flat array / `{latest, versions}`）
 - 新增 `mkdirSync` 导入 + 目录自动创建
+
+### 修改 5：`update-server` (app.js) + `lingjing-update-server.js` — 多路径回退
+- 从单一硬编码路径改为多路径搜索回退
+- 搜索路径列表与统一路径方案对齐
+- 任一文件缺失/损坏自动回退到下一个路径
 
 ## 影响文件
 | 文件 | 改动类型 |
 |------|----------|
-| `services/backend/admin-api.js` | `writeVersionsJson()` 扩展写入目标 + `promoteYamlFiles()` 扩展目录 |
+| `services/backend/admin-api.js` | `writeVersionsJson()` (5→15路径) + `promoteYamlFiles()` 扩展 |
 | `services/backend/server.js` | `readVersionInfo()` 路径优先级 + CI/CD端点全路径同步 |
+| `services/update/app.js` | `getLatestVersion()` 多路径回退 |
+| `services/update/lingjing-update-server.js` | `getVersions()` 多路径回退 |
 
 ## 调用链分析
 ```

@@ -1,7 +1,7 @@
 // Cloud memory search tool - AI can search cloud memories across devices
 // Direct HTTP to cloud server, no local DB dependency
 const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://ide.zhejiangjinmo.com';
-const API_KEY = process.env.LINGJING_CLOUD_KEY || 'lingjing-cloud-key';
+const API_KEY = process.env.LINGJING_CLOUD_KEY || 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8';
 let _enabled = true;
 export function initCloudMemoryTool(enabled) {
     if (enabled !== undefined)

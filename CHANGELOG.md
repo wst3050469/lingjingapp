@@ -2,6 +2,15 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)。
 
+## [1.73.34] — 2026-06-12
+
+### 修复
+- **版本检测误报**: 修复云端 versions.json 数据源不同步导致客户端版本检测异常
+  - 6个 versions.json 文件统一为 latest: 1.73.34
+  - cloud-server / update-server / lingjing-update-server 全部修复 hasUpdate 智能对比
+  - `/api/latest` 新增 `?current=` 参数支持客户端版本对比
+  - 新增排查文档 `docs/version-troubleshooting.md`
+
 ## [1.73.0] — 2026-06-11
 
 ### 新增

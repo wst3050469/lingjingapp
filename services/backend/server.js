@@ -6,7 +6,7 @@
 
 import http from 'node:http';
 import { randomUUID, createHmac, scryptSync, randomBytes } from 'node:crypto';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 
 // Load .env file (simple loader, no dependency needed)
@@ -2720,6 +2720,27 @@ app.put('/api/files/write', auth, (req, res) => {
     }
     writeFileSync(absPath, content, 'utf-8');
     res.json({ success: true, path: filePath });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Cloud File List API (服务器文件浏览，不需要桌面端) ──
+app.get('/api/files/list', auth, (req, res) => {
+  const dirPath = req.query.path || '/root/cloud-server';
+  try {
+    const absPath = resolve(dirPath);
+    const forbidden = ['/etc/', '/proc/', '/sys/', '/root/.ssh'];
+    if (forbidden.some(p => absPath.startsWith(p))) {
+      return res.status(403).json({ error: 'access denied: system path' });
+    }
+    if (!existsSync(absPath)) return res.status(404).json({ error: 'directory not found' });
+    const entries = readdirSync(absPath).map(name => {
+      const full = resolve(absPath, name);
+      try { const s = statSync(full); return { name, path: full, type: s.isDirectory() ? 'dir' : 'file', size: s.size }; }
+      catch { return { name, path: full, type: 'file', size: 0 }; }
+    });
+    res.json({ path: dirPath, entries });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

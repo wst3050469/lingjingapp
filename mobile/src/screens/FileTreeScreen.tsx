@@ -1,8 +1,8 @@
-// 文件浏览器页 — 浏览桌面端项目文件树 + 云端超时回退
+// 文件浏览器页 — 桌面(WebSocket) + 云端(HTTP) 双通道
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, RefreshControl, Alert,
+  ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,41 +13,37 @@ interface FileNode {
   path: string;
   type: 'file' | 'dir';
   size?: number;
-  children?: FileNode[];
 }
 
 export default function FileTreeScreen() {
   const navigation = useNavigation<any>();
-  const [currentPath, setCurrentPath] = useState('/');
+  const [currentPath, setCurrentPath] = useState('/root/cloud-server');
   const [entries, setEntries] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [cloudMode, setCloudMode] = useState(false);
 
   const loadDir = useCallback(async (path: string) => {
     try {
-      // Try WebSocket (desktop) first
+      // Try desktop WebSocket first
       const result = await api.wsCommand('file', 'list', { path });
-      if (result?.entries) {
+      if (result?.entries && result.entries.length > 0) {
         setEntries(result.entries);
         setCloudMode(false);
-      } else {
-        setEntries([]);
+        return;
       }
-    } catch (e) {
-      console.log('Failed to load directory:', e);
-      // If WebSocket fails, try to read directory structure via HTTP
+      throw new Error('empty');
+    } catch {
+      // Desktop offline → use cloud server file list
       try {
-        const fileResult = await api.readFile(path || '/README.md');
-        if (fileResult?.content) {
-          setEntries([{ name: 'README.md', path: path || '/README.md', type: 'file', size: fileResult.size }]);
-        } else {
-          setEntries([]);
+        const result = await api.listCloudFiles(path);
+        if (result?.entries) {
+          setEntries(result.entries);
+          setCloudMode(true);
+          return;
         }
-      } catch {
-        setEntries([]);
-      }
+      } catch { /* cloud also failed */ }
+      setEntries([]);
       setCloudMode(true);
     } finally {
       setLoading(false);
@@ -57,36 +53,25 @@ export default function FileTreeScreen() {
 
   React.useEffect(() => { loadDir(currentPath); }, [currentPath, loadDir]);
 
-  const toggleDir = async (node: FileNode) => {
-    if (node.type !== 'dir') return;
-    const key = node.path;
-    if (expandedDirs.has(key)) {
-      setExpandedDirs(prev => { const s = new Set(prev); s.delete(key); return s; });
-    } else {
-      setExpandedDirs(prev => new Set(prev).add(key));
-    }
-  };
-
   const goUp = () => {
-    const parent = currentPath === '/' ? '/' : currentPath.split('/').slice(0, -1).join('/') || '/';
+    const parent = currentPath.split('/').slice(0, -1).join('/') || '/';
     setCurrentPath(parent);
     setLoading(true);
   };
 
-  const getFileIcon = (name: string, type: string): keyof typeof Ionicons.glyphMap => {
-    if (type === 'dir') return expandedDirs.has(name) ? 'folder-open-outline' : 'folder-outline';
+  const getIcon = (name: string, type: string): keyof typeof Ionicons.glyphMap => {
+    if (type === 'dir') return 'folder-outline';
     const ext = name.split('.').pop()?.toLowerCase();
     switch (ext) {
-      case 'ts': case 'tsx': case 'js': case 'jsx': return 'code-slash-outline';
-      case 'json': return 'code-outline';
+      case 'ts': case 'tsx': case 'js': case 'jsx': case 'py': case 'go': return 'code-slash-outline';
+      case 'json': case 'yml': case 'yaml': case 'toml': return 'code-outline';
       case 'md': return 'document-text-outline';
-      case 'png': case 'jpg': case 'jpeg': case 'gif': case 'svg': return 'image-outline';
-      case 'css': case 'scss': return 'color-palette-outline';
+      case 'sh': return 'terminal-outline';
       default: return 'document-outline';
     }
   };
 
-  const formatSize = (bytes?: number): string => {
+  const fmtSize = (bytes?: number): string => {
     if (!bytes) return '';
     if (bytes < 1024) return `${bytes}B`;
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)}KB`;
@@ -95,9 +80,9 @@ export default function FileTreeScreen() {
 
   if (loading && entries.length === 0) {
     return (
-      <View style={styles.center}>
+      <View style={s.center}>
         <ActivityIndicator size="large" color="#58a6ff" />
-        <Text style={styles.loadingText}>正在连接桌面端...</Text>
+        <Text style={s.loadingText}>加载文件中...</Text>
       </View>
     );
   }
@@ -108,91 +93,74 @@ export default function FileTreeScreen() {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       {cloudMode && (
-        <View style={styles.cloudBanner}>
-          <Text style={styles.cloudBannerText}>⚠ 桌面端离线 — 文件浏览不可用，请在电脑端启动灵境IDE</Text>
+        <View style={s.banner}>
+          <Ionicons name="cloud-outline" size={14} color="#58a6ff" />
+          <Text style={s.bannerText}>云端文件 (桌面离线)</Text>
         </View>
       )}
 
-      {/* Breadcrumb */}
-      <View style={styles.breadcrumb}>
-        <TouchableOpacity onPress={() => { setCurrentPath('/'); setLoading(true); }}>
-          <Ionicons name="home-outline" size={18} color="#58a6ff" />
+      <View style={s.breadcrumb}>
+        <TouchableOpacity onPress={() => { setCurrentPath('/root/cloud-server'); setLoading(true); }}>
+          <Ionicons name="server-outline" size={16} color="#58a6ff" />
         </TouchableOpacity>
-        <Text style={styles.pathText}>{currentPath}</Text>
-        {currentPath !== '/' && (
-          <TouchableOpacity onPress={goUp}>
-            <Ionicons name="arrow-up-outline" size={18} color="#8b949e" />
-          </TouchableOpacity>
-        )}
+        <Text style={s.pathText} numberOfLines={1}>{currentPath}</Text>
+        <TouchableOpacity onPress={goUp}>
+          <Ionicons name="arrow-up-outline" size={16} color="#8b949e" />
+        </TouchableOpacity>
       </View>
 
-      {/* File list */}
       <FlatList
         data={sorted}
-        keyExtractor={item => item.path || item.name}
+        keyExtractor={item => item.path}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.item}
-            onPress={() => item.type === 'dir' ? toggleDir(item) : navigation.navigate('CodeEditor', { filePath: item.path, fileName: item.name })}
+            style={s.item}
+            onPress={() => {
+              if (item.type === 'dir') {
+                setCurrentPath(item.path);
+                setLoading(true);
+              } else if (cloudMode) {
+                // Read from cloud
+                navigation.navigate('CodeEditor', { filePath: item.path, fileName: item.name });
+              } else {
+                navigation.navigate('CodeEditor', { filePath: item.path, fileName: item.name });
+              }
+            }}
           >
-            <Ionicons
-              name={getFileIcon(item.name, item.type)}
-              size={18}
-              color={item.type === 'dir' ? '#58a6ff' : '#8b949e'}
-            />
-            <Text style={[styles.itemName, item.type === 'dir' && styles.dirName]} numberOfLines={1}>
-              {item.name}
-            </Text>
-            {item.type === 'file' && item.size !== undefined && (
-              <Text style={styles.itemSize}>{formatSize(item.size)}</Text>
-            )}
-            {item.type === 'dir' && (
-              <Ionicons name="chevron-forward" size={14} color="#30363d" />
-            )}
+            <Ionicons name={getIcon(item.name, item.type)} size={18} color={item.type === 'dir' ? '#58a6ff' : '#8b949e'} />
+            <Text style={[s.itemName, item.type === 'dir' && s.dirName]} numberOfLines={1}>{item.name}</Text>
+            {item.type === 'file' && <Text style={s.size}>{fmtSize(item.size)}</Text>}
+            {item.type === 'dir' && <Ionicons name="chevron-forward" size={14} color="#30363d" />}
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="cloud-offline-outline" size={48} color="#30363d" />
-            <Text style={styles.emptyText}>无法连接桌面端</Text>
-            <Text style={styles.emptySub}>请在电脑上启动灵境IDE并登录云账号，即可浏览项目文件</Text>
+          <View style={s.empty}>
+            <Ionicons name="folder-open-outline" size={48} color="#30363d" />
+            <Text style={s.emptyText}>{cloudMode ? '云端目录为空' : '无法连接桌面'}</Text>
           </View>
         }
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadDir(currentPath); }} tintColor="#58a6ff" />
-        }
-        contentContainerStyle={sorted.length === 0 ? styles.emptyContainer : undefined}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadDir(currentPath); }} tintColor="#58a6ff" />}
+        contentContainerStyle={sorted.length === 0 ? s.emptyContainer : undefined}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0d1117' },
   center: { flex: 1, backgroundColor: '#0d1117', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#8b949e', marginTop: 8, fontSize: 13 },
-  cloudBanner: { backgroundColor: '#3d2c1c', padding: 8, alignItems: 'center' },
-  cloudBannerText: { color: '#d29922', fontSize: 12 },
-  breadcrumb: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 10,
-    backgroundColor: '#161b22', borderBottomWidth: 1, borderBottomColor: '#21262d',
-    gap: 8,
-  },
-  pathText: { color: '#8b949e', fontSize: 13, flex: 1, fontFamily: 'monospace' },
-  item: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 10,
-    borderBottomWidth: 1, borderBottomColor: '#21262d',
-    gap: 8,
-  },
-  itemName: { color: '#c9d1d9', fontSize: 14, flex: 1 },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 6, backgroundColor: '#1c2a3d', justifyContent: 'center' },
+  bannerText: { color: '#58a6ff', fontSize: 11 },
+  breadcrumb: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#161b22', borderBottomWidth: 1, borderBottomColor: '#21262d', gap: 6 },
+  pathText: { color: '#8b949e', fontSize: 12, flex: 1, fontFamily: 'monospace' },
+  item: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#21262d', gap: 8 },
+  itemName: { color: '#c9d1d9', fontSize: 13, flex: 1 },
   dirName: { color: '#58a6ff', fontWeight: '500' },
-  itemSize: { color: '#484f58', fontSize: 12, marginRight: 4 },
-  empty: { alignItems: 'center', justifyContent: 'center', paddingTop: 60, paddingHorizontal: 40 },
+  size: { color: '#484f58', fontSize: 11, marginRight: 4 },
+  empty: { alignItems: 'center', paddingTop: 60 },
   emptyContainer: { flex: 1, justifyContent: 'center' },
-  emptyText: { color: '#484f58', fontSize: 16, marginTop: 8 },
-  emptySub: { color: '#30363d', fontSize: 13, marginTop: 8, textAlign: 'center', lineHeight: 18 },
+  emptyText: { color: '#484f58', fontSize: 14, marginTop: 8 },
 });

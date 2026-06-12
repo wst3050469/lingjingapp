@@ -250,6 +250,9 @@ class ApiService {
   async writeFile(path: string, content: string): Promise<{success: boolean; path: string}> {
     return this.request<any>('/files/write', { method: 'PUT', body: JSON.stringify({ path, content }) });
   }
+  async listCloudFiles(dirPath: string = '/'): Promise<{path: string; entries: {name:string;path:string;type:'file'|'dir';size:number}[]}> {
+    return this.request<any>('/files/list?path=' + encodeURIComponent(dirPath));
+  }
 
   // ── Requirements (需求 + 审批) ──
   async getRequirements(params?: {status?: string; assignee?: string}): Promise<any[]> {

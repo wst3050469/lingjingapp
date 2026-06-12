@@ -172,6 +172,20 @@ class LingJingApi @Inject constructor() {
     suspend fun pairDesktop(code: String): SimpleResponse =
         json.decodeFromString(post("/api/pairing/desktop", PairingRequest(code)))
 
+    // ── Terminal / Commands ──
+    suspend fun execCommand(sessionId: String, command: String): SimpleResponse =
+        json.decodeFromString(post("/api/sessions/exec", ExecRequest(sessionId, command)))
+
+    // ── Approval / Review / QA ──
+    suspend fun submitApproval(sessionId: String, actionId: String, choice: String): SimpleResponse =
+        json.decodeFromString(post("/api/sessions/approval", ApprovalSubmitRequest(sessionId, actionId, choice)))
+
+    suspend fun submitPlanReview(sessionId: String, approved: Boolean, feedback: String = ""): SimpleResponse =
+        json.decodeFromString(post("/api/sessions/plan-review", PlanReviewRequest(sessionId, approved, feedback)))
+
+    suspend fun submitQaAnswer(sessionId: String, questionId: String, answer: Boolean): SimpleResponse =
+        json.decodeFromString(post("/api/sessions/qa", QaAnswerRequest(sessionId, questionId, answer)))
+
     // ── Requirements ──
     suspend fun getRequirements(): List<Requirement> =
         json.decodeFromString(get("/api/requirements"))

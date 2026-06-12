@@ -19,33 +19,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.zhejiangjinmo.lingjing.data.api.LingJingApi
+import com.zhejiangjinmo.lingjing.data.local.AuthDataStore
 import com.zhejiangjinmo.lingjing.ui.theme.*
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-data class TerminalLine(val text: String, val isCommand: Boolean = false)
+data class TerminalLine(val text: String, val isCommand: Boolean = false, val isError: Boolean = false)
 
 @Composable
 fun TerminalScreen(navController: NavController, sessionId: String) {
     var lines by remember { mutableStateOf(listOf(
-        TerminalLine("灵境 Terminal v1.0.0", false),
-        TerminalLine("session: $sessionId", false),
-        TerminalLine("", false)
+        TerminalLine("灵境 Terminal v${com.zhejiangjinmo.lingjing.BuildConfig.VERSION_NAME}"),
+        TerminalLine("session: ${sessionId.take(8)}..."),
+        TerminalLine("")
     )) }
     var command by remember { mutableStateOf("") }
+    var executing by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
     fun execute() {
-        if (command.isBlank()) return
+        if (command.isBlank() || executing) return
         val cmd = command.trim()
-        lines = lines + TerminalLine("$ $cmd", true)
+        lines = lines + TerminalLine("$ $cmd", isCommand = true)
         command = ""
-        // 模拟输出
-        lines = lines + TerminalLine("executing: $cmd", false)
-        lines = lines + TerminalLine("", false)
+        executing = true
 
         scope.launch {
-            listState.animateScrollToItem(lines.size - 1)
+            try {
+                val ctx = navController.context.applicationContext
+                val api = LingJingApi()
+                AuthDataStore(ctx).tokenFlow.first()?.let { api.setToken(it) }
+                val res = api.execCommand(sessionId, cmd)
+                if (res.ok) {
+                    lines = lines + TerminalLine(res.error ?: "ok")
+                } else {
+                    lines = lines + TerminalLine(res.error ?: "command failed", isError = true)
+                }
+            } catch (e: Exception) {
+                lines = lines + TerminalLine("error: ${e.message}", isError = true)
+            }
+            lines = lines + TerminalLine("")
+            executing = false
+
+            launch {
+                listState.animateScrollToItem(lines.size - 1)
+            }
         }
     }
 
@@ -61,7 +81,9 @@ fun TerminalScreen(navController: NavController, sessionId: String) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = DarkText)
                 }
                 Text("终端", color = DarkText, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                IconButton(onClick = { lines = emptyList() }) {
+                IconButton(onClick = {
+                    lines = listOf(TerminalLine("灵境 Terminal v${com.zhejiangjinmo.lingjing.BuildConfig.VERSION_NAME}"), TerminalLine(""))
+                }) {
                     Icon(Icons.Filled.Delete, "清空", tint = DarkTextSecondary)
                 }
             }
@@ -73,13 +95,23 @@ fun TerminalScreen(navController: NavController, sessionId: String) {
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 items(lines) { line ->
+                    val color = when {
+                        line.isError -> DangerRed
+                        line.isCommand -> SuccessGreen
+                        else -> DarkTextSecondary
+                    }
                     Text(
                         line.text,
-                        color = if (line.isCommand) SuccessGreen else DarkTextSecondary,
+                        color = color,
                         fontFamily = FontFamily.Monospace,
                         fontSize = 13.sp,
                         lineHeight = 18.sp
                     )
+                }
+                if (executing) {
+                    item {
+                        Text("...", color = DarkTextTertiary, fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+                    }
                 }
             }
 
@@ -96,6 +128,7 @@ fun TerminalScreen(navController: NavController, sessionId: String) {
                     onValueChange = { command = it },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
+                    enabled = !executing,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = DarkText,
                         unfocusedTextColor = DarkText,
@@ -105,8 +138,8 @@ fun TerminalScreen(navController: NavController, sessionId: String) {
                     ),
                     textStyle = androidx.compose.ui.text.TextStyle(fontFamily = FontFamily.Monospace, fontSize = 14.sp)
                 )
-                IconButton(onClick = { execute() }) {
-                    Icon(Icons.AutoMirrored.Filled.KeyboardReturn, "执行", tint = PrimaryBlue)
+                IconButton(onClick = { execute() }, enabled = !executing && command.isNotBlank()) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardReturn, "执行", tint = if (executing) DarkTextTertiary else PrimaryBlue)
                 }
             }
         }

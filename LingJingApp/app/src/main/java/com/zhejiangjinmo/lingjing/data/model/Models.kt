@@ -173,3 +173,32 @@ data class StoredNotification(
 // ── 配对模型 ──
 @Serializable
 data class PairingRequest(val code: String)
+
+// ── 终端执行模型 ──
+@Serializable
+data class ExecRequest(
+    @SerialName("sessionId") val sessionId: String,
+    val command: String
+)
+
+// ── 审批/审查/问答请求模型 ──
+@Serializable
+data class ApprovalSubmitRequest(
+    @SerialName("sessionId") val sessionId: String,
+    @SerialName("actionId") val actionId: String,
+    val choice: String
+)
+
+@Serializable
+data class PlanReviewRequest(
+    @SerialName("sessionId") val sessionId: String,
+    val approved: Boolean,
+    val feedback: String = ""
+)
+
+@Serializable
+data class QaAnswerRequest(
+    @SerialName("sessionId") val sessionId: String,
+    @SerialName("questionId") val questionId: String,
+    val answer: Boolean
+)

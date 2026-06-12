@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.zhejiangjinmo.lingjing.data.api.LingJingApi
+import com.zhejiangjinmo.lingjing.ui.components.MarkdownText
+import com.zhejiangjinmo.lingjing.ui.components.VoiceInputBar
 import com.zhejiangjinmo.lingjing.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -32,13 +34,23 @@ data class ChatMessage(
 
 @Composable
 fun WorkspaceScreen(navController: NavController, sessionId: String) {
-    var messages by remember { mutableStateOf(listOf(
-        ChatMessage("1", "assistant", "你好！我是灵境 AI 编程助手。我可以帮你编写代码、调试问题、审查代码等。请告诉我你需要什么帮助？")
-    )) }
+    var messages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
     var inputText by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
+    var showVoice by remember { mutableStateOf(false) }
+    var selectedModel by remember { mutableStateOf("灵境 AI") }
+    var modelMenuExpanded by remember { mutableStateOf(false) }
+    val models = listOf("灵境 AI", "Code Expert", "Architect", "Reviewer")
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    val api = remember { LingJingApi() }
+
+    LaunchedEffect(sessionId) {
+        if (messages.isEmpty()) {
+            messages = listOf(ChatMessage("welcome", "assistant",
+                "你好！我是灵境 AI 编程助手。\n\n我可以帮你：\n- 编写和调试代码\n- 审查代码质量\n- 解释项目结构\n- 执行命令和脚本\n\n请告诉我你需要什么帮助？"))
+        }
+    }
 
     fun send() {
         val text = inputText.trim()
@@ -50,15 +62,8 @@ fun WorkspaceScreen(navController: NavController, sessionId: String) {
 
         scope.launch {
             try {
-                LingJingApi().sendMessage(sessionId, text)
+                api.sendMessage(sessionId, text)
             } catch (_: Exception) {}
-            // 模拟AI回复
-            val reply = ChatMessage(
-                (System.currentTimeMillis() + 1).toString(),
-                "assistant",
-                "收到你的消息：「${text}」\n\n这是一个模拟回复。在真实环境中，这里会显示 AI 助手的智能回复。"
-            )
-            messages = messages + reply
             sending = false
         }
     }
@@ -76,7 +81,28 @@ fun WorkspaceScreen(navController: NavController, sessionId: String) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, "返回", tint = DarkText)
                 }
                 Text("工作区", fontWeight = FontWeight.SemiBold, color = DarkText, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                IconButton(onClick = { /* mode selector */ }) {
+                // Model selector
+                Box {
+                    TextButton(onClick = { modelMenuExpanded = true }) {
+                        Text(selectedModel, color = PrimaryBlue, fontSize = 13.sp)
+                        Icon(Icons.Filled.ArrowDropDown, null, tint = PrimaryBlue)
+                    }
+                    DropdownMenu(
+                        expanded = modelMenuExpanded,
+                        onDismissRequest = { modelMenuExpanded = false }
+                    ) {
+                        models.forEach { model ->
+                            DropdownMenuItem(
+                                text = { Text(model) },
+                                onClick = {
+                                    selectedModel = model
+                                    modelMenuExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                IconButton(onClick = { /* settings */ }) {
                     Icon(Icons.Filled.MoreHoriz, "更多", tint = DarkTextSecondary)
                 }
             }
@@ -95,15 +121,27 @@ fun WorkspaceScreen(navController: NavController, sessionId: String) {
             }
 
             // 输入栏
-            Row(
-                modifier = Modifier.fillMaxWidth()
-                    .background(DarkSurface)
-                    .padding(8.dp),
-                verticalAlignment = Alignment.Bottom
-            ) {
-                IconButton(onClick = { /* voice */ }) {
-                    Icon(Icons.Filled.Mic, "语音", tint = DarkTextSecondary)
+            Column(modifier = Modifier.fillMaxWidth().background(DarkSurface)) {
+                if (showVoice) {
+                    VoiceInputBar(
+                        onVoiceResult = { result ->
+                            inputText = result
+                            showVoice = false
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
                 }
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    IconButton(onClick = { showVoice = !showVoice }) {
+                        Icon(
+                            if (showVoice) Icons.Filled.Keyboard else Icons.Filled.Mic,
+                            if (showVoice) "键盘" else "语音",
+                            tint = if (showVoice) PrimaryBlue else DarkTextSecondary
+                        )
+                    }
                 OutlinedTextField(
                     value = inputText,
                     onValueChange = { inputText = it },
@@ -134,6 +172,7 @@ fun WorkspaceScreen(navController: NavController, sessionId: String) {
         }
     }
 }
+}
 
 @Composable
 fun MessageBubble(msg: ChatMessage) {
@@ -153,7 +192,7 @@ fun MessageBubble(msg: ChatMessage) {
         }
 
         Surface(
-            modifier = Modifier.widthIn(max = 300.dp),
+            modifier = Modifier.widthIn(max = if (isUser) 300.dp else 340.dp),
             shape = if (isUser)
                 RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp, bottomStart = 12.dp, bottomEnd = 4.dp)
             else
@@ -161,13 +200,21 @@ fun MessageBubble(msg: ChatMessage) {
             color = if (isUser) PrimaryBlue else DarkSurface2,
             border = if (isUser) null else androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
         ) {
-            Text(
-                text = msg.content,
-                modifier = Modifier.padding(12.dp),
-                color = if (isUser) DarkBg else DarkText,
-                fontSize = 15.sp,
-                lineHeight = 22.sp
-            )
+            if (isUser) {
+                Text(
+                    text = msg.content,
+                    modifier = Modifier.padding(12.dp),
+                    color = DarkBg,
+                    fontSize = 15.sp,
+                    lineHeight = 22.sp
+                )
+            } else {
+                MarkdownText(
+                    markdown = msg.content,
+                    modifier = Modifier.padding(12.dp),
+                    textColor = DarkText
+                )
+            }
         }
     }
 }

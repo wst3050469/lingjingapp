@@ -1,5 +1,7 @@
 package com.zhejiangjinmo.lingjing.ui.tasks
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -82,8 +84,11 @@ fun TasksScreen(navController: NavController) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TaskCard(task: Task, navController: NavController) {
+    var showContextMenu by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val phaseColor = when (task.phase) {
         "running" -> SuccessGreen
         "failed" -> DangerRed
@@ -92,32 +97,67 @@ fun TaskCard(task: Task, navController: NavController) {
         else -> DarkTextTertiary
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable {
-            task.sessionId?.let { navController.navigate(Routes.workspace(it)) }
-        },
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Phase indicator
-            Box(
-                modifier = Modifier.size(8.dp)
-                    .padding(0.dp)
-                    .then(Modifier.size(8.dp))
-            ) {
-                Surface(
-                    modifier = Modifier.size(8.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    color = phaseColor
-                ) {}
+    Box {
+        Card(
+            modifier = Modifier.fillMaxWidth().combinedClickable(
+                onClick = {
+                    task.sessionId?.let { navController.navigate(Routes.workspace(it)) }
+                },
+                onLongClick = { showContextMenu = true }
+            ),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(8.dp)
+                        .padding(0.dp)
+                        .then(Modifier.size(8.dp))
+                ) {
+                    Surface(
+                        modifier = Modifier.size(8.dp),
+                        shape = RoundedCornerShape(4.dp),
+                        color = phaseColor
+                    ) {}
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(task.title ?: "未命名任务", fontWeight = FontWeight.Medium, color = DarkText, fontSize = 15.sp)
+                    Text(task.phase, color = DarkTextSecondary, fontSize = 13.sp)
+                }
+                Icon(Icons.Filled.ChevronRight, null, tint = DarkTextTertiary)
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(task.title ?: "未命名任务", fontWeight = FontWeight.Medium, color = DarkText, fontSize = 15.sp)
-                Text(task.phase, color = DarkTextSecondary, fontSize = 13.sp)
+        }
+
+        DropdownMenu(
+            expanded = showContextMenu,
+            onDismissRequest = { showContextMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("查看详情") },
+                onClick = {
+                    showContextMenu = false
+                    task.sessionId?.let { navController.navigate(Routes.workspace(it)) }
+                },
+                leadingIcon = { Icon(Icons.Filled.Visibility, null) }
+            )
+            if (task.phase != "archived") {
+                DropdownMenuItem(
+                    text = { Text("归档任务", color = WarningYellow) },
+                    onClick = {
+                        showContextMenu = false
+                        scope.launch {
+                            try { LingJingApi().archiveSession(task.id) } catch (_: Exception) {}
+                        }
+                    },
+                    leadingIcon = { Icon(Icons.Filled.Archive, null, tint = WarningYellow) }
+                )
             }
-            Icon(Icons.Filled.ChevronRight, null, tint = DarkTextTertiary)
+            DropdownMenuItem(
+                text = { Text("删除任务", color = DangerRed) },
+                onClick = { showContextMenu = false },
+                leadingIcon = { Icon(Icons.Filled.Delete, null, tint = DangerRed) }
+            )
         }
     }
 }

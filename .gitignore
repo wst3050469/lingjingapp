@@ -37,6 +37,8 @@ eas
 eas.cmd
 eas.ps1
 .eas-build/
+dieapp/
+mobile/
 
 # Android
 android/app/build/

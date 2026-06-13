@@ -3,7 +3,6 @@
 import type { LLMProvider, StreamEvent } from '../llm/types.js';
 import type { ToolCall, ToolResult } from './message-types.js';
 import { Conversation } from './conversation.js';
-import { ToolExecutor } from '../tools/executor.js';
 import { ToolRegistry } from '../tools/registry.js';
 import type { ToolContext } from '../tools/types.js';
 import type { CodeReviewReport } from '../tools/builtin/code-review.js';
@@ -13,6 +12,34 @@ import { MemoryNudger } from '../memory/nudger.js';
 import { MemoryReflector } from '../memory/reflector.js';
 import { WorkflowEngine } from '../workflow/core/workflow-engine.js';
 import { TaskComplexityAnalyzer } from '../workflow/task-complexity-analyzer.js';
+
+// ── Lazy ToolExecutor load with fallback ──
+// executor.js may be missing from temp extraction (anti-virus, corruption, etc.)
+let ToolExecutorClass: any = null;
+let _executorLoading: Promise<void> | null = null;
+async function loadToolExecutor() {
+  if (ToolExecutorClass) return;
+  if (_executorLoading) return _executorLoading;
+  _executorLoading = (async () => {
+    try {
+      const mod = await import('../tools/executor.js');
+      ToolExecutorClass = mod.ToolExecutor;
+    } catch (err: any) {
+      logger.error('[agent] Failed to load executor.js:', err?.message || err);
+      ToolExecutorClass = class FallbackExecutor {
+        private registry: any;
+        constructor(tools: any) { this.registry = tools?.registry ?? tools; }
+        async execute(toolCall: ToolCall, context: ToolContext): Promise<ToolResult> {
+          const tool = this.registry?.get?.(toolCall.name);
+          if (!tool) return { content: `Error: Unknown tool "${toolCall.name}"`, isError: true };
+          try { return await tool.execute(toolCall.arguments, context); }
+          catch (e: any) { return { content: `Error: ${e.message}`, isError: true }; }
+        }
+      };
+    }
+  })();
+  return _executorLoading;
+}
 
 /**
  * Appended to the system prompt when tools are available.
@@ -225,7 +252,8 @@ export interface AgentConfig {
 export class Agent {
   /** @internal - public for cross-window hydration via IPC */ 
   conversation = new Conversation();
-  private executor: ToolExecutor;
+  private executor: any = { execute: () => Promise.resolve({ content: 'Executor initializing...', isError: true }) };
+  private _executorReady: Promise<void> = Promise.resolve();
   private config: Required<
     Pick<AgentConfig, 'maxTurns' | 'maxDuration' | 'turnTimeout' | 'maxContextTokens' | 'maxResponseTokens' | 'temperature'>
   > & AgentConfig;
@@ -246,7 +274,10 @@ export class Agent {
       temperature: 0.3,
       ...config,
     };
-    this.executor = new ToolExecutor(config.tools);
+    this._executorReady = (async () => {
+      await loadToolExecutor();
+      this.executor = new ToolExecutorClass(config.tools);
+    })();
     this.harvester = config.enableSkillHarvest
       ? new SkillHarvester({ provider: config.provider })
       : null;
@@ -574,6 +605,7 @@ Technical details: ${err.message}`;
             this.emit({ type: 'tool_progress', name: tc.name, text });
           },
         };
+        await this._executorReady;
         const result = await this.executor.execute(tc, toolContext);
         this.conversation.addToolResult(tc.id, result);
         this.emit({ type: 'tool_end', name: tc.name, result });

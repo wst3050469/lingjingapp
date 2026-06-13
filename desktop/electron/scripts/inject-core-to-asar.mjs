@@ -14,7 +14,20 @@ const root = join(__dirname, '..');
 const config = JSON.parse(readFileSync(join(root, 'electron-builder.json'), 'utf8'));
 const outputDir = config.directories?.output || 'release';
 
-const asarFile = join(root, outputDir, 'win-unpacked', 'resources', 'app.asar');
+// Detect platform-specific unpacked dir (win/linux/mac)
+const unpackedDirs = ['win-unpacked', 'linux-unpacked', 'mac-unpacked'];
+let asarFile = null;
+for (const dir of unpackedDirs) {
+  const candidate = join(root, outputDir, dir, 'resources', 'app.asar');
+  if (existsSync(candidate)) {
+    asarFile = candidate;
+    break;
+  }
+}
+if (!asarFile) {
+  console.error(`[inject-core] ASAR not found in ${outputDir}/*-unpacked/resources/app.asar`);
+  process.exit(1);
+}
 const srcCore = join(root, 'release', 'build', 'node_modules', '@codepilot', 'core');
 const tmpDir = join(root, outputDir, '.asar-tmp');
 
@@ -39,6 +52,13 @@ if (existsSync(dstCore)) {
   rmSync(dstCore, { recursive: true, force: true });
 }
 cpSync(srcCore, dstCore, { recursive: true, dereference: true, force: true });
+
+// Remove node_modules inside @codepilot/core (symlinks to pnpm store break asar pack)
+const coreNm = join(dstCore, 'node_modules');
+if (existsSync(coreNm)) {
+  rmSync(coreNm, { recursive: true, force: true });
+  console.log('[inject-core] Removed @codepilot/core/node_modules (dev deps, not needed)');
+}
 
 // Verify injection
 const dstIndex = join(dstCore, 'dist', 'index.js');

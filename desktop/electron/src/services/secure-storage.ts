@@ -1,4 +1,4 @@
-import { createHash, randomBytes, pbkdf2Sync } from 'node:crypto';
+import { createHash, randomBytes, pbkdf2Sync, createCipheriv, createDecipheriv } from 'node:crypto';
 import { hostname, platform, cpus, totalmem, networkInterfaces } from 'node:os';
 import { app } from 'electron';
 import { join } from 'node:path';
@@ -105,20 +105,19 @@ export interface TokenEncryptionResult {
 
 export function encryptToken(token: string, encryptionKey: Buffer): TokenEncryptionResult {
   const iv = randomBytes(16);
-  const cipher = createHash('sha256').update('aes-256-gcm').digest();
-  
-  const encrypted = createHash('sha256')
-    .update(token + iv.toString('hex'))
-    .digest('hex');
+  const cipher = createCipheriv('aes-256-gcm', encryptionKey, iv);
 
-  const authTag = createHash('sha256')
-    .update(encrypted + iv.toString('hex'))
-    .digest('hex').substring(0, 32);
+  const encrypted = Buffer.concat([
+    cipher.update(token, 'utf8'),
+    cipher.final(),
+  ]);
+
+  const authTag = cipher.getAuthTag();
 
   return {
-    encrypted,
+    encrypted: encrypted.toString('hex'),
     iv: iv.toString('hex'),
-    authTag
+    authTag: authTag.toString('hex'),
   };
 }
 
@@ -128,15 +127,15 @@ export function decryptToken(
   authTag: string,
   encryptionKey: Buffer
 ): string {
-  const expectedAuthTag = createHash('sha256')
-    .update(encrypted + iv)
-    .digest('hex').substring(0, 32);
+  const decipher = createDecipheriv('aes-256-gcm', encryptionKey, Buffer.from(iv, 'hex'));
+  decipher.setAuthTag(Buffer.from(authTag, 'hex'));
 
-  if (expectedAuthTag !== authTag) {
-    throw new Error('Authentication tag mismatch - token may be corrupted');
-  }
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(encrypted, 'hex')),
+    decipher.final(),
+  ]);
 
-  return encrypted;
+  return decrypted.toString('utf8');
 }
 
 export class SecureTokenStorage {

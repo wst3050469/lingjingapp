@@ -47,6 +47,37 @@ function saveCloudConfig(config: { url?: string; apiKey?: string }): void {
   }
 }
 
+/** Event names used by CloudSyncClient — used for cleanup */
+const CLOUD_CLIENT_EVENTS = [
+  'connected', 'disconnected', 'sync',
+  'webhook', 'relay:from-mobile', 'desktop:list',
+] as const;
+
+/**
+ * Remove all registered event listeners from cloudClient.
+ * Call before disconnect/reconnect to prevent memory leaks and duplicate handlers.
+ */
+function clearCloudClientListeners(): void {
+  if (!cloudClient) return;
+  for (const event of CLOUD_CLIENT_EVENTS) {
+    cloudClient.removeAllListeners(event);
+  }
+}
+
+/**
+ * Safely disconnect and clean up the current cloud client.
+ * Removes all event listeners, disconnects WebSocket, and nulls the reference.
+ */
+function destroyCloudClient(): void {
+  if (cloudRetryTimer) { clearInterval(cloudRetryTimer); cloudRetryTimer = null; }
+  if (cloudClient) {
+    clearCloudClientListeners();
+    try { cloudClient.disconnect(); } catch { /* ignore */ }
+    cloudClient = null;
+  }
+  isConnecting = false;
+}
+
 export function registerCloudIpc(win: BrowserWindow): void {
   mainWindow = win;
 
@@ -56,7 +87,8 @@ export function registerCloudIpc(win: BrowserWindow): void {
     try {
       // Stop auto-retry timer when user manually connects
       if (cloudRetryTimer) { clearInterval(cloudRetryTimer); cloudRetryTimer = null; }
-      if (cloudClient) cloudClient.disconnect();
+      // Clean up existing client before creating new one (remove listeners + disconnect)
+      destroyCloudClient();
       isConnecting = true;
       cloudClient = new CloudSyncClient(opts || {});
 
@@ -109,12 +141,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
   });
 
   ipcMain.handle('cloud:disconnect', async () => {
-    if (cloudRetryTimer) { clearInterval(cloudRetryTimer); cloudRetryTimer = null; }
-    if (cloudClient) {
-      cloudClient.disconnect();
-      cloudClient = null;
-    }
-    isConnecting = false;
+    destroyCloudClient();
     return { ok: true };
   });
 
@@ -123,7 +150,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
     // Use Node http for healthCheck (fetch may fail in ASAR environment)
     let healthy = false;
     try {
-      const clientUrl = (cloudClient as any).url || 'https://ide.zhejiangjinmo.com';
+      const clientUrl = cloudClient.url || 'https://ide.zhejiangjinmo.com';
       const healthUrl = new URL('/api/health', clientUrl);
       healthy = await new Promise<boolean>((resolve) => {
         const lib = healthUrl.protocol === 'https:' ? https : http;
@@ -148,6 +175,9 @@ export function registerCloudIpc(win: BrowserWindow): void {
       cloudClient = new CloudSyncClient({});
       // Wait for device registration so we have a fallback
       await cloudClient.autoRegister().catch(() => {});
+    } else {
+      // Remove old listeners to prevent duplicates when this is called after cloud:connect
+      clearCloudClientListeners();
     }
     // Set the user JWT - this overrides the device JWT for all API calls
     cloudClient.setToken(token);
@@ -361,8 +391,7 @@ export async function autoConnectCloud(): Promise<void> {
           // Health check failed, will create new client below
         }
         // Disconnect stale client before creating new one
-        try { cloudClient.disconnect(); } catch {}
-        cloudClient = null;
+        destroyCloudClient();
       }
 
       // Read persisted config for custom URL/API Key
@@ -414,7 +443,7 @@ export async function autoConnectCloud(): Promise<void> {
       // Check health to confirm connectivity (use Node http for ASAR compatibility)
       let healthy = false;
       try {
-        const clientUrl = (cloudClient as any).url || 'https://ide.zhejiangjinmo.com';
+        const clientUrl = cloudClient.url || 'https://ide.zhejiangjinmo.com';
         const healthUrl = new URL('/api/health', clientUrl);
         healthy = await new Promise<boolean>((resolve) => {
           const lib = healthUrl.protocol === 'https:' ? https : http;

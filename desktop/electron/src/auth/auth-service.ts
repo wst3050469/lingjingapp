@@ -16,6 +16,9 @@ async function getJose(): Promise<typeof import('jose')> {
   return _jose;
 }
 import { getDatabase, saveDatabase } from '../db/database.js';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
 /** Safe JSON parse — prevents "[object Object]" crashes when DB values are already objects */
 function safeJsonParse<T>(val: unknown, fallback: T): T {
@@ -23,7 +26,48 @@ function safeJsonParse<T>(val: unknown, fallback: T): T {
   try { return JSON.parse(val) as T; } catch { return fallback; }
 }
 
-const JWT_SECRET = new TextEncoder().encode('codepilot-local-secret-key-change-in-production');
+/**
+ * Load or generate the JWT signing secret.
+ * Priority: LINGJING_JWT_SECRET env var > ~/.lingjing/jwt-secret file > auto-generate on first launch.
+ */
+function loadJwtSecret(): Uint8Array {
+  // 1. Environment variable overrides everything
+  const envSecret = process.env.LINGJING_JWT_SECRET;
+  if (envSecret && envSecret.length >= 32) {
+    return new TextEncoder().encode(envSecret);
+  }
+
+  // 2. Persistent file in user config directory
+  const secretFile = join(homedir(), '.lingjing', 'jwt-secret');
+  const configDir = join(homedir(), '.lingjing');
+
+  if (existsSync(secretFile)) {
+    const stored = readFileSync(secretFile, 'utf8').trim();
+    if (stored && stored.length >= 32) {
+      return new TextEncoder().encode(stored);
+    }
+    console.warn('[Auth] jwt-secret file corrupted, regenerating');
+  }
+
+  // 3. Auto-generate and persist
+  try {
+    if (!existsSync(configDir)) {
+      mkdirSync(configDir, { recursive: true });
+    }
+    const { randomBytes } = require('node:crypto');
+    const newSecret = randomBytes(32).toString('hex'); // 64 hex chars
+    writeFileSync(secretFile, newSecret, 'utf8');
+    console.log('[Auth] Generated new JWT secret at', secretFile);
+    return new TextEncoder().encode(newSecret);
+  } catch (err) {
+    console.warn('[Auth] Failed to persist JWT secret, using fallback:', err);
+    // Last resort fallback — still better than hardcoded production secret
+    const fallback = `lingjing-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return new TextEncoder().encode(fallback);
+  }
+}
+
+const JWT_SECRET = loadJwtSecret();
 const JWT_ALGORITHM = 'HS256';
 const TOKEN_EXPIRY = '7d';
 

@@ -10,6 +10,7 @@ import type { BrowserWindow } from 'electron';
 import { app as electronApp } from 'electron';
 import { join, dirname, relative, resolve } from 'path';
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import os from 'os';
 
 
 interface WebServerConfig {
@@ -490,7 +491,6 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
   // ─── Mobile API: Device Status ───
   expressApp.get('/api/status', authenticate, (req, res) => {
     try {
-      const os = require('os');
       const db = getDatabaseFn!();
       const convCount = db.exec(`SELECT COUNT(*) FROM conversations`)[0]?.values[0][0] || 0;
       const questCount = db.exec(`SELECT COUNT(*) FROM quest_tasks`)[0]?.values[0][0] || 0;
@@ -672,7 +672,6 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
   }
 
   function handleStatusCommand(ws: WebSocket, id: string, action: string, payload: any) {
-    const os = require('os');
     const db = getDatabaseFn!();
     ws.send(JSON.stringify({
       type: 'ack', id, success: true,
@@ -799,7 +798,7 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
     // Register error handler BEFORE listen - the 'error' event is async
     srv.addListener('error', onError);
     try {
-      srv.listen(port, '0.0.0.0', () => {
+      srv.listen(port, '127.0.0.1', () => {
         srv.removeListener('error', onError);
         serverConfig.port = port;
         wsDiagnostics.currentPort = port;
@@ -810,7 +809,7 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
         if (serverConfig.frpEnabled) {
           console.log(`[Web Server] Remote access: http://${serverConfig.frpServerAddr}:${serverConfig.frpRemotePort}`);
         }
-        console.log(`[Web Server] Token: ${serverConfig.token}`);
+        console.log(`[Web Server] Token: ${serverConfig.token.slice(0, 8)}... (hidden)`);
       });
     } catch (err: any) {
       // Newer Node.js throws EADDRINUSE synchronously

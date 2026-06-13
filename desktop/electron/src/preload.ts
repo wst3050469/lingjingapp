@@ -5,6 +5,12 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('electronAPI', {
   // Generic invoke passthrough for Fusion panels and dynamic IPC callers
   invoke: (channel: string, ...args: unknown[]) => ipcRenderer.invoke(channel, ...args),
+  // Generic event listener (for workspace:changed, workspace:error, etc.)
+  on: (channel: string, callback: (...args: unknown[]) => void) => {
+    const handler = (_event: any, ...args: unknown[]) => callback(...args);
+    ipcRenderer.on(channel, handler);
+    return () => ipcRenderer.removeListener(channel, handler);
+  },
 
   agent: {
     run: (message: string, options?: { mode?: string; conversationId?: string; contexts?: Array<{ id: string; type: string; label: string; path: string; content?: string }>; images?: Array<{ data: string; mediaType: string }> }) =>

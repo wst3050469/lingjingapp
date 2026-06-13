@@ -27,7 +27,7 @@ export const useSecurityStore = create<SecurityState>((set) => ({
   scan: async (projectPath, scope, files) => {
     set({ loading: true, progress: { phase: 'starting', current: 0, total: 0 } });
     try {
-      const result = await window.electron.ipcRenderer.invoke('security:scan', projectPath, scope || 'full', files);
+      const result = await window.electronAPI.invoke('security:scan', projectPath, scope || 'full', files);
       set({ currentResult: result, loading: false, progress: null });
     } catch (err) {
       set({ loading: false, progress: null });
@@ -36,38 +36,38 @@ export const useSecurityStore = create<SecurityState>((set) => ({
   },
 
   cancelScan: (projectPath) => {
-    window.electron.ipcRenderer.invoke('security:cancel', projectPath);
+    window.electronAPI.invoke('security:cancel', projectPath);
     set({ loading: false, progress: null });
   },
 
   getResult: async (projectPath, scanId) => {
-    const result = await window.electron.ipcRenderer.invoke('security:getResult', projectPath, scanId);
+    const result = await window.electronAPI.invoke('security:getResult', projectPath, scanId);
     set({ currentResult: result });
   },
 
   listResults: async (projectPath) => {
-    const results = await window.electron.ipcRenderer.invoke('security:listResults', projectPath);
+    const results = await window.electronAPI.invoke('security:listResults', projectPath);
     set({ scanHistory: results });
   },
 
   applyFix: async (projectPath, vulnerability) => {
-    await window.electron.ipcRenderer.invoke('security:applyFix', projectPath, vulnerability);
+    await window.electronAPI.invoke('security:applyFix', projectPath, vulnerability);
   },
 
   loadRules: async (projectPath) => {
-    const rules = await window.electron.ipcRenderer.invoke('security:listRules', projectPath);
+    const rules = await window.electronAPI.invoke('security:listRules', projectPath);
     set({ customRules: rules });
   },
 
   saveRule: async (projectPath, rule) => {
-    await window.electron.ipcRenderer.invoke('security:saveRule', projectPath, rule);
+    await window.electronAPI.invoke('security:saveRule', projectPath, rule);
   },
 
   deleteRule: async (projectPath, ruleId) => {
-    await window.electron.ipcRenderer.invoke('security:deleteRule', projectPath, ruleId);
+    await window.electronAPI.invoke('security:deleteRule', projectPath, ruleId);
   },
 
   compareResults: async (projectPath, scanId1, scanId2) => {
-    return window.electron.ipcRenderer.invoke('security:compareResults', projectPath, scanId1, scanId2);
+    return window.electronAPI.invoke('security:compareResults', projectPath, scanId1, scanId2);
   },
 }));

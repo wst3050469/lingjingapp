@@ -26,7 +26,7 @@ export const usePMStore = create<PMState>((set, get) => ({
   loadWorkItems: async (projectPath, filter) => {
     set({ loading: true });
     try {
-      const items = await window.electron.ipcRenderer.invoke('pm:listWorkItems', projectPath, filter);
+      const items = await window.electronAPI.invoke('pm:listWorkItems', projectPath, filter);
       set({ workItems: items, loading: false });
     } catch (err) {
       set({ loading: false });
@@ -35,34 +35,34 @@ export const usePMStore = create<PMState>((set, get) => ({
   },
 
   createWorkItem: async (projectPath, input) => {
-    const id = await window.electron.ipcRenderer.invoke('pm:createWorkItem', projectPath, input);
+    const id = await window.electronAPI.invoke('pm:createWorkItem', projectPath, input);
     await get().loadWorkItems(projectPath);
     return id;
   },
 
   updateWorkItem: async (projectPath, id, input) => {
-    await window.electron.ipcRenderer.invoke('pm:updateWorkItem', projectPath, id, input);
+    await window.electronAPI.invoke('pm:updateWorkItem', projectPath, id, input);
     await get().loadWorkItems(projectPath);
   },
 
   updateStatus: async (projectPath, id, status, changedBy, wipLimit, currentCount) => {
-    await window.electron.ipcRenderer.invoke('pm:updateStatus', projectPath, id, status, changedBy, wipLimit, currentCount);
+    await window.electronAPI.invoke('pm:updateStatus', projectPath, id, status, changedBy, wipLimit, currentCount);
     await get().loadWorkItems(projectPath);
   },
 
   deleteWorkItem: async (projectPath, id) => {
-    await window.electron.ipcRenderer.invoke('pm:deleteWorkItem', projectPath, id);
+    await window.electronAPI.invoke('pm:deleteWorkItem', projectPath, id);
     await get().loadWorkItems(projectPath);
   },
 
   linkCommit: async (projectPath, workItemId, commitSha, message) => {
-    await window.electron.ipcRenderer.invoke('pm:linkCommit', projectPath, workItemId, commitSha, message);
+    await window.electronAPI.invoke('pm:linkCommit', projectPath, workItemId, commitSha, message);
   },
 
   loadBoard: async (projectPath) => {
     set({ loading: true });
     try {
-      const board = await window.electron.ipcRenderer.invoke('pm:getBoard', projectPath);
+      const board = await window.electronAPI.invoke('pm:getBoard', projectPath);
       set({ boardColumns: board.columns, workItems: board.workItems, loading: false });
     } catch (err) {
       set({ loading: false });
@@ -71,15 +71,15 @@ export const usePMStore = create<PMState>((set, get) => ({
   },
 
   updateWipLimit: async (projectPath, columnId, wipLimit) => {
-    await window.electron.ipcRenderer.invoke('pm:updateWipLimit', projectPath, columnId, wipLimit);
+    await window.electronAPI.invoke('pm:updateWipLimit', projectPath, columnId, wipLimit);
   },
 
   loadMilestones: async (projectPath) => {
-    const ms = await window.electron.ipcRenderer.invoke('pm:listMilestones', projectPath);
+    const ms = await window.electronAPI.invoke('pm:listMilestones', projectPath);
     set({ milestones: ms });
   },
 
   exportData: async (projectPath, format) => {
-    return window.electron.ipcRenderer.invoke('pm:exportData', projectPath, format || 'json');
+    return window.electronAPI.invoke('pm:exportData', projectPath, format || 'json');
   },
 }));

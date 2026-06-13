@@ -25,7 +25,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   loadPipelines: async (projectPath: string) => {
     set({ loading: true });
     try {
-      const result = await window.electron.ipcRenderer.invoke('pipeline:list', projectPath);
+      const result = await window.electronAPI.invoke('pipeline:list', projectPath);
       set({ pipelines: result, loading: false });
     } catch (err) {
       set({ loading: false });
@@ -34,19 +34,19 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   },
 
   savePipeline: async (projectPath: string, definition: any) => {
-    await window.electron.ipcRenderer.invoke('pipeline:save', projectPath, definition);
+    await window.electronAPI.invoke('pipeline:save', projectPath, definition);
     await get().loadPipelines(projectPath);
   },
 
   deletePipeline: async (projectPath: string, id: string) => {
-    await window.electron.ipcRenderer.invoke('pipeline:delete', projectPath, id);
+    await window.electronAPI.invoke('pipeline:delete', projectPath, id);
     await get().loadPipelines(projectPath);
   },
 
   triggerPipeline: async (projectPath: string, pipelineId: string) => {
     set({ logs: [], loading: true });
     try {
-      const run = await window.electron.ipcRenderer.invoke('pipeline:trigger', projectPath, pipelineId, 'manual');
+      const run = await window.electronAPI.invoke('pipeline:trigger', projectPath, pipelineId, 'manual');
       set({ currentRun: run, loading: false });
     } catch (err) {
       set({ loading: false });
@@ -55,12 +55,12 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   },
 
   cancelPipeline: async (projectPath: string, runId: string) => {
-    await window.electron.ipcRenderer.invoke('pipeline:cancel', projectPath, runId);
+    await window.electronAPI.invoke('pipeline:cancel', projectPath, runId);
     set({ currentRun: null });
   },
 
   loadRunHistory: async (projectPath: string, pipelineId: string) => {
-    const result = await window.electron.ipcRenderer.invoke('pipeline:runHistory', projectPath, pipelineId);
+    const result = await window.electronAPI.invoke('pipeline:runHistory', projectPath, pipelineId);
     set({ runHistory: result });
   },
 

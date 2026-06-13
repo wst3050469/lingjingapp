@@ -36,7 +36,7 @@ export function AdminPanel() {
   }, [activeTab, adminToken]);
 
   useEffect(() => {
-    window.electron.ipcRenderer.invoke('admin:log:stats').then((r: any) => {
+    window.electronAPI.invoke('admin:log:stats').then((r: any) => {
       if (r?.success) setDbStatus(r.stats);
     }).catch(() => {});
   }, []);
@@ -53,8 +53,8 @@ export function AdminPanel() {
   const loadDashboardStats = async () => {
     try {
       const [questResult, logResult] = await Promise.all([
-        window.electron.ipcRenderer.invoke('admin:quest:stats'),
-        window.electron.ipcRenderer.invoke('admin:log:stats'),
+        window.electronAPI.invoke('admin:quest:stats'),
+        window.electronAPI.invoke('admin:log:stats'),
       ]);
       setStats({
         agentCalls: questResult?.stats?.totalTasks ?? logResult?.stats?.totalLogs ?? 0,
@@ -67,7 +67,7 @@ export function AdminPanel() {
 
   const loadAuditLogs = async () => {
     try {
-      const result = await window.electron.ipcRenderer.invoke('admin:log:query', { limit: 50 });
+      const result = await window.electronAPI.invoke('admin:log:query', { limit: 50 });
       if (result?.success && Array.isArray(result.logs)) {
         setAuditLogs(result.logs.map((log: any, idx: number) => ({
           id: log.id ?? idx,
@@ -99,7 +99,7 @@ export function AdminPanel() {
 
   const loadConfig = async () => {
     try {
-      const result = await window.electron.ipcRenderer.invoke('admin:config:get');
+      const result = await window.electronAPI.invoke('admin:config:get');
       if (result?.success && result.config) {
         setSystemConfig(result.config);
       }
@@ -108,7 +108,7 @@ export function AdminPanel() {
 
   const handleConfigUpdate = async (section: string, key: string, value: any) => {
     try {
-      const result = await window.electron.ipcRenderer.invoke('admin:config:update', { section, key, value });
+      const result = await window.electronAPI.invoke('admin:config:update', { section, key, value });
       if (result?.success) {
         setSystemConfig(result.config || {});
       }
@@ -117,7 +117,7 @@ export function AdminPanel() {
 
   const handleConfigReset = async () => {
     try {
-      const result = await window.electron.ipcRenderer.invoke('admin:config:reset');
+      const result = await window.electronAPI.invoke('admin:config:reset');
       if (result?.success) {
         setSystemConfig(result.config || {});
       }
@@ -177,8 +177,8 @@ export function AdminPanel() {
 
   const handleDbBackup = async () => {
     try {
-      const configResult = await window.electron.ipcRenderer.invoke('admin:config:export');
-      const logResult = await window.electron.ipcRenderer.invoke('admin:log:export', {});
+      const configResult = await window.electronAPI.invoke('admin:config:export');
+      const logResult = await window.electronAPI.invoke('admin:log:export', {});
       const backupData = {
         config: configResult?.json || {},
         logs: logResult?.data || [],
@@ -199,7 +199,7 @@ export function AdminPanel() {
 
   const handleCacheClean = async () => {
     try {
-      await window.electron.ipcRenderer.invoke('admin:log:clean', { olderThan: 30 });
+      await window.electronAPI.invoke('admin:log:clean', { olderThan: 30 });
       alert('缓存清理完成');
     } catch (err: any) {
       alert('清理失败: ' + (err.message || '未知错误'));
@@ -209,9 +209,9 @@ export function AdminPanel() {
   const handleExportDiagnostics = async () => {
     try {
       const [configResult, logResult, questResult] = await Promise.all([
-        window.electron.ipcRenderer.invoke('admin:config:export').catch(() => ({})),
-        window.electron.ipcRenderer.invoke('admin:log:export', { limit: 100 }).catch(() => ({})),
-        window.electron.ipcRenderer.invoke('admin:quest:stats').catch(() => ({})),
+        window.electronAPI.invoke('admin:config:export').catch(() => ({})),
+        window.electronAPI.invoke('admin:log:export', { limit: 100 }).catch(() => ({})),
+        window.electronAPI.invoke('admin:quest:stats').catch(() => ({})),
       ]);
       const diagData = {
         config: configResult?.json || {},
@@ -560,7 +560,7 @@ function UsersTab() {
 
   useEffect(() => {
     setLoading(true);
-    window.electron.ipcRenderer.invoke('admin:auth:list-users').then((r: any) => {
+    window.electronAPI.invoke('admin:auth:list-users').then((r: any) => {
       if (r?.success) setUsers(r.users || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -593,7 +593,7 @@ function McpTab() {
 
   useEffect(() => {
     setLoading(true);
-    window.electron.ipcRenderer.invoke('admin:mcp:list-services').then((r: any) => {
+    window.electronAPI.invoke('admin:mcp:list-services').then((r: any) => {
       if (r?.success) setServices(r.services || []);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -628,8 +628,8 @@ function QuestTab() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      window.electron.ipcRenderer.invoke('admin:quest:list-tasks', { limit: 50 }),
-      window.electron.ipcRenderer.invoke('admin:quest:stats'),
+      window.electronAPI.invoke('admin:quest:list-tasks', { limit: 50 }),
+      window.electronAPI.invoke('admin:quest:stats'),
     ]).then(([taskResult, statsResult]: any[]) => {
       if (taskResult?.success) setTasks(taskResult.tasks || []);
       if (statsResult?.success) setTaskStats(statsResult.stats);
@@ -638,8 +638,8 @@ function QuestTab() {
 
   const handleAction = async (taskId: string, action: 'pause' | 'resume' | 'cancel') => {
     try {
-      await window.electron.ipcRenderer.invoke(`admin:quest:${action}`, { taskId });
-      const result = await window.electron.ipcRenderer.invoke('admin:quest:list-tasks', { limit: 50 });
+      await window.electronAPI.invoke(`admin:quest:${action}`, { taskId });
+      const result = await window.electronAPI.invoke('admin:quest:list-tasks', { limit: 50 });
       if (result?.success) setTasks(result.tasks || []);
     } catch {}
   };

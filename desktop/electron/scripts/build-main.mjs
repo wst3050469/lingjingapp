@@ -317,6 +317,61 @@ function resolveNodeModules() {
   } catch (err) {
     console.error('[build-main] ❌ Failed to resolve node_modules:', err.message);
   }
+
+  // ─── Phase 2.5: Handle workspace packages ───
+  // pnpm workspace packages (e.g., @codepilot/core) are symlinks from
+  // packages/electron/node_modules/@scoped/name → ../../core/
+  // They are NOT in .pnpm store, so findPkgDir() misses them.
+  // This step resolves symlinks and copies dist + package.json to BUILD_NM.
+  for (const external of EXTERNAL) {
+    // Only handle scoped workspace packages: @scope/name
+    if (!external.startsWith('@')) continue;
+    const parts = external.split('/');
+    if (parts.length !== 2) continue;
+
+    const symlinkPath = join(SRC_NM, parts[0], parts[1]);
+    let realPath;
+    try {
+      realPath = realpathSync(symlinkPath);
+    } catch {
+      continue; // not a symlink or doesn't exist
+    }
+
+    // If realPath === symlinkPath, it's already a real directory (not a workspace symlink)
+    if (realPath === symlinkPath) continue;
+
+    // Verify it's a workspace package: has dist/index.js and package.json
+    const realPkgJson = join(realPath, 'package.json');
+    const realDistIndex = join(realPath, 'dist', 'index.js');
+    if (!existsSync(realPkgJson) || !existsSync(realDistIndex)) continue;
+
+    let pkg;
+    try {
+      pkg = JSON.parse(readFileSync(realPkgJson, 'utf8'));
+    } catch { continue; }
+
+    if (!pkg.private && !pkg.main) continue; // not a workspace lib
+
+    // Copy to release/build/node_modules/ (inside resolveNodeModules, use DST_NM)
+    const dstScope = join(DST_NM, parts[0]);
+    const dstDir = join(dstScope, parts[1]);
+    mkdirSync(dstScope, { recursive: true });
+
+    try {
+      // Remove existing symlink if any
+      if (existsSync(dstDir)) {
+        try { rmSync(dstDir, { recursive: true, force: true }); } catch {}
+      }
+      // Copy dist directory
+      cpSync(join(realPath, 'dist'), join(dstDir, 'dist'), { recursive: true, dereference: true, force: true });
+      // Copy package.json (essential for Node.js module resolution)
+      copyFileSync(realPkgJson, join(dstDir, 'package.json'));
+      copied++;
+      console.log(`[build-main] 📦 Workspace package '${external}' resolved: ${realPath} → release/build/node_modules/`);
+    } catch (err) {
+      console.warn(`[build-main] ⚠️ Failed to copy workspace package '${external}': ${err.message}`);
+    }
+  }
 }
 
 console.log('[build-main] Building Electron main process with esbuild...');
@@ -445,6 +500,25 @@ try {
       console.log(`[build-main] ✅ Synced ${synced} missing external dep(s) to packages/electron/node_modules/`);
     } else {
       console.log('[build-main] ✅ All external deps already present in packages/electron/node_modules/');
+    }
+
+    // ── Workspace package special handling ──
+    // @codepilot/core is a pnpm workspace symlink. The loop above skips it
+    // ("already exists"). We must forcibly replace the symlink with real files
+    // so electron-builder includes them in the ASAR.
+    if (existsSync(join(SRC_NM, '@codepilot', 'core'))) {
+      try {
+        const srcCore = join(BUILD_NM, '@codepilot', 'core');
+        const dstCore = join(SRC_NM, '@codepilot', 'core');
+        const dstReal = realpathSync(dstCore);
+        if (dstReal !== resolve(srcCore) && existsSync(srcCore)) {
+          rmSync(dstCore, { recursive: true, force: true });
+          cpSync(srcCore, dstCore, { recursive: true, dereference: true, force: true });
+          console.log('[build-main] 📦 Replaced @codepilot/core symlink with real files');
+        }
+      } catch (err) {
+        console.warn('[build-main] ⚠️ Failed to replace @codepilot/core symlink:', err.message);
+      }
     }
   }
   syncExternalNodeModules();

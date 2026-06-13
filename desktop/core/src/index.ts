@@ -8,7 +8,8 @@ export { estimateTokens } from './agent/token-counter.js';
 export { loadPrompts, getPrompt, MAIN_PROMPT, CODE_REVIEWER_PROMPT, EXPLORER_PROMPT } from './agent/prompts.js';
 export { AgentScheduler } from './agent/agent-scheduler.js';
 export { AgentCore } from './agent/agent-core.js';
-export { AgentFactory } from './agent/agent-factory.js';
+// AgentFactory 使用 ToolExecutor 静态导入，移除避免 executor.js 缺失时崩溃（零消费者）
+// export { AgentFactory } from './agent/agent-factory.js';
 export { DAGExecutor } from './agent/dag-executor.js';
 export { ContextCompressor } from './agent/context-compressor.js';
 

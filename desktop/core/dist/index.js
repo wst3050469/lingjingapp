@@ -7,7 +7,8 @@ export { estimateTokens } from './agent/token-counter.js';
 export { loadPrompts, getPrompt, MAIN_PROMPT, CODE_REVIEWER_PROMPT, EXPLORER_PROMPT } from './agent/prompts.js';
 export { AgentScheduler } from './agent/agent-scheduler.js';
 export { AgentCore } from './agent/agent-core.js';
-export { AgentFactory } from './agent/agent-factory.js';
+// AgentFactory uses static ToolExecutor import - removed to prevent crash (zero consumers)
+// export { AgentFactory } from './agent/agent-factory.js';
 export { DAGExecutor } from './agent/dag-executor.js';
 export { ContextCompressor } from './agent/context-compressor.js';
 // LLM

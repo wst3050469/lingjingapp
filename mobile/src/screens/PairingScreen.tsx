@@ -107,7 +107,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
              '已通过FRP中转连接'}
           </Text>
           <Text style={styles.successUrl}>
-            {connectedChannel === 'lan' ? `${editingIp}:3001` : 'lingjing.zhejiangjinmo.com'}
+            {connectedChannel === 'lan' ? `${editingIp}:3001` : 'ide.zhejiangjinmo.com'}
           </Text>
         </View>
       </SafeAreaView>
@@ -192,7 +192,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
             📡 局域网：手机和桌面端在同 WiFi 下自动连接
           </Text>
           <Text style={styles.infoText}>
-            ☁️ FRP 中转：通过 lingjing.zhejiangjinmo.com 远程连接（需桌面端开启FRP）
+            ☁️ FRP 中转：通过 ide.zhejiangjinmo.com 远程连接（需桌面端开启FRP）
           </Text>
           <Text style={styles.infoHint}>
             提示：桌面设置→移动端→开启「灵境移动端」开关即可

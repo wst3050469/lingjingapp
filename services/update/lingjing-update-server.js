@@ -1,7 +1,7 @@
 /**
  * 灵境 LingJing Update Server
  * 零依赖 - 仅使用 Node.js 内置模块
- * 运行在 :3002 端口，专为 lingjing.zhejiangjinmo.com 服务
+ * 运行在 :3002 端口，专为灵境移动端版本更新服务
  */
 const http = require('http');
 const fs = require('fs');

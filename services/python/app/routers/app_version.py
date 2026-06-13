@@ -20,12 +20,12 @@ _LAN_HOST = os.getenv("LAN_HOST", "192.168.1.10")
 _LAN_PORT = os.getenv("API_PORT", "8900")
 
 # 公网下载基础URL
-# 主用: lingjing.zhejiangjinmo.com → 阿里云CDN → 本地nginx (ECS:8900)
+# 主用: ide.zhejiangjinmo.com → 阿里云CDN → 本地nginx (ECS:8900)
 # 注意: OSS账号已禁用(UserDisable)，所有OSS/CDN海外通道均不可用
-_PUBLIC_DOWNLOAD_BASE = "https://lingjing.zhejiangjinmo.com"
+_PUBLIC_DOWNLOAD_BASE = "https://ide.zhejiangjinmo.com"
 # 本地nginx直接服务（通过API下载端点，绕过CDN缓存不一致问题）
 # ⚠️ Tengine CDN仅允许 /downloads/ 路径，/api/v1/app/ 路径被拦截返回301
-_API_DOWNLOAD_BASE = "https://lingjing.zhejiangjinmo.com/downloads"
+_API_DOWNLOAD_BASE = "https://ide.zhejiangjinmo.com/downloads"
 # 香港服务器（文件serve等其他用途仍在使用，不删除常量声明）
 _HK_BASE = "https://www.spiritrealmz.com"
 # ⚠️ _HK_BASE 不再用于APK下载：spiritrealmz.com→SSH隧道→uvicorn，uvicorn无/apk/路由→404
@@ -116,7 +116,7 @@ async def download_version(version_name: str, request: Request = None):
         )
     apk_fn = _normalize_apk_filename(row["apk_filename"])
     local_path = _APK_DIR / apk_fn
-    # 公网重定向到CDN域名(lingjing.zhejiangjinmo.com)，CDN回源本地nginx静态文件直出
+    # 公网重定向到CDN域名(ide.zhejiangjinmo.com)，CDN回源本地nginx静态文件直出
     # 之前的HK重定向(spiritrealmz.com)经SSH隧道到uvicorn → uvicorn无/apk/路由→404
     public_url = f"{_PUBLIC_DOWNLOAD_BASE}/downloads/{apk_fn}"
     

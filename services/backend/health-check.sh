@@ -16,7 +16,7 @@ check "Nginx 运行中" "systemctl is-active nginx 2>/dev/null | grep -q active"
 check "cloud-server (PM2)" "pm2 list 2>/dev/null | grep cloud-server | grep -q online"
 
 # 3. Landing 页面 (HTTP 200)
-check "Landing 首页" "curl -sI -H 'Host: lingjing.zhejiangjinmo.com' http://127.0.0.1/ 2>/dev/null | head -1 | grep -q '200\|301'"
+check "Landing 首页" "curl -sI -H 'Host: ide.zhejiangjinmo.com' http://127.0.0.1/ 2>/dev/null | head -1 | grep -q '200\|301'"
 
 # 4. Admin API 健康
 check "/api/health" "curl -s http://127.0.0.1:8000/api/health 2>/dev/null | grep -q ok"

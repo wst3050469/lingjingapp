@@ -1189,7 +1189,7 @@ app.post('/api/payments/create', auth, async (req, res) => {
     const result = await createPayment(channel, {
       amount,
       subject: subject || '灵境订阅支付',
-      notifyUrl: 'https://lingjing.zhejiangjinmo.com/api/payments/notify/' + channel,
+      notifyUrl: 'https://ide.zhejiangjinmo.com/api/payments/notify/' + channel,
     });
     // Store payment record in DB
     const paymentId = randomUUID();

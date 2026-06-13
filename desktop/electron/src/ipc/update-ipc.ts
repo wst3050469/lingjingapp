@@ -293,11 +293,7 @@ export function initUpdateIPC(win: BrowserWindow): void {
   });
 
   ipcMain.handle('update:download', async () => {
-    // ── Always use electron-updater for download ──
-    // HTTP check (httpCheckVersion) only detects version and notifies renderer.
-    // It does NOT cache download URLs. The actual download must go through
-    // electron-updater so quitAndInstall() knows where the file is.
-    //
+    // ── Try electron-updater first ──
     // electron-updater reads latest.yml from feedURL:
     //   https://ide.zhejiangjinmo.com/downloads/latest.yml
     // which references LingJing-Setup-${version}-win-x64.exe
@@ -320,26 +316,63 @@ export function initUpdateIPC(win: BrowserWindow): void {
           await new Promise(resolve => setTimeout(resolve, retryDelays[attempt - 1]));
         }
 
-        console.log('[update] Starting download...');
+        console.log('[update] Starting download via electron-updater...');
+        let hasUpdate = false;
         try {
-          await au.checkForUpdates();
+          const checkResult = await au.checkForUpdates();
+          hasUpdate = checkResult && checkResult.updateInfo && checkResult.updateInfo.version;
+          if (hasUpdate) {
+            console.log('[update] electron-updater found update:', checkResult.updateInfo.version);
+          }
         } catch (checkErr: any) {
-          console.warn('[update] Pre-download check failed (continuing):', checkErr.message);
+          console.warn('[update] electron-updater check failed:', checkErr.message);
         }
+        
+        if (!hasUpdate) {
+          throw new Error('electron-updater found no update (latest.yml may be stale)');
+        }
+        
         await au.downloadUpdate();
-        console.log('[update] Download initiated successfully');
+        console.log('[update] Download initiated via electron-updater');
         return { ok: true };
-      } catch (err: any) {
-        console.error(`[update] Download failed (attempt ${attempt + 1}/${maxRetries + 1}):`, err.message);
+      } catch (updaterErr: any) {
+        console.warn(`[update] electron-updater download failed (attempt ${attempt + 1}/${maxRetries + 1}):`, updaterErr.message);
 
-        const errorInfo = classifyUpdateError(err instanceof Error ? err : new Error(err.message));
+        // ── HTTP fallback: if electron-updater can't find/download the update ──
+        // (e.g. latest.yml is stale), fetch download URL from /api/latest
+        if (attempt >= maxRetries) {
+          console.log('[update] Trying HTTP fallback download from /api/latest...');
+          try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            const apiRes = await fetch('https://ide.zhejiangjinmo.com/api/latest', { signal: controller.signal });
+            clearTimeout(timer);
+            
+            if (apiRes.ok) {
+              const apiData = await apiRes.json();
+              const files = apiData.files || {};
+              const downloadUrl = files['win-x64']?.url || files['win-x64'];
+              
+              if (downloadUrl && typeof downloadUrl === 'string') {
+                console.log('[update] HTTP fallback: downloading from', downloadUrl);
+                const result = await httpDownloadUpdate(downloadUrl, apiData.version);
+                if (result.ok) {
+                  _httpLatestVersion = apiData.version;
+                  return { ok: true, source: 'http-fallback' };
+                }
+              }
+            }
+          } catch (httpErr: any) {
+            console.error('[update] HTTP fallback download failed:', httpErr.message);
+          }
+        }
 
+        const errorInfo = classifyUpdateError(updaterErr instanceof Error ? updaterErr : new Error(updaterErr.message));
         if (attempt < maxRetries && errorInfo.errorCode !== 'HTTP_404') {
           continue;
         }
-
         if (mainWindow) {
-          sendUpdateError(mainWindow, err instanceof Error ? err : new Error(err.message));
+          sendUpdateError(mainWindow, updaterErr instanceof Error ? updaterErr : new Error(updaterErr.message));
         }
         throw new Error(errorInfo.userMessage);
       }
@@ -349,7 +382,19 @@ export function initUpdateIPC(win: BrowserWindow): void {
   });
 
   ipcMain.handle('update:install', async () => {
-    // Always use electron-updater's quitAndInstall().
+    // ── If downloaded via HTTP fallback, spawn the installer directly ──
+    if (_httpInstallerPath && existsSync(_httpInstallerPath)) {
+      console.log('[update] Installing via HTTP-downloaded installer:', _httpInstallerPath);
+      const { spawn } = await import('node:child_process');
+      spawn(_httpInstallerPath, ['--updated'], { detached: true, stdio: 'ignore' }).unref();
+      // Also try electron-updater's quitAndInstall() as fallback
+      try {
+        const au = await getAutoUpdater();
+        au.quitAndInstall();
+      } catch {}
+      return { ok: true, source: 'http' };
+    }
+    // ── Otherwise use electron-updater's quitAndInstall() ──
     // electron-updater manages its own download directory internally,
     // so quitAndInstall() knows exactly where the downloaded file is.
     const au = await getAutoUpdater();
@@ -854,6 +899,10 @@ async function httpDownloadUpdate(downloadUrl: string, version: string): Promise
   });
 
   console.log(`[update] HTTP download complete: ${destPath} (${transferred} bytes)`);
+
+  // Save installer path for install handler
+  _httpInstallerPath = destPath;
+  _httpLatestVersion = version;
 
   // Mark as ready to install
   lastKnownGoodVersion = app.getVersion();

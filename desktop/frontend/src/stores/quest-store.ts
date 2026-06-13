@@ -250,7 +250,7 @@ export const useQuestStore = create<QuestState>((set, get) => ({
       const messages: QuestMessage[] = (rawMessages || []).map((m: any, i: number) => ({
         id: `qloaded-${i}`,
         role: m.role,
-        content: m.content,
+        content: m.content || '', // defensive: guard against null/undefined from DB
         toolCalls: safeJsonParse(m.tool_calls, undefined),
         metadata: safeJsonParse(m.metadata, undefined),
         timestamp: m.created_at ? new Date(m.created_at).getTime() : Date.now(),

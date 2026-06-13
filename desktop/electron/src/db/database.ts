@@ -33,6 +33,27 @@ export function closeDatabase(): void {
 }
 
 /**
+ * Force WAL checkpoint to persist in-memory changes to disk.
+ * With better-sqlite3 in WAL mode, data is durable but checkpoint
+ * ensures the main DB file is up-to-date for crash recovery.
+ */
+export function saveDatabase(): void {
+  if (!db) return;
+  try {
+    db.pragma('wal_checkpoint(TRUNCATE)');
+  } catch (err) {
+    console.error('[DB] Failed to save database:', err);
+  }
+}
+
+/**
+ * Synchronous version of saveDatabase for exit/crash handlers.
+ */
+export function saveDatabaseSync(): void {
+  saveDatabase();
+}
+
+/**
  * Initialize database schema and run all migrations
  */
 export async function initDatabase(): Promise<void> {
@@ -247,7 +268,7 @@ export async function initDatabase(): Promise<void> {
           key TEXT PRIMARY KEY,
           value TEXT NOT NULL
         );
-      `;
+      `);
       console.log('[DB] Database recreated from scratch');
     } catch (recreateErr) {
       console.error('[DB] Fatal error recreating database:', recreateErr);

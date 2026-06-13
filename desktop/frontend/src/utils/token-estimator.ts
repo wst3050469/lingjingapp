@@ -7,7 +7,10 @@ import type { ChatMessage } from '../stores/chat-store';
  * Estimate token count for a text string.
  * ~4 chars per token for ASCII, ~1.5 chars per token for CJK/non-ASCII.
  */
-export function estimateTokens(text: string): number {
+export function estimateTokens(text: string | null | undefined): number {
+  // Defensive: guard against undefined/null/empty content from malformed DB rows or events
+  if (!text) return 0;
+
   let asciiChars = 0;
   let nonAsciiChars = 0;
 
@@ -34,7 +37,7 @@ export function estimateConversationTokens(messages: ChatMessage[]): number {
     if (msg.toolCalls) {
       for (const tc of msg.toolCalls) {
         total += estimateTokens(tc.name);
-        total += estimateTokens(JSON.stringify(tc.args));
+        total += estimateTokens(JSON.stringify(tc.args ?? {}));
         if (tc.result) {
           total += estimateTokens(tc.result.content);
         }

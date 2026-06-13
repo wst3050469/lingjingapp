@@ -396,7 +396,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const messages: ChatMessage[] = rawMessages.map((m: any, i: number) => ({
           id: `loaded-${i}`,
           role: m.role as ChatMessage['role'],
-          content: m.content,
+          content: m.content || '', // defensive: guard against null/undefined from malformed DB rows
           toolCalls: m.toolCalls,
           timestamp: Date.now(),
         }));

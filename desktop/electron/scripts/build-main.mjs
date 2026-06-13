@@ -91,6 +91,7 @@ const EXTERNAL = [
   // Native/binary modules - cannot be bundled by esbuild
   'electron',
   'sql.js',
+  'better-sqlite3',
   'ssh2',
   'cpu-features',
   'node-pty',

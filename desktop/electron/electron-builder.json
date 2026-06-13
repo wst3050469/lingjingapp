@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v17353"
+    "output": "release-v17354b"
   },
   "files": [
     "dist/**/*",
@@ -94,7 +94,13 @@
       ]
     }
   ],
+  "asarUnpack": [
+    "node_modules/cpu-features/**",
+    "node_modules/ssh2/**",
+    "node_modules/node-pty/**"
+  ],
   "npmRebuild": false,
+  "afterPack": "./scripts/after-pack-hook.cjs",
   "publish": {
     "provider": "generic",
     "url": "https://ide.zhejiangjinmo.com/downloads/"

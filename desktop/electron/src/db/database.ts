@@ -1,6 +1,6 @@
 import path from 'path';
 import { app } from 'electron';
-import Database from 'better-sqlite3';
+import { Database, initAdapter } from './sqljs-adapter.js';
 import {
   ensureDir,
 } from '../utils/fs.js';
@@ -10,9 +10,9 @@ export function getDatabasePath(): string {
   return path.join(userDataPath, 'lingjing.db');
 }
 
-let db: Database.Database | null = null;
+let db: Database | null = null;
 
-export function getDatabase(): Database.Database {
+export function getDatabase(): Database {
   if (db) return db;
 
   const dbPath = getDatabasePath();
@@ -34,13 +34,13 @@ export function closeDatabase(): void {
 
 /**
  * Force WAL checkpoint to persist in-memory changes to disk.
- * With better-sqlite3 in WAL mode, data is durable but checkpoint
- * ensures the main DB file is up-to-date for crash recovery.
+ * With sql.js (WASM), data lives in memory; saveDatabase() writes to disk.
  */
 export function saveDatabase(): void {
   if (!db) return;
   try {
     db.pragma('wal_checkpoint(TRUNCATE)');
+    db.save();
   } catch (err) {
     console.error('[DB] Failed to save database:', err);
   }
@@ -54,12 +54,19 @@ export function saveDatabaseSync(): void {
 }
 
 /**
- * Initialize database schema and run all migrations
+ * Initialize database: load SQL.js WASM, open/create DB, run schema migrations.
+ * Must be called once at app startup (before any DB operations).
  */
 export async function initDatabase(): Promise<void> {
-  const database = getDatabase();
-
-  database.exec('SET CONSTRAINTS ALL DEFERRED;');
+  await initAdapter();
+  
+  let database: Database;
+  try {
+    database = getDatabase();
+  } catch (err) {
+    console.error('[DB] Failed to open database:', err);
+    throw err;
+  }
 
   // ─── Schema: core tables ───
   database.exec(`
@@ -126,18 +133,20 @@ export async function initDatabase(): Promise<void> {
     );
   `);
 
+  // Save initial schema
+  database.save();
+
   // ─── Run migrations ───
 
-  // Run Codepilot migration001 (agent_message_triggers + message_idx)
   try {
     const { migration001 } = await import('./migrations/migration001_codepilot');
     database.run(migration001);
     console.log('[DB] Migration001 applied successfully');
+    database.save();
   } catch (m1err) {
     console.warn('[DB] Migration001 skipped or failed:', m1err);
   }
 
-  // Run memory migration (context_blocks, memory_anchors, tokens_short_term)
   const migration002 = `
     CREATE TABLE IF NOT EXISTS context_blocks (
       id TEXT PRIMARY KEY,
@@ -175,38 +184,38 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_tokens_session ON tokens_short_term(session_id);
   `;
   database.run(migration002);
+  database.save();
 
   try {
-  // Run Hermes Fusion migrations (event_bus, hook_registry, fusion_modules, review_engine, nl_cron, etc.)
-  try {
-    const { migration003 } = await import('./migrations/migration003_hermes_fusion');
-    database.run(migration003);
-    console.log('[DB] Migration003 (Hermes Fusion) applied successfully');
-  } catch (m3err) {
-    console.warn('[DB] Migration003 (Hermes Fusion) skipped or failed:', m3err);
-  }
+    try {
+      const { migration003 } = await import('./migrations/migration003_hermes_fusion');
+      database.run(migration003);
+      console.log('[DB] Migration003 (Hermes Fusion) applied successfully');
+      database.save();
+    } catch (m3err) {
+      console.warn('[DB] Migration003 (Hermes Fusion) skipped or failed:', m3err);
+    }
 
-  // Run GitHub Skills migration (installed_skills)
-  try {
-    const { migration005 } = await import('./migrations/migration005_github_skills');
-    database.run(migration005);
-    console.log('[DB] Migration005 (GitHub Skills) applied successfully');
-  } catch (m5err) {
-    console.warn('[DB] Migration005 (GitHub Skills) skipped or failed:', m5err);
-  }
-
+    try {
+      const { migration005 } = await import('./migrations/migration005_github_skills');
+      database.run(migration005);
+      console.log('[DB] Migration005 (GitHub Skills) applied successfully');
+      database.save();
+    } catch (m5err) {
+      console.warn('[DB] Migration005 (GitHub Skills) skipped or failed:', m5err);
+    }
   } catch (schemaErr) {
-    // Database file is corrupted — recreate from scratch
     console.error('[DB] Database corrupted, recreating:', schemaErr);
     try {
-      const dbPath = getDatabasePath();
-      if (require('fs').existsSync(dbPath)) {
-        require('fs').unlinkSync(dbPath);
+      closeDatabase();
+      const dbFilePath = getDatabasePath();
+      if (require('fs').existsSync(dbFilePath)) {
+        require('fs').unlinkSync(dbFilePath);
       }
       db = null;
-      const freshDb = getDatabase();
-      // Re-run just the core schema without migrations
-      freshDb.exec(`
+      await initAdapter();
+      database = getDatabase();
+      database.exec(`
         CREATE TABLE IF NOT EXISTS chat_messages (
           id TEXT PRIMARY KEY,
           role TEXT NOT NULL CHECK(role IN ('user','assistant','system','tool')),
@@ -269,6 +278,7 @@ export async function initDatabase(): Promise<void> {
           value TEXT NOT NULL
         );
       `);
+      database.save();
       console.log('[DB] Database recreated from scratch');
     } catch (recreateErr) {
       console.error('[DB] Fatal error recreating database:', recreateErr);

@@ -11,3 +11,4 @@ allowBuilds:
   'unrs-resolver': true
   '@vscode/vsce-sign': true
   'node-pty': true
+  better-sqlite3: set this to true or false

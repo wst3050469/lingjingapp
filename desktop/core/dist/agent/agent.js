@@ -5,31 +5,40 @@ import { SkillHarvester } from '../skills/harvester.js';
 import { MemoryNudger } from '../memory/nudger.js';
 import { MemoryReflector } from '../memory/reflector.js';
 import { TaskComplexityAnalyzer } from '../workflow/task-complexity-analyzer.js';
-
 // ── Lazy ToolExecutor load with fallback ──
 // executor.js may be missing from temp extraction (anti-virus, corruption, etc.)
-let ToolExecutor = null;
+let ToolExecutorClass = null;
+let _executorLoading = null;
 async function loadToolExecutor() {
-  if (ToolExecutor) return;
-  try {
-    const mod = await import('../tools/executor.js');
-    ToolExecutor = mod.ToolExecutor;
-  } catch (err) {
-    logger.error('[agent] Failed to load executor.js:', err.message);
-    // Fallback: create a minimal executor that delegates directly
-    ToolExecutor = class FallbackExecutor {
-      constructor(tools) {
-        this.registry = tools?.registry;
-        if (tools && !(tools?.registry)) this.registry = tools;
-      }
-      async execute(toolCall, context) {
-        const tool = this.registry?.get?.(toolCall.name);
-        if (!tool) return { content: `Error: Unknown tool "${toolCall.name}"`, isError: true };
-        try { return await tool.execute(toolCall.arguments, context); }
-        catch (e) { return { content: `Error: ${e.message}`, isError: true }; }
-      }
-    };
-  }
+    if (ToolExecutorClass)
+        return;
+    if (_executorLoading)
+        return _executorLoading;
+    _executorLoading = (async () => {
+        try {
+            const mod = await import('../tools/executor.js');
+            ToolExecutorClass = mod.ToolExecutor;
+        }
+        catch (err) {
+            logger.error('[agent] Failed to load executor.js:', err?.message || err);
+            ToolExecutorClass = class FallbackExecutor {
+                registry;
+                constructor(tools) { this.registry = tools?.registry ?? tools; }
+                async execute(toolCall, context) {
+                    const tool = this.registry?.get?.(toolCall.name);
+                    if (!tool)
+                        return { content: `Error: Unknown tool "${toolCall.name}"`, isError: true };
+                    try {
+                        return await tool.execute(toolCall.arguments, context);
+                    }
+                    catch (e) {
+                        return { content: `Error: ${e.message}`, isError: true };
+                    }
+                }
+            };
+        }
+    })();
+    return _executorLoading;
 }
 /**
  * Appended to the system prompt when tools are available.
@@ -182,7 +191,8 @@ function looksLikeTaskComplete(text) {
 export class Agent {
     /** @internal - public for cross-window hydration via IPC */
     conversation = new Conversation();
-    executor;
+    executor = { execute: () => Promise.resolve({ content: 'Executor initializing...', isError: true }) };
+    _executorReady = Promise.resolve();
     config;
     interventionQueue = [];
     harvester = null;
@@ -200,13 +210,10 @@ export class Agent {
             temperature: 0.3,
             ...config,
         };
-        // Start loading ToolExecutor; if not ready yet, execute() will await
         this._executorReady = (async () => {
-          await loadToolExecutor();
-          this.executor = new ToolExecutor(config.tools);
+            await loadToolExecutor();
+            this.executor = new ToolExecutorClass(config.tools);
         })();
-        // Set a synchronous stub so type checks pass
-        this.executor = { execute: () => Promise.resolve({ content: 'Executor is initializing...', isError: true }) };
         this.harvester = config.enableSkillHarvest
             ? new SkillHarvester({ provider: config.provider })
             : null;

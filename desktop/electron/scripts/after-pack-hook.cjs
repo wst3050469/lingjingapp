@@ -1,6 +1,18 @@
 // after-pack-hook.cjs — electron-builder afterPack hook
 // Called AFTER ASAR is created but BEFORE NSIS/AppImage/portable installers.
 // Injects @codepilot/core (pnpm workspace symlink) and fixes package.json.
+//
+// FIX v1.73.56: Strategy changed from .mjs rename back to:
+//   1. Keep "type": "module" (so .js = ESM)
+//   2. Keep all files as .js (no rename needed)
+//   3. DELETE "exports" field (root cause of NSIS temp \..\ path corruption via resolveExports)
+//   4. Delete "private": true (pnpm workspace marker incompatible with ASAR)
+//   5. Keep "main": "./dist/index.js" as-is
+//
+// Why this works:
+//   - CJS require() + "type":"module" → Node.js ESM interop → uses "main" field (simple resolution)
+//   - Without "exports", resolveExports is skipped → no \..\ path corruption in NSIS temp
+//   - ESM imports between .js files work because "type":"module" is set
 const { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } = require('node:fs');
 const { join } = require('node:path');
 const { execSync } = require('node:child_process');
@@ -43,9 +55,10 @@ exports.default = async function afterPack(context) {
     if (existsSync(coreNm)) rmSync(coreNm, { recursive: true, force: true });
 
     // Fix package.json:
-    // - Remove "private": true (causes ESM path resolution issues in pnpm → ASAR)
-    // - Remove "type": "module" → rename .js to .mjs so ESM works without type declaration
-    //   (Node.js treats .mjs as ESM regardless of "type" field)
+    //   DELETE "exports" — prevents resolveExports which causes NSIS temp \..\ path bug
+    //   DELETE "private" — pnpm marker incompatible with ASAR resolution
+    //   KEEP "type": "module" — so .js files are ESM (CJS require works via Node.js interop)
+    //   KEEP "main": "./dist/index.js"
     const pkgPath = join(dstCore, 'package.json');
     if (existsSync(pkgPath)) {
       let pkg;
@@ -55,78 +68,56 @@ exports.default = async function afterPack(context) {
         console.warn('[afterPack] ⚠️ Could not parse package.json:', e.message);
       }
       if (pkg) {
-        // Strategy: rename .js→.mjs + update package.json references
-        // This avoids the "type":"module" field entirely
-        if (pkg.type === 'module') {
-          delete pkg.type;
+        // CRITICAL: Delete "exports" — this is the root cause of NSIS temp \..\ path corruption
+        // When CJS require() loads an ESM package, resolveExports() follows the exports map
+        // and generates corrupt paths in NSIS temp directories. Without exports, Node.js
+        // uses the simpler "main" field resolution which avoids the bug.
+        if (pkg.exports) {
+          delete pkg.exports;
+          console.log('[afterPack]   Deleted "exports" field (avoids resolveExports path corruption)');
         }
+
+        // Remove pnpm workspace marker (incompatible with ASAR)
         if (pkg.private) {
           delete pkg.private;
+          console.log('[afterPack]   Removed "private": true');
         }
-        
-        // Rename all dist/**/*.js → dist/**/*.mjs
-        const { renameSync: ren, readdirSync: rd, lstatSync: ls } = require('node:fs');
-        const { join: j, extname: ext } = require('node:path');
-        function renameDir(dir) {
-          try {
-            for (const e of rd(dir, { withFileTypes: true })) {
-              const fp = j(dir, e.name);
-              if (e.isDirectory()) { renameDir(fp); }
-              else if (e.isFile() && e.name.endsWith('.js')) {
-                ren(fp, fp.slice(0, -3) + '.mjs');
-              }
-            }
-          } catch {}
-        }
-        const distDir = join(dstCore, 'dist');
-        renameDir(distDir);
 
-        // Fix package.json paths
-        const fixPath = (s) => typeof s === 'string' ? s.replace(/(dist\/[^"']+)\.js/g, '$1.mjs') : s;
-        if (pkg.main) pkg.main = fixPath(pkg.main);
-        if (pkg.exports) {
-          for (const [k, v] of Object.entries(pkg.exports)) {
-            if (typeof v === 'string') pkg.exports[k] = fixPath(v);
-            else if (Array.isArray(v)) pkg.exports[k] = v.map(fixPath);
-          }
+        // Ensure "type": "module" is preserved — required for .js = ESM
+        if (pkg.type !== 'module') {
+          pkg.type = 'module';
+          console.log('[afterPack]   Restored "type": "module"');
+        }
+
+        // Ensure "main" points to index.js (no .mjs rename)
+        if (!pkg.main || pkg.main.includes('.mjs')) {
+          pkg.main = './dist/index.js';
+          console.log('[afterPack]   Fixed "main" to ./dist/index.js');
         }
 
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), 'utf8');
-        console.log('[afterPack]   Fixed package.json: .js→.mjs, removed type/private');
+        console.log('[afterPack]   ✅ package.json fixed (exports deleted, type=module, .js preserved)');
       }
     }
 
-    // NOW fix internal import references in the .mjs files
-    // ESM imports need .js → .mjs: handles ./ ../ ../../ ../../../ etc.
-    function fixImportRefs(dir) {
-      try {
-        for (const e of require('node:fs').readdirSync(dir, { withFileTypes: true })) {
-          const fp = join(dir, e.name);
-          if (e.isDirectory()) { fixImportRefs(fp); }
-          else if (e.isFile() && (e.name.endsWith('.mjs') || e.name.endsWith('.js'))) {
-            let content = readFileSync(fp, 'utf8');
-            // Replace .js → .mjs in:
-            //   1) from "./x.js" / from "../x.js" / from "../../x.js" etc.
-            //   2) import "./x.js" / import "../x.js" (static side-effect imports)
-            //   3) import("./x.js") / await import("../x.js") (dynamic imports)
-            const updated = content.replace(
-              /((?:from\s+|import\s+|import\s*\(\s*))(['"])((?:\.\.?\/)+[^'"]+)(\.js)(['"])/g,
-              '$1$2$3.mjs$5'
-            );
-            if (updated !== content) {
-              writeFileSync(fp, updated, 'utf8');
-            }
-          }
-        }
-      } catch {}
+    // Verify key files exist
+    const indexJs = join(dstCore, 'dist', 'index.js');
+    const agentJs = join(dstCore, 'dist', 'agent', 'agent.js');
+    if (existsSync(indexJs)) {
+      console.log('[afterPack]   ✅ dist/index.js exists');
+    } else {
+      console.error('[afterPack]   ❌ dist/index.js MISSING');
     }
-    fixImportRefs(join(dstCore, 'dist'));
-    console.log('[afterPack]   Fixed internal import references .js→.mjs');
+    if (existsSync(agentJs)) {
+      console.log('[afterPack]   ✅ dist/agent/agent.js exists');
+    } else {
+      console.error('[afterPack]   ❌ dist/agent/agent.js MISSING');
+    }
 
     // Repack
     execSync(`npx asar pack "${tmpDir}" "${asarFile}"`, { stdio: 'pipe', timeout: 300000 });
 
-    console.log('[afterPack] ✅ @codepilot/core injected + ESM fix applied');
+    console.log('[afterPack] ✅ @codepilot/core injected + package.json fixed');
   } catch (err) {
     console.error('[afterPack] ❌ Failed:', err.message);
   } finally {

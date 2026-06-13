@@ -7,11 +7,18 @@ import { ToolRegistry } from '../tools/registry.js';
 import type { ToolContext } from '../tools/types.js';
 import type { CodeReviewReport } from '../tools/builtin/code-review.js';
 import { logger } from '../utils/logger.js';
-import { SkillHarvester } from '../skills/harvester.js';
-import { MemoryNudger } from '../memory/nudger.js';
 import { MemoryReflector } from '../memory/reflector.js';
 import { WorkflowEngine } from '../workflow/core/workflow-engine.js';
-import { TaskComplexityAnalyzer } from '../workflow/task-complexity-analyzer.js';
+
+// ── Lazy module loads with synchronous fallbacks ──
+// dist files may be missing from ASAR temp extraction (anti-virus, corruption, etc.)
+let _SkillHarvesterClass: any = null;
+let _MemoryNudgerClass: any = class FallbackMemoryNudger { review(_conversation: any) { return null; } };
+let _TaskComplexityAnalyzerClass: any = { analyze: (_userMessage: string) => ({ isComplex: false, confidence: 0, featureName: '' }) };
+// Fire async loads to replace fallbacks with real implementations
+import('../skills/harvester.js').then(m => { _SkillHarvesterClass = m.SkillHarvester; }).catch(() => {});
+import('../memory/nudger.js').then(m => { _MemoryNudgerClass = m.MemoryNudger; }).catch(() => {});
+import('../workflow/task-complexity-analyzer.js').then(m => { _TaskComplexityAnalyzerClass = m.TaskComplexityAnalyzer; }).catch(() => {});
 
 // ── Lazy ToolExecutor load with fallback ──
 // executor.js may be missing from temp extraction (anti-virus, corruption, etc.)
@@ -258,8 +265,8 @@ export class Agent {
     Pick<AgentConfig, 'maxTurns' | 'maxDuration' | 'turnTimeout' | 'maxContextTokens' | 'maxResponseTokens' | 'temperature'>
   > & AgentConfig;
   private interventionQueue: string[] = [];
-  private harvester: SkillHarvester | null = null;
-  private nudger: MemoryNudger;
+  private harvester: any = null;
+  private nudger: any;
   private reflector: MemoryReflector | null = null;
   private runStartedAt = 0;
   private workflowEngine: WorkflowEngine | null = null;
@@ -278,10 +285,10 @@ export class Agent {
       await loadToolExecutor();
       this.executor = new ToolExecutorClass(config.tools);
     })();
-    this.harvester = config.enableSkillHarvest
-      ? new SkillHarvester({ provider: config.provider })
+    this.harvester = config.enableSkillHarvest && _SkillHarvesterClass
+      ? new _SkillHarvesterClass({ provider: config.provider })
       : null;
-    this.nudger = new MemoryNudger({
+    this.nudger = new _MemoryNudgerClass({
       enabled: config.enableMemoryNudge !== false,
     });
     this.reflector = config.enableReflector
@@ -313,7 +320,7 @@ export class Agent {
   async run(userMessage: string, signal?: AbortSignal, images?: Array<{ data: string; mediaType: string }>): Promise<string> {
     // ── 工作流集成：分析任务复杂度 ──
     if (this.workflowEngine) {
-      const complexity = TaskComplexityAnalyzer.analyze(userMessage);
+      const complexity = _TaskComplexityAnalyzerClass.analyze(userMessage);
       
       if (complexity.isComplex && complexity.confidence >= 0.7) {
         logger.info('[Agent] Complex task detected, creating workflow:', complexity.featureName);
@@ -675,13 +682,17 @@ Technical details: ${err.message}`;
       }
 
       // ── Skill harvesting (Hermes-inspired): auto-create skills from conversations ──
+      // Lazy-init harvester if the async import resolved after constructor
+      if (!this.harvester && _SkillHarvesterClass && this.config.enableSkillHarvest) {
+        this.harvester = new _SkillHarvesterClass({ provider: this.config.provider });
+      }
       if (this.harvester) {
         const durationMs = Date.now() - this.runStartedAt;
-        this.harvester.harvest(this.conversation, durationMs).then((skillName) => {
+        this.harvester.harvest(this.conversation, durationMs).then((skillName: string) => {
           if (skillName) {
             this.emit({ type: 'intervention_injected', text: `\u{1F4A1} Auto-created skill: ${skillName}` });
           }
-        }).catch((err) => {
+        }).catch((err: any) => {
           logger.warn('[Harvester] Harvest failed:', err.message);
         });
       }

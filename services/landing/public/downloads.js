@@ -5,7 +5,7 @@
  */
 (async function(){
   try {
-    const resp = await fetch('/downloads/versions.json');
+    const resp = await fetch('/versions.json');
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
     const latestVer = data.latest;
@@ -15,25 +15,56 @@
     document.getElementById('versionBadge').textContent = 'v' + latestVer;
 
     const files = verEntry.files || {};
+    const platforms = verEntry.platforms || {};
     const secs = [];
+
+    // Helper: get raw URL from files entry (handles both string and object format)
+    function getUrl(key) {
+      const f = files[key];
+      if (!f) return null;
+      return typeof f === 'string' ? f : (f.url || f.name || null);
+    }
+    // Helper: extract filename from URL for display
+    function getFileName(url) {
+      if (!url) return '';
+      // If it's already just a filename (no http), return as-is
+      if (!/^https?:\/\//.test(url)) return url;
+      // Extract last segment after final /
+      const parts = url.split('/');
+      return parts[parts.length - 1] || url;
+    }
+    // Helper: get href for download (if full URL, use as-is; otherwise prepend /)
+    function getHref(url) {
+      if (!url) return '#';
+      if (/^https?:\/\//.test(url)) return url;
+      return '/' + url;
+    }
+    // Helper: get size from platforms or files
+    function getSize(key) {
+      if (platforms[key] && platforms[key].size) return platforms[key].size;
+      const f = files[key];
+      if (typeof f === 'object' && f.size) return f.size;
+      return 0;
+    }
 
     // Windows section
     const winItems = [];
-    if (files['win-x64']) {
+    const winUrl = getUrl('win-x64');
+    if (winUrl) {
       winItems.push({
-        name: files['win-x64'].url,
+        name: winUrl,
         label: '安装程序',
-        size: files['win-x64'].size
+        size: getSize('win-x64')
       });
     }
-    if (files['win-portable']) {
+    const winPortableUrl = getUrl('win-x64-portable');
+    if (winPortableUrl) {
       winItems.push({
-        name: files['win-portable'].url,
+        name: winPortableUrl,
         label: '便携版 (免安装)',
-        size: files['win-portable'].size
+        size: getSize('win-x64-portable')
       });
-    } else if (files['win-x64']) {
-      // fallback: derive portable filename from setup
+    } else if (winUrl) {
       winItems.push({
         name: 'LingJing-Portable-' + latestVer + '-win-x64.exe',
         label: '便携版 (免安装)',
@@ -46,42 +77,39 @@
 
     // Linux section
     const linuxItems = [];
-    if (files['linux-x64']) {
+    const linuxUrl = getUrl('linux-x64');
+    if (linuxUrl) {
       linuxItems.push({
-        name: files['linux-x64'].url,
+        name: linuxUrl,
         label: '通用 Linux 包 (AppImage)',
-        size: files['linux-x64'].size
+        size: getSize('linux-x64')
       });
     }
-    if (files['linux-deb']) {
+    const debUrl = getUrl('linux-x64-deb') || getUrl('linux-deb');
+    if (debUrl) {
       linuxItems.push({
-        name: files['linux-deb'].url,
+        name: debUrl,
         label: 'Debian/Ubuntu 安装包',
-        size: files['linux-deb'].size
+        size: getSize('linux-x64-deb') || getSize('linux-deb')
       });
     }
     if (linuxItems.length) {
       secs.push({ title: '🐧 Linux', items: linuxItems });
     }
 
-    // Android section
+    // Android section - only show if we have a real APK URL (no fallback to broken URL)
     const androidItems = [];
-    const apkUrl = files['android'] ? files['android'].url : null;
-    const apkCandidates = apkUrl ? [apkUrl] : ['lingjing-mobile-v' + latestVer + '.apk'];
-    for (const name of apkCandidates) {
-      try {
-        const headResp = await fetch('/' + name, { method: 'HEAD' });
-        if (headResp.ok || headResp.status === 200) {
-          const vMatch = name.match(/v(\d+\.\d+\.\d+)/);
-          androidItems.push({ name, label: (vMatch ? 'v' + vMatch[1] : 'Android') + ' APK' });
-        }
-      } catch(e) {}
+    const apkUrl = getUrl('android') || getUrl('android-x64');
+    if (apkUrl) {
+      androidItems.push({
+        name: apkUrl,
+        label: 'Android APK',
+        size: getSize('android') || getSize('android-x64')
+      });
     }
-    if (!androidItems.length) {
-      androidItems.push({ name: 'lingjing-mobile-v' + latestVer + '.apk', label: 'v' + latestVer + ' APK' });
-    }
+    // NOTE: No fallback - if no android entry in versions.json, simply hide the section
     if (androidItems.length) {
-      secs.push({ title: '📱 移动端 (Android)', items: androidItems.map(f => ({ name: f.name, label: f.label, size: 0 })) });
+      secs.push({ title: '📱 移动端 (Android)', items: androidItems });
     }
 
     // Render sections
@@ -89,8 +117,10 @@
     secs.forEach(s => {
       html += '<div class=sec><div class=sec-title>' + s.title + '</div>';
       s.items.forEach(f => {
-        const sizeStr = f.size ? '(' + (f.size / 1024 / 1024).toFixed(0) + ' MB)' : '';
-        html += '<div class=li><div><div class=ft>' + f.name + '</div><div class=fs>' + f.label + ' ' + sizeStr + '</div></div><a href=/' + f.name + ' class=btn>⬇ 下载</a></div>';
+        const sizeStr = f.size > 0 ? '(' + (f.size / 1024 / 1024).toFixed(0) + ' MB)' : '';
+        const displayName = getFileName(f.name);
+        const href = getHref(f.name);
+        html += '<div class=li><div><div class=ft>' + displayName + '</div><div class=fs>' + f.label + ' ' + sizeStr + '</div></div><a href=' + href + ' class=btn>⬇ 下载</a></div>';
       });
       html += '</div>';
     });
@@ -98,19 +128,18 @@
     document.getElementById('content').innerHTML = html;
   } catch(e) {
     console.warn('[Downloads] Failed to load versions.json, using fallback:', e.message);
-    document.getElementById('versionBadge').textContent = 'v1.52.0';
-    // Fallback: show static content
+    document.getElementById('versionBadge').textContent = 'v1.72.11';
     document.getElementById('content').innerHTML = [
       '<div class=sec><div class=sec-title>🖥️ Windows</div>',
-      '<div class=li><div><div class=ft>LingJing-Setup-1.51.0-win-x64.exe</div><div class=fs>安装程序 (142 MB)</div></div><a href=/LingJing-Setup-1.51.0-win-x64.exe class=btn>⬇ 下载</a></div>',
-      '<div class=li><div><div class=ft>LingJing-Portable-1.51.0-win-x64.exe</div><div class=fs>便携版 (142 MB)</div></div><a href=/LingJing-Portable-1.51.0-win-x64.exe class=btn>⬇ 下载</a></div>',
+      '<div class=li><div><div class=ft>LingJing-Setup-1.72.11-win-x64.exe</div><div class=fs>安装程序 (140 MB)</div></div><a href=/LingJing-Setup-1.72.11-win-x64.exe class=btn>⬇ 下载</a></div>',
+      '<div class=li><div><div class=ft>LingJing-Portable-1.72.11-win-x64.exe</div><div class=fs>便携版 (139 MB)</div></div><a href=/LingJing-Portable-1.72.11-win-x64.exe class=btn>⬇ 下载</a></div>',
       '</div>',
       '<div class=sec><div class=sec-title>🐧 Linux</div>',
-      '<div class=li><div><div class=ft>LingJing-1.51.0-linux-x86_64.AppImage</div><div class=fs>通用 Linux 包 (180 MB)</div></div><a href=/LingJing-1.51.0-linux-x86_64.AppImage class=btn>⬇ 下载</a></div>',
-      '<div class=li><div><div class=ft>LingJing-1.51.0-linux-x86_64.deb</div><div class=fs>Debian/Ubuntu 安装包 (109 MB)</div></div><a href=/LingJing-1.51.0-linux-x86_64.deb class=btn>⬇ 下载</a></div>',
+      '<div class=li><div><div class=ft>LingJing-1.72.11-linux-x86_64.AppImage</div><div class=fs>通用 Linux 包 (173 MB)</div></div><a href=/LingJing-1.72.11-linux-x86_64.AppImage class=btn>⬇ 下载</a></div>',
+      '<div class=li><div><div class=ft>LingJing-1.72.11-linux-x86_64.deb</div><div class=fs>Debian/Ubuntu 安装包 (105 MB)</div></div><a href=/LingJing-1.72.11-linux-x86_64.deb class=btn>⬇ 下载</a></div>',
       '</div>',
       '<div class=sec><div class=sec-title>📱 移动端 (Android)</div>',
-      '<div class=li><div><div class=ft>lingjing-mobile-v1.52.0.apk</div><div class=fs>Android 应用 (78 MB)</div></div><a href=/lingjing-mobile-v1.52.0.apk class=btn>⬇ 下载</a></div>',
+      '<div class=li><div><div class=ft>lingjing-1.72.11-android.apk</div><div class=fs>Android 应用 (31 MB)</div></div><a href=/lingjing-1.72.11-android.apk class=btn>⬇ 下载</a></div>',
       '</div>'
     ].join('');
   }

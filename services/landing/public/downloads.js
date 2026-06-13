@@ -170,7 +170,7 @@
       '<div class=mac-notice><strong>⚠️ macOS 用户请注意</strong><br>由于应用未经过 Apple 公证，首次打开时可能提示"已损坏"。<br>解决方法：打开<b>终端</b>，执行以下命令后即可正常使用：<br><code>sudo xattr -rd com.apple.quarantine /Applications/灵境.app</code></div>',
       '</div>',
       '<div class=sec><div class=sec-title>📱 移动端 (Android)</div>',
-      '<div class=li><div><div class=ft>lingjing-1.72.11-android.apk</div><div class=fs>Android 应用 (31 MB)</div></div><a href=/lingjing-1.72.11-android.apk class=btn>⬇ 下载</a></div>',
+      '<div class=li><div><div class=ft>lingjing-v1.73.42.apk</div><div class=fs>Android 应用 (7 MB)</div></div><a href=/downloads/lingjing-v1.73.42.apk class=btn>⬇ 下载</a></div>',
       '</div>'
     ].join('');
   }

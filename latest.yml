@@ -1,8 +1,8 @@
-version: 1.73.47
+version: 1.73.61
 files:
-  - url: 灵境 Setup 1.73.47.exe
-    sha512: RGrr6tZyU9oZdWIcLRxoNEQfXm9J4GVHNsNFtgho+y6rDjXtDC4pN1gL0M/Iq3Hx3pND/hdFoJEof35HnwsrUw==
-    size: 143156171
-path: 灵境 Setup 1.73.47.exe
-sha512: RGrr6tZyU9oZdWIcLRxoNEQfXm9J4GVHNsNFtgho+y6rDjXtDC4pN1gL0M/Iq3Hx3pND/hdFoJEof35HnwsrUw==
-releaseDate: '2026-06-13T03:42:27.110Z'
+  - url: 灵境 Setup 1.73.61.exe
+    sha512: 9H5/8ID1z6AWs6t/J3PP9WwBiUiMD5UeQhQsY8Nmvx06IHubhDjeddlMwK3gSux9QJ13zDi03XU1ix1Pa98R+w==
+    size: 155584468
+path: 灵境 Setup 1.73.61.exe
+sha512: 9H5/8ID1z6AWs6t/J3PP9WwBiUiMD5UeQhQsY8Nmvx06IHubhDjeddlMwK3gSux9QJ13zDi03XU1ix1Pa98R+w==
+releaseDate: '2026-06-13T16:12:40.286Z'

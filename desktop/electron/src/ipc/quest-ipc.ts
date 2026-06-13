@@ -97,6 +97,9 @@ import { questStateManager } from './quest-state-ipc.js';
 
 const taskAgents = new Map<string, { agent: Agent; abortController: AbortController; worktreePath?: string; containerId?: string; runId?: string }>();
 
+// Idempotent guard: prevent concurrent stopOnSwitch calls for the same task
+const _stoppingTaskIds = new Set<string>();
+
 
 
 // Module-level workspace getter (set by registerQuestIpc, used by abortAllQuestAgents)
@@ -2962,6 +2965,20 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
   ipcMain.handle('quest:stop-on-switch', async (_event, { taskId, runId }: { taskId: string; runId?: string }) => {
 
+    // Idempotent guard: prevent concurrent stopOnSwitch for the same task
+
+    if (_stoppingTaskIds.has(taskId)) {
+
+      return { success: false, reason: 'already_stopping' };
+
+    }
+
+    _stoppingTaskIds.add(taskId);
+
+
+
+    try {
+
     const taskAgent = taskAgents.get(taskId);
 
     if (taskAgent) {
@@ -3029,6 +3046,12 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
 
     return { success: true };
+
+    } finally {
+
+      _stoppingTaskIds.delete(taskId);
+
+    }
 
   });
 
@@ -3533,6 +3556,14 @@ function serializeEvent(event: AgentEvent): Record<string, unknown> {
 
       return { type: 'error', error: { message: event.error.message } };
 
+    case 'stalled':
+
+      return { type: 'stalled', message: event.message, retryCount: event.retryCount };
+
+    case 'auto_continue':
+
+      return { type: 'auto_continue', retryCount: event.retryCount, maxRetries: event.maxRetries };
+
     case 'done':
 
       return { type: 'done' };
@@ -3540,6 +3571,8 @@ function serializeEvent(event: AgentEvent): Record<string, unknown> {
     default:
 
       if ((event as any).type === 'heartbeat') return { type: 'heartbeat', turn: (event as any).turn, elapsedMs: (event as any).elapsedMs };
+      if ((event as any).type === 'workflow_started') return { type: 'workflow_started', workflowId: (event as any).workflowId, featureName: (event as any).featureName };
+      if ((event as any).type === 'workflow_progress') return { type: 'workflow_progress', workflowId: (event as any).workflowId, phase: (event as any).phase, status: (event as any).status };
 
       return { type: 'unknown' };
 

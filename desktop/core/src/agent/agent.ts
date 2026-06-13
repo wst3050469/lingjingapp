@@ -194,6 +194,8 @@ export type AgentEvent =
   | { type: 'heartbeat'; turn: number; elapsedMs: number }
   | { type: 'workflow_started'; workflowId: string; featureName: string }
   | { type: 'workflow_progress'; workflowId: string; phase: number; status: string }
+  | { type: 'stalled'; message: string; retryCount: number }
+  | { type: 'auto_continue'; retryCount: number; maxRetries: number }
   | { type: 'done' };
 
 export interface AgentConfig {
@@ -538,13 +540,18 @@ Technical details: ${err.message}`;
         if (shouldContinue) {
           noToolRetryCount++;
           if (noToolRetryCount > MAX_NO_TOOL_RETRIES) {
+            const stallMsg = '我已经尝试了多次自动继续，但模型没有执行新的操作。请提供更具体的指示或说明需要执行什么操作。';
             logger.info('No tool calls after ' + MAX_NO_TOOL_RETRIES + ' retries - returning control to user');
-            this.conversation.addUserMessage('我已经尝试了多次自动继续，但模型没有执行新的操作。请提供更具体的指示或说明需要执行什么操作。');
+            this.conversation.addUserMessage(stallMsg);
+            // ★ Emit stalled event so the frontend shows a visible warning
+            this.emit({ type: 'stalled', message: stallMsg, retryCount: noToolRetryCount });
             if (turnTimer) clearTimeout(turnTimer);
             return responseText;
           }
           logger.info('No tool calls but task seems incomplete - prompting to continue (retry ' + noToolRetryCount + '/' + MAX_NO_TOOL_RETRIES + ')');
           this.conversation.addUserMessage('[自动继续] 任务尚未完成，请继续执行。如有需要请调用工具完成操作。');
+          // ★ Emit auto_continue event for UI visibility
+          this.emit({ type: 'auto_continue', retryCount: noToolRetryCount, maxRetries: MAX_NO_TOOL_RETRIES });
           if (turnTimer) clearTimeout(turnTimer);
           continue; // Loop back to call LLM again
         }

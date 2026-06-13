@@ -109,9 +109,9 @@ export function useQuestEvents(): void {
           if (!isLateLifecycleEvent) {
             store.setStreaming(false);
             store.setActiveRunId(null);
-          }
-          if (event.taskId) {
-            store.removeRunningTask(event.taskId);
+            if (event.taskId) {
+              store.removeRunningTask(event.taskId);
+            }
           }
           break;
 
@@ -126,17 +126,16 @@ export function useQuestEvents(): void {
             });
           }
           store.resetStreamText();
-          // Only reset streaming state if this is NOT a late lifecycle event
-          // (late event = old run's done arriving after new run started).
-          // Prevents stopOnSwitch's done event from killing the new resume run.
+          // Only reset streaming state and remove from running tasks if this
+          // is NOT a late lifecycle event (old run's done arriving after new
+          // run started). Prevents stopOnSwitch's done event from killing
+          // the new resume run.
           if (!isLateLifecycleEvent) {
             store.setStreaming(false);
             store.setActiveRunId(null);
-          }
-
-          // Remove from running tasks
-          if (event.taskId) {
-            store.removeRunningTask(event.taskId);
+            if (event.taskId) {
+              store.removeRunningTask(event.taskId);
+            }
           }
 
           // Auto-compact: check if conversation needs compaction after each response
@@ -177,24 +176,49 @@ export function useQuestEvents(): void {
         // Quest-specific: task status change
         case 'status_change':
           if (event.taskId && event.status) {
-            store.setTaskStatus(event.taskId, event.status);
+            // ★ CRITICAL: Late lifecycle events (e.g. stopOnSwitch's 'paused'
+            // arriving AFTER a new resume run has started) must NOT overwrite
+            // the task status or remove the task from runningTaskIds.
+            // Without this guard, the old 'paused' event from stopOnSwitch
+            // corrupts the newly-running task's status back to 'paused'.
+            if (!isLateLifecycleEvent) {
+              store.setTaskStatus(event.taskId, event.status);
+            }
             if (event.status === 'running') {
               store.addRunningTask(event.taskId);
               // Ensure streaming flag is set when agent starts running
               if (event.taskId === store.activeTaskId) {
                 store.setStreaming(true);
               }
-            } else {
+            } else if (!isLateLifecycleEvent) {
+              // Only remove from runningTaskIds and reset streaming for
+              // non-stale status_change events.
               store.removeRunningTask(event.taskId);
-              // Reset streaming state for non-running statuses (defense-in-depth)
-              // BUT: skip if this is a late lifecycle event (e.g. paused status from
-              // stopOnSwitch arriving after new resume run has started)
-              if (event.taskId === store.activeTaskId && !isLateLifecycleEvent) {
+              if (event.taskId === store.activeTaskId) {
                 store.resetStreamText();
                 store.setStreaming(false);
               }
             }
           }
+          break;
+
+        // ★ Agent stalled: model stopped calling tools after max retries.
+        // Show a visible system message so the user knows to intervene.
+        case 'stalled':
+          store.addMessage({
+            id: generateQuestMessageId(),
+            role: 'system',
+            content: `⚠️ ${event.message || 'Agent 已停止自动执行，请提供进一步指示。'}`,
+            timestamp: Date.now(),
+          });
+          break;
+
+        // ★ Agent auto-continuing: model responded without tools but task
+        // seems incomplete. Agent is injecting a continuation nudge.
+        case 'auto_continue':
+          // Log for debugging; the continuation message is already in the
+          // conversation on the main-process side.
+          console.log(`[Quest] Auto-continue: retry ${event.retryCount}/${event.maxRetries}`);
           break;
 
         // File snapshot for diff review

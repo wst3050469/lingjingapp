@@ -68,11 +68,11 @@ export function QuestView() {
   const { tasks, activeTaskId, runningTaskIds } = useQuestStore();
 
   // Mount: reset stale streaming state when re-entering quest mode.
-  // Auto-resume of paused tasks is handled by QuestConversation's mount effect.
+  // Auto-resume paused tasks and tasks where the agent has been lost.
   useEffect(() => {
     const store = useQuestStore.getState();
 
-    if (store.isStreaming) {
+    if (store.isStreaming && !store.activeTaskId) {
       console.log('[QuestView] Mount: resetting stale streaming state');
       store.resetStreamText();
       store.setStreaming(false);
@@ -83,7 +83,10 @@ export function QuestView() {
     const pausedTaskId = store.activeTaskId;
     if (pausedTaskId) {
       const task = store.tasks.find(t => t.id === pausedTaskId);
-      if (task?.status === 'paused') {
+      const hasHistory = store.messages.length > 0;
+
+      // Fast path: task explicitly paused
+      if (task?.status === 'paused' && !store.isStreaming) {
         console.log('[QuestView] Mount: auto-resuming paused task:', pausedTaskId);
         const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
         store.setStreaming(true);
@@ -97,6 +100,28 @@ export function QuestView() {
           store.setActiveRunId(null);
           store.removeRunningTask(pausedTaskId);
         });
+      } else if (hasHistory && !store.isStreaming && (task?.status === 'running' || task?.status === 'idle')) {
+        // Slow path: status is 'running'/'idle' but agent may have been lost
+        // (stopOnSwitch events not processed yet due to race condition)
+        window.electronAPI.quest.getAgentStatus(pausedTaskId).then((status) => {
+          if (!status.hasActiveAgent && !useQuestStore.getState().isStreaming) {
+            console.log('[QuestView] Mount: task has no active agent, auto-resuming from DB:', pausedTaskId);
+            const s2 = useQuestStore.getState();
+            const runId = 'run-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+            s2.setStreaming(true);
+            s2.resetStreamText();
+            s2.addRunningTask(pausedTaskId);
+            s2.setActiveRunId(runId);
+            s2.setTaskStatus(pausedTaskId, 'running');
+            window.electronAPI.quest.resume(pausedTaskId, undefined, runId).catch((err) => {
+              console.error('[QuestView] Auto-resume (fallback) failed:', err);
+              const s3 = useQuestStore.getState();
+              s3.setStreaming(false);
+              s3.setActiveRunId(null);
+              s3.removeRunningTask(pausedTaskId);
+            });
+          }
+        }).catch(() => {});
       }
     }
   }, []);

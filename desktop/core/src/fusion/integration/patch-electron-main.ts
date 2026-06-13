@@ -37,7 +37,6 @@ interface PatchElectronMainDeps {
   eventBus?: IEventBus;
   hookRegistry?: IHookRegistry;
   loadRegisterFusionIPC?: () => Promise<(mainWindow: BrowserWindow) => void>;
-  loadRegisterOpenSpaceIPC?: () => Promise<(mainWindow: BrowserWindow) => void>;
 }
 
 export interface PatchElectronMainResult {
@@ -83,17 +82,6 @@ export async function patchElectronMain(
     logger.error(`[Fusion] registerFusionIPC failed: ${(err as Error).message}`);
   }
 
-  // Register OpenSpace IPC handlers
-  try {
-    const registerOpenSpaceIPC = deps.loadRegisterOpenSpaceIPC
-      ? await deps.loadRegisterOpenSpaceIPC()
-      : (await import('../../../electron/src/ipc/fusion/openspace-register.js')).registerOpenSpaceIPC;
-    registerOpenSpaceIPC(mainWindow);
-    logger.info('[Fusion] OpenSpace IPC registered');
-  } catch (err) {
-    logger.warn(`[Fusion] registerOpenSpaceIPC skipped or failed: ${(err as Error).message}`);
-  }
-
   // Publish initialization event
   if (deps.eventBus) {
     deps.eventBus.publish(
@@ -121,14 +109,4 @@ export async function patchElectronMain(
  *   // Run Hermes Fusion migrations
  *   const { migration003 } = await import('./migrations/migration003_hermes_fusion');
  *   db.run(migration003);
- *
- *   // Run OpenSpace Fusion migrations (migration004)
- *   const { getMigration004SQL } = await import('@codepilot/core/fusion/integration/patch-database.js');
- *   db.run(getMigration004SQL());
- *
- * If migration004 file is created at packages/electron/src/database/migrations/migration004_openspace_fusion.ts,
- * import it directly instead:
- *
- *   const { migration004 } = await import('./migrations/migration004_openspace_fusion');
- *   db.run(migration004);
  */

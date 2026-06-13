@@ -11,9 +11,9 @@ export interface FusionSkillPaths {
 }
 
 const DEFAULT_SKILL_PATHS: FusionSkillPaths = {
-  navigateSkillPath: 'packages/core/src/fusion/openspace/skills/navigate/SKILL.md',
-  sceneSkillPath: 'packages/core/src/fusion/openspace/skills/scene/SKILL.md',
-  recordSkillPath: 'packages/core/src/fusion/openspace/skills/record/SKILL.md',
+  navigateSkillPath: '',
+  sceneSkillPath: '',
+  recordSkillPath: '',
 };
 
 export function registerFusionSkills(
@@ -26,18 +26,6 @@ export function registerFusionSkills(
   skillPaths: FusionSkillPaths;
 } {
   const paths = { ...DEFAULT_SKILL_PATHS, ...skillPaths };
-
-  const requiredSkills = [
-    { name: 'openspace-navigate', path: paths.navigateSkillPath },
-    { name: 'openspace-scene', path: paths.sceneSkillPath },
-    { name: 'openspace-record', path: paths.recordSkillPath },
-  ];
-
-  for (const skill of requiredSkills) {
-    logger.info(`[Fusion:Skills] Expecting skill "${skill.name}" at: ${skill.path}`);
-  }
-
-  logger.info('[Fusion:Skills] auto-generated skill level is supported by SkillConfig.level type');
 
   let securityLoader: SkillSecurityLoader | null = null;
 

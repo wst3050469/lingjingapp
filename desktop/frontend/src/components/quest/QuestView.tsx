@@ -485,13 +485,13 @@ function ModelDropdown({
             </>
           )}
 
-          {configuredProviders.map((provider) => (
+          {(configuredProviders ?? []).map((provider) => (
             <div key={provider.key}>
               <div className="px-3 py-1.5 text-[10px] text-white/60 uppercase tracking-wider flex items-center gap-1.5 mt-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                 {provider.name}
               </div>
-              {provider.models.map((m) => {
+              {(provider.models ?? []).map((m) => {
                 const fullId = `${provider.key}:${m}`;
                 return (
                   <button key={fullId} onClick={() => { onSelect(fullId); setOpen(false); }}

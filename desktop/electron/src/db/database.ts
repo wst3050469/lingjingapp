@@ -1,347 +1,174 @@
-// SQLite database layer using sql.js (pure JS, no native compilation)
+import path from 'path';
+import { app } from 'electron';
+import Database from 'better-sqlite3';
+import {
+  ensureDir,
+} from '../utils/fs.js';
 
-import initSqlJs, { type Database as SqlJsDatabase } from 'sql.js';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
-import { homedir } from 'node:os';
-import { existsSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
+export function getDatabasePath(): string {
+  const userDataPath = app.getPath('userData');
+  return path.join(userDataPath, 'lingjing.db');
+}
 
-let db: SqlJsDatabase | null = null;
-let dbPath: string = '';
+let db: Database.Database | null = null;
 
-// ── Mutex to prevent concurrent writes from corrupting the database ──
-let saveLock: Promise<void> = Promise.resolve();
+export function getDatabase(): Database.Database {
+  if (db) return db;
 
-function getDbPath(): string {
-  return join(homedir(), '.lingjing', 'lingjing.db');
+  const dbPath = getDatabasePath();
+  ensureDir(path.dirname(dbPath));
+  // WAL mode + normal synchronous for concurrent safety
+  db = new Database(dbPath);
+  db.pragma('journal_mode = WAL');
+  db.pragma('synchronous = NORMAL');
+  db.pragma('busy_timeout = 5000');
+  return db;
+}
+
+export function closeDatabase(): void {
+  if (db) {
+    try { db.close(); } catch { /* ignore */ }
+    db = null;
+  }
 }
 
 /**
- * Locate the sql-wasm.wasm file.
- * In packaged Electron apps, the wasm is in app.asar.unpacked/
- * because asar archives can't serve wasm files directly.
+ * Initialize database schema and run all migrations
  */
-async function loadWasmBinary(): Promise<ArrayBuffer> {
-  const candidates: string[] = [];
+export async function initDatabase(): Promise<void> {
+  const database = getDatabase();
 
-  // Method 0: Direct extraResources path (most reliable for packaged Electron)
-  if (typeof process !== 'undefined' && (process as any).resourcesPath) {
-    candidates.push(
-      join((process as any).resourcesPath, 'sql-wasm.wasm'),
-    );
-  }
+  database.exec('SET CONSTRAINTS ALL DEFERRED;');
 
-  // Method 1: Use process.resourcesPath with app.asar.unpacked
-  if (typeof process !== 'undefined' && (process as any).resourcesPath) {
-    candidates.push(
-      join((process as any).resourcesPath, 'app.asar.unpacked', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
-      join((process as any).resourcesPath, 'app', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
-    );
-  }
-
-  // Method 2: Use createRequire to resolve from module context
-  try {
-    // In CJS builds (esbuild format:'cjs'), import.meta.url is undefined.
-    // createRequire needs a valid path, so skip if import.meta.url is unavailable.
-    if (import.meta.url) {
-      const require = createRequire(import.meta.url);
-      const resolved = require.resolve('sql.js/package.json');
-      const base = join(dirname(resolved), 'dist', 'sql-wasm.wasm');
-      const unpacked = base.replace('app.asar', 'app.asar.unpacked');
-      candidates.push(unpacked, base);
-    }
-  } catch {
-    // require.resolve may fail in some contexts
-  }
-
-  // Method 3: Relative to current file (__dirname equivalent for ESM)
-  // In CJS builds (esbuild format:'cjs'), import.meta.url is undefined.
-  // Fall back to __dirname which IS available in CJS.
-  let currentDir: string;
-  try {
-    currentDir = import.meta.url
-      ? dirname(fileURLToPath(import.meta.url))
-      : (typeof __dirname !== 'undefined' ? __dirname : process.cwd());
-  } catch {
-    currentDir = typeof __dirname !== 'undefined' ? __dirname : process.cwd();
-  }
-  candidates.push(
-    join(currentDir, '..', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
-    // Also check the electron package root (where sql-wasm.wasm is shipped)
-    join(currentDir, '..', 'sql-wasm.wasm'),
-  );
-
-  // Method 4: pnpm node_modules structure (from project root)
-  if (typeof process !== 'undefined' && process.cwd()) {
-    const projectRoot = process.cwd();
-    candidates.push(
-      join(projectRoot, 'node_modules', '.pnpm', 'sql.js@1.14.1', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
-      join(projectRoot, 'packages', 'electron', 'node_modules', '.pnpm', 'sql.js@1.14.1', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm'),
-    );
-  }
-
-  // Method 5: Search up from current file for pnpm structure
-  let searchDir = currentDir;
-  for (let i = 0; i < 10; i++) {
-    const pnpmPath = join(searchDir, 'node_modules', '.pnpm', 'sql.js@1.14.1', 'node_modules', 'sql.js', 'dist', 'sql-wasm.wasm');
-    candidates.push(pnpmPath);
-    const parent = dirname(searchDir);
-    if (parent === searchDir) break; // Reached root
-    searchDir = parent;
-  }
-
-  console.log('[DB] Searching for sql-wasm.wasm in:', candidates);
-  for (const p of candidates) {
-    const exists = existsSync(p);
-    console.log('[DB] Checking:', p, '- exists:', exists);
-    if (exists) {
-      console.log('[DB] Found sql-wasm.wasm at:', p);
-      const buf = await readFile(p);
-      return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
-    }
-  }
-
-  throw new Error(`sql-wasm.wasm not found. Searched:\n${candidates.join('\n')}`);
-}
-
-export async function initDatabase(): Promise<SqlJsDatabase> {
-  if (db) return db;
-
-  dbPath = getDbPath();
-  const dbDir = dirname(dbPath);
-  if (!existsSync(dbDir)) {
-    await mkdir(dbDir, { recursive: true });
-  }
-
-  const wasmBinary = await loadWasmBinary();
-  const SQL = await initSqlJs({ wasmBinary });
-
-  // Load existing database or create new one
-  if (existsSync(dbPath)) {
-    try {
-      const fileBuffer = await readFile(dbPath);
-      db = new SQL.Database(new Uint8Array(fileBuffer));
-    } catch (err) {
-      console.error('[DB] Failed to load existing database, creating new one:', err);
-      db = new SQL.Database();
-    }
-  } else {
-    db = new SQL.Database();
-  }
-
-  // Create tables — wrapped in try/catch to handle corrupted databases
-  try {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      email TEXT UNIQUE,
-      password_hash TEXT NOT NULL,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now'))
-    );
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS conversations (
+  // ─── Schema: core tables ───
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS chat_messages (
       id TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL,
-      title TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      role TEXT NOT NULL CHECK(role IN ('user','assistant','system','tool')),
+      content TEXT,
+      model TEXT,
+      timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+      token_count INTEGER,
+      truncated INTEGER DEFAULT 0,
+      compacted_from_ids TEXT
     );
-  `);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      conversation_id TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'tool', 'system')),
-      content TEXT NOT NULL,
-      tool_calls TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (conversation_id) REFERENCES conversations(id)
-    );
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS api_keys (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      provider TEXT NOT NULL,
-      encrypted_key TEXT NOT NULL,
-      created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS memories (
+    CREATE TABLE IF NOT EXISTS code_edits (
       id TEXT PRIMARY KEY,
-      scope TEXT NOT NULL DEFAULT 'global' CHECK(scope IN ('global', 'project')),
-      project_path TEXT,
-      category TEXT NOT NULL DEFAULT 'general',
-      title TEXT NOT NULL,
-      content TEXT NOT NULL,
-      source TEXT NOT NULL DEFAULT 'active' CHECK(source IN ('active', 'automatic')),
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now'))
-    );
-  `);
-
-  // Indexes for memory queries
-  db.run(`CREATE INDEX IF NOT EXISTS idx_memories_scope_project ON memories(scope, project_path);`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_memories_updated ON memories(updated_at DESC);`);
-
-  // Embedding vector storage for codebase_search
-  db.run(`
-    CREATE TABLE IF NOT EXISTS embeddings (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      workspace TEXT NOT NULL,
       file_path TEXT NOT NULL,
-      chunk_start INTEGER NOT NULL,
-      chunk_end INTEGER NOT NULL,
-      chunk_text TEXT NOT NULL,
-      embedding BLOB NOT NULL,
-      file_mtime TEXT NOT NULL,
-      updated_at TEXT DEFAULT (datetime('now'))
+      original_content TEXT NOT NULL,
+      new_content TEXT NOT NULL,
+      timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+      accepted INTEGER DEFAULT 0,
+      diff_summary TEXT
     );
-  `);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS file_index_meta (
-      workspace TEXT NOT NULL,
-      file_path TEXT NOT NULL,
-      mtime TEXT NOT NULL,
-      chunk_count INTEGER NOT NULL,
-      PRIMARY KEY (workspace, file_path)
-    );
-  `);
-
-  // Quest Mode tables
-  db.run(`
-    CREATE TABLE IF NOT EXISTS quest_tasks (
+    CREATE TABLE IF NOT EXISTS project_files (
       id TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL,
-      title TEXT,
-      scenario TEXT NOT NULL DEFAULT 'spec',
-      run_mode TEXT NOT NULL DEFAULT 'local',
-      auto_mode TEXT NOT NULL DEFAULT 'auto',
-      status TEXT NOT NULL DEFAULT 'idle',
-      spec_content TEXT,
-      worktree_path TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      path TEXT NOT NULL,
+      name TEXT NOT NULL,
+      content TEXT,
+      last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+      is_dirty INTEGER DEFAULT 0
     );
-  `);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS quest_messages (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      task_id TEXT NOT NULL,
-      role TEXT NOT NULL,
-      content TEXT NOT NULL,
-      tool_calls TEXT,
-      metadata TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (task_id) REFERENCES quest_tasks(id)
-    );
-  `);
-
-  // Planning Agent tables
-  db.run(`
-    CREATE TABLE IF NOT EXISTS plans (
+    CREATE TABLE IF NOT EXISTS terminal_history (
       id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      goals TEXT NOT NULL,
-      constraints TEXT,
-      status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft', 'reviewing', 'approved', 'executing', 'paused', 'completed', 'cancelled')),
-      current_step_index INTEGER NOT NULL DEFAULT 0,
-      working_directory TEXT NOT NULL,
-      retrospective TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now')),
-      completed_at TEXT
+      command TEXT NOT NULL,
+      output TEXT,
+      timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+      is_remote INTEGER DEFAULT 0
     );
-  `);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS plan_steps (
+    CREATE TABLE IF NOT EXISTS ssh_connections (
       id TEXT PRIMARY KEY,
-      plan_id TEXT NOT NULL,
-      step_index INTEGER NOT NULL,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      files TEXT,
-      commands TEXT,
-      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'in_progress', 'completed', 'skipped', 'blocked')),
-      estimated_complexity TEXT CHECK(estimated_complexity IN ('low', 'medium', 'high')),
-      result TEXT,
-      error TEXT,
-      FOREIGN KEY (plan_id) REFERENCES plans(id) ON DELETE CASCADE
+      host TEXT NOT NULL,
+      port INTEGER NOT NULL DEFAULT 22,
+      username TEXT NOT NULL,
+      name TEXT,
+      last_used TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS snippets (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      code TEXT NOT NULL,
+      language TEXT,
+      tags TEXT,
+      timestamp TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     );
   `);
 
-  db.run(`CREATE INDEX IF NOT EXISTS idx_plans_working_dir ON plans(working_directory);`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_plans_status ON plans(status);`);
-  db.run(`CREATE INDEX IF NOT EXISTS idx_plan_steps_plan_id ON plan_steps(plan_id);`);
+  // ─── Run migrations ───
 
-  // Create default development user if no users exist
-  const userCount = db.exec(`SELECT COUNT(*) FROM users`);
-  const hasUsers = userCount.length > 0 && userCount[0].values.length > 0 && (userCount[0].values[0][0] as number) > 0;
-  
-  if (!hasUsers) {
-    console.log('[DB] No users found, creating default development user: admin/admin123');
-    // Pre-hashed password for 'admin123' using bcrypt with cost factor 12
-    const defaultPasswordHash = '$2b$12$OaEYAEJsBqEDI7CfRqO3A.HjIMi0hZtup.ubdq0ScFWVEcFg2U.Oi';
-    
-    db.run(
-      `INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)`,
-      ['admin', 'admin@localhost', defaultPasswordHash],
-    );
-    console.log('[DB] Default user created successfully');
+  // Run Codepilot migration001 (agent_message_triggers + message_idx)
+  try {
+    const { migration001 } = await import('./migrations/migration001_codepilot');
+    database.run(migration001);
+    console.log('[DB] Migration001 applied successfully');
+  } catch (m1err) {
+    console.warn('[DB] Migration001 skipped or failed:', m1err);
   }
 
-  // Import and initialize cloud sync tables
-  const { initSyncTables } = await import('./sync-tables');
-  await initSyncTables();
+  // Run memory migration (context_blocks, memory_anchors, tokens_short_term)
+  const migration002 = `
+    CREATE TABLE IF NOT EXISTS context_blocks (
+      id TEXT PRIMARY KEY,
+      segment_id TEXT NOT NULL,
+      content TEXT NOT NULL,
+      role TEXT DEFAULT 'assistant',
+      stored_at TEXT NOT NULL DEFAULT (datetime('now')),
+      token_count INTEGER DEFAULT 0
+    );
 
-  // Run checkpoint migrations
-  const { migration001 } = await import('./migrations/001-checkpoint-tables');
-  db.run(migration001);
+    CREATE TABLE IF NOT EXISTS memory_anchors (
+      id TEXT PRIMARY KEY,
+      anchor_key TEXT UNIQUE NOT NULL,
+      content TEXT NOT NULL,
+      stored_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      category TEXT DEFAULT 'general',
+      scope TEXT DEFAULT 'global',
+      token_count INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1
+    );
 
-  // Run platform module migrations (pipeline/review/pm/security)
-  const { migration002 } = await import('./migrations/002-platform-tables');
-  db.run(migration002);
+    CREATE TABLE IF NOT EXISTS tokens_short_term (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL,
+      token_count INTEGER NOT NULL DEFAULT 0,
+      recorded_at TEXT NOT NULL DEFAULT (datetime('now')),
+      is_active INTEGER DEFAULT 1
+    );
 
+    CREATE INDEX IF NOT EXISTS idx_context_blocks_segment ON context_blocks(segment_id);
+    CREATE INDEX IF NOT EXISTS idx_memory_anchors_key ON memory_anchors(anchor_key);
+    CREATE INDEX IF NOT EXISTS idx_memory_anchors_category ON memory_anchors(category);
+    CREATE INDEX IF NOT EXISTS idx_memory_anchors_scope ON memory_anchors(scope);
+    CREATE INDEX IF NOT EXISTS idx_tokens_session ON tokens_short_term(session_id);
+  `;
+  database.run(migration002);
+
+  try {
   // Run Hermes Fusion migrations (event_bus, hook_registry, fusion_modules, review_engine, nl_cron, etc.)
   try {
     const { migration003 } = await import('./migrations/migration003_hermes_fusion');
-    db.run(migration003);
+    database.run(migration003);
     console.log('[DB] Migration003 (Hermes Fusion) applied successfully');
   } catch (m3err) {
     console.warn('[DB] Migration003 (Hermes Fusion) skipped or failed:', m3err);
   }
 
-  // Run OpenSpace migrations (openspace_processes, openspace_profiles, openspace_scripts, openspace_recordings)
-  try {
-    const { getMigration004SQL } = await import('@codepilot/core/fusion');
-    const migration004 = getMigration004SQL();
-    db.run(migration004);
-    console.log('[DB] Migration004 (OpenSpace) applied successfully');
-  } catch (m4err) {
-    console.warn('[DB] Migration004 (OpenSpace) skipped or failed:', m4err);
-  }
-
   // Run GitHub Skills migration (installed_skills)
   try {
     const { migration005 } = await import('./migrations/migration005_github_skills');
-    db.run(migration005);
+    database.run(migration005);
     console.log('[DB] Migration005 (GitHub Skills) applied successfully');
   } catch (m5err) {
     console.warn('[DB] Migration005 (GitHub Skills) skipped or failed:', m5err);
@@ -350,91 +177,81 @@ export async function initDatabase(): Promise<SqlJsDatabase> {
   } catch (schemaErr) {
     // Database file is corrupted — recreate from scratch
     console.error('[DB] Database corrupted, recreating:', schemaErr);
-    try { db.close(); } catch { /* ignore */ }
-    db = null;
-    // Backup corrupted file
-    const backupPath = dbPath + '.corrupted.' + Date.now();
-    try { renameSync(dbPath, backupPath); } catch { /* ignore */ }
-    console.log('[DB] Corrupted database backed up to:', backupPath);
-    // Retry — initDatabase will create a fresh DB since db is null and file is gone
-    return initDatabase();
-  }
-
-  // Persist to disk
-  await saveDatabase();
-
-  return db;
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// saveDatabase — ATOMIC write with concurrency protection
-//
-// Writes to a .tmp file first, then atomically renames to the target path.
-// This guarantees the on-disk file is either the complete old version or the
-// complete new version — never a truncated partial write.
-//
-// Uses a mutex (saveLock) to serialize concurrent writes from multiple IPC
-// modules. Without this, module A could db.export() a snapshot, then module B
-// writes more data, then A's stale snapshot overwrites B's changes.
-// ────────────────────────────────────────────────────────────────────────────
-export async function saveDatabase(): Promise<void> {
-  if (!db) return;
-
-  // Chain onto the existing lock so concurrent callers serialize
-  saveLock = saveLock.then(async () => {
-    if (!db) return;
-
     try {
-      // 1. Export the in-memory database snapshot
-      const data = db.export();
-      const buffer = Buffer.from(data);
+      const dbPath = getDatabasePath();
+      if (require('fs').existsSync(dbPath)) {
+        require('fs').unlinkSync(dbPath);
+      }
+      db = null;
+      const freshDb = getDatabase();
+      // Re-run just the core schema without migrations
+      freshDb.exec(`
+        CREATE TABLE IF NOT EXISTS chat_messages (
+          id TEXT PRIMARY KEY,
+          role TEXT NOT NULL CHECK(role IN ('user','assistant','system','tool')),
+          content TEXT,
+          model TEXT,
+          timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+          token_count INTEGER,
+          truncated INTEGER DEFAULT 0,
+          compacted_from_ids TEXT
+        );
 
-      // 2. Write to a temporary file first
-      const tmpPath = dbPath + '.tmp';
-      await writeFile(tmpPath, buffer);
+        CREATE TABLE IF NOT EXISTS code_edits (
+          id TEXT PRIMARY KEY,
+          file_path TEXT NOT NULL,
+          original_content TEXT NOT NULL,
+          new_content TEXT NOT NULL,
+          timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+          accepted INTEGER DEFAULT 0,
+          diff_summary TEXT
+        );
 
-      // 3. Atomically rename tmp → real path
-      //    On Windows, renameSync replaces the target if it exists
-      renameSync(tmpPath, dbPath);
-    } catch (err) {
-      console.error('[DB] Failed to save database:', err);
-      // Clean up stale tmp file if it exists
-      try { unlinkSync(dbPath + '.tmp'); } catch { /* ignore */ }
-      throw err;
+        CREATE TABLE IF NOT EXISTS project_files (
+          id TEXT PRIMARY KEY,
+          path TEXT NOT NULL,
+          name TEXT NOT NULL,
+          content TEXT,
+          last_modified TEXT NOT NULL DEFAULT (datetime('now')),
+          is_dirty INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS terminal_history (
+          id TEXT PRIMARY KEY,
+          command TEXT NOT NULL,
+          output TEXT,
+          timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+          is_remote INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS ssh_connections (
+          id TEXT PRIMARY KEY,
+          host TEXT NOT NULL,
+          port INTEGER NOT NULL DEFAULT 22,
+          username TEXT NOT NULL,
+          name TEXT,
+          last_used TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS snippets (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          code TEXT NOT NULL,
+          language TEXT,
+          tags TEXT,
+          timestamp TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        );
+      `;
+      console.log('[DB] Database recreated from scratch');
+    } catch (recreateErr) {
+      console.error('[DB] Fatal error recreating database:', recreateErr);
+      throw recreateErr;
     }
-  });
-
-  // Wait for our turn in the lock chain
-  await saveLock;
-}
-
-export function getDatabase(): SqlJsDatabase {
-  if (!db) throw new Error('Database not initialized. Call initDatabase() first.');
-  return db;
-}
-
-/**
- * Synchronous save for crash/exit handlers where async is not possible.
- * Not mutex-protected — caller must ensure no concurrent writes.
- */
-export function saveDatabaseSync(): void {
-  if (!db) return;
-  try {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    const tmpPath = dbPath + '.tmp';
-    writeFileSync(tmpPath, buffer);
-    renameSync(tmpPath, dbPath);
-  } catch (err) {
-    console.error('[DB] Failed to save database synchronously:', err);
-    try { unlinkSync(dbPath + '.tmp'); } catch { /* ignore */ }
-  }
-}
-
-export async function closeDatabase(): Promise<void> {
-  if (db) {
-    await saveDatabase();
-    db.close();
-    db = null;
   }
 }

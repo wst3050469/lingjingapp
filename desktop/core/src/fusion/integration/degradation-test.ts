@@ -41,7 +41,6 @@ export function verifyDegradation(): DegradationReport {
   checks.push(verifyToolRegistryIsolation());
   checks.push(verifyFusionInitDegradation());
   checks.push(verifyCircuitBreakerDegradation());
-  checks.push(verifyOpenSpaceGracefulDegradation());
 
   return {
     passed: checks.every((c) => c.passed),
@@ -127,13 +126,5 @@ function verifyCircuitBreakerDegradation(): DegradationCheck {
     name: 'CircuitBreaker causes module degradation after opening',
     passed: true,
     description: 'CircuitBreaker transitions CLOSED→OPEN after failure threshold; OPEN state returns fallback/error; modules marked unhealthy in FusionInitializer.healthCheck()',
-  };
-}
-
-function verifyOpenSpaceGracefulDegradation(): DegradationCheck {
-  return {
-    name: 'OpenSpace graceful degradation when not installed',
-    passed: true,
-    description: 'detectOpenSpace() returns { installed: false } → all OpenSpace features become no-op; WebSocket connections skipped; Lua scripts not loaded; UI panels hidden',
   };
 }

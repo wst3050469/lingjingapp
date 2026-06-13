@@ -65,7 +65,7 @@ export function QuestChangedFilesTab() {
       <div className="flex-1 flex overflow-hidden">
         {/* File list */}
         <div className={`${activeFile ? 'w-[180px]' : 'w-full'} border-r border-cp-border/20 overflow-y-auto shrink-0`}>
-          {files.map((file) => (
+          {(files ?? []).map((file) => (
             <FileEntry
               key={file.filePath}
               file={file}

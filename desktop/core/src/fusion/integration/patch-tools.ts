@@ -3,7 +3,6 @@ import type { FusionConfig, FusionModuleConfig } from '../types.js';
 import type { IVectorMemoryStore } from '../vector-memory/types.js';
 import type { MultiAgentExecutor } from '../multi-agent/multi-agent-executor.js';
 import type { DAGOrchestrator } from '../dag-orchestrator/dag-orchestrator.js';
-import type { OpenSpaceExecuteTool } from '../openspace/tools/openspace-execute.js';
 import { createRememberVectorTool } from '../vector-memory/tools/remember-vector.js';
 import { createRecallVectorTool } from '../vector-memory/tools/recall-vector.js';
 import { createParallelExecuteTool } from '../multi-agent/tools/parallel-execute.js';
@@ -14,12 +13,10 @@ export interface FusionToolDeps {
   vectorStore?: IVectorMemoryStore;
   multiAgentExecutor?: MultiAgentExecutor;
   dagOrchestrator?: DAGOrchestrator;
-  openspaceTool?: OpenSpaceExecuteTool;
 }
 
 interface ModuleToggle {
   vectorMemory: boolean;
-  openspace: boolean;
   multiAgent: boolean;
   dagOrchestrator: boolean;
 }
@@ -30,7 +27,6 @@ function resolveModuleToggles(modules: FusionModuleConfig[]): ModuleToggle {
 
   return {
     vectorMemory: isModuleEnabled('vector_memory'),
-    openspace: isModuleEnabled('openspace') || isModuleEnabled('skill_security'),
     multiAgent: isModuleEnabled('parallel_executor'),
     dagOrchestrator: isModuleEnabled('dag_engine'),
   };
@@ -59,12 +55,6 @@ export function registerFusionTools(
     logger.info('[Fusion:Tools] Registered vector memory tools');
   } else if (toggles.vectorMemory) {
     logger.warn('[Fusion:Tools] vectorMemory enabled but no vectorStore provided');
-  }
-
-  if (toggles.openspace && deps.openspaceTool) {
-    toolRegistry.register(deps.openspaceTool as unknown as Tool);
-    registered.push('openspace_execute');
-    logger.info('[Fusion:Tools] Registered openspace_execute tool');
   }
 
   if (toggles.multiAgent && deps.multiAgentExecutor) {

@@ -36,6 +36,12 @@ export function QuestConversation() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Streaming stuck detection: track when streaming started and last message time
+  const streamingStartRef = useRef<number>(0);
+  const lastMessageRef = useRef<number>(Date.now());
+  const [isStreamingStuck, setIsStreamingStuck] = useState(false);
+  const STREAMING_STUCK_TIMEOUT = 60000; // 60 seconds
+
   const {
     activeTaskId,
     messages,
@@ -48,6 +54,34 @@ export function QuestConversation() {
     isCompacting,
     compactQuest,
   } = useQuestStore();
+
+  // Update refs and detect stuck streaming
+  useEffect(() => {
+    if (isStreaming) {
+      if (streamingStartRef.current === 0) {
+        streamingStartRef.current = Date.now();
+      }
+      lastMessageRef.current = Date.now();
+    } else {
+      streamingStartRef.current = 0;
+      setIsStreamingStuck(false);
+    }
+  }, [isStreaming, messages]);
+
+  // Check for stuck streaming every 5 seconds
+  useEffect(() => {
+    if (!isStreaming) return;
+    const checkStuck = () => {
+      const now = Date.now();
+      const stuck = streamingStartRef.current > 0 &&
+        (now - streamingStartRef.current > STREAMING_STUCK_TIMEOUT) &&
+        (now - lastMessageRef.current > STREAMING_STUCK_TIMEOUT);
+      setIsStreamingStuck(stuck);
+    };
+    checkStuck(); // Run immediately
+    const interval = setInterval(checkStuck, 5000);
+    return () => clearInterval(interval);
+  }, [isStreaming]);
 
   const { currentModel } = useModelStore();
   const { chatMode, setChatMode } = useChatStore();
@@ -112,7 +146,20 @@ export function QuestConversation() {
   const handleSend = useCallback(async () => {
     const hasText = !!text.trim();
     const hasAttachments = attachments.length > 0;
-    if ((!hasText && !hasAttachments) || isStreaming || !activeTaskId) return;
+
+    // If streaming is stuck (60s+ with no new messages), force reset and allow sending
+    if (isStreaming && isStreamingStuck) {
+      console.log('[QuestConversation] Streaming stuck detected, force resetting');
+      const s = useQuestStore.getState();
+      s.resetStreamText();
+      s.setStreaming(false);
+      s.setActiveRunId(null);
+      if (activeTaskId) s.removeRunningTask(activeTaskId);
+      streamingStartRef.current = 0;
+      setIsStreamingStuck(false);
+    }
+
+    if ((!hasText && !hasAttachments) || (isStreaming && !isStreamingStuck) || !activeTaskId) return;
 
     // Capture values before clearing
     const messageText = text;
@@ -237,6 +284,8 @@ export function QuestConversation() {
   };
 
   const handleStop = async () => {
+    setIsStreamingStuck(false);
+    streamingStartRef.current = 0;
     if (activeTaskId) {
       try {
         await window.electronAPI.quest.abort(activeTaskId);
@@ -354,7 +403,7 @@ export function QuestConversation() {
               <p className="text-white/60 text-xs">发送消息开始与 AI 对话</p>
             </div>
           ) : (
-            messages.map((msg) => (
+            (messages ?? []).map((msg) => (
               <ChatMessageView key={msg.id} message={mapToViewMessage(msg)} />
             ))
           )}
@@ -505,6 +554,34 @@ export function QuestConversation() {
               />
             </div>
           </div>
+
+          {/* Recovery bar: visible when streaming appears stuck */}
+          {isStreamingStuck && (
+            <div className="max-w-3xl mx-auto mt-2">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-2.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-amber-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <span className="text-xs text-amber-300">Agent 超过 60 秒未响应，可能已卡住</span>
+                </div>
+                <button
+                  onClick={() => {
+                    const s = useQuestStore.getState();
+                    s.resetStreamText();
+                    s.setStreaming(false);
+                    s.setActiveRunId(null);
+                    if (activeTaskId) s.removeRunningTask(activeTaskId);
+                    streamingStartRef.current = 0;
+                    setIsStreamingStuck(false);
+                  }}
+                  className="shrink-0 px-3 py-1 rounded-md bg-amber-500/20 text-amber-300 text-xs hover:bg-amber-500/30 transition-colors font-medium"
+                >
+                  恢复 Agent
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Hidden file input */}
           <input
@@ -691,7 +768,7 @@ function QuestFileChangeSummary() {
       {/* File list (collapsible) */}
       {!collapsed && (
         <div className="border-t border-cp-border/30 divide-y divide-cp-border/20">
-          {files.map((file) => {
+          {(files ?? []).map((file) => {
             const fileName = file.filePath.split(/[\\\/]/).pop() || file.filePath;
             const statusColor = file.status === 'pending' ? 'text-yellow-400' :
                                file.status === 'accepted' ? 'text-green-400' : 'text-red-400';

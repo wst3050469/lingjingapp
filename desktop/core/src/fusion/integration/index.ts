@@ -15,7 +15,7 @@
 export { patchElectronMain } from './patch-electron-main.js';
 export type { PatchElectronMainResult } from './patch-electron-main.js';
 
-export { getMigration003SQL, getMigration004SQL } from './patch-database.js';
+export { getMigration003SQL } from './patch-database.js';
 
 export { patchAgentHooks } from './patch-agent.js';
 export type {
@@ -39,24 +39,10 @@ export { setupMemoryLinkages } from './patch-memory.js';
 export type { MemoryLinkageDeps, MemoryLinkageResult } from './patch-memory.js';
 
 /**
- * Batch C (P1 Renderer UI路由注册 + scifi-dark主题切换 + OpenSpace集成完善):
- * - patch-renderer.tsx     → Fusion/OpenSpace 侧栏面板注册 + 懒加载组件映射
+ * Batch C (P1 Renderer UI路由注册 + scifi-dark主题切换):
+ * - patch-renderer.tsx     → Fusion 侧栏面板注册 + 懒加载组件映射
  * - patch-theme-switch.tsx → scifi-dark 主题选项 + CSS变量 + 主题选择菜单
- * - patch-openspace.ts     → OpenSpace 路径检测 + WebSocket/窗口嵌入说明 + Lua脚本
  */
-
-export {
-  detectOpenSpace,
-  detectOpenSpaceWindows,
-  detectOpenSpaceLinux,
-  patchOpenSpaceIntegration,
-  LUA_FRAME_EXPORT,
-  LUA_GLOBE_SYNC,
-} from './patch-openspace.js';
-export type {
-  OpenSpaceDetectionResult,
-  OpenSpacePatchResult,
-} from './patch-openspace.js';
 
 /**
  * Batch D (P1 Cloud Server RBAC + Audit Log + Health Check + Degradation Test + Tenant Quota):

@@ -23,12 +23,6 @@ const LazyModelRouterConfig = lazy(() => import('../fusion/ModelRouterConfig').t
 const LazyCronScheduleManager = lazy(() => import('../fusion/CronScheduleManager').then(m => ({ default: m.CronScheduleManager })));
 const LazyReviewReportPanel = lazy(() => import('../fusion/ReviewReportPanel').then(m => ({ default: m.ReviewReportPanel })));
 const LazyUserProfilePanel = lazy(() => import('../fusion/UserProfilePanel').then(m => ({ default: m.UserProfilePanel })));
-const LazyOpenSpacePanel = lazy(() => import('../fusion/OpenSpacePanel').then(m => ({ default: m.OpenSpacePanel })));
-const LazyOpenSpaceScriptEditor = lazy(() => import('../fusion/OpenSpaceScriptEditor').then(m => ({ default: m.OpenSpaceScriptEditor })));
-const LazyOpenSpaceDatasetTree = lazy(() => import('../fusion/OpenSpaceDatasetTree').then(m => ({ default: m.OpenSpaceDatasetTree })));
-const LazyOpenSpaceProfileManager = lazy(() => import('../fusion/OpenSpaceProfileManager').then(m => ({ default: m.OpenSpaceProfileManager })));
-const LazyOpenSpaceRecorderPanel = lazy(() => import('../fusion/OpenSpaceRecorderPanel').then(m => ({ default: m.OpenSpaceRecorderPanel })));
-
 const fusionFallback = <div className="flex items-center justify-center h-full text-cp-text-dim/50 text-sm">加载中...</div>;
 
 function WorkflowPanel() {
@@ -112,11 +106,6 @@ export function SidebarContainer() {
       {activeSidebarPanel === 'cron-scheduler' && <Suspense fallback={fusionFallback}><LazyCronScheduleManager /></Suspense>}
       {activeSidebarPanel === 'review-report' && <Suspense fallback={fusionFallback}><LazyReviewReportPanel /></Suspense>}
       {activeSidebarPanel === 'user-profile' && <Suspense fallback={fusionFallback}><LazyUserProfilePanel /></Suspense>}
-      {activeSidebarPanel === 'openspace' && <Suspense fallback={fusionFallback}><LazyOpenSpacePanel /></Suspense>}
-      {activeSidebarPanel === 'openspace-script' && <Suspense fallback={fusionFallback}><LazyOpenSpaceScriptEditor /></Suspense>}
-      {activeSidebarPanel === 'openspace-dataset' && <Suspense fallback={fusionFallback}><LazyOpenSpaceDatasetTree /></Suspense>}
-      {activeSidebarPanel === 'openspace-profile' && <Suspense fallback={fusionFallback}><LazyOpenSpaceProfileManager /></Suspense>}
-      {activeSidebarPanel === 'openspace-recorder' && <Suspense fallback={fusionFallback}><LazyOpenSpaceRecorderPanel /></Suspense>}
     </div>
   );
 }

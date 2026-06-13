@@ -156,20 +156,6 @@ export function runFusionHealthCheck(deps: HealthCheckDeps): FusionHealthReport 
     details: deps.connectorHub ? 'available' : 'not available',
   });
 
-  modules.push({
-    name: 'OpenSpaceProcessManager',
-    enabled: true,
-    healthy: deps.openSpaceProcessAlive ?? false,
-    details: deps.openSpaceProcessAlive ? 'process alive' : 'process not running',
-  });
-
-  modules.push({
-    name: 'OpenSpaceBridge',
-    enabled: true,
-    healthy: deps.openSpaceWsConnected ?? false,
-    details: deps.openSpaceWsConnected ? 'WebSocket connected' : 'WebSocket disconnected',
-  });
-
   const enabledModules = modules.filter((m) => m.enabled);
   const healthyCount = enabledModules.filter((m) => m.healthy).length;
   const enabledCount = enabledModules.length;

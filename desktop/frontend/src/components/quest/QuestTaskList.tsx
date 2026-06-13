@@ -97,12 +97,12 @@ export function QuestTaskList() {
 
       {/* Task list */}
       <div className="flex-1 overflow-y-auto">
-        {tasks.length === 0 ? (
+        {(tasks ?? []).length === 0 ? (
           <div className="px-3 py-6 text-center text-[11px] text-white/50">
             No tasks yet
           </div>
         ) : (
-          tasks.map((task: QuestTask) => {
+          (tasks ?? []).map((task: QuestTask) => {
             const isActive = task.id === activeTaskId;
             const isRunning = runningTaskIds.includes(task.id);
             const isEditing = editingId === task.id;

@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "\u7075\u5883",
   "directories": {
-    "output": "release-v17360"
+    "output": "release-v17361"
   },
   "files": [
     "dist/**/*",

@@ -30,7 +30,7 @@ exports.default = async function afterPack(context) {
     // Extract
     rmSync(tmpDir, { recursive: true, force: true });
     mkdirSync(tmpDir, { recursive: true });
-    execSync(`npx asar extract "${asarFile}" "${tmpDir}"`, { stdio: 'pipe', timeout: 60000 });
+    execSync(`npx asar extract "${asarFile}" "${tmpDir}"`, { stdio: 'pipe', timeout: 300000 });
 
     // Inject @codepilot/core
     const dstCore = join(tmpDir, 'node_modules', '@codepilot', 'core');
@@ -97,7 +97,7 @@ exports.default = async function afterPack(context) {
     }
 
     // NOW fix internal import references in the .mjs files
-    // ESM imports like 'from "./foo/bar.js"' need to become 'from "./foo/bar.mjs"'
+    // ESM imports need .js → .mjs: handles ./ ../ ../../ ../../../ etc.
     function fixImportRefs(dir) {
       try {
         for (const e of require('node:fs').readdirSync(dir, { withFileTypes: true })) {
@@ -105,13 +105,13 @@ exports.default = async function afterPack(context) {
           if (e.isDirectory()) { fixImportRefs(fp); }
           else if (e.isFile() && (e.name.endsWith('.mjs') || e.name.endsWith('.js'))) {
             let content = readFileSync(fp, 'utf8');
-            // Replace .js → .mjs in import/export paths (only local relative paths, not npm packages)
+            // Replace .js → .mjs in:
+            //   1) from "./x.js" / from "../x.js" / from "../../x.js" etc.
+            //   2) import "./x.js" / import "../x.js" (static side-effect imports)
+            //   3) import("./x.js") / await import("../x.js") (dynamic imports)
             const updated = content.replace(
-              /(from\s+['"])(\.\/[^'"]+)(\.js)(['"])/g,
-              '$1$2.mjs$4'
-            ).replace(
-              /(import\s+['"])(\.\/[^'"]+)(\.js)(['"])/g,
-              '$1$2.mjs$4'
+              /((?:from\s+|import\s+|import\s*\(\s*))(['"])((?:\.\.?\/)+[^'"]+)(\.js)(['"])/g,
+              '$1$2$3.mjs$5'
             );
             if (updated !== content) {
               writeFileSync(fp, updated, 'utf8');
@@ -124,7 +124,7 @@ exports.default = async function afterPack(context) {
     console.log('[afterPack]   Fixed internal import references .js→.mjs');
 
     // Repack
-    execSync(`npx asar pack "${tmpDir}" "${asarFile}"`, { stdio: 'pipe', timeout: 60000 });
+    execSync(`npx asar pack "${tmpDir}" "${asarFile}"`, { stdio: 'pipe', timeout: 300000 });
 
     console.log('[afterPack] ✅ @codepilot/core injected + ESM fix applied');
   } catch (err) {

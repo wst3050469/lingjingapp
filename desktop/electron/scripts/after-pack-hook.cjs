@@ -1,86 +1,51 @@
-// after-pack-hook.cjs — electron-builder afterPack hook
-// Called AFTER ASAR is created but BEFORE NSIS/AppImage/portable installers.
-//
-// v1.73.59: asarUnpack fails to exclude @codepilot/core from ASAR (still present
-//   in both app.asar and app.asar.unpacked). Node.js resolves from ASAR first →
-//   resolveExports() path corruption in NSIS temp dir → Uncaught Exception.
-//
-//   FIX: Physically remove node_modules/@codepilot/ from app.asar.
-//   @codepilot/core remains available in app.asar.unpacked/ (real filesystem,
-//   resolveExports works correctly there).
-//
-//   Speed: on WSL2/Win, give generous timeout for cross-fs operations.
-
+// afterPack hook for v1.73.60 - strips @codepilot from ASAR
 const { execSync } = require('node:child_process');
 const { existsSync, rmSync, renameSync } = require('node:fs');
 const { join } = require('node:path');
 
-const ASAR_TIMEOUT = 300_000; // 5 min for WSL2 cross-fs slowness
-
-exports.default = async function afterPack(context) {
+module.exports = async function(context) {
   const { appOutDir } = context;
   const asarPath = join(appOutDir, 'resources', 'app.asar');
   const unpackedCoreDir = join(appOutDir, 'resources', 'app.asar.unpacked', 'node_modules', '@codepilot', 'core');
 
-  console.log('[afterPack] v1.73.59: Removing @codepilot/core from ASAR (keep in unpacked)');
+  console.log('[afterPack] v1.73.60: Stripping @codepilot/core from ASAR');
 
   if (!existsSync(asarPath)) {
-    console.log('[afterPack] ⚠️ app.asar not found at', asarPath, '— skipping');
+    console.log('[afterPack] WARNING app.asar not found - skipping');
     return;
   }
 
-  // Verify unpacked copy exists (safety check)
   if (!existsSync(join(unpackedCoreDir, 'dist', 'index.js'))) {
-    console.error('[afterPack] ❌ @codepilot/core NOT found in unpacked dir! Aborting ASAR modification.');
-    console.error('[afterPack]   Expected:', unpackedCoreDir);
+    console.error('[afterPack] ERROR @codepilot/core NOT in unpacked dir!');
     return;
   }
-  console.log('[afterPack] ✅ Unpacked @codepilot/core verified:', unpackedCoreDir);
+  console.log('[afterPack] Unpacked @codepilot/core verified');
 
   const tmpDir = join(appOutDir, 'resources', '.asar-tmp-extract');
-
   try {
-    // Step 1: Extract ASAR
-    console.log('[afterPack] Extracting app.asar...');
     rmSync(tmpDir, { recursive: true, force: true });
-    execSync(`npx asar extract "${asarPath}" "${tmpDir}"`, {
-      stdio: 'pipe',
-      timeout: ASAR_TIMEOUT,
-    });
-    console.log('[afterPack] ✅ ASAR extracted to', tmpDir);
+    execSync('npx asar extract "' + asarPath + '" "' + tmpDir + '"', { stdio: 'pipe', timeout: 300000 });
+    console.log('[afterPack] ASAR extracted');
 
-    // Step 2: Delete @codepilot from extracted content
     const coreInAsar = join(tmpDir, 'node_modules', '@codepilot');
     if (existsSync(coreInAsar)) {
       rmSync(coreInAsar, { recursive: true, force: true });
-      console.log('[afterPack] ✅ Removed node_modules/@codepilot/ from ASAR');
+      console.log('[afterPack] Removed @codepilot from ASAR');
     } else {
-      console.log('[afterPack] ⚠️ @codepilot not in ASAR (already clean)');
+      console.log('[afterPack] @codepilot not in ASAR (already clean)');
     }
 
-    // Step 3: Repack ASAR
     const tmpAsar = asarPath + '.new';
-    console.log('[afterPack] Repacking app.asar...');
-    execSync(`npx asar pack "${tmpDir}" "${tmpAsar}"`, {
-      stdio: 'pipe',
-      timeout: ASAR_TIMEOUT,
-    });
-    console.log('[afterPack] ✅ ASAR repacked:', tmpAsar);
-
-    // Step 4: Replace original
+    execSync('npx asar pack "' + tmpDir + '" "' + tmpAsar + '"', { stdio: 'pipe', timeout: 300000 });
     rmSync(asarPath, { force: true });
     renameSync(tmpAsar, asarPath);
-    console.log('[afterPack] ✅ Original app.asar replaced (without @codepilot)');
-
+    console.log('[afterPack] ASAR replaced (without @codepilot)');
   } catch (err) {
-    console.error('[afterPack] ❌ Failed to strip @codepilot from ASAR:', err.message);
-    // Non-fatal: the unpacked copy is still available, but the bug may persist
-    // if Node.js resolves from inside ASAR first.
+    console.error('[afterPack] Failed:', err.message);
   } finally {
-    // Cleanup
     try { rmSync(tmpDir, { recursive: true, force: true }); } catch {}
     try { rmSync(asarPath + '.new', { force: true }); } catch {}
   }
 
-  console.log('[afterPack] ✅ @codepilot/core: ASAR stripped, unpacked copy ready');
+  console.log('[afterPack] @codepilot/core: ASAR stripped, unpacked copy ready');
 };

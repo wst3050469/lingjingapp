@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v17357"
+    "output": "release-v17358"
   },
   "files": [
     "dist/**/*",
@@ -97,7 +97,8 @@
   "asarUnpack": [
     "node_modules/cpu-features/**",
     "node_modules/ssh2/**",
-    "node_modules/node-pty/**"
+    "node_modules/node-pty/**",
+    "node_modules/@codepilot/**"
   ],
   "npmRebuild": false,
   "afterPack": "./scripts/after-pack-hook.cjs",

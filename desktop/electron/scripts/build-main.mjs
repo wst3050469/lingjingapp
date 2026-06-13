@@ -4,7 +4,7 @@
 // Native/huge deps are kept external
 
 import * as esbuild from 'esbuild';
-import { copyFileSync, cpSync, mkdirSync, rmSync, readFileSync, existsSync, realpathSync, readdirSync, lstatSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, rmSync, readFileSync, writeFileSync, existsSync, realpathSync, readdirSync, lstatSync } from 'node:fs';
 import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
@@ -26,7 +26,7 @@ if (existsSync(CORE_SRC) && existsSync(CORE_DST)) {
     const srcReal = realpathSync(CORE_SRC);
     const dstReal = realpathSync(CORE_DST);
     if (srcReal === dstReal) {
-      console.log('[build-main] ✅ @codepilot/core dist already accessible (pnpm symlink)');
+      console.log('[build-main] �?@codepilot/core dist already accessible (pnpm symlink)');
     } else if (isWin) {
       execSync(`xcopy /E /Y /I /Q "${CORE_SRC}" "${CORE_DST}"`, { stdio: 'pipe', timeout: 10000 });
     } else {
@@ -38,7 +38,7 @@ if (existsSync(CORE_SRC) && existsSync(CORE_DST)) {
     if (existsSync(pkgSrc) && existsSync(pkgDst)) {
       copyFileSync(pkgSrc, pkgDst);
     }
-    console.log('[build-main] ✅ Synced @codepilot/core dist + package.json to electron local node_modules');
+    console.log('[build-main] �?Synced @codepilot/core dist + package.json to electron local node_modules');
   } catch (err) {
     console.warn('[build-main] ⚠️ Failed to sync @codepilot/core dist:', err.message);
   }
@@ -128,7 +128,7 @@ const EXTERNAL = [
 // electron-builder packages files from desktop/electron/ using "files": ["renderer/**/*"].
 // The Vite build output is at desktop/frontend/dist/, which needs to be copied
 // to desktop/electron/renderer/ so electron-builder includes it in the ASAR.
-// Without this step, only index.html is packaged (no assets/) → blank page at runtime.
+// Without this step, only index.html is packaged (no assets/) �?blank page at runtime.
 const RENDERER_SRC = resolve(root, '../frontend/dist');
 const RENDERER_DST = resolve(root, 'renderer');
 if (existsSync(RENDERER_SRC)) {
@@ -140,7 +140,7 @@ if (existsSync(RENDERER_SRC)) {
   const assetCount = existsSync(join(RENDERER_DST, 'assets'))
     ? readdirSync(join(RENDERER_DST, 'assets')).length
     : 0;
-  console.log(`[build-main] ✅ Synced renderer dist (${assetCount} assets)`);
+  console.log(`[build-main] �?Synced renderer dist (${assetCount} assets)`);
 } else {
   console.warn('[build-main] ⚠️ Renderer dist not found at:', RENDERER_SRC);
   console.warn('[build-main]   Run: pnpm --filter @codepilot/renderer build first');
@@ -314,12 +314,12 @@ function resolveNodeModules() {
       }
     }
   } catch (err) {
-    console.error('[build-main] ❌ Failed to resolve node_modules:', err.message);
+    console.error('[build-main] �?Failed to resolve node_modules:', err.message);
   }
 
   // ─── Phase 2.5: Handle workspace packages ───
   // pnpm workspace packages (e.g., @codepilot/core) are symlinks from
-  // packages/electron/node_modules/@scoped/name → ../../core/
+  // packages/electron/node_modules/@scoped/name �?../../core/
   // They are NOT in .pnpm store, so findPkgDir() misses them.
   // This step resolves symlinks and copies dist + package.json to BUILD_NM.
   for (const external of EXTERNAL) {
@@ -366,7 +366,7 @@ function resolveNodeModules() {
       // Copy package.json (essential for Node.js module resolution)
       copyFileSync(realPkgJson, join(dstDir, 'package.json'));
       copied++;
-      console.log(`[build-main] 📦 Workspace package '${external}' resolved: ${realPath} → release/build/node_modules/`);
+      console.log(`[build-main] 📦 Workspace package '${external}' resolved: ${realPath} �?release/build/node_modules/`);
     } catch (err) {
       console.warn(`[build-main] ⚠️ Failed to copy workspace package '${external}': ${err.message}`);
     }
@@ -393,7 +393,7 @@ try {
 
   console.log('[build-main] main.js built successfully');
 
-  // Build preload.ts → dist/preload.js (CJS for Electron contextBridge)
+  // Build preload.ts �?dist/preload.js (CJS for Electron contextBridge)
   await esbuild.build({
     entryPoints: [join(root, 'src', 'preload.ts')],
     outfile: join(root, 'dist', 'preload.js'),
@@ -416,7 +416,7 @@ try {
   const preloadCjsPath = join(root, 'dist', 'preload.cjs');
   try {
     copyFileSync(preloadJsPath, preloadCjsPath);
-    console.log('[build-main] ✅ preload.cjs created (copy of preload.js)');
+    console.log('[build-main] �?preload.cjs created (copy of preload.js)');
   } catch (err) {
     console.warn('[build-main] ⚠️ Failed to create preload.cjs:', err.message);
   }
@@ -440,7 +440,7 @@ try {
       mkdirSync(wasmDstDir, { recursive: true });
       copyFileSync(wasmSrc, wasmDst1);
       copyFileSync(wasmSrc, join(wasmDstDir, 'sql-wasm.wasm'));
-      console.log('[build-main] ✅ sql-wasm.wasm copied from', wasmSrc);
+      console.log('[build-main] �?sql-wasm.wasm copied from', wasmSrc);
     } catch (err) {
       console.warn('[build-main] ⚠️ Failed to copy sql-wasm.wasm (non-fatal):', err.message);
     }
@@ -496,9 +496,9 @@ try {
       }
     }
     if (synced > 0) {
-      console.log(`[build-main] ✅ Synced ${synced} missing external dep(s) to packages/electron/node_modules/`);
+      console.log(`[build-main] �?Synced ${synced} missing external dep(s) to packages/electron/node_modules/`);
     } else {
-      console.log('[build-main] ✅ All external deps already present in packages/electron/node_modules/');
+      console.log('[build-main] �?All external deps already present in packages/electron/node_modules/');
     }
 
     // ── Workspace package special handling ──
@@ -514,6 +514,19 @@ try {
           rmSync(dstCore, { recursive: true, force: true });
           cpSync(srcCore, dstCore, { recursive: true, dereference: true, force: true });
           console.log('[build-main] 📦 Replaced @codepilot/core symlink with real files');
+          // v1.73.58: Fix package.json for asarUnpack — remove pnpm workspace marker
+          // 'private: true' is incompatible with Node.js module resolution in ASAR
+          try {
+            const corePkgPath = join(dstCore, 'package.json');
+            const corePkg = JSON.parse(readFileSync(corePkgPath, 'utf8'));
+            if (corePkg.private) {
+              delete corePkg.private;
+              writeFileSync(corePkgPath, JSON.stringify(corePkg, null, 2), 'utf8');
+              console.log('[build-main]   Removed "private": true from @codepilot/core/package.json');
+            }
+          } catch (err) {
+            console.warn('[build-main] ⚠️ Failed to fix @codepilot/core package.json:', err.message);
+          }
         }
       } catch (err) {
         console.warn('[build-main] ⚠️ Failed to replace @codepilot/core symlink:', err.message);

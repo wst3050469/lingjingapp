@@ -2,17 +2,21 @@
 // Called AFTER ASAR is created but BEFORE NSIS/AppImage/portable installers.
 // Injects @codepilot/core (pnpm workspace symlink) and fixes package.json.
 //
-// FIX v1.73.56: Strategy changed from .mjs rename back to:
-//   1. Keep "type": "module" (so .js = ESM)
-//   2. Keep all files as .js (no rename needed)
-//   3. DELETE "exports" field (root cause of NSIS temp \..\ path corruption via resolveExports)
-//   4. Delete "private": true (pnpm workspace marker incompatible with ASAR)
-//   5. Keep "main": "./dist/index.js" as-is
+// FIX v1.73.57: RESTORE "exports" field — v1.73.56 wrongly deleted it.
+//   Root cause analysis: the \..\ path corruption in v1.73.54b was caused by
+//   pnpm workspace SYMLINKS (node_modules/@codepilot/core → ../../core/) being
+//   extracted to NSIS temp dir, NOT by the "exports" field itself.
+//   Since we now use cpSync({dereference:true}), there are no symlinks — exports is safe.
+//   Without exports, CJS require('@codepilot/core/mcp') fails because Node.js
+//   can't resolve subpaths without the exports map (54 broken imports across mcp,
+//   fusion, checkpoint, rules, utils, types, intent, context, completion, etc.).
 //
-// Why this works:
-//   - CJS require() + "type":"module" → Node.js ESM interop → uses "main" field (simple resolution)
-//   - Without "exports", resolveExports is skipped → no \..\ path corruption in NSIS temp
-//   - ESM imports between .js files work because "type":"module" is set
+// Strategy:
+//   1. KEEP "exports" field — required for subpath resolution (mcp, fusion, etc.)
+//   2. KEEP "type": "module" — so .js = ESM
+//   3. KEEP "main": "./dist/index.js"
+//   4. DELETE "private": true — pnpm workspace marker incompatible with ASAR
+//   5. All files stay as .js (no .mjs rename)
 const { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync, rmSync } = require('node:fs');
 const { join } = require('node:path');
 const { execSync } = require('node:child_process');
@@ -55,9 +59,10 @@ exports.default = async function afterPack(context) {
     if (existsSync(coreNm)) rmSync(coreNm, { recursive: true, force: true });
 
     // Fix package.json:
-    //   DELETE "exports" — prevents resolveExports which causes NSIS temp \..\ path bug
+    //   KEEP "exports" — ESSENTIAL for subpath resolution (mcp, fusion, etc.)
+    //     The \..\ bug was from SYMLINKS, not exports. cpSync dereference = safe.
     //   DELETE "private" — pnpm marker incompatible with ASAR resolution
-    //   KEEP "type": "module" — so .js files are ESM (CJS require works via Node.js interop)
+    //   KEEP "type": "module" — so .js files are ESM
     //   KEEP "main": "./dist/index.js"
     const pkgPath = join(dstCore, 'package.json');
     if (existsSync(pkgPath)) {
@@ -68,13 +73,14 @@ exports.default = async function afterPack(context) {
         console.warn('[afterPack] ⚠️ Could not parse package.json:', e.message);
       }
       if (pkg) {
-        // CRITICAL: Delete "exports" — this is the root cause of NSIS temp \..\ path corruption
-        // When CJS require() loads an ESM package, resolveExports() follows the exports map
-        // and generates corrupt paths in NSIS temp directories. Without exports, Node.js
-        // uses the simpler "main" field resolution which avoids the bug.
+        // CRITICAL v1.73.57: KEEP "exports" — required for CJS require() subpath resolution.
+        // require('@codepilot/core/mcp') needs exports to map ./mcp -> ./dist/mcp/index.js
+        // The \..\ path bug in v1.73.54b was caused by pnpm workspace SYMLINKS, NOT exports.
+        // Since cpSync({dereference:true}) copies real files, exports is safe.
         if (pkg.exports) {
-          delete pkg.exports;
-          console.log('[afterPack]   Deleted "exports" field (avoids resolveExports path corruption)');
+          console.log('[afterPack]   "exports" field preserved (required for subpath resolution)');
+        } else {
+          console.warn('[afterPack]   WARNING: "exports" MISSING — subpath imports will fail!');
         }
 
         // Remove pnpm workspace marker (incompatible with ASAR)
@@ -96,7 +102,7 @@ exports.default = async function afterPack(context) {
         }
 
         writeFileSync(pkgPath, JSON.stringify(pkg, null, 2), 'utf8');
-        console.log('[afterPack]   ✅ package.json fixed (exports deleted, type=module, .js preserved)');
+        console.log('[afterPack]   ✅ package.json fixed (exports preserved, private removed, type=module)');
       }
     }
 

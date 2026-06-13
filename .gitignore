@@ -77,3 +77,4 @@ temp/
 backups/
 *.bak
 "tmp-update-versions.py"  
+tmp-*

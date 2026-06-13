@@ -24,14 +24,13 @@
       if (!f) return null;
       return typeof f === 'string' ? f : (f.url || f.name || null);
     }
-    // Helper: extract filename from URL for display
+    // Helper: extract filename from URL for display (decodes URI-encoded chars)
     function getFileName(url) {
       if (!url) return '';
-      // If it's already just a filename (no http), return as-is
       if (!/^https?:\/\//.test(url)) return url;
-      // Extract last segment after final /
       const parts = url.split('/');
-      return parts[parts.length - 1] || url;
+      const raw = parts[parts.length - 1] || url;
+      try { return decodeURIComponent(raw); } catch(e) { return raw; }
     }
     // Helper: get href for download (if full URL, use as-is; otherwise prepend /)
     function getHref(url) {
@@ -97,6 +96,29 @@
       secs.push({ title: '🐧 Linux', items: linuxItems });
     }
 
+    // macOS section
+    const macItems = [];
+    const macX64Url = getUrl('mac-x64');
+    if (macX64Url) {
+      macItems.push({
+        name: macX64Url,
+        label: 'Intel 芯片 (x64)',
+        size: getSize('mac-x64')
+      });
+    }
+    const macArm64Url = getUrl('mac-arm64');
+    if (macArm64Url) {
+      macItems.push({
+        name: macArm64Url,
+        label: 'Apple Silicon (M1/M2/M3)',
+        size: getSize('mac-arm64')
+      });
+    }
+    if (macItems.length) {
+      macItems.push({ name: '', label: '', size: 0, isNotice: true });
+      secs.push({ title: '🍎 macOS', items: macItems });
+    }
+
     // Android section - only show if we have a real APK URL (no fallback to broken URL)
     const androidItems = [];
     const apkUrl = getUrl('android') || getUrl('android-x64');
@@ -117,6 +139,10 @@
     secs.forEach(s => {
       html += '<div class=sec><div class=sec-title>' + s.title + '</div>';
       s.items.forEach(f => {
+        if (f.isNotice) {
+          html += '<div class=mac-notice><strong>⚠️ macOS 用户请注意</strong><br>由于应用未经过 Apple 公证，首次打开时可能提示"已损坏"。<br>解决方法：打开<b>终端</b>，执行以下命令后即可正常使用：<br><code>sudo xattr -rd com.apple.quarantine /Applications/灵境.app</code></div>';
+          return;
+        }
         const sizeStr = f.size > 0 ? '(' + (f.size / 1024 / 1024).toFixed(0) + ' MB)' : '';
         const displayName = getFileName(f.name);
         const href = getHref(f.name);
@@ -137,6 +163,11 @@
       '<div class=sec><div class=sec-title>🐧 Linux</div>',
       '<div class=li><div><div class=ft>LingJing-1.72.11-linux-x86_64.AppImage</div><div class=fs>通用 Linux 包 (173 MB)</div></div><a href=/LingJing-1.72.11-linux-x86_64.AppImage class=btn>⬇ 下载</a></div>',
       '<div class=li><div><div class=ft>LingJing-1.72.11-linux-x86_64.deb</div><div class=fs>Debian/Ubuntu 安装包 (105 MB)</div></div><a href=/LingJing-1.72.11-linux-x86_64.deb class=btn>⬇ 下载</a></div>',
+      '</div>',
+      '<div class=sec><div class=sec-title>🍎 macOS</div>',
+      '<div class=li><div><div class=ft>LingJing-1.72.11-mac-x64.zip</div><div class=fs>Intel 芯片 (x64) (180 MB)</div></div><a href=/LingJing-1.72.11-mac-x64.zip class=btn>⬇ 下载</a></div>',
+      '<div class=li><div><div class=ft>LingJing-1.72.11-mac-arm64.zip</div><div class=fs>Apple Silicon M1/M2/M3 (175 MB)</div></div><a href=/LingJing-1.72.11-mac-arm64.zip class=btn>⬇ 下载</a></div>',
+      '<div class=mac-notice><strong>⚠️ macOS 用户请注意</strong><br>由于应用未经过 Apple 公证，首次打开时可能提示"已损坏"。<br>解决方法：打开<b>终端</b>，执行以下命令后即可正常使用：<br><code>sudo xattr -rd com.apple.quarantine /Applications/灵境.app</code></div>',
       '</div>',
       '<div class=sec><div class=sec-title>📱 移动端 (Android)</div>',
       '<div class=li><div><div class=ft>lingjing-1.72.11-android.apk</div><div class=fs>Android 应用 (31 MB)</div></div><a href=/lingjing-1.72.11-android.apk class=btn>⬇ 下载</a></div>',

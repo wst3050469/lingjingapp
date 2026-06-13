@@ -2,12 +2,11 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v17358"
+    "output": "release-v17359"
   },
   "files": [
     "dist/**/*",
     "renderer/**/*",
-    "node_modules/@codepilot/**/*",
     "node_modules/**/*",
     "package.json",
     "prompts/**/*"

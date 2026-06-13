@@ -1982,6 +1982,7 @@ export function registerAdminAPI(app, db) {
   // ====== versions.json helpers ======
   function findVersionsJsonPath() {
     const searchPaths = [
+      '/var/www/html/versions.json',                       // PRIMARY: authoritative source
       '/var/www/lingjing/versions.json',
       '/root/lingjing-update/data/versions.json',
       '/var/www/update-server/data/versions.json',

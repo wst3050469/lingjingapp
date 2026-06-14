@@ -746,6 +746,44 @@ function registerShortcuts(mainWindow: BrowserWindow): void {
 }
 
 async function bootstrap(): Promise<void> {
+  // ═══════════════════════════════════════════════════════════════
+  // PHASE 0: @codepilot/core self-repair check
+  // The after-pack-hook removes @codepilot from app.asar (to avoid
+  // CJS→ESM path truncation). During auto-update, only app.asar is
+  // replaced — app.asar.unpacked/ retains the old @codepilot/core.
+  // This causes "loadPrompts is not a function" after upgrade.
+  //
+  // Fix: Copy a fresh backup from extraResources (bundled via
+  // electron-builder.json → extraResources → codepilot-core-dist).
+  // ═══════════════════════════════════════════════════════════════
+  try {
+    const coreDistBackup = join(process.resourcesPath, 'codepilot-core-dist');
+    if (existsSync(coreDistBackup)) {
+      // Try to verify loadPrompts export
+      let coreOk = false;
+      try {
+        const coreTest = require('@codepilot/core');
+        coreOk = typeof coreTest.loadPrompts === 'function';
+      } catch { /* core not loadable yet */ }
+
+      if (!coreOk) {
+        // Find the unpacked core dist path
+        const asarUnpacked = join(dirname(process.resourcesPath), 'app.asar.unpacked');
+        const unpackedCoreDist = join(asarUnpacked, 'node_modules', '@codepilot', 'core', 'dist');
+        if (existsSync(unpackedCoreDist)) {
+          console.warn('[main] @codepilot/core missing loadPrompts — repairing from backup...');
+          // Delete old dist and copy fresh one
+          const { rmSync, cpSync } = await import('node:fs');
+          rmSync(unpackedCoreDist, { recursive: true, force: true });
+          cpSync(coreDistBackup, unpackedCoreDist, { recursive: true, force: true });
+          console.log('[main] ✅ @codepilot/core dist repaired successfully');
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[main] @codepilot/core self-repair check failed (non-fatal):', err);
+  }
+
   // Grant microphone/media permission (must be after app.whenReady)
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, _callback) => {
     const permitted = permission === 'media' || permission === 'mediaKeySystem';

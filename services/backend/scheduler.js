@@ -194,7 +194,8 @@ export class CloudScheduler extends EventEmitter {
         created_at TEXT,
         updated_at TEXT,
         retry_count INTEGER DEFAULT 0,
-        max_retries INTEGER DEFAULT 3
+        max_retries INTEGER DEFAULT 3,
+        last_error TEXT
       )
     `);
 

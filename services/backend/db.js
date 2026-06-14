@@ -268,7 +268,8 @@ export function initDB(dbPath) {
       max_retries INTEGER DEFAULT 3,
       status TEXT DEFAULT 'active',
       created_at TEXT,
-      updated_at TEXT
+      updated_at TEXT,
+      last_error TEXT
     )
   `);
 

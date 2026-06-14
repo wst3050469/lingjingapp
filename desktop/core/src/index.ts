@@ -8,7 +8,7 @@ export { Agent } from './agent/agent.js';
 export { Conversation } from './agent/conversation.js';
 export { estimateTokens } from './agent/token-counter.js';
 // Missing dist files:
-// export { loadPrompts, getPrompt, MAIN_PROMPT, CODE_REVIEWER_PROMPT, EXPLORER_PROMPT } from './agent/prompts.js';
+export { loadPrompts, getPrompt, MAIN_PROMPT, clearPromptCache } from './agent/prompts.js';
 // export { AgentScheduler } from './agent/agent-scheduler.js';
 // export { AgentCore } from './agent/agent-core.js';
 // export { DAGExecutor } from './agent/dag-executor.js';

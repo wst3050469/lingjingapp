@@ -572,6 +572,20 @@ try {
   }
   syncExternalNodeModules();
 
+  // Final sync: ensure electron node_modules has latest core dist
+  {
+    const coreDistSrc = resolve(root, '..', 'core', 'dist');
+    const coreDistDst = join(root, 'node_modules', '@codepilot', 'core', 'dist');
+    if (existsSync(coreDistSrc) && existsSync(coreDistDst)) {
+      try {
+        cpSync(coreDistSrc, coreDistDst, { recursive: true, force: true, dereference: true });
+        console.log('[build-main] Final sync: @codepilot/core dist refreshed from desktop/core/dist');
+      } catch (err) {
+        console.warn('[build-main] Final sync failed:', err.message);
+      }
+    }
+  }
+
 } catch (err) {
   console.error('[build-main] Build failed:', err);
   process.exit(1);

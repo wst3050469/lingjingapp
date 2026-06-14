@@ -182,7 +182,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log('灵境 LingJing Update Server running on http://0.0.0.0:' + PORT);
-  console.log('Data file: ' + VERSIONS_FILE);
+  console.log('Search paths: ' + VERSION_SEARCH_PATHS.join(', '));
   const data = getVersions();
   console.log('Latest version: ' + data.latest);
 });

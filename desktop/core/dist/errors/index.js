@@ -1,0 +1,2 @@
+// Stub: errors module
+export {};

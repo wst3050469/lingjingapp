@@ -1,0 +1,2 @@
+// Stub: lifecycle module
+export {};

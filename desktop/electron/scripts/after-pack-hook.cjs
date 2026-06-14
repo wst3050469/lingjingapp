@@ -158,7 +158,7 @@ module.exports = async function(ctx) {
   const tmpAsar = path.join(os.tmpdir(), `lingjing-asar-repacked-${Date.now()}.asar`);
 
   try {
-    execSync(`npx @electron/asar pack "${tempDir}" "${tmpAsar}"`, {
+    execSync(`npx --package @electron/asar asar pack "${tempDir}" "${tmpAsar}"`, {
       stdio: 'pipe',
       timeout: 300000,
     });
@@ -196,7 +196,7 @@ module.exports = async function(ctx) {
 
   // Verify @codepilot NOT in app.asar
   try {
-    const listOutput = execSync(`npx @electron/asar list "${asarPath}"`, {
+    const listOutput = execSync(`npx --package @electron/asar asar list "${asarPath}"`, {
       stdio: 'pipe', timeout: 30000, encoding: 'utf8',
     });
     if (listOutput.includes('@codepilot')) {

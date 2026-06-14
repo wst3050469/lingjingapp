@@ -181,6 +181,26 @@ export class CloudScheduler extends EventEmitter {
   }
 
   _ensureTables() {
+    // Migration: add missing columns for older DB versions
+    try {
+      const cols = this.db.prepare("PRAGMA table_info(schedules)").all().map(c => c.name);
+      if (!cols.includes('next_run')) {
+        this.db.exec(`ALTER TABLE schedules ADD COLUMN next_run TEXT`);
+        console.log('[Scheduler] Migration: added next_run column');
+      }
+      if (!cols.includes('retry_count')) {
+        this.db.exec(`ALTER TABLE schedules ADD COLUMN retry_count INTEGER DEFAULT 0`);
+      }
+      if (!cols.includes('max_retries')) {
+        this.db.exec(`ALTER TABLE schedules ADD COLUMN max_retries INTEGER DEFAULT 3`);
+      }
+      if (!cols.includes('last_error')) {
+        this.db.exec(`ALTER TABLE schedules ADD COLUMN last_error TEXT`);
+      }
+    } catch (e) {
+      console.warn('[Scheduler] Migration warning:', e.message);
+    }
+
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS schedules (
         id TEXT PRIMARY KEY,

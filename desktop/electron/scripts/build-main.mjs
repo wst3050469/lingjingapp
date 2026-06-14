@@ -364,6 +364,59 @@ try {
 
   console.log('[build-main] main.js built successfully');
 
+  // Phase 0.6: Patch ALL @codepilot/core requires in CJS output (root + subpaths)
+  // esbuild hoists ALL await import("@codepilot/core*") to top-level
+  // require() calls in CJS format. These run BEFORE any try/catch at module load.
+  // v1.73.70 only caught root; v1.73.71 extends to subpaths (mcp, rules, checkpoint, etc.)
+  // Fix: Replace ALL top-level require("@codepilot/core/...") with generic safe wrapper.
+  {
+    const mainJsPath = join(root, 'dist', 'main.js');
+    let content = readFileSync(mainJsPath, 'utf8');
+    
+    // Generic safe-require wrapper: accepts optional subpath parameter
+    const SAFE_REQUIRE_PREAMBLE = [
+      '// @codepilot/core safe-require wrapper (v2: root + all subpaths)',
+      'var __safeRequireCodepilot = (function(subpath) {',
+      '  var modulePath = "@codepilot/core" + (subpath ? "/" + subpath : "");',
+      '  try {',
+      '    return require(modulePath);',
+      '  } catch(e) {',
+      '    if (e && (e.code === "MODULE_NOT_FOUND" || e.code === "ERR_MODULE_NOT_FOUND" ||',
+      '        (e.message && e.message.indexOf("codepilot") !== -1))) {',
+      '      console.warn("[main] " + modulePath + " unavailable at startup");',
+      '      return {};',
+      '    }',
+      '    throw e;',
+      '  }',
+      '})();',
+      '',
+    ].join('\n');
+    
+    const strictIdx = content.indexOf('"use strict"');
+    const insertIdx = strictIdx >= 0 ? content.indexOf('\n', strictIdx) + 1 : 0;
+    content = content.slice(0, insertIdx) + SAFE_REQUIRE_PREAMBLE + content.slice(insertIdx);
+    
+    // Match ALL @codepilot/core require() patterns:
+    //   var import_core = require("@codepilot/core");                  (root)
+    //   var import_mcp = require("@codepilot/core/mcp");               (subpath)
+    //   var import_logger = require("@codepilot/core/utils/logger");    (deep)
+    //   import_utils27 = require("@codepilot/core/utils");             (no var)
+    const codepilotRequireRe = /^(\s*(?:var\s+)?\w+\s*=\s*)require\("@codepilot\/core(\/[^"]*)?"\);/gm;
+    let patchedCount = 0;
+    content = content.replace(codepilotRequireRe, (match, prefix, subpath) => {
+      patchedCount++;
+      const arg = subpath ? '"' + subpath.slice(1) + '"' : '';
+      return prefix + '__safeRequireCodepilot(' + arg + ');';
+    });
+    
+    if (patchedCount > 0) {
+      writeFileSync(mainJsPath, content, 'utf8');
+      console.log('[build-main] Patched ' + patchedCount + ' top-level @codepilot/core/* require() -> safe wrapper');
+    } else {
+      console.log('[build-main] No top-level @codepilot/core/* require() found');
+    }
+  }
+
   // Build preload.ts �?dist/preload.js (CJS for Electron contextBridge)
   await esbuild.build({
     entryPoints: [join(root, 'src', 'preload.ts')],

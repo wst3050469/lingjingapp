@@ -1,3 +1,12 @@
+## [1.73.67] - 2026-06-14
+### 修复
+- **Quest 任务创建失败**: 修复 `quest_tasks`/`quest_messages` 数据库表从未创建导致所有任务创建失败
+  - `database.ts` initDatabase() 主schema + 重建恢复段两处添加 quest_tasks/quest_messages 建表
+  - `web-server.ts` 修正 4处列索引 (3 REST API + 1 WebSocket)
+  - 表结构: quest_tasks(11列含索引) + quest_messages(7列含外键)
+- **Linux 构建**: 修复 electron-builder Linux 构建 (electron 缺失) → AppImage(175MB) + deb(107MB)
+- **下载页**: 更新 fallback 版本号 v1.73.66→v1.73.67 + Linux 文件链接
+
 ## [1.73.63] - 2026-06-14
 ### 修复
 - **@codepilot/core 子路径模块缺失**: 修复 23 个缺失模块导致 esbuild 构建 69 个 ERR_MODULE_NOT_FOUND 错误

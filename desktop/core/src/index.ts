@@ -20,7 +20,7 @@ export * from './llm/types.js';
 // export { OpenAIProvider } from './llm/openai.js';
 // export { AnthropicProvider } from './llm/anthropic.js';
 // export { OllamaProvider } from './llm/ollama.js';
-// export { createProvider, OPENAI_COMPATIBLE_PROVIDERS, getModelContextWindow } from './llm/provider-factory.js';
+export { createProvider, OPENAI_COMPATIBLE_PROVIDERS, getModelContextWindow } from './llm/provider-factory.js';
 // export { parseSSEStream } from './llm/sse-parser.js';
 
 // ── Tools (only types.js exists in dist) ──

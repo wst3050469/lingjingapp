@@ -402,8 +402,21 @@ try {
     //   var import_logger = require("@codepilot/core/utils/logger");    (deep)
     //   import_utils27 = require("@codepilot/core/utils");             (no var)
     const codepilotRequireRe = /^(\s*(?:var\s+)?\w+\s*=\s*)require\("@codepilot\/core(\/[^"]*)?"\);/gm;
+    // Also match await import("@codepilot/core") patterns (esbuild may keep them as-is)
+    const codepilotImportDestrRe = /^(\s*(?:const|var|let)\s+\{[^}]+\}\s*=\s*)await\s+import\("@codepilot\/core(\/[^"]*)?"\);/gm;
+    const codepilotImportSimpleRe = /^(\s*(?:const|var|let)\s+\w+\s*=\s*)await\s+import\("@codepilot\/core(\/[^"]*)?"\);/gm;
     let patchedCount = 0;
     content = content.replace(codepilotRequireRe, (match, prefix, subpath) => {
+      patchedCount++;
+      const arg = subpath ? '"' + subpath.slice(1) + '"' : '';
+      return prefix + '__safeRequireCodepilot(' + arg + ');';
+    });
+    content = content.replace(codepilotImportDestrRe, (match, prefix, subpath) => {
+      patchedCount++;
+      const arg = subpath ? '"' + subpath.slice(1) + '"' : '';
+      return prefix + '__safeRequireCodepilot(' + arg + ');';
+    });
+    content = content.replace(codepilotImportSimpleRe, (match, prefix, subpath) => {
       patchedCount++;
       const arg = subpath ? '"' + subpath.slice(1) + '"' : '';
       return prefix + '__safeRequireCodepilot(' + arg + ');';
@@ -411,9 +424,9 @@ try {
     
     if (patchedCount > 0) {
       writeFileSync(mainJsPath, content, 'utf8');
-      console.log('[build-main] Patched ' + patchedCount + ' top-level @codepilot/core/* require() -> safe wrapper');
+      console.log('[build-main] Patched ' + patchedCount + ' top-level @codepilot/core/* require/import -> safe wrapper');
     } else {
-      console.log('[build-main] No top-level @codepilot/core/* require() found');
+      console.log('[build-main] No top-level @codepilot/core/* require/import found');
     }
   }
 

@@ -51,6 +51,7 @@ import { verifyIpcRegistrations } from './ipc/ipc-verifier.js';
 import { registerBatchIPC } from './ipc/batch-ipc.js';
 import { registerConnectorIPC } from './ipc/connector-ipc.js';
 import { registerTriggerIPC } from './ipc/trigger-ipc.js';
+import { loadConfig, getModelContextWindow } from './config/main-config.js';
 
 const IS_DEV = !app.isPackaged;
 
@@ -481,13 +482,10 @@ function createWindow(): void {
   });
 }
 
-function registerAppIpc(): void {
+async function registerAppIpc(): Promise<void> {
   // Config IPC
   ipcMain.handle('config:get', async () => {
-    const { loadConfig, getModelContextWindow } = await import('@codepilot/core');
-    const loaded = await loadConfig();
-    // Override maxContextTokens with model-specific context window
-    const cfg = { ...loaded.config };
+    const cfg = loadConfig();
     cfg.maxContextTokens = getModelContextWindow(cfg.model, cfg.maxContextTokens);
     return cfg;
   });
@@ -641,9 +639,14 @@ function registerAppIpc(): void {
 
   // Tools list IPC - returns all built-in tool names and descriptions
   ipcMain.handle('tools:list', async () => {
-    const { createDefaultRegistry } = await import('@codepilot/core');
-    const registry = createDefaultRegistry();
-    return registry.getAll().map((t: any) => ({ name: t.name, description: t.description }));
+    try {
+      const { createDefaultRegistry } = await import('@codepilot/core');
+      const registry = createDefaultRegistry();
+      return registry.getAll().map((t: any) => ({ name: t.name, description: t.description }));
+    } catch (err) {
+      console.error('[Main] Failed to load tools from @codepilot/core:', err);
+      return [];
+    }
   });
 
   // Config reset IPC - resets config to defaults
@@ -813,7 +816,7 @@ async function bootstrap(): Promise<void> {
 
   // Config IPC (config:get, config:set) — no window dependency
   try {
-    registerAppIpc();
+    await registerAppIpc();
   } catch (err) {
     console.error('[Main] registerAppIpc failed:', err);
   }
@@ -1053,9 +1056,11 @@ async function bootstrap(): Promise<void> {
     }
 
     // Batch task processing (@codepilot/core at runtime)
+    // Use await import() instead of require() to avoid ASAR resolveExports path
+    // truncation bug in Electron's CJS module patcher (CVE-2026-06-14)
     try {
-      // @ts-ignore - core types available at runtime
-      const { BatchTaskQueue, BatchExecutor } = require('@codepilot/core');
+      const coreMod = await import('@codepilot/core');
+      const { BatchTaskQueue, BatchExecutor } = coreMod as any;
       registerBatchIPC(ipcMain, new BatchTaskQueue(), new BatchExecutor());
       console.log('[Main] Batch IPC registered');
     } catch (err) {
@@ -1064,8 +1069,8 @@ async function bootstrap(): Promise<void> {
 
     // Connector management
     try {
-      // @ts-ignore - core types available at runtime
-      const { ConnectorManager } = require('@codepilot/core');
+      const coreMod = await import('@codepilot/core');
+      const { ConnectorManager } = coreMod as any;
       registerConnectorIPC(ipcMain, new ConnectorManager());
       console.log('[Main] Connector IPC registered');
     } catch (err) {
@@ -1074,8 +1079,8 @@ async function bootstrap(): Promise<void> {
 
     // Trigger management
     try {
-      // @ts-ignore - core types available at runtime
-      const { TriggerManager } = require('@codepilot/core');
+      const coreMod = await import('@codepilot/core');
+      const { TriggerManager } = coreMod as any;
       registerTriggerIPC(ipcMain, new TriggerManager());
       console.log('[Main] Trigger IPC registered');
     } catch (err) {

@@ -1,0 +1,206 @@
+[build-main] ⚠️ @codepilot/core dist not found at one of:
+  src: D:\lingjing-ide\node_modules\@codepilot\core\dist (exists: false)
+  dst: D:\lingjing-ide\desktop\electron\node_modules\@codepilot\core\dist (exists: true)
+[build-main] �?Synced renderer dist (17 assets)
+[build-main] Building Electron main process with esbuild...
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "scanAndChunk"
+
+    src/services/indexing-pipeline.ts:6:9:
+      6 │ import { scanAndChunk, type AppConfig } from '@codepilot/core';
+        ╵          ~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "generateCommandId"
+
+    src/tools/ssh-bash.ts:5:9:
+      5 │ import { generateCommandId, storeBashOutput } from '@codepilot/core';
+        ╵          ~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "storeBashOutput"
+
+    src/tools/ssh-bash.ts:5:28:
+      5 │ import { generateCommandId, storeBashOutput } from '@codepilot/core';
+        ╵                             ~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createProvider"
+
+    src/ipc/quest-ipc.ts:14:2:
+      14 │   createProvider,
+         ╵   ~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createDefaultRegistry"
+
+    src/ipc/quest-ipc.ts:16:2:
+      16 │   createDefaultRegistry,
+         ╵   ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "loadPrompts"
+
+    src/ipc/quest-ipc.ts:18:2:
+      18 │   loadPrompts,
+         ╵   ~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "getPrompt"
+
+    src/ipc/quest-ipc.ts:20:2:
+      20 │   getPrompt,
+         ╵   ~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "MAIN_PROMPT"
+
+    src/ipc/quest-ipc.ts:22:2:
+      22 │   MAIN_PROMPT,
+         ╵   ~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "ToolRegistry"
+
+    src/ipc/quest-ipc.ts:24:2:
+      24 │   ToolRegistry,
+         ╵   ~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "getTodoList"
+
+    src/ipc/quest-ipc.ts:26:2:
+      26 │   getTodoList,
+         ╵   ~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "initUpdateMemoryTool"
+
+    src/ipc/quest-ipc.ts:30:2:
+      30 │   initUpdateMemoryTool,
+         ╵   ~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "initCodebaseSearchTool"
+
+    src/ipc/quest-ipc.ts:32:2:
+      32 │   initCodebaseSearchTool,
+         ╵   ~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "getModelContextWindow"
+
+    src/ipc/quest-ipc.ts:50:2:
+      50 │   getModelContextWindow,
+         ╵   ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createProvider"
+
+    src/ipc/agent-ipc.ts:7:2:
+      7 │   createProvider,
+        ╵   ~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createDefaultRegistry"
+
+    src/ipc/agent-ipc.ts:8:2:
+      8 │   createDefaultRegistry,
+        ╵   ~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "loadPrompts"
+
+    src/ipc/agent-ipc.ts:9:2:
+      9 │   loadPrompts,
+        ╵   ~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "MAIN_PROMPT"
+
+    src/ipc/agent-ipc.ts:10:2:
+      10 │   MAIN_PROMPT,
+         ╵   ~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "ToolRegistry"
+
+    src/ipc/agent-ipc.ts:11:2:
+      11 │   ToolRegistry,
+         ╵   ~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "getTodoList"
+
+    src/ipc/agent-ipc.ts:12:2:
+      12 │   getTodoList,
+         ╵   ~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "getPrompt"
+
+    src/ipc/agent-ipc.ts:13:2:
+      13 │   getPrompt,
+         ╵   ~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "initUpdateMemoryTool"
+
+    src/ipc/agent-ipc.ts:16:2:
+      16 │   initUpdateMemoryTool,
+         ╵   ~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "initCodebaseSearchTool"
+
+    src/ipc/agent-ipc.ts:17:2:
+      17 │   initCodebaseSearchTool,
+         ╵   ~~~~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "initGetProblemsTool"
+
+    src/ipc/agent-ipc.ts:18:2:
+      18 │   initGetProblemsTool,
+         ╵   ~~~~~~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createProvider"
+
+    src/ipc/completion-ipc.ts:7:2:
+      7 │   createProvider,
+        ╵   ~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createProvider"
+
+    src/ipc/inline-chat-ipc.ts:8:2:
+      8 │   createProvider,
+        ╵   ~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createProvider"
+
+    src/ipc/compact-ipc.ts:7:2:
+      7 │   createProvider,
+        ╵   ~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createProvider"
+
+    src/ipc/prompt-ipc.ts:7:2:
+      7 │   createProvider,
+        ╵   ~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createProvider"
+
+    src/services/wiki-service.ts:8:21:
+      8 │ import { loadConfig, createProvider, gitRevParseHead, gitDiffNameOn...
+        ╵                      ~~~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "TokenManager"
+
+    src/ipc/github-ipc.ts:4:9:
+      4 │ import { TokenManager, GitHubClient } from '@codepilot/core';
+        ╵          ~~~~~~~~~~~~
+
+X [ERROR] No matching export in "node_modules/@codepilot/core/dist/index.js" for import "GitHubClient"
+
+    src/ipc/github-ipc.ts:4:23:
+      4 │ import { TokenManager, GitHubClient } from '@codepilot/core';
+        ╵                        ~~~~~~~~~~~~
+
+30 errors
+[build-main] Build failed: Error: Build failed with 30 errors:
+src/ipc/agent-ipc.ts:7:2: ERROR: No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createProvider"
+src/ipc/agent-ipc.ts:8:2: ERROR: No matching export in "node_modules/@codepilot/core/dist/index.js" for import "createDefaultRegistry"
+src/ipc/agent-ipc.ts:9:2: ERROR: No matching export in "node_modules/@codepilot/core/dist/index.js" for import "loadPrompts"
+src/ipc/agent-ipc.ts:10:2: ERROR: No matching export in "node_modules/@codepilot/core/dist/index.js" for import "MAIN_PROMPT"
+src/ipc/agent-ipc.ts:11:2: ERROR: No matching export in "node_modules/@codepilot/core/dist/index.js" for import "ToolRegistry"
+...
+    at failureErrorWithLog (D:\lingjing-ide\desktop\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:1467:15)
+    at D:\lingjing-ide\desktop\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:926:25
+    at runOnEndCallbacks (D:\lingjing-ide\desktop\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:1307:45)
+    at buildResponseToResult (D:\lingjing-ide\desktop\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:924:7)
+    at D:\lingjing-ide\desktop\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:951:16
+    at responseCallbacks.<computed> (D:\lingjing-ide\desktop\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:603:9)
+    at handleIncomingPacket (D:\lingjing-ide\desktop\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:658:12)
+    at Socket.readFromStdout (D:\lingjing-ide\desktop\node_modules\.pnpm\esbuild@0.25.12\node_modules\esbuild\lib\main.js:581:7)
+    at Socket.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:563:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}

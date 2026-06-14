@@ -112,7 +112,7 @@ module.exports = async function(ctx) {
 
   try {
     fs.mkdirSync(tempDir, { recursive: true });
-    execSync(`npx @electron/asar extract "${asarPath}" "${tempDir}"`, {
+    execSync(`npx --package @electron/asar asar extract "${asarPath}" "${tempDir}"`, {
       stdio: 'pipe',
       timeout: 300000, // 5 min — WSL2 cross-fs can be very slow
     });

@@ -1184,6 +1184,42 @@ export function registerAdminAPI(app, db) {
 
   // ====== Version Review System (DB-driven, v1.71+) ======
 
+  // Platform name normalization map: Electron process.platform → downloads.js expected format
+  const PLATFORM_NORMALIZE_MAP = {
+    'win32': 'win-x64',
+    'darwin': 'mac-x64',
+    'linux': 'linux-x64',
+  };
+
+  /**
+   * Normalize platform names in files array/object to match what downloads.js expects.
+   * Electron uses process.platform (win32/darwin/linux), but downloads.js uses win-x64/mac-x64/linux-x64.
+   * This prevents the "version entry exists but files won't show on download page" bug.
+   */
+  function normalizePlatformNames(files) {
+    if (!files) return files;
+    if (Array.isArray(files)) {
+      return files.map(f => {
+        if (f && f.platform && PLATFORM_NORMALIZE_MAP[f.platform]) {
+          return { ...f, platform: PLATFORM_NORMALIZE_MAP[f.platform] };
+        }
+        return f;
+      });
+    }
+    if (typeof files === 'object') {
+      const result = {};
+      for (const [key, value] of Object.entries(files)) {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          result[key] = value;
+        } else {
+          result[key] = value;
+        }
+      }
+      return result;
+    }
+    return files;
+  }
+
   // Helper: sync approved versions from DB to versions.json for electron-updater
   // MERGES with existing JSON data — never removes historical versions that exist only in JSON
   function syncApprovedVersionsToJson() {
@@ -1199,6 +1235,8 @@ export function registerAdminAPI(app, db) {
       for (const v of approved) {
         let filesObj = {};
         try { filesObj = JSON.parse(v.files || '{}'); } catch {}
+        // Normalize platform names: Electron uses "win32", but downloads.js expects "win-x64"
+        filesObj = normalizePlatformNames(filesObj);
         const entry = {
           version: v.version,
           releaseDate: v.reviewed_at || v.created_at,
@@ -2020,6 +2058,14 @@ export function registerAdminAPI(app, db) {
   function normalizeVersionsJson(data) {
     if (data.versions && typeof data.versions === 'object' && !Array.isArray(data.versions)) {
       data.versions = Object.values(data.versions);
+    }
+    // Normalize platform names in all version entries (defense-in-depth)
+    if (Array.isArray(data.versions)) {
+      for (const entry of data.versions) {
+        if (entry.files) {
+          entry.files = normalizePlatformNames(entry.files);
+        }
+      }
     }
     return data;
   }

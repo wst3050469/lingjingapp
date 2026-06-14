@@ -1,0 +1,32 @@
+{
+  "versions": [
+    {
+      "version": "1.73.73",
+      "releaseDate": "2026-06-14T22:00:00.000Z",
+      "description": "修复: loadPrompts模块缺失问题",
+      "files": {
+        "win": {
+          "installer": {
+            "name": "灵境 Setup 1.73.73.exe",
+            "size": 194595197,
+            "sha512": "ec864ea06fe3ca74c1bde5d54a5d21043683e06fb89b9af9a95429ed40592f362fe0785363bb6e6eec5f809314fe6354fc7fab11187249a0376b681bb15266f3",
+            "blockMap": "灵境 Setup 1.73.73.exe.blockmap"
+          },
+          "portable": {
+            "name": "LingJing-Portable-1.73.73-win-x64.exe",
+            "size": 194253710,
+            "sha512": "1ad5185d1b43ec7d2d2e141dbb60d659a6abe2e051e283b0289673a4f93abe13b1012d7d461812fe19b8dd9cec2eedc06aeb01920cd9e5b6df6a212ece6d5eba"
+          }
+        },
+        "linux": {
+          "AppImage": {
+            "name": "LingJing-1.73.73-linux-x86_64.AppImage",
+            "size": 200564640,
+            "sha512": "bd76cdc545728f763acd7178064d7fe492a600c5f707367321963e218e38a3c577681649fe07342bd53d2ef689dc572b37e7439839c1c6732d30db12efcec2fe"
+          }
+        }
+      }
+    }
+  ],
+  "latest": "1.73.73"
+}

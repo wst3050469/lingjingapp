@@ -87,6 +87,10 @@ function importMetaPlugin() {
 }
 
 // Native/binary modules that must stay external
+// Native/binary modules that must stay external.
+// @codepilot/core is ESM with exports field — must remain external because
+// esbuild cannot bundle its missing dist stubs (22+ broken exports).
+// The after-pack-hook.cjs handles the ASAR path-truncation fix.
 const EXTERNAL=["electron","sql.js","ssh2","cpu-features","node-pty","fsevents","playwright","playwright-core","@codepilot/core","@codepilot/core/fusion","@codepilot/core/checkpoint","@codepilot/core/rules","@codepilot/core/utils","@codepilot/core/mcp","@codepilot/core/voice","@codepilot/core/context","@codepilot/core/intent","@codepilot/core/terminal-suggester","@codepilot/core/auto-fix","@codepilot/core/agent-mode","@codepilot/core/multi-file-edit","@codepilot/core/pipeline","@codepilot/core/security","@codepilot/core/pm","@codepilot/core/review","bcryptjs","chokidar","exceljs","express","ws","electron-updater","fast-glob","jose","uuid","zod","gpt-tokenizer","yaml","cron-parser","underscore","readable-stream"];
 
 

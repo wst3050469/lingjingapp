@@ -196,9 +196,9 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
       const tasks = db.exec('SELECT * FROM quest_tasks ORDER BY created_at DESC LIMIT 20');
       res.json(tasks[0]?.values.map((row: any) => ({
         id: row[0],
-        title: row[3],
+        title: row[2],
         status: row[6],
-        createdAt: row[7],
+        createdAt: row[8],
       })) || []);
     } catch (err) {
       console.error('[Web Server] Failed to get tasks:', err);
@@ -213,9 +213,9 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
       const tasks = db.exec('SELECT * FROM quest_tasks ORDER BY created_at DESC LIMIT 20');
       res.json(tasks[0]?.values.map((row: any) => ({
         id: row[0],
-        title: row[3],
+        title: row[2],
         status: row[6],
-        createdAt: row[7],
+        createdAt: row[8],
       })) || []);
     } catch (err) {
       console.error('[Web Server] /api/quest-tasks error:', err);
@@ -271,9 +271,9 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
         const row = task[0].values[0];
         res.json({
           id: row[0],
-          title: row[3],
+          title: row[2],
           status: row[6],
-          createdAt: row[7],
+          createdAt: row[8],
         });
       } else {
         res.status(404).json({ error: 'Task not found' });
@@ -621,7 +621,7 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
       ws.send(JSON.stringify({
         type: 'ack', id, success: true,
         data: {
-          id: t[0], title: t[2], status: t[5], scenario: t[3],
+          id: t[0], title: t[2], status: t[6], scenario: t[3],
           spec_content: t[7], created_at: t[8], updated_at: t[9],
           messages: (msgs[0]?.values || []).map((m: any) => ({ role: m[0], content: m[1], created_at: m[2] })),
         }

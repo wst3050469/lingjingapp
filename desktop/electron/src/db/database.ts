@@ -131,6 +131,35 @@ export async function initDatabase(): Promise<void> {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    -- Quest Mode tables
+    CREATE TABLE IF NOT EXISTS quest_tasks (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL DEFAULT 1,
+      title TEXT NOT NULL DEFAULT 'New Quest',
+      scenario TEXT NOT NULL DEFAULT 'spec',
+      run_mode TEXT NOT NULL DEFAULT 'local',
+      auto_mode TEXT NOT NULL DEFAULT 'auto',
+      status TEXT NOT NULL DEFAULT 'idle' CHECK(status IN ('idle','running','paused','completed','failed')),
+      spec_content TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      worktree_path TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS quest_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      task_id TEXT NOT NULL,
+      role TEXT NOT NULL,
+      content TEXT,
+      tool_calls TEXT,
+      metadata TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (task_id) REFERENCES quest_tasks(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_quest_messages_task ON quest_messages(task_id);
+    CREATE INDEX IF NOT EXISTS idx_quest_tasks_status ON quest_tasks(status);
+    CREATE INDEX IF NOT EXISTS idx_quest_tasks_updated ON quest_tasks(updated_at DESC);
   `);
 
   // Save initial schema
@@ -277,6 +306,35 @@ export async function initDatabase(): Promise<void> {
           key TEXT PRIMARY KEY,
           value TEXT NOT NULL
         );
+
+        -- Quest Mode tables
+        CREATE TABLE IF NOT EXISTS quest_tasks (
+          id TEXT PRIMARY KEY,
+          user_id INTEGER NOT NULL DEFAULT 1,
+          title TEXT NOT NULL DEFAULT 'New Quest',
+          scenario TEXT NOT NULL DEFAULT 'spec',
+          run_mode TEXT NOT NULL DEFAULT 'local',
+          auto_mode TEXT NOT NULL DEFAULT 'auto',
+          status TEXT NOT NULL DEFAULT 'idle' CHECK(status IN ('idle','running','paused','completed','failed')),
+          spec_content TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+          worktree_path TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS quest_messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          task_id TEXT NOT NULL,
+          role TEXT NOT NULL,
+          content TEXT,
+          tool_calls TEXT,
+          metadata TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          FOREIGN KEY (task_id) REFERENCES quest_tasks(id) ON DELETE CASCADE
+        );
+        CREATE INDEX IF NOT EXISTS idx_quest_messages_task ON quest_messages(task_id);
+        CREATE INDEX IF NOT EXISTS idx_quest_tasks_status ON quest_tasks(status);
+        CREATE INDEX IF NOT EXISTS idx_quest_tasks_updated ON quest_tasks(updated_at DESC);
       `);
       database.save();
       console.log('[DB] Database recreated from scratch');

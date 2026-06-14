@@ -1,3 +1,10 @@
+## [1.73.68] - 2026-06-14
+### 修复
+- **sqljs-adapter db.run() 参数平铺 Bug**: 修复 `db.run(sql, [params])` 中 `!Array.isArray` 条件导致数组参数未能正确展开，使得所有参数化 SQL (INSERT/UPDATE/DELETE) 参数绑定错误
+  - INSERT 直接报错（Quest 任务创建失败）
+  - DELETE/UPDATE 静默失效（数据未被实际变更）
+  - 影响约 40+ 处 `db.run()` 调用
+
 ## [1.73.67] - 2026-06-14
 ### 修复
 - **Quest 任务创建失败**: 修复 `quest_tasks`/`quest_messages` 数据库表从未创建导致所有任务创建失败

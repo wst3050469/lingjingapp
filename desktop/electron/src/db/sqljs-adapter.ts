@@ -35,7 +35,7 @@ class Statement {
   
   /** Bind parameters and return all rows as objects */
   all(...params: any[]): Record<string, any>[] {
-    const flatParams = params.length === 1 && typeof params[0] === 'object' && !Array.isArray(params[0])
+    const flatParams = params.length === 1 && typeof params[0] === 'object'
       ? params[0] : params;
     
     this.stmt.bind(flatParams);
@@ -49,7 +49,7 @@ class Statement {
   
   /** Bind parameters and return first row */
   get(...params: any[]): Record<string, any> | undefined {
-    const flatParams = params.length === 1 && typeof params[0] === 'object' && !Array.isArray(params[0])
+    const flatParams = params.length === 1 && typeof params[0] === 'object'
       ? params[0] : params;
     
     this.stmt.bind(flatParams);
@@ -63,7 +63,7 @@ class Statement {
   
   /** Execute INSERT/UPDATE/DELETE, return { changes, lastInsertRowid } */
   run(...params: any[]): { changes: number; lastInsertRowid: number | bigint } {
-    const flatParams = params.length === 1 && typeof params[0] === 'object' && !Array.isArray(params[0])
+    const flatParams = params.length === 1 && typeof params[0] === 'object'
       ? params[0] : params;
     
     this.stmt.bind(flatParams);
@@ -127,7 +127,7 @@ export class Database {
   
   /** Run SQL with optional params. For INSERT/UPDATE/DELETE returns changes info. */
   run(sql: string, ...params: any[]): { changes: number; lastInsertRowid: number | bigint } {
-    const flatParams = params.length === 1 && typeof params[0] === 'object' && !Array.isArray(params[0])
+    const flatParams = params.length === 1 && typeof params[0] === 'object'
       ? params[0] : params;
     
     // sql.js .run() accepts params

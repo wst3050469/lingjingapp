@@ -190,6 +190,7 @@ export const useQuestStore = create<QuestState>((set, get) => ({
       // Show detailed error from backend if available
       if (result?.error) {
         console.error('[Quest] Create task failed with error:', result.error);
+        throw new Error(result.error);
       } else {
         console.error('[Quest] Create task failed: no id in result', result);
       }

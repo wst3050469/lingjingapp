@@ -1,3 +1,0 @@
-# v1.73.61 fix
-import re
-c=open('D:/lingjing-ide/desktop/electron/scripts/build-main.mjs','r',encoding='utf-8').read()\nc=c.replace("'@codepilot/core',\\n  '@codepilot/core/fusion',\\n  '@codepilot/core/checkpoint',\\n  '@codepilot/core/rules',\\n  '@codepilot/core/utils',\\n",'')\nc=c.replace('// @codepilot/core - must be external, its subpaths (checkpoint, rules, utils)\n  // are resolved at runtime from the installation directory','// @codepilot/core - now bundled into main.js\n  // to avoid ASAR resolveExports() path corruption')\nopen('D:/lingjing-ide/desktop/electron/scripts/build-main.mjs','w',encoding='utf-8').write(c)\nprint('build-main.mjs updated')\n

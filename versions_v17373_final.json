@@ -23,6 +23,11 @@
             "name": "LingJing-1.73.73-linux-x86_64.AppImage",
             "size": 200564640,
             "sha512": "bd76cdc545728f763acd7178064d7fe492a600c5f707367321963e218e38a3c577681649fe07342bd53d2ef689dc572b37e7439839c1c6732d30db12efcec2fe"
+          },
+          "deb": {
+            "name": "LingJing-1.73.73-linux-x86_64.deb",
+            "size": 197781260,
+            "sha512": "5f2e7bd7dd125ea4d40e3de600e5dcc64820356d71eb74ca8b55f665085d747071e5aacc38ddad687fddc69bc4f073ef1574b2250dfbcf69f529dbf517383513"
           }
         }
       }

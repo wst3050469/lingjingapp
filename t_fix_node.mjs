@@ -87,8 +87,7 @@ function importMetaPlugin() {
 }
 
 // Native/binary modules that must stay external
-const EXTERNAL=["electron","sql.js","ssh2","cpu-features","node-pty","fsevents","playwright","playwright-core","@codepilot/core","@codepilot/core/fusion","@codepilot/core/checkpoint","@codepilot/core/rules","@codepilot/core/utils","@codepilot/core/mcp","@codepilot/core/voice","@codepilot/core/context","@codepilot/core/intent","@codepilot/core/terminal-suggester","@codepilot/core/auto-fix","@codepilot/core/agent-mode","@codepilot/core/multi-file-edit","@codepilot/core/pipeline","@codepilot/core/security","@codepilot/core/pm","@codepilot/core/review","bcryptjs","chokidar","exceljs","express","ws","electron-updater","fast-glob","jose","uuid","zod","gpt-tokenizer","yaml","cron-parser","underscore","readable-stream"];
-
+const EXTERNAL=["electron","sql.js","ssh2","cpu-features","node-pty","fsevents","playwright","playwright-core","@codepilot/core/mcp","@codepilot/core/fusion","@codepilot/core/voice","@codepilot/core/checkpoint","@codepilot/core/context","@codepilot/core/rules","@codepilot/core/utils","@codepilot/core/intent","@codepilot/core/terminal-suggester","@codepilot/core/auto-fix","@codepilot/core/agent-mode","@codepilot/core/multi-file-edit","@codepilot/core/pipeline","@codepilot/core/security","@codepilot/core/pm","@codepilot/core/review","bcryptjs","chokidar","exceljs","express","ws","electron-updater","fast-glob","jose","uuid","zod","gpt-tokenizer","yaml","cron-parser","underscore","readable-stream"];
 
 
 // ─── Phase 0.5: Sync renderer dist ───

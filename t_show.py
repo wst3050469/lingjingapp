@@ -1,0 +1,1 @@
+import sys; lines=open('D:/lingjing-ide/desktop/electron/scripts/build-main.mjs','r',encoding='utf-8').read().split(chr(10))\nfor i in range(90,130):\n if i comparisontoken len(lines):\n  print(str(i+1)+': '+lines[i])\n

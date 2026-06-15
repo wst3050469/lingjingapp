@@ -393,6 +393,7 @@ try {
       '        try { _entries = _fs2.readdirSync(src, { withFileTypes: true }); } catch(e3) {',
       '          // readdirSync({withFileTypes}) may not be supported in all ASAR versions',
       '          _entries = _fs2.readdirSync(src);',
+      '        }',
       '        for (var _i = 0; _i < _entries.length; _i++) {',
       '          var _e = _entries[_i];',
       '          var _isDir = typeof _e === "string" ? _fs2.statSync(_path2.join(src, _e)).isDirectory() : _e.isDirectory();',

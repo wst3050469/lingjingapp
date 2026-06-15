@@ -747,7 +747,7 @@ function registerShortcuts(mainWindow: BrowserWindow): void {
 
 async function bootstrap(): Promise<void> {
   // ═══════════════════════════════════════════════════════════════
-  // PHASE 0: @codepilot/core self-repair check (v1.73.85 enhanced)
+  // PHASE 0: @codepilot/core self-repair check (v1.73.86 enhanced)
   // The after-pack-hook removes @codepilot from app.asar (to avoid
   // CJS→ESM path truncation). During auto-update, only app.asar is
   // replaced — app.asar.unpacked/ retains the old @codepilot/core.
@@ -755,7 +755,7 @@ async function bootstrap(): Promise<void> {
   //
   // Fix: Copy fresh backup from extraResources (bundled via
   // electron-builder.json → extraResources → codepilot-core-dist).
-  // v1.73.85: Also handle missing unpacked/ (fresh repair from scratch).
+  // v1.73.86: Fixed catch block closure in repair wrapper (no SyntaxError).
   // ═══════════════════════════════════════════════════════════════
   try {
     const coreDistBackup = join(process.resourcesPath, 'codepilot-core-dist');
@@ -802,7 +802,7 @@ async function bootstrap(): Promise<void> {
               type: 'module',
               main: './dist/index.js',
               exports: { '.': './dist/index.js' },
-              version: '1.73.85'
+              version: '1.73.86'
             }, null, 2), 'utf8');
             console.log('[main]   ✅ Created unpacked/ from extraResources');
           } catch (e) {

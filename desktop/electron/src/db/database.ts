@@ -69,7 +69,8 @@ export async function initDatabase(): Promise<void> {
   }
 
   // ─── Schema: core tables ───
-  database.exec(`
+  try {
+    database.exec(`
     CREATE TABLE IF NOT EXISTS chat_messages (
       id TEXT PRIMARY KEY,
       role TEXT NOT NULL CHECK(role IN ('user','assistant','system','tool')),
@@ -161,6 +162,10 @@ export async function initDatabase(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_quest_tasks_status ON quest_tasks(status);
     CREATE INDEX IF NOT EXISTS idx_quest_tasks_updated ON quest_tasks(updated_at DESC);
   `);
+  } catch (err) {
+    console.error('[DB] Failed to create core tables:', err);
+    throw err;
+  }
 
   // Save initial schema
   database.save();

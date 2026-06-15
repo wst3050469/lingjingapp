@@ -3,8 +3,8 @@
  * 零依赖 - 仅使用 Node.js 内置模块
  * 运行在 :3002 端口，专为灵境移动端版本更新服务
  *
- * v1.2.0 - /api/latest 返回多平台下载链接
- *   - /api/latest 新增 files/urls 字段，包含所有平台下载 URL
+ * v1.2.1 - /latest.yml & /latest-linux.yml 兼容新版 files key 格式
+ *   - 新增 win-x64_setup / win-x64_portable / linux-x64_appimage 等 key 支持
  */
 const http = require('http');
 const fs = require('fs');
@@ -98,6 +98,24 @@ function handleMinVersion(req, res) {
   res.end(minVersion + '\n');
 }
 
+/**
+ * Resolve file info from versions.json with multi-key fallback
+ * Supports both new format (win-x64_setup, linux-x64_appimage) and old (win-x64, linux-x64)
+ */
+function resolveFileInfo(latest, primaryKeys, fallbackKeys, platformKey) {
+  // Try primary keys first (new format)
+  for (const key of primaryKeys) {
+    if (latest.files?.[key]) return latest.files[key];
+  }
+  // Try fallback keys (old format)
+  for (const key of fallbackKeys) {
+    if (latest.files?.[key]) return latest.files[key];
+  }
+  // Try platforms
+  if (platformKey && latest.platforms?.[platformKey]) return latest.platforms[platformKey];
+  return null;
+}
+
 const server = http.createServer((req, res) => {
   try {
     const urlPath = req.url.split('?')[0];
@@ -143,16 +161,17 @@ const server = http.createServer((req, res) => {
       const data = getVersions();
       const latest = data.versions?.[0];
       if (!latest) { jsonResponse(res, { error: 'no_version_found' }, 404); return; }
-      // 兼容新旧两种格式
-      const winUrl = latest.files?.['win-x64']?.url
+      // 兼容新旧多种格式: win-x64_setup > win-setup > win-x64 > installer
+      const winInfo = resolveFileInfo(latest,
+        ['win-x64_setup', 'win-setup'], 
+        ['win-x64', 'win-x64_portable'],
+        'win-x64'
+      );
+      const winUrl = winInfo?.url
         || latest.files?.installer
         || 'LingJing-Setup-' + data.latest + '-win-x64.exe';
-      const winSha = latest.files?.['win-x64']?.sha512
-        || latest.platforms?.['win-x64']?.sha512
-        || 'TBD';
-      const winSize = latest.files?.['win-x64']?.size
-        || latest.platforms?.['win-x64']?.size
-        || 0;
+      const winSha = winInfo?.sha512 || 'TBD';
+      const winSize = winInfo?.size || 0;
       const yml = [
         'version: ' + data.latest,
         'files:',
@@ -171,14 +190,16 @@ const server = http.createServer((req, res) => {
       const data = getVersions();
       const latest = data.versions?.[0];
       if (!latest) { jsonResponse(res, { error: 'no_version_found' }, 404); return; }
-      const linuxUrl = latest.files?.['linux-x64']?.url
+      // 兼容新旧格式: linux-x64_appimage > linux-x64
+      const linuxInfo = resolveFileInfo(latest,
+        ['linux-x64_appimage'],
+        ['linux-x64', 'linux-x86_64'],
+        'linux-x64'
+      );
+      const linuxUrl = linuxInfo?.url
         || 'LingJing-' + data.latest + '-linux-x86_64.AppImage';
-      const linuxSha = latest.files?.['linux-x64']?.sha512
-        || latest.platforms?.['linux-x64']?.sha512
-        || 'TBD';
-      const linuxSize = latest.files?.['linux-x64']?.size
-        || latest.platforms?.['linux-x64']?.size
-        || 0;
+      const linuxSha = linuxInfo?.sha512 || 'TBD';
+      const linuxSize = linuxInfo?.size || 0;
       const yml = [
         'version: ' + data.latest,
         'files:',
@@ -198,7 +219,7 @@ const server = http.createServer((req, res) => {
       jsonResponse(res, {
         status: 'ok',
         service: 'lingjing-update-server',
-        version: '1.2.0',
+        version: '1.2.1',
         latestVersion: data.latest,
         cacheAge: Date.now() - _cache.ts,
       });

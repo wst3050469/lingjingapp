@@ -1,8 +1,8 @@
-version: 1.73.86
+version: 1.73.87
 files:
-  - url: /downloads/1.73.86/LingJing-1.73.86-linux-x86_64.AppImage
-    sha512: 453815fca5264e4297e8c252a2842642e7fba17e6da3d290f4e99bcfedae31c51ea9590bcbf5b01f3026ebf7b35195b6de89f195e645a4b2ef1999a17bf62887
-    size: 255283564
-path: /downloads/1.73.86/LingJing-1.73.86-linux-x86_64.AppImage
-sha512: 453815fca5264e4297e8c252a2842642e7fba17e6da3d290f4e99bcfedae31c51ea9590bcbf5b01f3026ebf7b35195b6de89f195e645a4b2ef1999a17bf62887
-releaseDate: 2026-06-16T07:30:00.000Z
+  - url: /downloads/1.73.87/LingJing-1.73.87-linux-x86_64.AppImage
+    sha512: f31776920f394ed7a8863a5b39acdbe514103fbe47a3d5585a58ca82ef73dac561fdd7cc493328ef5b03a17082b139d7e56ff260b43bd1d9d504c2f80bf1a34d
+    size: 245012286
+path: /downloads/1.73.87/LingJing-1.73.87-linux-x86_64.AppImage
+sha512: f31776920f394ed7a8863a5b39acdbe514103fbe47a3d5585a58ca82ef73dac561fdd7cc493328ef5b03a17082b139d7e56ff260b43bd1d9d504c2f80bf1a34d
+releaseDate: 2026-06-16T08:00:00.000Z

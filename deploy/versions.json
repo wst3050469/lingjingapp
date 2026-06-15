@@ -10,52 +10,28 @@
       "releaseNotes": "修复: 移动端APK下载URL key不匹配(404) + 桌面端latest.yml/latest-linux.yml静态文件过期在1.73.85 + HTTP fallback下载平台感知",
       "files": {
         "win-x64_setup": {
-          "url": "/downloads/1.73.86/灵境 Setup 1.73.86.exe",
-          "size": 195073108,
+          "url": "/downloads/1.73.87/灵境 Setup 1.73.87.exe",
+          "size": 195071463,
           "type": "setup",
-          "sha512": "ca0f4e01b370e2d5f18f481e42485fea9fb7d7730108d96b78f7ebec79196e1c81e5d3a37bdfa28e817eda5644d722dc411cf9c93abf24baa66abd886002b593"
+          "sha512": "e43d1830eb6acff694c6e20907bcb8ab3ab9a78f0972f92e8a86a71abf05583794f7ee8a006127ffea2fac95ce9004e082870652282ccb3da9e102f075ccf928"
         },
         "win-x64_portable": {
-          "url": "/downloads/1.73.86/LingJing-Portable-1.73.86-win-x64.exe",
-          "size": 194731607,
+          "url": "/downloads/1.73.87/LingJing-Portable-1.73.87-win-x64.exe",
+          "size": 194729913,
           "type": "portable",
-          "sha512": "4b9f0fb135bfc93574ee0e17a695f2e5343da84d93c000897464497d4376b2b77aef390c0d8a430a3b9bef5831ed25e70f1932a051595def5904772547fff129"
-        },
-        "linux-x64_appimage": {
-          "url": "/downloads/1.73.86/LingJing-1.73.86-linux-x86_64.AppImage",
-          "size": 255283564,
-          "type": "appimage",
-          "sha512": "453815fca5264e4297e8c252a2842642e7fba17e6da3d290f4e99bcfedae31c51ea9590bcbf5b01f3026ebf7b35195b6de89f195e645a4b2ef1999a17bf62887"
-        },
-        "linux-x64_deb": {
-          "url": "/downloads/1.73.86/LingJing-1.73.86-linux-x86_64.deb",
-          "size": 129934022,
-          "type": "deb",
-          "sha512": "4171331cff4e33df50a26e7be1f7b72d222f659fdaaf1be9c925f4d246fb1a338e682f9dac2e917c0a5b534b6838f1b7c5b5e699030840758f116c3d864e798e"
-        },
-        "android-apk": {
-          "url": "/downloads/1.73.86/LingJing-1.73.86-android.apk",
-          "size": 182415510,
-          "type": "apk",
-          "sha512": "5a0bd3be25e69006eeb008369eb6034712f7733519e10bf59cf1be12e5432d91721bec5e198d9179c32f5613e2533b15b1ddd4c74cc5e59009a10e5053706776"
+          "sha512": "54da6c32f9cd3e137b9c35aa6fde6d86b275020ffab6fe4a6eb6239e8c322d3e85fca17f7ae41074142c17fea16435087740aa828d35452a26f5693a89f59094"
         },
         "win-x64": {
-          "url": "/downloads/1.73.86/LingJing-Portable-1.73.86-win-x64.exe",
-          "size": 194731607,
+          "url": "/downloads/1.73.87/LingJing-Portable-1.73.87-win-x64.exe",
+          "size": 194729913,
           "type": "portable",
-          "sha512": "4b9f0fb135bfc93574ee0e17a695f2e5343da84d93c000897464497d4376b2b77aef390c0d8a430a3b9bef5831ed25e70f1932a051595def5904772547fff129"
+          "sha512": "54da6c32f9cd3e137b9c35aa6fde6d86b275020ffab6fe4a6eb6239e8c322d3e85fca17f7ae41074142c17fea16435087740aa828d35452a26f5693a89f59094"
         },
         "win-setup": {
-          "url": "/downloads/1.73.86/灵境 Setup 1.73.86.exe",
-          "size": 195073108,
+          "url": "/downloads/1.73.87/灵境 Setup 1.73.87.exe",
+          "size": 195071463,
           "type": "setup",
-          "sha512": "ca0f4e01b370e2d5f18f481e42485fea9fb7d7730108d96b78f7ebec79196e1c81e5d3a37bdfa28e817eda5644d722dc411cf9c93abf24baa66abd886002b593"
-        },
-        "linux-x64": {
-          "url": "/downloads/1.73.86/LingJing-1.73.86-linux-x86_64.AppImage",
-          "size": 255283564,
-          "type": "appimage",
-          "sha512": "453815fca5264e4297e8c252a2842642e7fba17e6da3d290f4e99bcfedae31c51ea9590bcbf5b01f3026ebf7b35195b6de89f195e645a4b2ef1999a17bf62887"
+          "sha512": "e43d1830eb6acff694c6e20907bcb8ab3ab9a78f0972f92e8a86a71abf05583794f7ee8a006127ffea2fac95ce9004e082870652282ccb3da9e102f075ccf928"
         }
       }
     },

@@ -1,8 +1,8 @@
-version: 1.73.86
+version: 1.73.87
 files:
-  - url: /downloads/1.73.86/灵境 Setup 1.73.86.exe
-    sha512: ca0f4e01b370e2d5f18f481e42485fea9fb7d7730108d96b78f7ebec79196e1c81e5d3a37bdfa28e817eda5644d722dc411cf9c93abf24baa66abd886002b593
-    size: 195073108
-path: /downloads/1.73.86/灵境 Setup 1.73.86.exe
-sha512: ca0f4e01b370e2d5f18f481e42485fea9fb7d7730108d96b78f7ebec79196e1c81e5d3a37bdfa28e817eda5644d722dc411cf9c93abf24baa66abd886002b593
-releaseDate: 2026-06-16T07:30:00.000Z
+  - url: /downloads/1.73.87/灵境 Setup 1.73.87.exe
+    sha512: e43d1830eb6acff694c6e20907bcb8ab3ab9a78f0972f92e8a86a71abf05583794f7ee8a006127ffea2fac95ce9004e082870652282ccb3da9e102f075ccf928
+    size: 195071463
+path: /downloads/1.73.87/灵境 Setup 1.73.87.exe
+sha512: e43d1830eb6acff694c6e20907bcb8ab3ab9a78f0972f92e8a86a71abf05583794f7ee8a006127ffea2fac95ce9004e082870652282ccb3da9e102f075ccf928
+releaseDate: 2026-06-16T08:00:00.000Z

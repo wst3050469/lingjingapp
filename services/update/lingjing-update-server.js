@@ -2,12 +2,18 @@
  * 灵境 LingJing Update Server
  * 零依赖 - 仅使用 Node.js 内置模块
  * 运行在 :3002 端口，专为灵境移动端版本更新服务
+ *
+ * v1.1.0 - 内存缓存 + 崩溃防护
+ *   - 添加 process 级 uncaughtException 处理，防止 crash-loop
+ *   - versions.json 内存缓存（60s TTL），避免每次请求都读文件
+ *   - 文件读取失败时返回过期缓存而非崩溃
  */
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3002;
+const CACHE_TTL_MS = 60000; // 60 second cache
 const VERSION_SEARCH_PATHS = [
   '/var/www/html/versions.json',                       // PRIMARY: authoritative source
   '/var/www/lingjing/versions.json',                   // Default path
@@ -17,17 +23,32 @@ const VERSION_SEARCH_PATHS = [
   '/var/www/downloads/versions.json',                  // Downloads
 ];
 
+// ── Memory cache ──
+let _cache = { data: null, ts: 0, path: '' };
+
 function getVersions() {
+  const now = Date.now();
+  // Return cached data if still fresh
+  if (_cache.data && (now - _cache.ts) < CACHE_TTL_MS) {
+    return _cache.data;
+  }
   for (const p of VERSION_SEARCH_PATHS) {
     try {
       if (fs.existsSync(p)) {
-        const data = JSON.parse(fs.readFileSync(p, 'utf8'));
-        console.error('[LingJing Update] Loaded versions.json from:', p);
+        const raw = fs.readFileSync(p, 'utf8');
+        const data = JSON.parse(raw);
+        _cache = { data, ts: now, path: p };
+        console.error('[LingJing Update] Loaded versions.json from:', p, '(cached for 60s)');
         return data;
       }
     } catch (e) {
-      // try next path
+      console.error('[LingJing Update] Failed to read', p, ':', e.message);
     }
+  }
+  // Return stale cache if available (better than crashing)
+  if (_cache.data) {
+    console.error('[LingJing Update] All paths failed, returning stale cache from:', _cache.path);
+    return _cache.data;
   }
   console.error('[LingJing Update] No versions.json found, using default');
   return { latest: '1.52.3', versions: [{ version: '1.52.3' }] };
@@ -80,104 +101,125 @@ function handleMinVersion(req, res) {
 }
 
 const server = http.createServer((req, res) => {
-  const urlPath = req.url.split('?')[0];
+  try {
+    const urlPath = req.url.split('?')[0];
 
-  if (urlPath === '/api/rollout/check') { handleRolloutCheck(req, res); return; }
-  if (urlPath === '/min-version.txt') { handleMinVersion(req, res); return; }
+    if (urlPath === '/api/rollout/check') { handleRolloutCheck(req, res); return; }
+    if (urlPath === '/min-version.txt') { handleMinVersion(req, res); return; }
 
-  if (urlPath === '/api/latest') {
-    const data = getVersions();
-    const latestVersion = data.latest;
-    const urlObj = new URL(req.url, 'http://localhost');
-    const currentVersion = urlObj.searchParams.get('current') || '';
+    if (urlPath === '/api/latest') {
+      const data = getVersions();
+      const latestVersion = data.latest;
+      const urlObj = new URL(req.url, 'http://localhost');
+      const currentVersion = urlObj.searchParams.get('current') || '';
 
-    // 智能 hasUpdate：客户端传入旧版本才返回 true
-    let hasUpdate = true;
-    if (currentVersion) {
-      hasUpdate = compareVersions(latestVersion, currentVersion) > 0;
+      // 智能 hasUpdate：客户端传入旧版本才返回 true
+      let hasUpdate = true;
+      if (currentVersion) {
+        hasUpdate = compareVersions(latestVersion, currentVersion) > 0;
+      }
+
+      jsonResponse(res, {
+        hasUpdate,
+        version: latestVersion,
+        status: 'published',
+      });
+      return;
     }
+    if (urlPath === '/api/versions') {
+      jsonResponse(res, getVersions());
+      return;
+    }
+    if (urlPath === '/latest.yml') {
+      const data = getVersions();
+      const latest = data.versions?.[0];
+      if (!latest) { jsonResponse(res, { error: 'no_version_found' }, 404); return; }
+      // 兼容新旧两种格式
+      const winUrl = latest.files?.['win-x64']?.url
+        || latest.files?.installer
+        || 'LingJing-Setup-' + data.latest + '-win-x64.exe';
+      const winSha = latest.files?.['win-x64']?.sha512
+        || latest.platforms?.['win-x64']?.sha512
+        || 'TBD';
+      const winSize = latest.files?.['win-x64']?.size
+        || latest.platforms?.['win-x64']?.size
+        || 0;
+      const yml = [
+        'version: ' + data.latest,
+        'files:',
+        '  - url: ' + winUrl,
+        '    sha512: ' + winSha,
+        '    size: ' + winSize,
+        'path: ' + winUrl,
+        'sha512: ' + winSha,
+        'releaseDate: ' + (latest.releaseDate || new Date().toISOString()),
+        ''
+      ].join('\n');
+      ymlResponse(res, yml);
+      return;
+    }
+    if (urlPath === '/latest-linux.yml') {
+      const data = getVersions();
+      const latest = data.versions?.[0];
+      if (!latest) { jsonResponse(res, { error: 'no_version_found' }, 404); return; }
+      const linuxUrl = latest.files?.['linux-x64']?.url
+        || 'LingJing-' + data.latest + '-linux-x86_64.AppImage';
+      const linuxSha = latest.files?.['linux-x64']?.sha512
+        || latest.platforms?.['linux-x64']?.sha512
+        || 'TBD';
+      const linuxSize = latest.files?.['linux-x64']?.size
+        || latest.platforms?.['linux-x64']?.size
+        || 0;
+      const yml = [
+        'version: ' + data.latest,
+        'files:',
+        '  - url: ' + linuxUrl,
+        '    sha512: ' + linuxSha,
+        '    size: ' + linuxSize,
+        'path: ' + linuxUrl,
+        'sha512: ' + linuxSha,
+        'releaseDate: ' + (latest.releaseDate || new Date().toISOString()),
+        ''
+      ].join('\n');
+      ymlResponse(res, yml);
+      return;
+    }
+    if (urlPath === '/health') {
+      const data = getVersions();
+      jsonResponse(res, {
+        status: 'ok',
+        service: 'lingjing-update-server',
+        version: '1.1.0',
+        latestVersion: data.latest,
+        cacheAge: Date.now() - _cache.ts,
+      });
+      return;
+    }
+    if (urlPath === '/versions.json' || urlPath === '/') {
+      const data = getVersions();
+      jsonResponse(res, data);
+      return;
+    }
+    jsonResponse(res, { error: 'not_found' }, 404);
+  } catch (err) {
+    console.error('[LingJing Update] Request handler error:', err.message);
+    try {
+      jsonResponse(res, { error: 'internal_server_error' }, 500);
+    } catch {
+      // If response already sent, nothing we can do
+    }
+  }
+});
 
-    jsonResponse(res, {
-      hasUpdate,
-      version: latestVersion,
-      status: 'published',
-    });
-    return;
-  }
-  if (urlPath === '/api/versions') {
-    jsonResponse(res, getVersions());
-    return;
-  }
-  if (urlPath === '/latest.yml') {
-    const data = getVersions();
-    const latest = data.versions?.[0];
-    if (!latest) { jsonResponse(res, { error: 'no_version_found' }, 404); return; }
-    // 兼容新旧两种格式
-    const winUrl = latest.files?.['win-x64']?.url
-      || latest.files?.installer
-      || 'LingJing-Setup-' + data.latest + '-win-x64.exe';
-    const winSha = latest.files?.['win-x64']?.sha512
-      || latest.platforms?.['win-x64']?.sha512
-      || 'TBD';
-    const winSize = latest.files?.['win-x64']?.size
-      || latest.platforms?.['win-x64']?.size
-      || 0;
-    const yml = [
-      'version: ' + data.latest,
-      'files:',
-      '  - url: ' + winUrl,
-      '    sha512: ' + winSha,
-      '    size: ' + winSize,
-      'path: ' + winUrl,
-      'sha512: ' + winSha,
-      'releaseDate: ' + (latest.releaseDate || new Date().toISOString()),
-      ''
-    ].join('\n');
-    ymlResponse(res, yml);
-    return;
-  }
-  if (urlPath === '/latest-linux.yml') {
-    const data = getVersions();
-    const latest = data.versions?.[0];
-    if (!latest) { jsonResponse(res, { error: 'no_version_found' }, 404); return; }
-    const linuxUrl = latest.files?.['linux-x64']?.url
-      || 'LingJing-' + data.latest + '-linux-x86_64.AppImage';
-    const linuxSha = latest.files?.['linux-x64']?.sha512
-      || latest.platforms?.['linux-x64']?.sha512
-      || 'TBD';
-    const linuxSize = latest.files?.['linux-x64']?.size
-      || latest.platforms?.['linux-x64']?.size
-      || 0;
-    const yml = [
-      'version: ' + data.latest,
-      'files:',
-      '  - url: ' + linuxUrl,
-      '    sha512: ' + linuxSha,
-      '    size: ' + linuxSize,
-      'path: ' + linuxUrl,
-      'sha512: ' + linuxSha,
-      'releaseDate: ' + (latest.releaseDate || new Date().toISOString()),
-      ''
-    ].join('\n');
-    ymlResponse(res, yml);
-    return;
-  }
-  if (urlPath === '/health') {
-    const data = getVersions();
-    jsonResponse(res, {
-      status: 'ok',
-      service: 'lingjing-update-server',
-      version: '1.0.0',
-      latestVersion: data.latest,
-    });
-    return;
-  }
-  if (urlPath === '/versions.json' || urlPath === '/') {
-    const data = getVersions();
-    jsonResponse(res, data);
-    return;
-  }
-  jsonResponse(res, { error: 'not_found' }, 404);
+// ── Crash protection: catch uncaught exceptions ──
+process.on('uncaughtException', (err) => {
+  console.error('[LingJing Update] UNCAUGHT EXCEPTION:', err.message);
+  console.error(err.stack);
+  // Don't exit — keep the server running
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[LingJing Update] UNHANDLED REJECTION:', reason);
 });
 
 server.listen(PORT, '0.0.0.0', () => {

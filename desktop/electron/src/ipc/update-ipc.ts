@@ -300,7 +300,9 @@ export function initUpdateIPC(win: BrowserWindow): void {
 
     const au = await getAutoUpdater();
     const maxRetries = 3;
+    const httpRetries = 5;
     const retryDelays = [1000, 3000, 5000];
+    const httpRetryDelays = [2000, 5000, 10000, 15000, 20000];
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
@@ -342,32 +344,9 @@ export function initUpdateIPC(win: BrowserWindow): void {
         // (e.g. latest.yml is stale), fetch download URL from /api/latest
         if (attempt >= maxRetries) {
           console.log('[update] Trying HTTP fallback download from /api/latest...');
-          try {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 10000);
-            const apiRes = await fetch('https://ide.zhejiangjinmo.com/api/latest', { signal: controller.signal });
-            clearTimeout(timer);
-            
-            if (apiRes.ok) {
-              const apiData = await apiRes.json();
-              const files = apiData.files || {};
-              const downloadUrl = files['win-x64']?.url || files['win-x64'];
-              
-              if (downloadUrl && typeof downloadUrl === 'string') {
-                // /api/latest returns relative URLs; Node.js fetch requires absolute
-                const fullUrl = downloadUrl.startsWith('/')
-                  ? `https://ide.zhejiangjinmo.com${downloadUrl}`
-                  : downloadUrl;
-                console.log('[update] HTTP fallback: downloading from', fullUrl);
-                const result = await httpDownloadUpdate(fullUrl, apiData.version);
-                if (result.ok) {
-                  _httpLatestVersion = apiData.version;
-                  return { ok: true, source: 'http-fallback' };
-                }
-              }
-            }
-          } catch (httpErr: any) {
-            console.error('[update] HTTP fallback download failed:', httpErr.message);
+          const httpResult = await httpFallbackDownloadWithProbe(httpRetries, httpRetryDelays);
+          if (httpResult && httpResult.ok) {
+            return httpResult;
           }
         }
 
@@ -757,31 +736,66 @@ async function httpCheckVersion(): Promise<{
   currentVersion?: string;
   needsUpgrade?: boolean;
 } | null> {
-  try {
-    console.log('[update] HTTP fallback: fetching /api/latest');
-    const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeoutId = setTimeout(() => abortController?.abort(), 10000);
-    const res = await fetch('https://ide.zhejiangjinmo.com/api/latest', {
-      signal: abortController?.signal,
-    });
-    clearTimeout(timeoutId);
-    if (!res.ok) {
-      console.log('[update] HTTP fallback: /api/latest returned', res.status);
-      return null;
-    }
-    const data = await res.json();
-    const latestVersion = data.version;
-    const versionStatus = data.status || 'published';
-    if (latestVersion) {
-      const current = app.getVersion();
-      console.log('[update] HTTP fallback: latest=' + latestVersion + ' (status=' + versionStatus + '), current=' + current);
-      const needsUpgrade = compareVersions(latestVersion, current) > 0;
-      if (needsUpgrade) {
-        // Check if version is pending review — if so, hide notification
-        // The installer IS downloadable, but upgrade prompt should not appear
-        // until admin approves (status changes to 'published')
-        if (versionStatus === 'pending_review') {
-          console.log('[update] Version ' + latestVersion + ' is pending review — suppressing notification');
+  const maxRetries = 3;
+  const retryDelays = [1000, 3000, 5000];
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      console.log(`[update] HTTP fallback: fetching /api/latest (attempt ${attempt + 1}/${maxRetries})`);
+      const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timeoutId = setTimeout(() => abortController?.abort(), 10000);
+      const res = await fetch('https://ide.zhejiangjinmo.com/api/latest', {
+        signal: abortController?.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        console.log(`[update] HTTP fallback: /api/latest returned ${res.status}`);
+        if (attempt < maxRetries - 1) {
+          await new Promise(r => setTimeout(r, retryDelays[attempt]));
+          continue;
+        }
+        return null;
+      }
+      const data = await res.json();
+      const latestVersion = data.version;
+      const versionStatus = data.status || 'published';
+      if (latestVersion) {
+        const current = app.getVersion();
+        console.log('[update] HTTP fallback: latest=' + latestVersion + ' (status=' + versionStatus + '), current=' + current);
+        const needsUpgrade = compareVersions(latestVersion, current) > 0;
+        if (needsUpgrade) {
+          // Check if version is pending review — if so, hide notification
+          if (versionStatus === 'pending_review') {
+            console.log('[update] Version ' + latestVersion + ' is pending review — suppressing notification');
+            if (mainWindow) {
+              mainWindow.webContents.send('update:not-available');
+            }
+            return {
+              notActive: true,
+              latestVersion,
+              currentVersion: current,
+              needsUpgrade: false
+            };
+          }
+
+          // HTTP detected a new published version — send notification to renderer.
+          // Do NOT cache _httpDownloadUrl or _httpLatestVersion here!
+          if (mainWindow) {
+            mainWindow.webContents.send('update:available', {
+              version: latestVersion,
+              releaseDate: data.releaseDate,
+              releaseNotes: data.releaseNotes,
+              forced: false,
+              channel: updateState.updateChannel,
+            });
+          }
+          return {
+            ok: true,
+            latestVersion,
+            currentVersion: current,
+            needsUpgrade: true
+          };
+        } else {
           if (mainWindow) {
             mainWindow.webContents.send('update:not-available');
           }
@@ -792,59 +806,119 @@ async function httpCheckVersion(): Promise<{
             needsUpgrade: false
           };
         }
+      }
+      return null;
+    } catch (err: any) {
+      console.log(`[update] HTTP fallback attempt ${attempt + 1} failed:`, (err as Error).message);
+      if (attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, retryDelays[attempt]));
+        continue;
+      }
+    }
+  }
 
-        // HTTP detected a new published version — send notification to renderer.
-        // Do NOT cache _httpDownloadUrl or _httpLatestVersion here!
-        // The actual download MUST go through electron-updater (au.downloadUpdate())
-        // so that quitAndInstall() knows where the downloaded file lives.
-        // Electron-updater reads latest.yml from its feedURL:
-        //   https://ide.zhejiangjinmo.com/downloads/latest.yml
-        // which points to LingJing-Setup-${version}-win-x64.exe
+  // All retries exhausted
+  console.log('[update] HTTP fallback: all retries exhausted');
+  const current = app.getVersion();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('update:not-available');
+  }
+  return {
+    notActive: true,
+    latestVersion: current,
+    currentVersion: current,
+    needsUpgrade: false
+  };
+}
 
-        if (mainWindow) {
-          mainWindow.webContents.send('update:available', {
-            version: latestVersion,
-            releaseDate: data.releaseDate,
-            releaseNotes: data.releaseNotes,
-            forced: false,
-            channel: updateState.updateChannel,
-          });
+/**
+ * HTTP fallback download with URL pre-probe and smart retry.
+ * Before downloading, HEAD-probes the install URL to confirm file is reachable.
+ * If /api/latest reports version status != "published", skips the download.
+ * Retries up to maxRetries times with exponential backoff.
+ */
+async function httpFallbackDownloadWithProbe(
+  maxRetries: number,
+  retryDelays: number[]
+): Promise<{ ok: boolean; source?: string } | null> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      // Step 1: Fetch /api/latest to get the download URL + version status
+      console.log(`[update] HTTP fallback attempt ${attempt + 1}/${maxRetries}: fetching /api/latest...`);
+      const apiController = new AbortController();
+      const apiTimer = setTimeout(() => apiController.abort(), 10000);
+      const apiRes = await fetch('https://ide.zhejiangjinmo.com/api/latest', { signal: apiController.signal });
+      clearTimeout(apiTimer);
+
+      if (!apiRes.ok) {
+        console.warn(`[update] /api/latest returned ${apiRes.status}, retrying...`);
+        if (attempt < maxRetries - 1) {
+          await new Promise(r => setTimeout(r, retryDelays[attempt]));
+          continue;
         }
-        return {
-          ok: true,
-          latestVersion,
-          currentVersion: current,
-          needsUpgrade: true
-        };
-      } else {
+        return null;
+      }
+
+      const apiData = await apiRes.json();
+
+      // Step 2: Check version status — skip if not published
+      const versionStatus = apiData.status || 'published';
+      if (versionStatus !== 'published') {
+        console.log(`[update] Version ${apiData.version} status is "${versionStatus}" — skipping download`);
         if (mainWindow) {
           mainWindow.webContents.send('update:not-available');
         }
-        return {
-          notActive: true,
-          latestVersion,
-          currentVersion: current,
-          needsUpgrade: false
-        };
+        return null;
       }
+
+      // Step 3: Resolve download URL
+      const files = apiData.files || {};
+      const downloadUrl = files['win-x64']?.url || files['win-x64'];
+      if (!downloadUrl || typeof downloadUrl !== 'string') {
+        console.warn('[update] /api/latest returned no win-x64 download URL');
+        return null;
+      }
+      const fullUrl = downloadUrl.startsWith('/')
+        ? `https://ide.zhejiangjinmo.com${downloadUrl}`
+        : downloadUrl;
+
+      // Step 4: HEAD probe the install URL before committing to download
+      console.log(`[update] Probing install URL: ${fullUrl}`);
+      const probeResult = await UpdateUrlEncoder.validateUrl(fullUrl, 10000);
+      if (!probeResult.reachable || probeResult.status !== 200) {
+        console.warn(`[update] Install URL probe failed (status=${probeResult.status}), retrying...`);
+        if (attempt < maxRetries - 1) {
+          if (mainWindow) {
+            mainWindow.webContents.send('update:retry', {
+              retryCount: attempt + 1,
+              maxRetry: maxRetries,
+              delayMs: retryDelays[attempt],
+            });
+          }
+          await new Promise(r => setTimeout(r, retryDelays[attempt]));
+          continue;
+        }
+        return null;
+      }
+
+      // Step 5: Download
+      console.log('[update] HTTP fallback: probe OK, starting download from', fullUrl);
+      const result = await httpDownloadUpdate(fullUrl, apiData.version);
+      if (result.ok) {
+        _httpLatestVersion = apiData.version;
+        return { ok: true, source: 'http-fallback' };
+      }
+      return null;
+    } catch (err: any) {
+      console.error(`[update] HTTP fallback attempt ${attempt + 1} error:`, err.message);
+      if (attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, retryDelays[attempt]));
+        continue;
+      }
+      return null;
     }
-    return null;
-  } catch (err: any) {
-    console.log('[update] HTTP fallback failed:', (err as Error).message);
-    
-    // 降级处理：发送not-available而非错误
-    const current = app.getVersion();
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update:not-available');
-    }
-    
-    return {
-      notActive: true,
-      latestVersion: current,
-      currentVersion: current,
-      needsUpgrade: false
-    };
   }
+  return null;
 }
 
 /**

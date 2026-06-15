@@ -871,11 +871,24 @@ async function httpFallbackDownloadWithProbe(
         return null;
       }
 
-      // Step 3: Resolve download URL
+      // Step 3: Resolve download URL (platform-aware fallback)
       const files = apiData.files || {};
-      const downloadUrl = files['win-x64']?.url || files['win-x64'];
-      if (!downloadUrl || typeof downloadUrl !== 'string') {
-        console.warn('[update] /api/latest returned no win-x64 download URL');
+      const isWin = process.platform === 'win32';
+      const isLinux = process.platform === 'linux';
+      const isMac = process.platform === 'darwin';
+      const platformKeys: string[] = isMac
+        ? ['mac-x64', 'mac']
+        : isLinux
+          ? ['linux-x64_appimage', 'linux-x64', 'linux-x86_64']
+          : ['win-x64_setup', 'win-setup', 'win-x64', 'win-x64_portable'];
+      let downloadUrl: string | undefined;
+      for (const key of platformKeys) {
+        const f = files[key];
+        if (typeof f === 'string') { downloadUrl = f; break; }
+        if (f?.url && typeof f.url === 'string') { downloadUrl = f.url; break; }
+      }
+      if (!downloadUrl) {
+        console.warn(`[update] /api/latest returned no ${isLinux ? 'linux' : isMac ? 'mac' : 'win-x64'} download URL`);
         return null;
       }
       const fullUrl = downloadUrl.startsWith('/')

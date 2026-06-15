@@ -149,7 +149,11 @@ const server = http.createServer((req, res) => {
       };
       // 附加多平台下载链接
       if (latestEntry?.files) {
-        response.files = latestEntry.files;
+        response.files = { ...latestEntry.files };
+        // 移动端兼容: android → android-apk 别名
+        if (response.files['android-apk']) {
+          response.files.android = response.files['android-apk'];
+        }
       }
       if (latestEntry?.platforms) {
         response.platforms = latestEntry.platforms;

@@ -307,12 +307,16 @@ class ApiService {
         return false;
       };
       const hasUpdate = data.hasUpdate === true && isNewer(latest, currentVersion);
-      const androidUrl = typeof data.files?.android === 'string'
-        ? data.files.android
-        : data.files?.android?.url?.startsWith('http')
-          ? data.files.android.url
-          : `https://ide.zhejiangjinmo.com/downloads/lingjing-v${latest}.apk`;
-      const androidSize = data.platforms?.android?.size || data.files?.android?.size || 0;
+      // 兼容 android-apk (versions.json key) 和 android (旧版别名)
+      const androidFile = data.files?.['android-apk'] || data.files?.android;
+      const androidUrl = typeof androidFile === 'string'
+        ? androidFile
+        : androidFile?.url?.startsWith('http')
+          ? androidFile.url
+          : (androidFile?.url
+            ? `https://ide.zhejiangjinmo.com${androidFile.url}`
+            : `https://ide.zhejiangjinmo.com/downloads/lingjing-v${latest}.apk`);
+      const androidSize = data.platforms?.android?.size || androidFile?.size || 0;
       return { hasUpdate, version: latest, status: data.status || '', releaseDate: data.releaseDate || '', releaseNotes: data.releaseNotes || '', downloadUrl: androidUrl, fileSize: androidSize };
     } catch { return null; }
   }

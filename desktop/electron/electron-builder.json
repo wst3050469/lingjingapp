@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v17375"
+    "output": "release-v17376"
   },
   "files": [
     "dist/**/*",

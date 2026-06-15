@@ -375,7 +375,7 @@ try {
     
     // Generic safe-require wrapper: accepts optional subpath parameter
     const SAFE_REQUIRE_PREAMBLE = [
-      '// @codepilot/core safe-require wrapper (v3: auto-repair from backup)',
+      '// @codepilot/core safe-require wrapper (v4: asar-internal + extraResources auto-repair)',
       'var __safeRequireCodepilot = (function(subpath) {',
       '  var modulePath = "@codepilot/core" + (subpath ? "/" + subpath : "");',
       '  try {',
@@ -390,16 +390,25 @@ try {
       '      try {',
       '        var _fs2 = require("fs");',
       '        var _path2 = require("path");',
-      '        if (typeof process !== "undefined" && process.resourcesPath) {',
-      '          var _backup2 = _path2.join(process.resourcesPath, "codepilot-core-dist");',
-      '          var _unpacked2 = _path2.join(_path2.dirname(process.resourcesPath), "app.asar.unpacked", "node_modules", "@codepilot", "core", "dist");',
-      '          if (_fs2.existsSync(_backup2) && _fs2.existsSync(_unpacked2)) {',
-      '            _fs2.rmSync(_unpacked2, { recursive: true, force: true });',
-      '            _fs2.cpSync(_backup2, _unpacked2, { recursive: true, force: true });',
-      '            try { delete require.cache[require.resolve("@codepilot/core")]; } catch {}',
-      '            return require(modulePath);',
-      '          }',
-      '        }',
+'        var _unpackedPath = _path2.join(process.resourcesPath, "app.asar.unpacked", "node_modules", "@codepilot", "core", "dist");',
+'        // Strategy 1: Copy from asar-internal backup (survives auto-update)',
+'        var _asarBackup = _path2.join(__dirname, "__codepilot_dist__");',
+'        if (_fs2.existsSync(_asarBackup)) {',
+'          if (_fs2.existsSync(_unpackedPath)) _fs2.rmSync(_unpackedPath, { recursive: true, force: true });',
+'          _fs2.mkdirSync(_path2.dirname(_unpackedPath), { recursive: true });',
+'          _fs2.cpSync(_asarBackup, _unpackedPath, { recursive: true, force: true });',
+'          try { delete require.cache[require.resolve("@codepilot/core")]; } catch {}',
+'          return require(modulePath);',
+'        }',
+'        // Strategy 2: Copy from extraResources (fresh install workers)',
+'        var _extraBackup = _path2.join(process.resourcesPath, "codepilot-core-dist");',
+'        if (_fs2.existsSync(_extraBackup)) {',
+'          if (_fs2.existsSync(_unpackedPath)) _fs2.rmSync(_unpackedPath, { recursive: true, force: true });',
+'          _fs2.mkdirSync(_path2.dirname(_unpackedPath), { recursive: true });',
+'          _fs2.cpSync(_extraBackup, _unpackedPath, { recursive: true, force: true });',
+'          try { delete require.cache[require.resolve("@codepilot/core")]; } catch {}',
+'          return require(modulePath);',
+'        }',
       '      } catch(e2) {',
       '        console.warn("[main] @codepilot/core repair failed:", e2.message);',
       '      }',
@@ -609,6 +618,21 @@ try {
     }
   }
 
+  // Phase 3: Copy core dist to dist/__codepilot_dist__/ for asar-internal auto-recovery
+  // This dir goes INSIDE app.asar (survives auto-update).
+  {
+    const coreDistSrc = resolve(root, '..', 'core', 'dist');
+    const asarBackupDst = join(root, 'dist', '__codepilot_dist__');
+    if (existsSync(coreDistSrc)) {
+      try {
+        if (existsSync(asarBackupDst)) rmSync(asarBackupDst, { recursive: true, force: true });
+        cpSync(coreDistSrc, asarBackupDst, { recursive: true, force: true, dereference: true });
+        console.log('[build-main] Asar-internal backup: dist/__codepilot_dist__/');
+      } catch (err) {
+        console.warn('[build-main] Asar-internal backup failed:', err.message);
+      }
+    }
+  }
 } catch (err) {
   console.error('[build-main] Build failed:', err);
   process.exit(1);

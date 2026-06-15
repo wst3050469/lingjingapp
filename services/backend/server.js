@@ -562,6 +562,7 @@ function readVersionInfo(currentVersion) {
       '/opt/lingjing/update-server/data/versions.json',    // primary update-server
       '/opt/lingjing/update-server/versions.json',         // update-server root
       '/opt/lingjing-update/data/versions.json',           // lingjing-update data
+      '/var/www/downloads/versions.json',                  // download site shared
       resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
       resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
     ];

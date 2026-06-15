@@ -768,7 +768,8 @@ async function bootstrap(): Promise<void> {
 
       if (!coreOk) {
         // Find the unpacked core dist path
-        const asarUnpacked = join(dirname(process.resourcesPath), 'app.asar.unpacked');
+        // app.asar.unpacked is inside resources/, not at its parent
+        const asarUnpacked = join(process.resourcesPath, 'app.asar.unpacked');
         const unpackedCoreDist = join(asarUnpacked, 'node_modules', '@codepilot', 'core', 'dist');
         if (existsSync(unpackedCoreDist)) {
           console.warn('[main] @codepilot/core missing loadPrompts — repairing from backup...');

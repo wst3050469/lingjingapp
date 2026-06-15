@@ -354,8 +354,12 @@ export function initUpdateIPC(win: BrowserWindow): void {
               const downloadUrl = files['win-x64']?.url || files['win-x64'];
               
               if (downloadUrl && typeof downloadUrl === 'string') {
-                console.log('[update] HTTP fallback: downloading from', downloadUrl);
-                const result = await httpDownloadUpdate(downloadUrl, apiData.version);
+                // /api/latest returns relative URLs; Node.js fetch requires absolute
+                const fullUrl = downloadUrl.startsWith('/')
+                  ? `https://ide.zhejiangjinmo.com${downloadUrl}`
+                  : downloadUrl;
+                console.log('[update] HTTP fallback: downloading from', fullUrl);
+                const result = await httpDownloadUpdate(fullUrl, apiData.version);
                 if (result.ok) {
                   _httpLatestVersion = apiData.version;
                   return { ok: true, source: 'http-fallback' };

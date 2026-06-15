@@ -1,0 +1,23 @@
+
+## v1.73.85 Android APK 构建与部署 (2026-06-16)
+
+### Android APK
+- 本地构建: mobile/android/gradlew.bat assembleDebug -> BUILD SUCCESSFUL (5m44s)
+- APK 大小: 174 MB
+- APK 路径: release/android/LingJing-v1.73.85-debug.apk
+- 已部署: /var/www/html/downloads/1.73.85/lingjing-mobile-1.73.85.apk
+
+### versions.json 更新
+- /var/www/html/versions.json (primary) 和 /var/www/html/downloads/versions.json 均添加 android-apk 条目
+
+### 更新服务器升级 (v1.1.0 -> v1.2.0)
+- /opt/lingjing-update-server/app.js 更新
+- /api/latest 新增 files 字段(所有平台下载 URL,含android-apk)
+- PM2 lingjing-update-server 已重启
+
+### 各平台下载链接
+- Android: https://lingjing.zhejiangjinmo.com/downloads/1.73.85/lingjing-mobile-1.73.85.apk
+- Win Setup: https://lingjing.zhejiangjinmo.com/downloads/1.73.85/灵境 Setup 1.73.85.exe
+- Win Portable: https://lingjing.zhejiangjinmo.com/downloads/1.73.85/LingJing-Portable-1.73.85-win-x64.exe
+- Linux AppImage: https://lingjing.zhejiangjinmo.com/downloads/1.73.85/LingJing-1.73.85-linux-x86_64.AppImage
+- Linux deb: https://lingjing.zhejiangjinmo.com/downloads/1.73.85/LingJing-1.73.85-linux-x86_64.deb

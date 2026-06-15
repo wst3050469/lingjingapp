@@ -376,24 +376,30 @@ try {
     // Generic safe-require wrapper: accepts optional subpath parameter
     // v5: Fix — also attempt auto-repair on MODULE_NOT_FOUND (not just NEEDS_REPAIR)
     const SAFE_REQUIRE_PREAMBLE = [
-      '// @codepilot/core safe-require wrapper (v7: readdir-based repair for ASAR cpSync incompatibility)',
+      '// @codepilot/core safe-require wrapper (v8: readdir-based repair + package.json + readdirSync fallback)',
       'var __safeRequireCodepilot = (function(subpath) {',
       '  var modulePath = "@codepilot/core" + (subpath ? "/" + subpath : "");',
       '  var __repairCodepilot = function() {',
+      '    console.log("[main] v8 repair: attempting @codepilot/core auto-recovery...");',
       '    try {',
       '      var _fs2 = require("fs");',
       '      var _path2 = require("path");',
       '      var _unpackedPath = _path2.join(process.resourcesPath, "app.asar.unpacked", "node_modules", "@codepilot", "core", "dist");',
-      '      // Helper: recursive copy using readdirSync+readFileSync (ASAR-compatible, cpSync broken)',
+      '      // v8: Enhanced recursive copy with readdirSync fallback for ASAR compatibility',
       '      var __copyRecursive = function(src, dst) {',
       '        if (!_fs2.existsSync(src)) return;',
       '        _fs2.mkdirSync(dst, { recursive: true });',
-      '        var _entries = _fs2.readdirSync(src, { withFileTypes: true });',
+      '        var _entries;',
+      '        try { _entries = _fs2.readdirSync(src, { withFileTypes: true }); } catch(e3) {',
+      '          // readdirSync({withFileTypes}) may not be supported in all ASAR versions',
+      '          _entries = _fs2.readdirSync(src);',
       '        for (var _i = 0; _i < _entries.length; _i++) {',
       '          var _e = _entries[_i];',
-      '          var _s = _path2.join(src, _e.name);',
-      '          var _d = _path2.join(dst, _e.name);',
-      '          if (_e.isDirectory()) { __copyRecursive(_s, _d); }',
+      '          var _isDir = typeof _e === "string" ? _fs2.statSync(_path2.join(src, _e)).isDirectory() : _e.isDirectory();',
+      '          var _name = typeof _e === "string" ? _e : _e.name;',
+      '          var _s = _path2.join(src, _name);',
+      '          var _d = _path2.join(dst, _name);',
+      '          if (_isDir) { __copyRecursive(_s, _d); }',
       '          else { _fs2.writeFileSync(_d, _fs2.readFileSync(_s)); }',
       '        }',
       '      };',
@@ -402,6 +408,11 @@ try {
       '      if (_fs2.existsSync(_asarBackup)) {',
       '        if (_fs2.existsSync(_unpackedPath)) _fs2.rmSync(_unpackedPath, { recursive: true, force: true });',
       '        __copyRecursive(_asarBackup, _unpackedPath);',
+      '        // v8: Also copy package.json for Node.js module resolution',
+      '        var _pkgSrc = _path2.join(_asarBackup, "package.json");',
+      '        var _unpackedPkgDirS1 = _path2.join(process.resourcesPath, "app.asar.unpacked", "node_modules", "@codepilot", "core");',
+      '        if (_fs2.existsSync(_pkgSrc)) { try { _fs2.mkdirSync(_unpackedPkgDirS1, { recursive: true }); _fs2.writeFileSync(_path2.join(_unpackedPkgDirS1, "package.json"), _fs2.readFileSync(_pkgSrc)); } catch(e3) {} }',
+      '        console.log("[main] Strategy 1 (asar backup) repaired @codepilot/core");',
       '        try { delete require.cache[require.resolve("@codepilot/core")]; } catch {}',
       '        return true;',
       '      }',
@@ -410,15 +421,20 @@ try {
       '      if (_fs2.existsSync(_extraBackup)) {',
       '        if (_fs2.existsSync(_unpackedPath)) _fs2.rmSync(_unpackedPath, { recursive: true, force: true });',
       '        __copyRecursive(_extraBackup, _unpackedPath);',
+      '        // v8: Also copy package.json for Node.js module resolution',
+      '        var _pkgSrc2 = _path2.join(_extraBackup, "package.json");',
+      '        var _unpackedPkgDirS2 = _path2.join(process.resourcesPath, "app.asar.unpacked", "node_modules", "@codepilot", "core");',
+      '        if (_fs2.existsSync(_pkgSrc2)) { try { _fs2.mkdirSync(_unpackedPkgDirS2, { recursive: true }); _fs2.writeFileSync(_path2.join(_unpackedPkgDirS2, "package.json"), _fs2.readFileSync(_pkgSrc2)); } catch(e3) {} }',
+      '        console.log("[main] Strategy 2 (extraResources) repaired @codepilot/core");',
       '        try { delete require.cache[require.resolve("@codepilot/core")]; } catch {}',
       '        return true;',
       '      }',
       '    } catch(e2) {',
-      '      console.warn("[main] @codepilot/core repair failed:", e2.message);',
+      '      console.warn("[main] v8 repair failed:", e2.message);',
       '    }',
       '    return false;',
       '  };',
-      '  // v7: Stub module with noop functions for graceful degradation.',
+      '  // v8: Stub module with noop functions for graceful degradation.',
       '  // When @codepilot/core is unavailable, the app still starts but core features',
       '  // (Agent, Quest) will show user-friendly errors instead of crashing.',
       '  var __stub = function() {',
@@ -662,15 +678,25 @@ try {
     }
   }
 
-  // Phase 3: Copy core dist to dist/__codepilot_dist__/ for asar-internal auto-recovery
+  // Phase 3: Copy core dist + package.json to dist/__codepilot_dist__/ for asar-internal auto-recovery
   // This dir goes INSIDE app.asar (survives auto-update).
+  // v1.73.85: Also copy package.json — needed for Node.js module resolution when
+  // the unpacked directory is empty/corrupted (e.g. after asarUnpack failure).
   {
     const coreDistSrc = resolve(root, '..', 'core', 'dist');
+    const corePkgSrc = resolve(root, '..', 'core', 'package.json');
     const asarBackupDst = join(root, 'dist', '__codepilot_dist__');
     if (existsSync(coreDistSrc)) {
       try {
         if (existsSync(asarBackupDst)) rmSync(asarBackupDst, { recursive: true, force: true });
         cpSync(coreDistSrc, asarBackupDst, { recursive: true, force: true, dereference: true });
+        // Copy package.json alongside dist/ so Node.js can resolve the module
+        if (existsSync(corePkgSrc)) {
+          const pkg = JSON.parse(readFileSync(corePkgSrc, 'utf8'));
+          if (pkg.private) delete pkg.private; // CJS resolution incompatible
+          writeFileSync(join(asarBackupDst, 'package.json'), JSON.stringify(pkg, null, 2), 'utf8');
+          console.log('[build-main]   package.json included (private stripped)');
+        }
         console.log('[build-main] Asar-internal backup: dist/__codepilot_dist__/');
       } catch (err) {
         console.warn('[build-main] Asar-internal backup failed:', err.message);

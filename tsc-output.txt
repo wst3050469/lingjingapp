@@ -1,0 +1,166 @@
+D:/lingjing-ide/desktop/core/src/workflow/core/workflow-engine.ts(162,19): error TS18048: 'requirement.goal' is possibly 'undefined'.
+D:/lingjing-ide/desktop/electron/src/db/database.ts(201,43): error TS2307: Cannot find module './migrations/migration001_codepilot' or its corresponding type declarations.
+D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter.ts(7,110): error TS2724: '"sql.js"' has no exported member named 'QueryExecResult'. Did you mean 'QueryResult'?
+D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter.ts(46,15): error TS2339: Property 'reset' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter.ts(60,15): error TS2339: Property 'reset' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter.ts(71,15): error TS2339: Property 'reset' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(6,3): error TS2305: Module '"@codepilot/core"' has no exported member 'loadConfig'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(8,3): error TS2305: Module '"@codepilot/core"' has no exported member 'createDefaultRegistry'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(11,3): error TS2305: Module '"@codepilot/core"' has no exported member 'ToolRegistry'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(12,3): error TS2305: Module '"@codepilot/core"' has no exported member 'getTodoList'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(14,3): error TS2305: Module '"@codepilot/core"' has no exported member 'getExpertPresets'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(15,3): error TS2305: Module '"@codepilot/core"' has no exported member 'initDispatchExpertsTool'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(16,3): error TS2305: Module '"@codepilot/core"' has no exported member 'initUpdateMemoryTool'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(17,3): error TS2305: Module '"@codepilot/core"' has no exported member 'initCodebaseSearchTool'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(18,3): error TS2305: Module '"@codepilot/core"' has no exported member 'initGetProblemsTool'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(72,3): error TS2739: Type 'Record<string, unknown>' is missing the following properties from type 'LLMProvider': chat, name, model
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(76,54): error TS2345: Argument of type 'import("D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter").Database' is not assignable to parameter of type 'import("sql.js").Database'.
+  Property 'export' is missing in type 'import("D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter").Database' but required in type 'import("sql.js").Database'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(94,3): error TS2739: Type 'Record<string, unknown>' is missing the following properties from type 'LLMProvider': chat, name, model
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(278,10): error TS2339: Property 'bind' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(280,17): error TS2339: Property 'step' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(281,24): error TS2339: Property 'getAsObject' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(284,10): error TS2339: Property 'free' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(583,17): error TS2339: Property 'ToolRegistry' does not exist on type 'typeof import("D:/lingjing-ide/desktop/electron/node_modules/@codepilot/core/dist/index")'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(773,15): error TS1345: An expression of type 'void' cannot be tested for truthiness.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(773,15): error TS1345: An expression of type 'void' cannot be tested for truthiness.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(773,15): error TS1345: An expression of type 'void' cannot be tested for truthiness.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(773,15): error TS1345: An expression of type 'void' cannot be tested for truthiness.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(773,42): error TS2339: Property 'values' does not exist on type 'never'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(773,60): error TS2339: Property 'values' does not exist on type 'never'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(774,37): error TS2339: Property 'values' does not exist on type 'never'.
+D:/lingjing-ide/desktop/electron/src/ipc/agent-ipc.ts(871,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+D:/lingjing-ide/desktop/electron/src/ipc/cloud-ipc.ts(10,32): error TS2305: Module '"@codepilot/core"' has no exported member 'CloudSyncOptions'.
+D:/lingjing-ide/desktop/electron/src/ipc/cloud-ipc.ts(63,17): error TS2339: Property 'removeAllListeners' does not exist on type 'CloudSyncClient'.
+D:/lingjing-ide/desktop/electron/src/ipc/cloud-ipc.ts(333,37): error TS2345: Argument of type '{ id?: string | undefined; title: string; content: string; category?: string | undefined; scope?: string | undefined; }' is not assignable to parameter of type 'Partial<CloudMemory>'.
+  Types of property 'scope' are incompatible.
+    Type 'string | undefined' is not assignable to type '"global" | "project" | undefined'.
+      Type 'string' is not assignable to type '"global" | "project" | undefined'.
+D:/lingjing-ide/desktop/electron/src/ipc/cloud-ipc.ts(546,36): error TS2345: Argument of type '{ title: string; content: string; category?: string | undefined; scope?: string | undefined; }' is not assignable to parameter of type 'Partial<CloudMemory>'.
+  Types of property 'scope' are incompatible.
+    Type 'string | undefined' is not assignable to type '"global" | "project" | undefined'.
+      Type 'string' is not assignable to type '"global" | "project" | undefined'.
+D:/lingjing-ide/desktop/electron/src/ipc/cloud-sync-ipc.ts(4,60): error TS2307: Cannot find module '@codepilot/core/types' or its corresponding type declarations.
+D:/lingjing-ide/desktop/electron/src/ipc/compact-ipc.ts(6,3): error TS2305: Module '"@codepilot/core"' has no exported member 'loadConfig'.
+D:/lingjing-ide/desktop/electron/src/ipc/compact-ipc.ts(9,8): error TS2305: Module '"@codepilot/core"' has no exported member 'ChatRequest'.
+D:/lingjing-ide/desktop/electron/src/ipc/compact-ipc.ts(40,5): error TS2739: Type 'Record<string, unknown>' is missing the following properties from type 'LLMProvider': chat, name, model
+D:/lingjing-ide/desktop/electron/src/ipc/compact-ipc.ts(42,3): error TS2322: Type 'LLMProvider | null' is not assignable to type 'LLMProvider'.
+  Type 'null' is not assignable to type 'LLMProvider'.
+D:/lingjing-ide/desktop/electron/src/ipc/completion-ipc.ts(6,3): error TS2305: Module '"@codepilot/core"' has no exported member 'loadConfig'.
+D:/lingjing-ide/desktop/electron/src/ipc/completion-ipc.ts(9,8): error TS2305: Module '"@codepilot/core"' has no exported member 'ChatRequest'.
+D:/lingjing-ide/desktop/electron/src/ipc/completion-ipc.ts(46,5): error TS2739: Type 'Record<string, unknown>' is missing the following properties from type 'LLMProvider': chat, name, model
+D:/lingjing-ide/desktop/electron/src/ipc/completion-ipc.ts(48,3): error TS2322: Type 'LLMProvider | null' is not assignable to type 'LLMProvider'.
+  Type 'null' is not assignable to type 'LLMProvider'.
+D:/lingjing-ide/desktop/electron/src/ipc/context-ipc.ts(10,10): error TS2305: Module '"@codepilot/core"' has no exported member 'loadConfig'.
+D:/lingjing-ide/desktop/electron/src/ipc/fs-ipc.ts(95,51): error TS2463: A binding pattern parameter cannot be optional in an implementation signature.
+D:/lingjing-ide/desktop/electron/src/ipc/github-ipc.ts(2,66): error TS2307: Cannot find module '@codepilot/core/types' or its corresponding type declarations.
+D:/lingjing-ide/desktop/electron/src/ipc/indexing-ipc.ts(8,10): error TS2305: Module '"@codepilot/core"' has no exported member 'loadConfig'.
+D:/lingjing-ide/desktop/electron/src/ipc/indexing-ipc.ts(145,100): error TS2339: Property 'getAsObject' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/indexing-ipc.ts(196,9): error TS2345: Argument of type 'import("D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter").Database' is not assignable to parameter of type 'import("sql.js").Database'.
+  Property 'export' is missing in type 'import("D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter").Database' but required in type 'import("sql.js").Database'.
+D:/lingjing-ide/desktop/electron/src/ipc/indexing-ipc.ts(276,20): error TS2503: Cannot find namespace 'chokidar'.
+D:/lingjing-ide/desktop/electron/src/ipc/indexing-ipc.ts(298,9): error TS2345: Argument of type 'import("D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter").Database' is not assignable to parameter of type 'import("sql.js").Database'.
+  Property 'export' is missing in type 'import("D:/lingjing-ide/desktop/electron/src/db/sqljs-adapter").Database' but required in type 'import("sql.js").Database'.
+D:/lingjing-ide/desktop/electron/src/ipc/inline-chat-ipc.ts(7,3): error TS2305: Module '"@codepilot/core"' has no exported member 'loadConfig'.
+D:/lingjing-ide/desktop/electron/src/ipc/inline-chat-ipc.ts(10,8): error TS2305: Module '"@codepilot/core"' has no exported member 'ChatRequest'.
+D:/lingjing-ide/desktop/electron/src/ipc/inline-chat-ipc.ts(41,5): error TS2739: Type 'Record<string, unknown>' is missing the following properties from type 'LLMProvider': chat, name, model
+D:/lingjing-ide/desktop/electron/src/ipc/inline-chat-ipc.ts(43,3): error TS2322: Type 'LLMProvider | null' is not assignable to type 'LLMProvider'.
+  Type 'null' is not assignable to type 'LLMProvider'.
+D:/lingjing-ide/desktop/electron/src/ipc/memory-ipc.ts(46,35): error TS2339: Property 'bind' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/memory-ipc.ts(49,19): error TS2339: Property 'step' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/memory-ipc.ts(50,27): error TS2339: Property 'getAsObject' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/memory-ipc.ts(52,12): error TS2339: Property 'free' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/memory-ipc.ts(82,12): error TS2339: Property 'bind' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/memory-ipc.ts(85,19): error TS2339: Property 'step' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/memory-ipc.ts(86,27): error TS2339: Property 'getAsObject' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/memory-ipc.ts(88,12): error TS2339: Property 'free' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(3,10): error TS2305: Module '"@codepilot/core"' has no exported member 'getPlanManager'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(19,18): error TS2339: Property 'bind' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(20,37): error TS2339: Property 'step' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(21,18): error TS2339: Property 'free' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(96,14): error TS2339: Property 'bind' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(97,19): error TS2339: Property 'step' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(98,16): error TS2339: Property 'free' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(101,30): error TS2339: Property 'getAsObject' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(102,14): error TS2339: Property 'free' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(105,15): error TS2339: Property 'bind' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(107,22): error TS2339: Property 'step' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(108,33): error TS2339: Property 'getAsObject' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(121,15): error TS2339: Property 'free' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(145,10): error TS2339: Property 'bind' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(147,17): error TS2339: Property 'step' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(148,24): error TS2339: Property 'getAsObject' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/plan-ipc.ts(152,10): error TS2339: Property 'free' does not exist on type 'Statement'.
+D:/lingjing-ide/desktop/electron/src/ipc/prompt-ipc.ts(6,3): error TS2305: Module '"@codepilot/core"' has no exported member 'loadConfig'.
+D:/lingjing-ide/desktop/electron/src/ipc/prompt-ipc.ts(9,8): error TS2305: Module '"@codepilot/core"' has no exported member 'ChatRequest'.
+D:/lingjing-ide/desktop/electron/src/ipc/prompt-ipc.ts(30,5): error TS2739: Type 'Record<string, unknown>' is missing the following properties from type 'LLMProvider': chat, name, model
+D:/lingjing-ide/desktop/electron/src/ipc/prompt-ipc.ts(32,3): error TS2322: Type 'LLMProvider | null' is not assignable to type 'LLMProvider'.
+  Type 'null' is not assignable to type 'LLMProvider'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(8,10): error TS2305: Module '"@codepilot/core"' has no exported member 'scanAllSkills'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(8,25): error TS2305: Module '"@codepilot/core"' has no exported member 'getSkill'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(8,40): error TS2305: Module '"@codepilot/core"' has no exported member 'SkillConfig'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(229,15): error TS18046: 'skill' is of type 'unknown'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(230,22): error TS18046: 'skill' is of type 'unknown'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(231,19): error TS18046: 'skill' is of type 'unknown'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(232,16): error TS18046: 'skill' is of type 'unknown'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(233,16): error TS18046: 'skill' is of type 'unknown'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(234,15): error TS18046: 'skill' is of type 'unknown'.
+D:/lingjing-ide/desktop/electron/src/ipc/skills-ipc.ts(259,15): error TS2339: Property 'getSkillCatalog' does not exist on type 'typeof import("D:/lingjing-ide/desktop/electron/node_modules/@codepilot/core/dist/index")'.
+D:/lingjing-ide/desktop/electron/src/main.ts(489,50): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+D:/lingjing-ide/desktop/electron/src/main.ts(643,15): error TS2339: Property 'createDefaultRegistry' does not exist on type 'typeof import("D:/lingjing-ide/desktop/electron/node_modules/@codepilot/core/dist/index")'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1220,63): error TS2307: Cannot find module '../services/embedding-service.js' or its corresponding type declarations.
+D:/lingjing-ide/desktop/electron/src/main.ts(1221,23): error TS2339: Property 'loadConfig' does not exist on type 'typeof import("D:/lingjing-ide/desktop/electron/node_modules/@codepilot/core/dist/index")'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1234,21): error TS2339: Property 'vectorMemory' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1237,108): error TS2339: Property 'reviewEngine' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1238,125): error TS2339: Property 'traceHarvester' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1239,86): error TS2339: Property 'skillSecurity' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1240,61): error TS2322: Type 'Promise<{ success: boolean; error: string; }>' is not assignable to type 'Promise<string>'.
+  Type '{ success: boolean; error: string; }' is not assignable to type 'string'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1240,144): error TS2339: Property 'dagOrchestrator' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1241,51): error TS2345: Argument of type 'MultiAgentConfig' is not assignable to parameter of type 'ExecuteSingleTaskCallback'.
+  Type 'MultiAgentConfig' provides no match for the signature '(task: ParallelTask, context: Record<string, unknown>, signal: AbortSignal): Promise<string>'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1241,168): error TS2339: Property 'multiAgent' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1242,118): error TS2339: Property 'modelRouter' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1243,101): error TS2339: Property 'nlCron' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1244,124): error TS2339: Property 'userModeler' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1254,19): error TS2339: Property 'fusionInitializer' does not exist on type '{}'.
+D:/lingjing-ide/desktop/electron/src/main.ts(1262,21): error TS2554: Expected 3 arguments, but got 0.
+D:/lingjing-ide/desktop/electron/src/main.ts(1280,21): error TS2554: Expected 2 arguments, but got 1.
+D:/lingjing-ide/desktop/electron/src/pipeline/pipeline-service.ts(27,78): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pipeline/pipeline-service.ts(28,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/pipeline/pipeline-service.ts(58,77): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pipeline/pipeline-service.ts(59,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/pipeline/pipeline-service.ts(79,114): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pipeline/pipeline-service.ts(80,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/pipeline/pipeline-service.ts(91,72): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pipeline/pipeline-service.ts(92,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(23,35): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(24,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(44,77): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(45,19): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(67,76): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(68,19): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(104,104): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(106,20): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(140,99): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/pm/pm-service.ts(141,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/review/review-service.ts(25,73): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/review/review-service.ts(26,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/review/review-service.ts(42,35): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/review/review-service.ts(43,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/review/review-service.ts(65,81): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/review/review-service.ts(66,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/security/security-ipc.ts(19,41): error TS2345: Argument of type '"staged" | "full" | "quick" | "custom"' is not assignable to parameter of type '"full" | "incremental" | "specified" | undefined'.
+  Type '"staged"' is not assignable to type '"full" | "incremental" | "specified" | undefined'.
+D:/lingjing-ide/desktop/electron/src/security/security-service.ts(32,71): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/security/security-service.ts(33,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/security/security-service.ts(43,114): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/security/security-service.ts(44,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/security/security-service.ts(73,83): error TS2554: Expected 1 arguments, but got 2.
+D:/lingjing-ide/desktop/electron/src/security/security-service.ts(74,17): error TS2339: Property 'length' does not exist on type 'void'.
+D:/lingjing-ide/desktop/electron/src/services/indexing-pipeline.ts(6,10): error TS2305: Module '"@codepilot/core"' has no exported member 'scanAndChunk'.
+D:/lingjing-ide/desktop/electron/src/tools/ssh-bash.ts(4,10): error TS2305: Module '"@codepilot/core"' has no exported member 'truncateString'.
+D:/lingjing-ide/desktop/electron/src/tools/ssh-bash.ts(5,10): error TS2305: Module '"@codepilot/core"' has no exported member 'generateCommandId'.
+D:/lingjing-ide/desktop/electron/src/tools/ssh-bash.ts(5,29): error TS2305: Module '"@codepilot/core"' has no exported member 'storeBashOutput'.

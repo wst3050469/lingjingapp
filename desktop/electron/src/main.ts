@@ -747,14 +747,15 @@ function registerShortcuts(mainWindow: BrowserWindow): void {
 
 async function bootstrap(): Promise<void> {
   // ═══════════════════════════════════════════════════════════════
-  // PHASE 0: @codepilot/core self-repair check
+  // PHASE 0: @codepilot/core self-repair check (v1.73.85 enhanced)
   // The after-pack-hook removes @codepilot from app.asar (to avoid
   // CJS→ESM path truncation). During auto-update, only app.asar is
   // replaced — app.asar.unpacked/ retains the old @codepilot/core.
   // This causes "loadPrompts is not a function" after upgrade.
   //
-  // Fix: Copy a fresh backup from extraResources (bundled via
+  // Fix: Copy fresh backup from extraResources (bundled via
   // electron-builder.json → extraResources → codepilot-core-dist).
+  // v1.73.85: Also handle missing unpacked/ (fresh repair from scratch).
   // ═══════════════════════════════════════════════════════════════
   try {
     const coreDistBackup = join(process.resourcesPath, 'codepilot-core-dist');
@@ -767,19 +768,73 @@ async function bootstrap(): Promise<void> {
       } catch { /* core not loadable yet */ }
 
       if (!coreOk) {
-        // Find the unpacked core dist path
-        // app.asar.unpacked is inside resources/, not at its parent
         const asarUnpacked = join(process.resourcesPath, 'app.asar.unpacked');
-        const unpackedCoreDist = join(asarUnpacked, 'node_modules', '@codepilot', 'core', 'dist');
-        if (existsSync(unpackedCoreDist)) {
-          console.warn('[main] @codepilot/core missing loadPrompts — repairing from backup...');
-          // Delete old dist and copy fresh one
-          const { rmSync, cpSync } = await import('node:fs');
-          rmSync(unpackedCoreDist, { recursive: true, force: true });
-          cpSync(coreDistBackup, unpackedCoreDist, { recursive: true, force: true });
-          console.log('[main] ✅ @codepilot/core dist repaired successfully');
+        const unpackedCorePkgDir = join(asarUnpacked, 'node_modules', '@codepilot', 'core');
+        const unpackedCoreDist = join(unpackedCorePkgDir, 'dist');
+        const unpackedPkgJson = join(unpackedCorePkgDir, 'package.json');
+
+        console.warn('[main] Phase 0: @codepilot/core needs repair (loadPrompts missing)');
+
+        // Check if unpacked directory exists at all
+        if (!existsSync(unpackedCorePkgDir)) {
+          console.warn('[main]   unpacked/ directory missing — creating from extraResources...');
+          try {
+            const { mkdirSync, writeFileSync, readFileSync, readdirSync, statSync } = await import('node:fs');
+            // Recursive copy using readdirSync (ASAR-compatible)
+            function copyRecursive(src: string, dst: string) {
+              if (!existsSync(src)) return;
+              mkdirSync(dst, { recursive: true });
+              const entries = readdirSync(src, { withFileTypes: true });
+              for (const entry of entries) {
+                const srcPath = join(src, entry.name);
+                const dstPath = join(dst, entry.name);
+                if (entry.isDirectory()) {
+                  copyRecursive(srcPath, dstPath);
+                } else {
+                  writeFileSync(dstPath, readFileSync(srcPath));
+                }
+              }
+            }
+            copyRecursive(coreDistBackup, unpackedCoreDist);
+            // Create a minimal package.json so Node.js can resolve the module
+            writeFileSync(unpackedPkgJson, JSON.stringify({
+              name: '@codepilot/core',
+              type: 'module',
+              main: './dist/index.js',
+              exports: { '.': './dist/index.js' },
+              version: '1.73.85'
+            }, null, 2), 'utf8');
+            console.log('[main]   ✅ Created unpacked/ from extraResources');
+          } catch (e) {
+            console.warn('[main]   Phase 0 repair failed:', (e as Error).message);
+          }
+        } else if (existsSync(unpackedCoreDist)) {
+          console.warn('[main]   unpacked/ exists but stale — replacing dist...');
+          try {
+            const { rmSync, cpSync } = await import('node:fs');
+            rmSync(unpackedCoreDist, { recursive: true, force: true });
+            cpSync(coreDistBackup, unpackedCoreDist, { recursive: true, force: true });
+            console.log('[main]   ✅ @codepilot/core dist replaced');
+          } catch (e) {
+            console.warn('[main]   Phase 0 repair failed:', (e as Error).message);
+          }
+        }
+
+        // Verify repair
+        try {
+          delete require.cache[require.resolve('@codepilot/core')];
+          const recheck = require('@codepilot/core');
+          if (typeof recheck.loadPrompts === 'function') {
+            console.log('[main] ✅ Phase 0 repair verified — @codepilot/core operational');
+          } else {
+            console.warn('[main] ⚠️ Phase 0 repair incomplete — loadPrompts still not a function');
+          }
+        } catch (e) {
+          console.warn('[main] ⚠️ Phase 0 repair verification failed:', (e as Error).message);
         }
       }
+    } else {
+      console.warn('[main] Phase 0: extraResources backup not found at', coreDistBackup);
     }
   } catch (err) {
     console.warn('[main] @codepilot/core self-repair check failed (non-fatal):', err);

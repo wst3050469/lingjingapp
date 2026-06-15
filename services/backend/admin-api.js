@@ -186,7 +186,7 @@ export function registerAdminAPI(app, db) {
 
   // ====== Admin Login ======
   const loginRateLimit = createRateLimiter({ windowMs: 15 * 60 * 1000, maxAttempts: 5, message: '登录尝试过多，请15分钟后重试' });
-  app.post('/api/admin/login', loginRateLimit, (req, res) => {
+  const adminLoginHandler = (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
       return res.status(400).json({ error: 'username and password required' });
@@ -214,17 +214,21 @@ export function registerAdminAPI(app, db) {
       expiresIn: 24 * 60 * 60 * 1000,
       mustChangePassword: isDefaultPassword(),
     });
-  });
+  };
+  app.post('/api/admin/login', loginRateLimit, adminLoginHandler);
+  app.post('/api/login', loginRateLimit, adminLoginHandler); // Also mount at /api/ for nginx rewrite compat
 
   // ====== Apply rate limiting + audit log to all subsequent admin routes ======
   app.use('/api/admin', apiRateLimit, auditLog);
 
   // ====== Change Admin Password ======
-  app.get('/api/admin/check-default-password', adminAuth, (req, res) => {
+  const checkDefaultPasswordHandler = (req, res) => {
     res.json({ isDefault: isDefaultPassword() });
-  });
+  };
+  app.get('/api/admin/check-default-password', adminAuth, checkDefaultPasswordHandler);
+  app.get('/api/check-default-password', adminAuth, checkDefaultPasswordHandler); // Also mount at /api/
 
-  app.post('/api/admin/change-password', adminAuth, (req, res) => {
+  const changePasswordHandler = (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
       if (!currentPassword || !newPassword) {
@@ -251,7 +255,9 @@ export function registerAdminAPI(app, db) {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  });
+  };
+  app.post('/api/admin/change-password', adminAuth, changePasswordHandler);
+  app.post('/api/change-password', adminAuth, changePasswordHandler); // Also mount at /api/
 
   // ====== Dashboard Stats (real data from DB) ======
   app.get('/api/admin/stats', adminAuth, async (req, res) => {
@@ -1043,7 +1049,7 @@ export function registerAdminAPI(app, db) {
   app.use('/api/', apiRateLimit, auditLog);
 
   // ====== Users (from `users` table) ======
-  app.get('/api/users', adminAuth, (req, res) => {
+  function listUsers(req, res) {
     try {
       const { page, pageSize, offset } = parsePagination(req.query);
       const users = db.prepare(`
@@ -1056,9 +1062,11 @@ export function registerAdminAPI(app, db) {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  });
+  }
+  app.get('/api/users', adminAuth, listUsers);
+  app.get('/api/admin/users', adminAuth, listUsers); // Admin panel uses /admin/api/ prefix
 
-  app.post('/api/users', adminAuth, (req, res) => {
+  function createUser(req, res) {
     try {
       const { name, username: reqUsername, email } = req.body;
       const username = name || reqUsername;
@@ -1077,9 +1085,11 @@ export function registerAdminAPI(app, db) {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  });
+  }
+  app.post('/api/users', adminAuth, createUser);
+  app.post('/api/admin/users', adminAuth, createUser);
 
-  app.put('/api/users/:id', adminAuth, (req, res) => {
+  function updateUser(req, res) {
     try {
       const { id } = req.params;
       const { name, email, password_strength } = req.body;
@@ -1095,9 +1105,11 @@ export function registerAdminAPI(app, db) {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  });
+  }
+  app.put('/api/users/:id', adminAuth, updateUser);
+  app.put('/api/admin/users/:id', adminAuth, updateUser);
 
-  app.delete('/api/users/:id', adminAuth, (req, res) => {
+  function deleteUser(req, res) {
     try {
       const { id } = req.params;
       db.prepare('DELETE FROM users WHERE id = ?').run(id);
@@ -1105,7 +1117,9 @@ export function registerAdminAPI(app, db) {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  });
+  }
+  app.delete('/api/users/:id', adminAuth, deleteUser);
+  app.delete('/api/admin/users/:id', adminAuth, deleteUser);
 
   // ====== Devices (merged from user_devices + devices tables) ======
   app.get('/api/devices', adminAuth, (req, res) => {

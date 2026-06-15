@@ -1,8 +1,7 @@
 // Auth IPC handler - bridges auth service with Electron renderer
 
 import { ipcMain } from 'electron';
-import {
-  registerUser,
+import { registerUser,
   loginUser,
   verifyToken,
   saveConversation,
@@ -12,7 +11,7 @@ import {
   renameConversation,
 } from '../auth/auth-service.js';
 import { pushSessionToCloud } from './cloud-ipc.js';
-import { getDatabase, saveDatabaseSync } from '../db/database.js';
+import { getDatabase, saveDatabase, saveDatabaseSync } from '../db/database.js';
 
 export function registerAuthIpc(): void {
   ipcMain.handle('auth:register', async (_event, { username, password, email }: {
@@ -33,7 +32,28 @@ export function registerAuthIpc(): void {
     password: string;
   }) => {
     try {
-      return await loginUser(username, password);
+      const result = await loginUser(username, password);
+      // Auto-provision: if login fails and no users exist, create default admin and retry
+      if (!result.success && username === 'admin') {
+        try {
+          const db = getDatabase();
+          const users = db.all('SELECT COUNT(*) as count FROM users');
+          const userExists = users.length > 0 && users[0].count > 0;
+          if (!userExists) {
+            console.log('[Auth] No users found, auto-creating default admin user');
+            const bcrypt = require('bcryptjs');
+            const salt = await bcrypt.genSalt(12);
+            const hash = await bcrypt.hash('admin123', salt);
+            db.run('INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)', ['admin', 'admin@lingjing.local', hash]);
+            saveDatabase();
+            // Retry login
+            return await loginUser(username, password);
+          }
+        } catch (provisionErr) {
+          console.error('[Auth] Auto-provision failed:', provisionErr);
+        }
+      }
+      return result;
     } catch (err) {
       console.error('auth:login error:', err);
       return { success: false, error: String(err instanceof Error ? err.message : err) };

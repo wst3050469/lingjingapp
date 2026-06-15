@@ -85,13 +85,43 @@ export interface AuthResult {
   error?: string;
 }
 
+/** Ensure auth tables exist (idempotent) */
+function ensureAuthTables(): void {
+  const db = getDatabase();
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      email TEXT,
+      password_hash TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS conversations (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL DEFAULT 1,
+      title TEXT DEFAULT '',
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      conversation_id TEXT NOT NULL,
+      role TEXT NOT NULL,
+      content TEXT,
+      tool_calls TEXT,
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+    );
+  `);
+}
+
 export async function registerUser(username: string, password: string, email?: string): Promise<AuthResult> {
   try {
     const db = getDatabase();
+    ensureAuthTables();
+    saveDatabase();
 
     // Check if user exists
-    const existing = db.exec(`SELECT id FROM users WHERE username = ?`, [username]);
-    if (existing.length > 0 && existing[0].values.length > 0) {
+    const existing = db.all(`SELECT id FROM users WHERE username = ?`, [username]);
+    if (existing.length > 0) {
       return { success: false, error: 'Username already exists' };
     }
 
@@ -107,17 +137,17 @@ export async function registerUser(username: string, password: string, email?: s
     await saveDatabase();
 
     // Get created user
-    const result = db.exec(`SELECT id, username, email, created_at FROM users WHERE username = ?`, [username]);
-    if (result.length === 0 || result[0].values.length === 0) {
+    const result = db.all(`SELECT id, username, email, created_at FROM users WHERE username = ?`, [username]);
+    if (result.length === 0) {
       return { success: false, error: 'Failed to create user' };
     }
 
-    const row = result[0].values[0];
+    const row = result[0];
     const user: UserRecord = {
-      id: row[0] as number,
-      username: row[1] as string,
-      email: row[2] as string | null,
-      created_at: row[3] as string,
+      id: row.id as number,
+      username: row.username as string,
+      email: row.email as string | null,
+      created_at: row.created_at as string,
     };
 
     // Generate JWT
@@ -133,19 +163,21 @@ export async function registerUser(username: string, password: string, email?: s
 export async function loginUser(username: string, password: string): Promise<AuthResult> {
   try {
     const db = getDatabase();
+    ensureAuthTables();
+    saveDatabase();
 
-    const result = db.exec(
+    const result = db.all(
       `SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?`,
       [username],
     );
 
-    if (result.length === 0 || result[0].values.length === 0) {
+    if (result.length === 0) {
       // No such user — return immediately (common on first launch, not an error)
       return { success: false, error: 'Invalid username or password' };
     }
 
-    const row = result[0].values[0];
-    const passwordHash = row[3] as string;
+    const row = result[0];
+    const passwordHash = row.password_hash as string;
 
     // bcrypt.compare may hang on some Windows systems due to native module issues
     let valid = false;
@@ -166,10 +198,10 @@ export async function loginUser(username: string, password: string): Promise<Aut
     }
 
     const user: UserRecord = {
-      id: row[0] as number,
-      username: row[1] as string,
-      email: row[2] as string | null,
-      created_at: row[4] as string,
+      id: row.id as number,
+      username: row.username as string,
+      email: row.email as string | null,
+      created_at: row.created_at as string,
     };
 
     // generateToken may fail if jose dynamic import hangs
@@ -256,17 +288,15 @@ export async function loadConversations(userId: number): Promise<Array<{
   updatedAt: string;
 }>> {
   const db = getDatabase();
-  const result = db.exec(
+  const result = db.all(
     `SELECT id, title, updated_at FROM conversations WHERE user_id = ? ORDER BY updated_at DESC LIMIT 50`,
     [userId],
   );
 
-  if (result.length === 0) return [];
-
-  return result[0].values.map((row) => ({
-    id: row[0] as string,
-    title: row[1] as string,
-    updatedAt: row[2] as string,
+  return result.map((row) => ({
+    id: row.id as string,
+    title: row.title as string,
+    updatedAt: row.updated_at as string,
   }));
 }
 
@@ -276,17 +306,15 @@ export async function loadConversationMessages(conversationId: string): Promise<
   toolCalls?: unknown;
 }>> {
   const db = getDatabase();
-  const result = db.exec(
+  const result = db.all(
     `SELECT role, content, tool_calls FROM messages WHERE conversation_id = ? ORDER BY id ASC`,
     [conversationId],
   );
 
-  if (result.length === 0) return [];
-
-  return result[0].values.map((row) => ({
-    role: row[0] as string,
-    content: row[1] as string,
-    toolCalls: safeJsonParse(row[2], undefined),
+  return result.map((row) => ({
+    role: row.role as string,
+    content: row.content as string,
+    toolCalls: safeJsonParse(row.tool_calls, undefined),
   }));
 }
 

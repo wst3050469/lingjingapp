@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v17387"
+    "output": "release-v17388"
   },
   "files": [
     "dist/**/*",
@@ -98,6 +98,10 @@
       "filter": [
         "**/*"
       ]
+    },
+    {
+      "from": "node_modules/@codepilot/core/package.json",
+      "to": "codepilot-core-dist/package.json"
     }
   ],
   "asarUnpack": [

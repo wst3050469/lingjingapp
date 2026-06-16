@@ -747,24 +747,47 @@ function registerShortcuts(mainWindow: BrowserWindow): void {
 
 async function bootstrap(): Promise<void> {
   // ═══════════════════════════════════════════════════════════════
-  // PHASE 0: @codepilot/core self-repair check (v1.73.86 enhanced)
+  // PHASE 0: @codepilot/core self-repair check (v1.73.88 enhanced)
   // The after-pack-hook removes @codepilot from app.asar (to avoid
   // CJS→ESM path truncation). During auto-update, only app.asar is
   // replaced — app.asar.unpacked/ retains the old @codepilot/core.
-  // This causes "loadPrompts is not a function" after upgrade.
   //
   // Fix: Copy fresh backup from extraResources (bundled via
   // electron-builder.json → extraResources → codepilot-core-dist).
-  // v1.73.86: Fixed catch block closure in repair wrapper (no SyntaxError).
+  // v1.73.88: Fixed health check — stub module also has loadPrompts(),
+  //   so we now verify createProvider() does NOT throw (stub throws).
+  //   Also handles missing package.json in unpacked/ directory.
   // ═══════════════════════════════════════════════════════════════
   try {
     const coreDistBackup = join(process.resourcesPath, 'codepilot-core-dist');
     if (existsSync(coreDistBackup)) {
-      // Try to verify loadPrompts export
+      // v1.73.88: Robust health check — stub has loadPrompts as noop,
+      // but createProvider() throws. Check __isStub + verify createProvider.
       let coreOk = false;
       try {
         const coreTest = require('@codepilot/core');
-        coreOk = typeof coreTest.loadPrompts === 'function';
+        // Check 1: Is this the stub module?
+        if ((coreTest as any).__isStub === true) {
+          console.warn('[main] Phase 0: detected stub module (__isStub=true), forcing repair');
+          coreOk = false;
+        } else if (typeof coreTest.createProvider !== 'function') {
+          console.warn('[main] Phase 0: createProvider missing from @codepilot/core');
+          coreOk = false;
+        } else {
+          // Check 2: Does createProvider actually work? (stub throws here)
+          try {
+            const testProvider = coreTest.createProvider({ provider: 'openai', apiKey: 'test', model: 'test' } as any);
+            coreOk = testProvider != null;
+          } catch (providerErr) {
+            console.warn('[main] Phase 0: createProvider threw — stub or corrupted:', (providerErr as Error).message);
+            coreOk = false;
+          }
+        }
+        // Final check: loadPrompts must also be a real function
+        if (coreOk && typeof coreTest.loadPrompts !== 'function') {
+          console.warn('[main] Phase 0: loadPrompts missing');
+          coreOk = false;
+        }
       } catch { /* core not loadable yet */ }
 
       if (!coreOk) {
@@ -773,27 +796,42 @@ async function bootstrap(): Promise<void> {
         const unpackedCoreDist = join(unpackedCorePkgDir, 'dist');
         const unpackedPkgJson = join(unpackedCorePkgDir, 'package.json');
 
-        console.warn('[main] Phase 0: @codepilot/core needs repair (loadPrompts missing)');
+        console.warn('[main] Phase 0: @codepilot/core needs repair');
 
-        // Check if unpacked directory exists at all
-        if (!existsSync(unpackedCorePkgDir)) {
-          console.warn('[main]   unpacked/ directory missing — creating from extraResources...');
+        // Check state of unpacked directory
+        const pkgDirExists = existsSync(unpackedCorePkgDir);
+        const distExists = existsSync(unpackedCoreDist);
+        const pkgJsonExists = existsSync(unpackedPkgJson);
+
+        if (!pkgDirExists || !distExists || !pkgJsonExists) {
+          console.warn(`[main]   unpacked/ state: pkgDir=${pkgDirExists} dist=${distExists} pkgJson=${pkgJsonExists} — recreating...`);
           try {
-            const { mkdirSync, writeFileSync, readFileSync, readdirSync, statSync } = await import('node:fs');
-            // Recursive copy using readdirSync (ASAR-compatible)
+            const { mkdirSync, writeFileSync, readFileSync, readdirSync } = await import('node:fs');
+            // Recursive copy using readdirSync (ASAR-compatible) with fallback
             function copyRecursive(src: string, dst: string) {
               if (!existsSync(src)) return;
               mkdirSync(dst, { recursive: true });
-              const entries = readdirSync(src, { withFileTypes: true });
+              let entries: any[];
+              try { entries = readdirSync(src, { withFileTypes: true }); } catch {
+                entries = readdirSync(src) as any;
+              }
               for (const entry of entries) {
-                const srcPath = join(src, entry.name);
-                const dstPath = join(dst, entry.name);
-                if (entry.isDirectory()) {
+                const entryName = typeof entry === 'string' ? entry : entry.name;
+                const isDir = typeof entry === 'string'
+                  ? (() => { try { return require('fs').statSync(join(src, entryName)).isDirectory(); } catch { return false; } })()
+                  : entry.isDirectory();
+                const srcPath = join(src, entryName);
+                const dstPath = join(dst, entryName);
+                if (isDir) {
                   copyRecursive(srcPath, dstPath);
                 } else {
                   writeFileSync(dstPath, readFileSync(srcPath));
                 }
               }
+            }
+            // Remove stale unpacked dist if exists
+            if (distExists) {
+              try { require('fs').rmSync(unpackedCoreDist, { recursive: true, force: true }); } catch {}
             }
             copyRecursive(coreDistBackup, unpackedCoreDist);
             // Create a minimal package.json so Node.js can resolve the module
@@ -802,36 +840,54 @@ async function bootstrap(): Promise<void> {
               type: 'module',
               main: './dist/index.js',
               exports: { '.': './dist/index.js' },
-              version: '1.73.86'
+              version: '1.73.88'
             }, null, 2), 'utf8');
-            console.log('[main]   ✅ Created unpacked/ from extraResources');
+            console.log('[main]   ✅ Created/repaired unpacked/ from extraResources');
           } catch (e) {
             console.warn('[main]   Phase 0 repair failed:', (e as Error).message);
           }
-        } else if (existsSync(unpackedCoreDist)) {
+        } else {
+          // unpacked/ exists but stale — replace dist
           console.warn('[main]   unpacked/ exists but stale — replacing dist...');
           try {
-            const { rmSync, cpSync } = await import('node:fs');
+            const { rmSync, cpSync, writeFileSync } = await import('node:fs');
             rmSync(unpackedCoreDist, { recursive: true, force: true });
             cpSync(coreDistBackup, unpackedCoreDist, { recursive: true, force: true });
+            // Also refresh package.json
+            writeFileSync(unpackedPkgJson, JSON.stringify({
+              name: '@codepilot/core',
+              type: 'module',
+              main: './dist/index.js',
+              exports: { '.': './dist/index.js' },
+              version: '1.73.88'
+            }, null, 2), 'utf8');
             console.log('[main]   ✅ @codepilot/core dist replaced');
           } catch (e) {
             console.warn('[main]   Phase 0 repair failed:', (e as Error).message);
           }
         }
 
-        // Verify repair
+        // Verify repair — re-require and check createProvider doesn't throw
         try {
           delete require.cache[require.resolve('@codepilot/core')];
           const recheck = require('@codepilot/core');
-          if (typeof recheck.loadPrompts === 'function') {
-            console.log('[main] ✅ Phase 0 repair verified — @codepilot/core operational');
+          if ((recheck as any).__isStub === true) {
+            console.warn('[main] ⚠️ Phase 0 repair failed — still returning stub');
+          } else if (typeof recheck.createProvider !== 'function') {
+            console.warn('[main] ⚠️ Phase 0 repair incomplete — createProvider missing');
           } else {
-            console.warn('[main] ⚠️ Phase 0 repair incomplete — loadPrompts still not a function');
+            try {
+              recheck.createProvider({ provider: 'openai', apiKey: 'test', model: 'test' });
+              console.log('[main] ✅ Phase 0 repair verified — @codepilot/core operational');
+            } catch {
+              console.warn('[main] ⚠️ Phase 0 repair incomplete — createProvider still throws');
+            }
           }
         } catch (e) {
           console.warn('[main] ⚠️ Phase 0 repair verification failed:', (e as Error).message);
         }
+      } else {
+        console.log('[main] ✅ Phase 0: @codepilot/core healthy');
       }
     } else {
       console.warn('[main] Phase 0: extraResources backup not found at', coreDistBackup);

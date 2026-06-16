@@ -128,7 +128,7 @@ if (existsSync(RENDERER_SRC)) {
 // We trace the recursive dependencies of each EXTERNAL package and copy only
 // those needed, keeping the ASAR lean.
 function resolveNodeModules() {
-  const ROOT_NM = join(root, '..', '..', 'node_modules'); // root-level node_modules
+  const ROOT_NM = join(root, '..', 'node_modules'); // root-level node_modules (desktop/)
   const PNPM_HOISTED = join(ROOT_NM, '.pnpm', 'node_modules');
   const SRC_NM = join(root, 'node_modules'); // electron-local node_modules
   const BUILD_APP = join(root, 'release', 'build');
@@ -236,7 +236,7 @@ function resolveNodeModules() {
     for (const external of EXTERNAL) {
       // Skip native packages, electron, etc.
       if (['electron', 'playwright', 'playwright-core', 'fsevents', 'cpu-features',
-           'sql.js', 'ssh2', 'node-pty'].includes(external)) continue;
+           'node-pty'].includes(external)) continue;
       // Skip subpath entries (e.g., @codepilot/core/checkpoint) - they are not
       // separate npm packages but subpaths of an already-listed external package.
       if (external.startsWith('@') && external.split('/').length > 2) continue;

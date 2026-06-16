@@ -1,3 +1,7 @@
+# _inject_v7.py — DEPRECATED as of v1.73.88
+# The v9 safe-require wrapper is now directly embedded in build-main.mjs (SAFE_REQUIRE_PREAMBLE).
+# This standalone injection script is preserved for historical reference only.
+# Last used: v1.73.84 (v7 repair)
 import re
 
 fpath = r'D:\lingjing-ide\desktop\electron\scripts\build-main.mjs'

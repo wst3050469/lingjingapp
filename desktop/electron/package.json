@@ -11,9 +11,9 @@
   "scripts": {
     "build": "node scripts/build-main.mjs",
     "prepackage": "node scripts/pre-package.mjs",
-    "dist": "node scripts/build-main.mjs && node scripts/pre-package.mjs && npx electron-builder build --win --x64",
-    "dist:linux": "node scripts/build-main.mjs && node scripts/pre-package.mjs && npx electron-builder build --linux --x64",
-    "dist:mac": "node scripts/build-main.mjs && node scripts/pre-package.mjs && npx electron-builder build --mac --x64 --arm64"
+    "dist": "node scripts/build-main.mjs && node scripts/pre-package.mjs && npx electron-builder build --win --x64 && node scripts/fix-latest-yml.mjs",
+    "dist:linux": "node scripts/build-main.mjs && node scripts/pre-package.mjs && npx electron-builder build --linux --x64 && node scripts/fix-latest-yml.mjs",
+    "dist:mac": "node scripts/build-main.mjs && node scripts/pre-package.mjs && npx electron-builder build --mac --x64 --arm64 && node scripts/fix-latest-yml.mjs"
   },
   "dependencies": {
     "@codepilot/core": "workspace:*",

@@ -1,11 +1,11 @@
-version: 1.73.89
+version: 1.73.90
 files:
-  - url: 1.73.89/LingJing-1.73.89-linux-x86_64.AppImage
-    sha512: UvTTzN4pMdOf8SFaWDGpGecNa84D6QAdMJilHWsUmXLXYRaSdzxsOB5bjVoN725/A1cvvbhM6JSOrLAgvmXLqQ==
-    size: 255283201
-  - url: 1.73.89/LingJing-1.73.89-linux-x86_64.deb
-    sha512: 6HWz1R4bOnaelK5jma05uQcoD/ncQ91GDexxfZ9H7zpzY0Bz7tRB0wpKSDAAPcxeIIpQ1tJNaVrrnr/g2h/2aw==
+  - url: 1.73.90/LingJing-1.73.90-linux-x86_64.AppImage
+    sha512: a902e8966c82c7d1f0f17e5146fdaf8a9b91479e529f3d4a09a59359de1b98cdb22a23f357288102f2558ba72c660f4da53934a4156af326ad069b032b5d9d22
+    size: 255283154
+  - url: 1.73.90/LingJing-1.73.90-linux-x86_64.deb
+    sha512: e875b3d51e1b3a769e94ae6399ad39b907280ff9dc43dd460dec717d9f47ef3a73634073eed441d30a4a4830003dcc5e208a50d6d24d695aeb9ebfe0da1ff66b
     size: 129941408
-path: 1.73.89/LingJing-1.73.89-linux-x86_64.AppImage
-sha512: UvTTzN4pMdOf8SFaWDGpGecNa84D6QAdMJilHWsUmXLXYRaSdzxsOB5bjVoN725/A1cvvbhM6JSOrLAgvmXLqQ==
-releaseDate: '2026-06-16T02:19:48.690Z'
+path: 1.73.90/LingJing-1.73.90-linux-x86_64.AppImage
+sha512: a902e8966c82c7d1f0f17e5146fdaf8a9b91479e529f3d4a09a59359de1b98cdb22a23f357288102f2558ba72c660f4da53934a4156af326ad069b032b5d9d22
+releaseDate: 2026-06-16T02:56:09.000Z

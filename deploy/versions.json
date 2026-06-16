@@ -32,6 +32,24 @@
           "size": 195071463,
           "type": "setup",
           "sha512": "e43d1830eb6acff694c6e20907bcb8ab3ab9a78f0972f92e8a86a71abf05583794f7ee8a006127ffea2fac95ce9004e082870652282ccb3da9e102f075ccf928"
+        },
+        "linux-x64_appimage": {
+          "url": "/downloads/1.73.87/LingJing-1.73.87-linux-x86_64.AppImage",
+          "size": 245012286,
+          "type": "appimage",
+          "sha512": "f31776920f394ed7a8863a5b39acdbe514103fbe47a3d5585a58ca82ef73dac561fdd7cc493328ef5b03a17082b139d7e56ff260b43bd1d9d504c2f80bf1a34d"
+        },
+        "linux-x64_deb": {
+          "url": "/downloads/1.73.87/LingJing-1.73.87-linux-x86_64.deb",
+          "size": 129170210,
+          "type": "deb",
+          "sha512": "50a465fae775036f1a70984fc1f638678c908ef13785bea5cfb15ddae84bf78b843a6eec5e2a3df66ddb6d92718b2076f17c4117e721db3c61ac936a26b98dac"
+        },
+        "linux-x64": {
+          "url": "/downloads/1.73.87/LingJing-1.73.87-linux-x86_64.AppImage",
+          "size": 245012286,
+          "type": "appimage",
+          "sha512": "f31776920f394ed7a8863a5b39acdbe514103fbe47a3d5585a58ca82ef73dac561fdd7cc493328ef5b03a17082b139d7e56ff260b43bd1d9d504c2f80bf1a34d"
         }
       }
     },

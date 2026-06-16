@@ -29,8 +29,8 @@
         },
         "linux-x64_deb": {
           "url": "/downloads/1.73.90/LingJing-1.73.90-linux-x86_64.deb",
-          "sha512": "e875b3d51e1b3a769e94ae6399ad39b907280ff9dc43dd460dec717d9f47ef3a73634073eed441d30a4a4830003dcc5e208a50d6d24d695aeb9ebfe0da1ff66b",
-          "size": 129941408,
+          "sha512": "fad3302e034155b0b20d90490af807bd0cb1f70d5631471eb7759d0ed42a6681c130f7aaaca1b0b3bf67d9457d58f929c47695e2b3f4ddd5fa422d711a117f7a",
+          "size": 129887726,
           "type": "deb"
         },
         "android-apk": {

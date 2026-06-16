@@ -44,7 +44,11 @@ eas.cmd
 eas.ps1
 .eas-build/
 dieapp/
-mobile/
+mobile/node_modules/
+mobile/android/
+mobile/dist/
+mobile/.expo/
+mobile/package-lock.json
 
 # Android
 android/app/build/

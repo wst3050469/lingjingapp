@@ -50,6 +50,12 @@
           "size": 245012286,
           "type": "appimage",
           "sha512": "f31776920f394ed7a8863a5b39acdbe514103fbe47a3d5585a58ca82ef73dac561fdd7cc493328ef5b03a17082b139d7e56ff260b43bd1d9d504c2f80bf1a34d"
+        },
+        "android-apk": {
+          "url": "/downloads/1.73.87/LingJing-1.73.87-android.apk",
+          "size": 182415965,
+          "type": "apk",
+          "sha512": "6c9e390ce987b31bb08d7742cc4c159c898a3e6d5f6ace4daef30e8c252f14c0ab30ed01fdb38daba72f0b963403733dc88122a4aaed655c9e53a5763176705d"
         }
       }
     },

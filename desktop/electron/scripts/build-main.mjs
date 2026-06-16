@@ -612,7 +612,7 @@ try {
       '        }',
       '      }',
       '      console.warn("[main] @codepilot/core repair failed — merging stubs for graceful degradation");',
-      '      var _st = __stub();',
+      '      var _st = __stub;',
       '      for (var _k in _st) { if (!(_k in mod) || typeof mod[_k] !== "function") { mod[_k] = _st[_k]; } }',
       '      mod.__isStub = true;',
       '    } else if (!subpath && mod && !mod.__isStub) {',
@@ -627,7 +627,7 @@ try {
       '        try { var _r = require(modulePath); if (_r && !_r.__isStub) { __savePersistent(); return _r; } } catch(e3) {}',
       '      }',
       '      console.warn("[main] " + modulePath + " unavailable at startup, returning stub module");',
-      '      return __stub();',
+      '      return __stub;',
       '    }',
       '    throw e;',
       '  }',
@@ -742,8 +742,28 @@ try {
     if (!existsSync(BUILD_NM)) return;
 
     let synced = 0;
+    let replacedSymlinks = 0;
+    const isExternal = (name) => EXTERNAL.includes(name);
     const copyToSrc = (srcPath, dstPath, name) => {
-      if (existsSync(dstPath)) return; // already exists, skip
+      // v1.73.93: Only replace EXTERNAL symlinks (non-external keep for esbuild)
+      if (existsSync(dstPath)) {
+        try {
+          const stat = lstatSync(dstPath);
+          if (stat.isSymbolicLink()) {
+            if (isExternal(name)) {
+              rmSync(dstPath, { recursive: true, force: true });
+              replacedSymlinks++;
+              console.log(`[build-main] 🔗 Replacing external symlink '${name}' with real files`);
+            } else {
+              return; // non-external symlink: keep for esbuild transitive deps
+            }
+          } else {
+            return; // real directory, skip
+          }
+        } catch {
+          return; // conservative skip
+        }
+      }
       try {
         cpSync(srcPath, dstPath, { recursive: true, dereference: true, force: true });
         synced++;
@@ -775,8 +795,8 @@ try {
         copyToSrc(join(BUILD_NM, name), join(SRC_NM, name), name);
       }
     }
-    if (synced > 0) {
-      console.log(`[build-main] �?Synced ${synced} missing external dep(s) to packages/electron/node_modules/`);
+    if (replacedSymlinks > 0 || synced > 0) {
+      console.log(`[build-main] �?Synced: ${synced} new + ${replacedSymlinks} symlinks replaced -> packages/electron/node_modules/`);
     } else {
       console.log('[build-main] �?All external deps already present in packages/electron/node_modules/');
     }

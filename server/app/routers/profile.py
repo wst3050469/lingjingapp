@@ -53,11 +53,6 @@ async def get_profile(user: dict = Depends(get_current_user)):
                 "帮我给{name}分配角色",
                 "person_add",
             ),
-            "attendance_flagged": (
-                "「{name}」的打卡记录异常，需要审核",
-                "查看{name}的打卡异常",
-                "warning",
-            ),
         }
         notifs = await get_team_notifications(tenant_id)
         for n in notifs:

@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi.staticfiles import StaticFiles
-from routers import auth, user, project, attendance, task, approval, ai, app_version, memories, chat, profile, files, tenant_admin, search, technician, business, consensus, system, webhook, partners, push, admin, oss, platform_admin, notification, automation, hardware_voice, dashboard, ha_conversation, import_data, call_analysis, voice_asr, wechat, wechat_mp, wecom
+from routers import auth, user, project, task, approval, ai, app_version, memories, chat, profile, files, tenant_admin, search, technician, business, consensus, system, webhook, partners, push, admin, oss, platform_admin, notification, automation, hardware_voice, dashboard, ha_conversation, import_data, call_analysis, voice_asr, wechat, wechat_mp, wecom
 import db as database
 from config import UPLOAD_DIR, ADMIN_DIR, APK_DIR
 
@@ -139,7 +139,7 @@ app.include_router(auth.router)
 app.include_router(ai.router)
 app.include_router(user.router)
 app.include_router(project.router)
-app.include_router(attendance.router)
+
 app.include_router(task.router)
 app.include_router(approval.router)
 app.include_router(app_version.router)

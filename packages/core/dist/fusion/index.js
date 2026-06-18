@@ -11,6 +11,7 @@ export { SlidingWindowMemoryManager } from './sliding-window/sliding-window-mana
 export { DEFAULT_SLIDING_WINDOW_CONFIG } from './sliding-window/types.js';
 export { VectorMemoryStore } from './vector-memory/vector-memory-store.js';
 export { InMemoryVectorAdapter } from './vector-memory/adapters/in-memory-adapter.js';
+export { SqliteVectorAdapter } from './vector-memory/adapters/sqlite-adapter.js';
 export { createRememberVectorTool } from './vector-memory/tools/remember-vector.js';
 export { createRecallVectorTool } from './vector-memory/tools/recall-vector.js';
 export { createParallelExecuteTool } from './multi-agent/tools/parallel-execute.js';
@@ -40,5 +41,7 @@ export { ConnectorHubAdapter } from './connectors/connector-hub-adapter.js';
 export { MessageGateway } from './gateway/message-gateway.js';
 export { FusionInitializer } from './fusion-initializer.js';
 export * as openspace from './openspace/index.js';
+// Explicit safe re-exports from integration (patch-renderer.tsx excluded — imports react)
+export { getMigration003SQL, getMigration004SQL, } from './integration/patch-database.js';
 export * as integration from './integration/index.js';
 //# sourceMappingURL=index.js.map

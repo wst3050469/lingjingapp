@@ -150,4 +150,10 @@ export type { FusionInitResult } from './fusion-initializer.js';
 
 export * as openspace from './openspace/index.js';
 
+// Explicit safe re-exports from integration (patch-renderer.tsx excluded — imports react)
+export {
+  getMigration003SQL,
+  getMigration004SQL,
+} from './integration/patch-database.js';
+
 export * as integration from './integration/index.js';

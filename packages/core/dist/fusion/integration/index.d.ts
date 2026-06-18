@@ -24,12 +24,12 @@ export { setupMemoryLinkages } from './patch-memory.js';
 export type { MemoryLinkageDeps, MemoryLinkageResult } from './patch-memory.js';
 /**
  * Batch C (P1 Renderer UI路由注册 + scifi-dark主题切换 + OpenSpace集成完善):
- * - patch-renderer.tsx     → Fusion/OpenSpace 侧栏面板注册 + 懒加载组件映射
  * - patch-theme-switch.tsx → scifi-dark 主题选项 + CSS变量 + 主题选择菜单
  * - patch-openspace.ts     → OpenSpace 路径检测 + WebSocket/窗口嵌入说明 + Lua脚本
+ * NOTE: patch-renderer.tsx is excluded — imports 'react' which crashes Electron main process
+ *       (ERR_MODULE_NOT_FOUND). Renderer-side sidebar panels should be registered directly
+ *       in the renderer bundle, not through @codepilot/core.
  */
-export { FUSION_SIDEBAR_PANELS, OPENSPACE_SIDEBAR_PANELS, FUSION_PANEL_COMPONENTS, OPENSPACE_PANEL_COMPONENTS, ALL_SIDEBAR_PANELS, ALL_PANEL_COMPONENTS, getPanelIconEntries, } from './patch-renderer.js';
-export type { SidebarPanelDef, FusionSidebarPanel, OpenSpaceSidebarPanel, } from './patch-renderer.js';
 export { SCIFI_THEME_OPTION, SCIFI_DARK_CSS_VARS, THEME_OPTIONS, } from './patch-theme-switch.js';
 export type { ScifiThemeId, ExtendedThemeMode, } from './patch-theme-switch.js';
 export { detectOpenSpace, detectOpenSpaceWindows, detectOpenSpaceLinux, patchOpenSpaceIntegration, LUA_FRAME_EXPORT, LUA_GLOBE_SYNC, } from './patch-openspace.js';

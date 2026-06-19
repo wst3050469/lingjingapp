@@ -87,6 +87,15 @@ export const AppConfigSchema = z.object({
             executionPolicy: z.enum(['always', 'ask', 'never', 'auto']).default('ask'),
         }).default({}),
         builtinBrowser: z.boolean().default(true),
+        github: z.object({
+            connected: z.boolean().default(false),
+            username: z.string().default(''),
+        }).default({}),
+        supabase: z.object({
+            connected: z.boolean().default(false),
+            projectUrl: z.string().default(''),
+            anonKey: z.string().default(''),
+        }).default({}),
     }).default({}),
     quest: z.object({
         worktreeScript: z.string().optional(),

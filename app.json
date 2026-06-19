@@ -2,10 +2,11 @@
   "expo": {
     "name": "灵境IDE",
     "slug": "lingjing-mobile",
-    "version": "1.56.0",
+    "version": "1.73.120",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
     "splash": {
       "backgroundColor": "#0d1117"
     },
@@ -26,6 +27,5 @@
       }
     },
     "owner": "wst3050469"
-  },
-  "version": "1.56.0"
+  }
 }

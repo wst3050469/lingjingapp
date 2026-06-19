@@ -706,7 +706,18 @@ async function bootstrap(): Promise<void> {
     console.error('[Main] Auth features will not work without database');
   }
 
-  // Create window FIRST — show UI immediately even if agent init is slow
+  // Load workspace BEFORE creating window — ensures renderer sees restored workspace immediately
+  try {
+    workspacePath = await loadWorkspaceFromConfig();
+    setWorkingDirectory(workspacePath);
+    console.log('[Main] Workspace loaded before window creation:', workspacePath);
+  } catch (wsErr) {
+    console.error('[Main] Failed to load workspace before window:', wsErr);
+    workspacePath = homedir();
+    setWorkingDirectory(workspacePath);
+  }
+
+  // Create window — show UI immediately even if agent init is slow
   createWindow();
 
   // Send startup logs and database status to renderer after window is created

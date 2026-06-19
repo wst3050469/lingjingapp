@@ -2,7 +2,7 @@
   "expo": {
     "name": "灵境",
     "slug": "lingjing-mobile",
-    "version": "1.73.120",
+    "version": "1.73.123",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "lingjing",
@@ -26,8 +26,16 @@
       "edgeToEdgeEnabled": false
     },
     "plugins": [
-      "expo-notifications"
+      "expo-notifications",
+      "expo-updates"
     ],
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 3000,
+      "url": "https://u.expo.dev/2c8f346b-10e0-4b26-b893-124eb212602f"
+    },
+    "runtimeVersion": "1.73.123",
     "extra": {
       "cloudUrl": "https://ide.zhejiangjinmo.com",
       "apiKey": ""

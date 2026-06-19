@@ -6,6 +6,9 @@
 - **Black Screen Crash**: 移除 `schema.js` 中不完全的 `quest.github` Zod 定义，修复 Linux AppImage 打开黑屏问题
 - **GitHub Token 持久化**: `integrations` Zod 对象添加 `.passthrough()`，修复 GitHub/Supabase 连接状态保存后丢失的问题
 
+### Added
+- **Windows EXE** (Setup 134MB + Portable 134MB) v1.73.120 全量重新编译
+
 ### Changed
 - Linux AppImage (180MB) + DEB (326MB) 全量重编译部署
 - Windows EXE 沿用 v1.73.119（Schema 兼容，无黑屏风险）

@@ -2,12 +2,12 @@
   "expo": {
     "name": "灵境",
     "slug": "lingjing-mobile",
-    "version": "1.55.0",
+    "version": "1.73.120",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "lingjing",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -22,7 +22,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1e1e1e"
       },
-      "package": "com.lingjing.codepilot"
+      "package": "com.lingjing.codepilot",
+      "edgeToEdgeEnabled": false
     },
     "plugins": [
       "expo-notifications"

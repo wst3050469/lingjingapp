@@ -2,6 +2,7 @@
 import os
 import sys
 import logging
+from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
@@ -119,19 +120,40 @@ async def _preload_tts():
         logger.warning(f"TTS 缓存预热失败: {e}")
 
 
+# 自动读取根目录 package.json 获取版本号，保持与桌面端一致
+def _read_version() -> str:
+    try:
+        import json
+        root_pkg = Path(__file__).resolve().parent.parent.parent / "package.json"
+        if root_pkg.exists():
+            return json.loads(root_pkg.read_text(encoding="utf-8")).get("version", "0.0.0")
+    except Exception:
+        pass
+    return "0.0.0"
+
+APP_VERSION = _read_version()
+
+# CORS 白名单 — 仅允许已知域名
+CORS_ORIGINS = [
+    o.strip() for o in os.environ.get(
+        "CORS_ORIGINS",
+        "https://ide.zhejiangjinmo.com,https://lingjing.zhejiangjinmo.com,https://wap.zhejiangjinmo.com"
+    ).split(",") if o.strip()
+]
+
 app = FastAPI(
     title="灵境 - 企业数字大脑",
     description="基于AI的企业管理系统",
-    version="1.64.3",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "x-api-key", "x-request-id"],
 )
 
 # 注册路由
@@ -192,7 +214,7 @@ async def ws_endpoint(websocket: WebSocket, token: str):
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy", "service": "灵境企业管理系统"}
+    return {"status": "healthy", "service": "灵境企业管理系统", "version": APP_VERSION}
 
 @app.get("/WW_verify_xteLOMYFbau0PLmR.txt")
 
@@ -205,7 +227,7 @@ async def wecom_verify():
     
 @app.get("/")
 async def root():
-    return {"name": "灵境 - 企业数字大脑", "version": "1.64.3"}
+    return {"name": "灵境 - 企业数字大脑", "version": APP_VERSION}
 
 if __name__ == "__main__":
     import uvicorn

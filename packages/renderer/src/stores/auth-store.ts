@@ -109,23 +109,8 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem(USER_KEY);
         }
 
-        // 🌟 Final fallback: auto-login as admin (with 8s timeout)
-        try {
-          const result = await withTimeout(
-            window.electronAPI.auth.login('admin', 'admin123'),
-            8000,
-            'auth:login (auto)',
-          );
-          if (result.success && result.token && result.user) {
-            localStorage.setItem(TOKEN_KEY, result.token);
-            localStorage.setItem(USER_KEY, JSON.stringify(result.user));
-            set({ user: result.user, token: result.token, isAuthenticated: true });
-            console.log('[Auth] Auto-logged in as default admin user');
-          }
-        } catch (e) {
-          // If auto-login fails/times out, still mark as done loading
-          console.warn('[Auth] Auto-login as admin failed — running as guest:', e);
-        }
+        // No saved credentials — run as guest (login required for cloud features)
+        console.log('[Auth] No saved credentials found — running as guest');
       },
     }),
     {

@@ -1351,7 +1351,7 @@ function loadWebServerConfig(): any {
     frpServerAddr: 'wap.zhejiangjinmo.com',
     frpServerPort: 32200,
     frpRemotePort: 8080,
-    frpToken: 'lingjing_mobile_token_2024',
+    frpToken: generateToken(),
     frpCustomDomain: 'wap.zhejiangjinmo.com',
   };
 }

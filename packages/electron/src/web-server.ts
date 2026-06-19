@@ -754,7 +754,10 @@ export function startWebServer(config: Partial<WebServerConfig> = {}): void {
         if (serverConfig.frpEnabled) {
           console.log(`[Web Server] Remote access: http://${serverConfig.frpServerAddr}:${serverConfig.frpRemotePort}`);
         }
-        console.log(`[Web Server] Token: ${serverConfig.token}`);
+        const maskedToken = serverConfig.token && serverConfig.token.length > 8
+          ? serverConfig.token.slice(0, 4) + '...' + serverConfig.token.slice(-4)
+          : '(not set)';
+        console.log(`[Web Server] Token: ${maskedToken}`);
       });
     } catch (err: any) {
       // Newer Node.js throws EADDRINUSE synchronously

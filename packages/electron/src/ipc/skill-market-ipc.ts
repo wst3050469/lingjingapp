@@ -72,7 +72,11 @@ async function searchSkills(query: string, page: number, limit: number): Promise
 }
 
 async function fetchSkillDetail(source: string, slug: string): Promise<{ files: Record<string, string>; version?: string }> {
-  const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_PROXY}/skills/${source}/${slug}`);
+  // Encode source to handle multi-segment paths (e.g., 'anthropics/skills' → 'anthropics%2Fskills')
+  // Express routes only match single path segments; encoding prevents 404 on multi-segment sources
+  const encodedSource = encodeURIComponent(source);
+  const encodedSlug = encodeURIComponent(slug);
+  const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_PROXY}/skills/${encodedSource}/${encodedSlug}`);
   if (statusCode !== 200) throw new Error(`获取技能详情失败: ${statusCode}`);
   const json = JSON.parse(data);
   return { files: json.files || {}, version: json.version };
@@ -181,10 +185,11 @@ export function registerSkillMarketIpc(): void {
       const { skillId, skill } = args;
       await ensureSkillsDir();
 
-      // Parse source and slug from skillId (format: "source/slug")
-      const [source, slug] = skillId.includes('/')
-        ? skillId.split('/', 2)
-        : ['www', skillId];
+      // Parse source and slug correctly:
+      // skill.source may contain '/' (e.g. 'anthropics/skills')
+      // skill.name is the last path segment (the actual slug)
+      const source = skill.source || 'www';
+      const slug = skill.name || skillId;
 
       // Fetch skill files from API
       const { files } = await fetchSkillDetail(source, slug);
@@ -209,9 +214,12 @@ export function registerSkillMarketIpc(): void {
 
   // Helper: send progress event to renderer
   function sendGithubImportProgress(step: string, detail?: string) {
+    console.log(`[SkillMarket] GitHub import: ${step} - ${detail || ''}`);
     const win = BrowserWindow.getAllWindows()[0];
-    if (win) {
+    if (win && !win.isDestroyed()) {
       win.webContents.send('skill-market:github-import-progress', { step, detail, timestamp: Date.now() });
+    } else {
+      console.warn('[SkillMarket] No browser window available, progress sent to log only');
     }
   }
 
@@ -242,33 +250,61 @@ export function registerSkillMarketIpc(): void {
       sendGithubImportProgress('clone', `正在克隆 ${owner}/${repo}...`);
       await new Promise<void>((resolve, reject) => {
         const proc = spawn('git', ['clone', '--depth', '1', '--progress', url, tmpDir], {
-          timeout: 120000,
           stdio: ['ignore', 'pipe', 'pipe'],
+          shell: true, // ensure git is found on Windows
+          windowsHide: true,
         });
 
+        let settled = false;
+        const finish = (fn: () => void) => {
+          if (!settled) { settled = true; clearTimeout(timer); fn(); }
+        };
+
+        // Manual timeout (more reliable than spawn's built-in timeout option)
+        const timer = setTimeout(() => {
+          proc.kill('SIGKILL');
+          finish(() => reject(new Error(`Git clone 超时 (120s): ${owner}/${repo}`)));
+        }, 120000);
+
+        // Accumulated stderr buffer — git outputs progress in chunks,
+        // and a percentage number may be split across chunks (e.g., "10" and "0%")
+        let stderrBuf = '';
         proc.stderr.on('data', (chunk: Buffer) => {
-          const text = chunk.toString();
-          // Git outputs clone progress to stderr
-          const pctMatch = text.match(/Receiving objects:\s*(\d+)%/);
+          stderrBuf += chunk.toString();
+          // Git outputs clone progress to stderr (English + Chinese variants)
+          let pctMatch = stderrBuf.match(/Receiving objects:\s*(\d+)%/);
+          if (!pctMatch) pctMatch = stderrBuf.match(/接收对象中:\s*(\d+)%/);
+          if (!pctMatch) pctMatch = stderrBuf.match(/接收对象:\s*(\d+)%/);
           if (pctMatch) {
             sendGithubImportProgress('clone', `克隆中... ${pctMatch[1]}%`);
           }
-          const doneMatch = text.match(/Resolving deltas:\s*(\d+)%/);
+          let doneMatch = stderrBuf.match(/Resolving deltas:\s*(\d+)%/);
+          if (!doneMatch) doneMatch = stderrBuf.match(/处理 delta 中:\s*(\d+)%/);
+          if (!doneMatch) doneMatch = stderrBuf.match(/处理delta中:\s*(\d+)%/);
           if (doneMatch) {
             sendGithubImportProgress('clone', `处理中... ${doneMatch[1]}%`);
           }
+          // Limit buffer growth
+          if (stderrBuf.length > 10000) stderrBuf = stderrBuf.slice(-5000);
         });
 
         proc.on('close', (code) => {
-          if (code === 0) resolve();
-          else reject(new Error(`Git clone 失败 (code: ${code})`));
+          if (code === 0) finish(resolve);
+          else finish(() => reject(new Error(`Git clone 失败 (code: ${code})`)));
         });
 
-        proc.on('error', (err) => reject(new Error(`Git clone 失败: ${err.message}`)));
+        proc.on('error', (err) => {
+          const msg = (err as any)?.code === 'ENOENT'
+            ? 'Git 未安装或不在 PATH 中，请先安装 Git'
+            : `Git clone 失败: ${err.message}`;
+          finish(() => reject(new Error(msg)));
+        });
       });
 
       // Step 2: Analyze repository
       sendGithubImportProgress('analyze', `正在分析仓库结构...`);
+      // Yield microtask so renderer renders this progress step before continuing
+      await new Promise(r => setTimeout(r, 10));
       let readmeContent = '';
       let pkgJson: any = {};
       try {
@@ -288,6 +324,7 @@ export function registerSkillMarketIpc(): void {
 
       // Step 3: Generate SKILL.md
       sendGithubImportProgress('generate', `正在生成技能文件...`);
+      await new Promise(r => setTimeout(r, 10));
       const skillMdContent = [
         '---',
         `name: ${skillName}`,
@@ -309,6 +346,7 @@ export function registerSkillMarketIpc(): void {
 
       // Step 4: Write skill to local directory
       sendGithubImportProgress('write', `正在写入技能...`);
+      await new Promise(r => setTimeout(r, 10));
       const targetDir = join(SKILLS_DIR, skillName);
       await mkdir(targetDir, { recursive: true });
       await writeFile(join(targetDir, 'SKILL.md'), skillMdContent, 'utf-8');

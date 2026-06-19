@@ -2601,7 +2601,9 @@ app.get('/api/skills-proxy/skills/search', (req, res) => {
 // GET /api/skills-proxy/skills/:source/:slug — Detail
 app.get('/api/skills-proxy/skills/:source/:slug', (req, res) => {
   try {
-    const { source, slug } = req.params;
+    // Decode URI-encoded params for multi-segment sources (e.g., 'anthropics%2Fskills')
+    const source = decodeURIComponent(req.params.source);
+    const slug = decodeURIComponent(req.params.slug);
     const skill = (skillsCache.data || []).find(s => s.source === source && s.slug === slug);
     if (!skill) {
       return res.status(404).json({ error: 'not_found', message: '技能未找到' });

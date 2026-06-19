@@ -1,6 +1,7 @@
 // 灵境IDE 移动端 - 应用入口 (合并 lingjing-mobile + mobile 全部功能)
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import * as Updates from 'expo-updates';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -51,8 +52,35 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showPairing, setShowPairing] = useState(false);
   const [loadingText, setLoadingText] = useState('正在连接灵境...');
+  const [updateReady, setUpdateReady] = useState(false);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  // OTA hot update: expo-updates auto-checks on load (ON_LOAD),
+  // we poll for a ready update after init and auto-reload
+  useEffect(() => {
+    if (initializing) return; // wait until init done
+    let cancelled = false;
+    async function tryReload() {
+      try {
+        const u = await Updates.checkForUpdateAsync();
+        if (u.isAvailable && !cancelled) {
+          const result = await Updates.fetchUpdateAsync();
+          if (result.isNew && !cancelled) {
+            setUpdateReady(true);
+            // Brief delay so user sees any loading screen, then reload
+            setTimeout(() => {
+              if (!cancelled) Updates.reloadAsync();
+            }, 200);
+          }
+        }
+      } catch {
+        // Silent fail — never block the user
+      }
+    }
+    tryReload();
+    return () => { cancelled = true; };
+  }, [initializing]);
 
   useEffect(() => {
     initConnection();

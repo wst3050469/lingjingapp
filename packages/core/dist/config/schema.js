@@ -87,14 +87,9 @@ export const AppConfigSchema = z.object({
             executionPolicy: z.enum(['always', 'ask', 'never', 'auto']).default('ask'),
         }).default({}),
         builtinBrowser: z.boolean().default(true),
-    }).default({}),
+    }).passthrough().default({}),
     quest: z.object({
         worktreeScript: z.string().optional(),
-        github: z.object({
-            repo: z.string().optional(),
-            token: z.string().optional(),
-            connected: z.boolean().optional(),
-        }).optional(),
         remote: z.object({
             dockerfile: z.string().optional(),
             installScript: z.string().optional(),

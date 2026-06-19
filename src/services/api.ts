@@ -83,7 +83,7 @@ class ApiService {
  if (this.ws?.readyState === WebSocket.OPEN) return;
  this.disconnectWs();
  const token = this._jwtToken || this.config.token;
- const url = `${this.config.wsUrl}?token=${encodeURIComponent(token)}`;
+ const url = `${this.config.wsUrl}/api/v1/ws/${encodeURIComponent(token)}`;
  console.log('[Mobile API] Connecting WebSocket:', url.replace(token, '***'));
  this.ws = new WebSocket(url);
  this.ws.onopen = () => {

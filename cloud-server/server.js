@@ -43,7 +43,12 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const API_KEY = process.env.API_KEY || 'lingjing-cloud-key-dev-only';
-const JWT_SECRET = process.env.JWT_SECRET || 'lingjing-jwt-secret-dev-only-' + API_KEY;
+// In production, JWT_SECRET must be explicitly set (checked above).
+// Fallback: generate a strong random secret instead of using a predictable string.
+const JWT_SECRET = process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === 'production'
+    ? require('crypto').randomBytes(64).toString('hex')
+    : 'lingjing-jwt-secret-dev-only-' + API_KEY);
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || '';
 const DEEPSEEK_BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com/v1';
 const JWT_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000; // 30 days

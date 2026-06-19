@@ -1,0 +1,2 @@
+cd /home/liuhui/lingjingapp
+node -e "var p=JSON.parse(require("fs").readFileSync("package.json","utf8"));p.version="1.73.116";require("fs").writeFileSync("package.json",JSON.stringify(p,null,2)+"\\n")"

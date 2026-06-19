@@ -257,6 +257,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('skill-market:check-updates'),
     update: (opts: { skillPath: string }) =>
       ipcRenderer.invoke('skill-market:update', opts),
+    onGithubImportProgress: (callback: (data: { step: string; detail?: string; timestamp: number }) => void) => {
+      const handler = (_event: any, data: any) => callback(data);
+      ipcRenderer.on('skill-market:github-import-progress', handler);
+      return () => ipcRenderer.removeListener('skill-market:github-import-progress', handler);
+    },
   },
 
   indexing: {

@@ -303,6 +303,7 @@ declare interface ElectronAPI {
     installFromGithub: (opts: { url: string }) => Promise<any>;
     checkUpdates: () => Promise<any>;
     update: (opts: { skillPath: string }) => Promise<any>;
+    onGithubImportProgress: (callback: (data: { step: string; detail?: string; timestamp: number }) => void) => () => void;
   };
   integrations: {
     githubValidate: (token: string) => Promise<any>;

@@ -2494,6 +2494,126 @@ app.get('/api/api-keys/stats', auth, requireSubscription(), (req, res) => {
 
 console.log('[Cloud Management] API routes initialized');
 
+// ====== Skills Market Proxy (skills.sh → cloud cache) ======
+// skills.sh now requires Vercel OIDC auth; we cache popular skills here
+const SKILLS_CACHE_PATH = resolve(__dirname, 'skills-cache.json');
+let skillsCache = { data: [], updatedAt: null };
+
+function loadSkillsCache() {
+  try {
+    if (existsSync(SKILLS_CACHE_PATH)) {
+      skillsCache = JSON.parse(readFileSync(SKILLS_CACHE_PATH, 'utf8'));
+      console.log('[SkillsProxy] Cache loaded:', skillsCache.data.length, 'skills, updated:', skillsCache.updatedAt);
+    } else {
+      // Seed with curated popular skills from skills.sh
+      skillsCache = { data: generateCuratedSkills(), updatedAt: new Date().toISOString() };
+      writeFileSync(SKILLS_CACHE_PATH, JSON.stringify(skillsCache, null, 2));
+      console.log('[SkillsProxy] Seeded with', skillsCache.data.length, 'curated skills');
+    }
+  } catch (e) {
+    console.warn('[SkillsProxy] Cache load error:', e.message);
+    skillsCache = { data: generateCuratedSkills(), updatedAt: new Date().toISOString() };
+  }
+}
+
+function generateCuratedSkills() {
+  // Top skills from skills.sh leaderboard (as of 2026-06)
+  const curated = [
+    { id: 'vercel-labs/skills/find-skills', slug: 'find-skills', name: 'find-skills', source: 'vercel-labs/skills', installs: 2100000, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/skills', url: 'https://skills.sh/vercel-labs/skills/find-skills', description: 'Discover and install skills for your AI agents' },
+    { id: 'anthropics/skills/frontend-design', slug: 'frontend-design', name: 'frontend-design', source: 'anthropics/skills', installs: 565000, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/frontend-design', description: 'Frontend design and UI development best practices' },
+    { id: 'vercel-labs/agent-skills/vercel-react-best-practices', slug: 'vercel-react-best-practices', name: 'vercel-react-best-practices', source: 'vercel-labs/agent-skills', installs: 487900, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/agent-skills', url: 'https://skills.sh/vercel-labs/agent-skills/vercel-react-best-practices', description: 'React best practices for Vercel deployments' },
+    { id: 'vercel-labs/agent-browser/agent-browser', slug: 'agent-browser', name: 'agent-browser', source: 'vercel-labs/agent-browser', installs: 464000, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/agent-browser', url: 'https://skills.sh/vercel-labs/agent-browser/agent-browser', description: 'Browser automation for AI agents' },
+    { id: 'microsoft/azure-skills/microsoft-foundry', slug: 'microsoft-foundry', name: 'microsoft-foundry', source: 'microsoft/azure-skills', installs: 403000, sourceType: 'github', installUrl: 'https://github.com/microsoft/azure-skills', url: 'https://skills.sh/microsoft/azure-skills/microsoft-foundry', description: 'Microsoft Azure AI Foundry integration' },
+    { id: 'vercel-labs/agent-skills/web-design-guidelines', slug: 'web-design-guidelines', name: 'web-design-guidelines', source: 'vercel-labs/agent-skills', installs: 401900, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/agent-skills', url: 'https://skills.sh/vercel-labs/agent-skills/web-design-guidelines', description: 'Web design and UI/UX guidelines' },
+    { id: 'microsoft/azure-skills/azure-ai', slug: 'azure-ai', name: 'azure-ai', source: 'microsoft/azure-skills', installs: 401000, sourceType: 'github', installUrl: 'https://github.com/microsoft/azure-skills', url: 'https://skills.sh/microsoft/azure-skills/azure-ai', description: 'Azure AI services integration and best practices' },
+    { id: 'remotion-dev/skills/remotion-best-practices', slug: 'remotion-best-practices', name: 'remotion-best-practices', source: 'remotion-dev/skills', installs: 379900, sourceType: 'github', installUrl: 'https://github.com/remotion-dev/skills', url: 'https://skills.sh/remotion-dev/skills/remotion-best-practices', description: 'Remotion video creation best practices' },
+    { id: 'mattpocock/skills/grill-me', slug: 'grill-me', name: 'grill-me', source: 'mattpocock/skills', installs: 347500, sourceType: 'github', installUrl: 'https://github.com/mattpocock/skills', url: 'https://skills.sh/mattpocock/skills/grill-me', description: 'Code review and improvement suggestions' },
+    { id: 'anthropics/skills/skill-creator', slug: 'skill-creator', name: 'skill-creator', source: 'anthropics/skills', installs: 277300, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/skill-creator', description: 'Create custom skills for Claude and other AI agents' },
+    { id: 'mattpocock/skills/tdd', slug: 'tdd', name: 'tdd', source: 'mattpocock/skills', installs: 268800, sourceType: 'github', installUrl: 'https://github.com/mattpocock/skills', url: 'https://skills.sh/mattpocock/skills/tdd', description: 'Test-driven development workflow' },
+    { id: 'mattpocock/skills/diagnose', slug: 'diagnose', name: 'diagnose', source: 'mattpocock/skills', installs: 229100, sourceType: 'github', installUrl: 'https://github.com/mattpocock/skills', url: 'https://skills.sh/mattpocock/skills/diagnose', description: 'Diagnose and fix TypeScript errors' },
+    { id: 'anthropics/skills/pptx', slug: 'pptx', name: 'pptx', source: 'anthropics/skills', installs: 151200, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/pptx', description: 'Create and edit PowerPoint presentations' },
+    { id: 'supabase/agent-skills/supabase-postgres-best-practices', slug: 'supabase-postgres-best-practices', name: 'supabase-postgres-best-practices', source: 'supabase/agent-skills', installs: 240500, sourceType: 'github', installUrl: 'https://github.com/supabase/agent-skills', url: 'https://skills.sh/supabase/agent-skills/supabase-postgres-best-practices', description: 'Supabase PostgreSQL best practices' },
+    { id: 'anthropics/skills/pdf', slug: 'pdf', name: 'pdf', source: 'anthropics/skills', installs: 138000, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/pdf', description: 'Generate and manipulate PDF documents' },
+    { id: 'vercel-labs/agent-skills/vercel-react-native-skills', slug: 'vercel-react-native-skills', name: 'vercel-react-native-skills', source: 'vercel-labs/agent-skills', installs: 145900, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/agent-skills', url: 'https://skills.sh/vercel-labs/agent-skills/vercel-react-native-skills', description: 'React Native development with Vercel' },
+    { id: 'anthropics/skills/docx', slug: 'docx', name: 'docx', source: 'anthropics/skills', installs: 129700, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/docx', description: 'Create and edit Word documents' },
+    { id: 'supabase/agent-skills/supabase', slug: 'supabase', name: 'supabase', source: 'supabase/agent-skills', installs: 129400, sourceType: 'github', installUrl: 'https://github.com/supabase/agent-skills', url: 'https://skills.sh/supabase/agent-skills/supabase', description: 'Supabase backend development' },
+    { id: 'anthropics/skills/xlsx', slug: 'xlsx', name: 'xlsx', source: 'anthropics/skills', installs: 114400, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/xlsx', description: 'Create and edit Excel spreadsheets' },
+    { id: 'vercel-labs/next-skills/next-best-practices', slug: 'next-best-practices', name: 'next-best-practices', source: 'vercel-labs/next-skills', installs: 108800, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/next-skills', url: 'https://skills.sh/vercel-labs/next-skills/next-best-practices', description: 'Next.js development best practices' },
+    { id: 'anthropics/skills/webapp-testing', slug: 'webapp-testing', name: 'webapp-testing', source: 'anthropics/skills', installs: 99100, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/webapp-testing', description: 'Web application testing with Playwright' },
+    { id: 'firebase/agent-skills/firebase-basics', slug: 'firebase-basics', name: 'firebase-basics', source: 'firebase/agent-skills', installs: 86200, sourceType: 'github', installUrl: 'https://github.com/firebase/agent-skills', url: 'https://skills.sh/firebase/agent-skills/firebase-basics', description: 'Firebase development fundamentals' },
+    { id: 'shadcn/ui/shadcn', slug: 'shadcn', name: 'shadcn', source: 'shadcn/ui', installs: 197000, sourceType: 'github', installUrl: 'https://github.com/shadcn/ui', url: 'https://skills.sh/shadcn/ui/shadcn', description: 'shadcn/ui component library integration' },
+    { id: 'obra/superpowers/brainstorming', slug: 'brainstorming', name: 'brainstorming', source: 'obra/superpowers', installs: 231600, sourceType: 'github', installUrl: 'https://github.com/obra/superpowers', url: 'https://skills.sh/obra/superpowers/brainstorming', description: 'Brainstorming and ideation techniques' },
+    { id: 'obra/superpowers/systematic-debugging', slug: 'systematic-debugging', name: 'systematic-debugging', source: 'obra/superpowers', installs: 151000, sourceType: 'github', installUrl: 'https://github.com/obra/superpowers', url: 'https://skills.sh/obra/superpowers/systematic-debugging', description: 'Systematic debugging methodology' },
+  ];
+  return curated;
+}
+
+// GET /api/skills-proxy/skills — Leaderboard
+app.get('/api/skills-proxy/skills', (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const perPage = Math.min(parseInt(req.query.per_page) || 20, 100);
+    const allSkills = skillsCache.data || [];
+    const start = page * perPage;
+    const slice = allSkills.slice(start, start + perPage);
+    res.json({
+      data: slice,
+      pagination: { page, perPage, total: allSkills.length, hasMore: start + perPage < allSkills.length },
+      _proxy: 'lingjing-cloud-cache',
+      _updatedAt: skillsCache.updatedAt,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'proxy_error', message: err.message });
+  }
+});
+
+// GET /api/skills-proxy/skills/search — Search
+app.get('/api/skills-proxy/skills/search', (req, res) => {
+  try {
+    const q = (req.query.q || '').toLowerCase();
+    const limit = Math.min(parseInt(req.query.limit) || 30, 100);
+    const allSkills = skillsCache.data || [];
+    let results;
+    if (q.length >= 2) {
+      results = allSkills.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        (s.description || '').toLowerCase().includes(q) ||
+        s.source.toLowerCase().includes(q)
+      ).slice(0, limit);
+    } else {
+      results = allSkills.slice(0, limit);
+    }
+    res.json({
+      data: results,
+      query: q,
+      count: results.length,
+      _proxy: 'lingjing-cloud-cache',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'proxy_error', message: err.message });
+  }
+});
+
+// GET /api/skills-proxy/skills/:source/:slug — Detail
+app.get('/api/skills-proxy/skills/:source/:slug', (req, res) => {
+  try {
+    const { source, slug } = req.params;
+    const skill = (skillsCache.data || []).find(s => s.source === source && s.slug === slug);
+    if (!skill) {
+      return res.status(404).json({ error: 'not_found', message: '技能未找到' });
+    }
+    res.json({
+      ...skill,
+      files: null, // No file cache available from proxy
+      _proxy: 'lingjing-cloud-cache',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'proxy_error', message: err.message });
+  }
+});
+
+loadSkillsCache();
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`灵境 Cloud Server v3 running on http://0.0.0.0:${PORT}`);
   console.log(`API Key: ${API_KEY}`);

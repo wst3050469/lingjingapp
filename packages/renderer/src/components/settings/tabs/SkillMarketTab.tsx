@@ -23,6 +23,21 @@ interface UpdateInfo {
   latestVersion: string;
 }
 
+interface GhProgress {
+  step: string;
+  detail?: string;
+  timestamp: number;
+}
+
+const STEPS: Record<string, string> = {
+  clone: '🔽 克隆仓库',
+  analyze: '🔍 分析代码',
+  generate: '📝 生成技能',
+  write: '💾 写入文件',
+  done: '✅ 完成',
+  error: '❌ 错误',
+};
+
 const SkillMarketTab: React.FC<{ onRefresh?: () => void }> = ({ onRefresh }) => {
   const [skills, setSkills] = useState<SkillItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,6 +49,7 @@ const SkillMarketTab: React.FC<{ onRefresh?: () => void }> = ({ onRefresh }) => 
   const [installedIds, setInstalledIds] = useState<Record<string, boolean>>({});
   const [githubUrl, setGithubUrl] = useState('');
   const [ghImporting, setGhImporting] = useState(false);
+  const [ghProgress, setGhProgress] = useState<GhProgress | null>(null);
   const [ghResult, setGhResult] = useState<GhResult | null>(null);
   const [updates, setUpdates] = useState<UpdateInfo[]>([]);
 
@@ -102,13 +118,26 @@ const SkillMarketTab: React.FC<{ onRefresh?: () => void }> = ({ onRefresh }) => 
   const doInstallFromGithub = async () => {
     if (!githubUrl.trim()) return;
     setGhImporting(true);
+    setGhProgress({ step: 'clone', detail: '正在克隆仓库...', timestamp: Date.now() });
     setGhResult(null);
     setError('');
+    
+    // Listen for progress updates
+    const unsub = window.electronAPI.skillMarket.onGithubImportProgress((data: GhProgress) => {
+      setGhProgress(data);
+      if (data.step === 'done' || data.step === 'error') {
+        setGhImporting(false);
+      }
+    });
+
     try {
       const res = await window.electronAPI.skillMarket.installFromGithub({ url: githubUrl.trim() });
+      // Wait a short moment for the final progress event
+      await new Promise(r => setTimeout(r, 300));
       if (res.success) {
         setGhResult(res);
         setGithubUrl('');
+        setGhProgress(null);
         if (onRefresh) onRefresh();
       } else {
         setError(res.error);
@@ -117,6 +146,7 @@ const SkillMarketTab: React.FC<{ onRefresh?: () => void }> = ({ onRefresh }) => 
       setError(e.message);
     } finally {
       setGhImporting(false);
+      unsub();
     }
   };
 
@@ -230,16 +260,53 @@ const SkillMarketTab: React.FC<{ onRefresh?: () => void }> = ({ onRefresh }) => 
             onChange={e => setGithubUrl(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && doInstallFromGithub()}
             placeholder="https://github.com/owner/repo"
-            className="flex-1 bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-1.5 text-sm text-cp-text font-mono outline-none focus:border-cp-accent"
+            disabled={ghImporting}
+            className="flex-1 bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-1.5 text-sm text-cp-text font-mono outline-none focus:border-cp-accent disabled:opacity-50"
           />
           <button
             onClick={doInstallFromGithub}
             disabled={ghImporting || !githubUrl.trim()}
             className="text-xs px-4 py-1.5 bg-cp-accent/20 text-cp-accent rounded-md hover:bg-cp-accent/30 disabled:opacity-50 shrink-0"
           >
-            {ghImporting ? '分析中...' : '生成技能'}
+            {ghImporting ? '处理中...' : '生成技能'}
           </button>
         </div>
+        {/* Progress indicator */}
+        {ghProgress && (
+          <div className="bg-cp-accent/[0.03] border border-cp-accent/10 rounded-lg px-3 py-2 mb-2">
+            <div className="flex items-center gap-2 text-[11px] text-cp-text-dim">
+              {ghProgress.step !== 'done' && ghProgress.step !== 'error' && (
+                <div className="w-3 h-3 border-2 border-cp-accent/30 border-t-cp-accent rounded-full animate-spin shrink-0" />
+              )}
+              <span className={ghProgress.step === 'error' ? 'text-red-400' : ghProgress.step === 'done' ? 'text-emerald-400' : 'text-cp-accent'}>
+                {STEPS[ghProgress.step] || ghProgress.step}
+              </span>
+              {ghProgress.detail && (
+                <span className="text-[10px] text-cp-text-dim/50">{ghProgress.detail}</span>
+              )}
+            </div>
+            {/* Step progress bar */}
+            {ghProgress.step !== 'done' && ghProgress.step !== 'error' && (
+              <div className="flex gap-1 mt-2">
+                {['clone', 'analyze', 'generate', 'write'].map((s) => {
+                  const stepOrder = ['clone', 'analyze', 'generate', 'write'];
+                  const currentIdx = stepOrder.indexOf(ghProgress.step);
+                  const thisIdx = stepOrder.indexOf(s);
+                  const isActive = thisIdx === currentIdx;
+                  const isDone = thisIdx < currentIdx;
+                  return (
+                    <div key={s} className="flex-1">
+                      <div className={`h-1 rounded-full ${isActive ? 'bg-cp-accent animate-pulse' : isDone ? 'bg-emerald-500/50' : 'bg-cp-border/30'}`} />
+                      <div className={`text-[8px] mt-0.5 text-center ${isActive ? 'text-cp-accent' : isDone ? 'text-emerald-500/50' : 'text-cp-text-dim/20'}`}>
+                        {STEPS[s]?.replace(/^[^\s]+\s/, '') || s}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
         {ghResult && (
           <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg px-3 py-2 text-[11px] text-emerald-400">
             ✅ 技能 {ghResult.name} 已成功生成！

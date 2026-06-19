@@ -14,6 +14,7 @@ import { registerOllamaIpc } from './ipc/ollama-ipc.js';
 import { registerGitIpc } from './ipc/git-ipc.js';
 import { registerMemoryIpc } from './ipc/memory-ipc.js';
 import { registerSkillsIpc } from './ipc/skills-ipc.js';
+import { registerSkillMarketIpc } from './ipc/skill-market-ipc.js';
 import { registerIndexingIpc } from './ipc/indexing-ipc.js';
 import { registerIntegrationsIpc } from './ipc/integrations-ipc.js';
 import { registerNetworkIpc } from './ipc/network-ipc.js';
@@ -964,6 +965,7 @@ async function bootstrap(): Promise<void> {
     registerTerminalIpc(mainWindow);
     registerGitIpc(() => workspacePath);
     registerSkillsIpc(() => workspacePath);
+    registerSkillMarketIpc();
     registerIndexingIpc(() => workspacePath, mainWindow);
     registerDiagnosticsIpc(mainWindow, () => workspacePath);
     console.log('[Main] About to call registerQuestIpc...');

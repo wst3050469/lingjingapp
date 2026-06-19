@@ -1,7 +1,7 @@
 // Skill Market IPC - Handles marketplace integration with skills.sh and GitHub
 import { ipcMain } from 'electron';
 import { exec } from 'node:child_process';
-import { readFile, writeFile, mkdir, readdir, access, stat } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, access, stat, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
@@ -279,7 +279,7 @@ export function registerSkillMarketIpc(): void {
       await writeFile(join(targetDir, 'SKILL.md'), skillMdContent, 'utf-8');
 
       // Clean up temp
-      exec(`rmdir /s /q "${tmpDir}"`, () => {});
+      rm(tmpDir, { recursive: true, force: true }).catch(() => {});
 
       return { success: true, name: skillName, skillPath: targetDir };
     } catch (error: any) {

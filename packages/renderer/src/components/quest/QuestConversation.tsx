@@ -535,7 +535,7 @@ export function QuestConversation() {
               
               {/* Input toolbar */}
               <InputToolbar
-                onFile={triggerFileInput}
+                onImage={triggerFileInput}
                 onVoice={() => toggleRecording(text)}
                 onPolish={async () => {
                   if (text.trim()) {

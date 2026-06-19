@@ -1,5 +1,5 @@
 interface InputToolbarProps {
-  onImage: () => void;
+  onImage?: () => void;
   onVoice: () => void;
   onPolish: () => void;
   onSend: () => void;
@@ -16,7 +16,11 @@ export function InputToolbar({
 }: InputToolbarProps) {
   const handleImage = () => {
     console.log('[InputToolbar] Image button clicked');
-    onImage();
+    if (onImage) {
+      onImage();
+    } else {
+      console.error('[InputToolbar] onImage callback not provided');
+    }
   };
   
   const handleVoice = () => {

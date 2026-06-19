@@ -1,6 +1,6 @@
 // Skill Market IPC - Handles marketplace integration with skills.sh and GitHub
-import { ipcMain } from 'electron';
-import { exec } from 'node:child_process';
+import { ipcMain, BrowserWindow } from 'electron';
+import { spawn } from 'node:child_process';
 import { readFile, writeFile, mkdir, readdir, access, stat, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -8,7 +8,9 @@ import { homedir } from 'node:os';
 import https from 'node:https';
 import http from 'node:http';
 
-const SKILLS_SH_API = 'skills.sh';
+// Use cloud server as skills.sh proxy (skills.sh now requires Vercel OIDC auth)
+const CLOUD_SERVER = 'ide.zhejiangjinmo.com';
+const SKILLS_SH_PROXY = `${CLOUD_SERVER}/api/skills-proxy`;
 const SKILLS_DIR = join(homedir(), '.lingjing', 'skills');
 
 // ─── HTTP Helpers ───────────────────────────────────────────────
@@ -37,8 +39,8 @@ interface SkillItem {
 }
 
 async function fetchLeaderboard(page: number, limit: number): Promise<{ skills: SkillItem[]; hasMore: boolean }> {
-  const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_API}/api/v1/skills?page=${page}&per_page=${limit}`);
-  if (statusCode !== 200) throw new Error(`skills.sh API returned ${statusCode}`);
+  const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_PROXY}/skills?page=${page}&per_page=${limit}`);
+  if (statusCode !== 200) throw new Error(`技能市场 API 返回 ${statusCode}`);
   const json = JSON.parse(data);
   const skills: SkillItem[] = (json.data || []).map((s: any) => ({
     id: `${s.source || 'www'}/${s.slug || s.name}`,
@@ -49,13 +51,13 @@ async function fetchLeaderboard(page: number, limit: number): Promise<{ skills: 
     version: s.version || '1.0.0',
     remoteUrl: s.url || `https://skills.sh/${s.source || 'www'}/${s.slug || s.name}`,
   }));
-  return { skills, hasMore: json.has_more || json.data?.length === limit };
+  return { skills, hasMore: json.hasMore !== undefined ? json.hasMore : json.data?.length === limit };
 }
 
 async function searchSkills(query: string, page: number, limit: number): Promise<{ skills: SkillItem[]; hasMore: boolean }> {
   const encoded = encodeURIComponent(query);
-  const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_API}/api/v1/skills/search?q=${encoded}&page=${page}&per_page=${limit}`);
-  if (statusCode !== 200) throw new Error(`skills.sh API returned ${statusCode}`);
+  const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_PROXY}/skills/search?q=${encoded}&page=${page}&per_page=${limit}`);
+  if (statusCode !== 200) throw new Error(`技能市场搜索返回 ${statusCode}`);
   const json = JSON.parse(data);
   const skills: SkillItem[] = (json.data || []).map((s: any) => ({
     id: `${s.source || 'www'}/${s.slug || s.name}`,
@@ -66,12 +68,12 @@ async function searchSkills(query: string, page: number, limit: number): Promise
     version: s.version || '1.0.0',
     remoteUrl: s.url || `https://skills.sh/${s.source || 'www'}/${s.slug || s.name}`,
   }));
-  return { skills, hasMore: json.has_more || json.data?.length === limit };
+  return { skills, hasMore: json.hasMore !== undefined ? json.hasMore : json.data?.length === limit };
 }
 
 async function fetchSkillDetail(source: string, slug: string): Promise<{ files: Record<string, string>; version?: string }> {
-  const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_API}/api/v1/skills/${source}/${slug}`);
-  if (statusCode !== 200) throw new Error(`Failed to fetch skill detail: ${statusCode}`);
+  const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_PROXY}/skills/${source}/${slug}`);
+  if (statusCode !== 200) throw new Error(`获取技能详情失败: ${statusCode}`);
   const json = JSON.parse(data);
   return { files: json.files || {}, version: json.version };
 }
@@ -205,6 +207,14 @@ export function registerSkillMarketIpc(): void {
     }
   });
 
+  // Helper: send progress event to renderer
+  function sendGithubImportProgress(step: string, detail?: string) {
+    const win = BrowserWindow.getAllWindows()[0];
+    if (win) {
+      win.webContents.send('skill-market:github-import-progress', { step, detail, timestamp: Date.now() });
+    }
+  }
+
   // Install from GitHub
   ipcMain.handle('skill-market:install-from-github', async (_event, args: { url: string }) => {
     try {
@@ -228,14 +238,37 @@ export function registerSkillMarketIpc(): void {
       const tmpDir = join(homedir(), '.lingjing', '.tmp', `gh-${Date.now()}`);
       await mkdir(join(homedir(), '.lingjing', '.tmp'), { recursive: true });
 
+      // Step 1: Clone repository
+      sendGithubImportProgress('clone', `正在克隆 ${owner}/${repo}...`);
       await new Promise<void>((resolve, reject) => {
-        exec(`git clone --depth 1 "${url}" "${tmpDir}"`, { timeout: 120000 }, (err) => {
-          if (err) reject(new Error(`Git clone 失败: ${err.message}`));
-          else resolve();
+        const proc = spawn('git', ['clone', '--depth', '1', '--progress', url, tmpDir], {
+          timeout: 120000,
+          stdio: ['ignore', 'pipe', 'pipe'],
         });
+
+        proc.stderr.on('data', (chunk: Buffer) => {
+          const text = chunk.toString();
+          // Git outputs clone progress to stderr
+          const pctMatch = text.match(/Receiving objects:\s*(\d+)%/);
+          if (pctMatch) {
+            sendGithubImportProgress('clone', `克隆中... ${pctMatch[1]}%`);
+          }
+          const doneMatch = text.match(/Resolving deltas:\s*(\d+)%/);
+          if (doneMatch) {
+            sendGithubImportProgress('clone', `处理中... ${doneMatch[1]}%`);
+          }
+        });
+
+        proc.on('close', (code) => {
+          if (code === 0) resolve();
+          else reject(new Error(`Git clone 失败 (code: ${code})`));
+        });
+
+        proc.on('error', (err) => reject(new Error(`Git clone 失败: ${err.message}`)));
       });
 
-      // Analyze repo and generate SKILL.md
+      // Step 2: Analyze repository
+      sendGithubImportProgress('analyze', `正在分析仓库结构...`);
       let readmeContent = '';
       let pkgJson: any = {};
       try {
@@ -253,7 +286,8 @@ export function registerSkillMarketIpc(): void {
       const descMatch = readmeContent.match(/^#\s+[^\n]+\n\n([^\n]+)/m);
       const description = descMatch ? descMatch[1].trim() : `A skill for ${repo} - ${pkgJson.description || 'No description available'}`.slice(0, 200);
 
-      // Build SKILL.md content
+      // Step 3: Generate SKILL.md
+      sendGithubImportProgress('generate', `正在生成技能文件...`);
       const skillMdContent = [
         '---',
         `name: ${skillName}`,
@@ -273,7 +307,8 @@ export function registerSkillMarketIpc(): void {
         '> Auto-generated by LingJing Skill Market from GitHub repository analysis.',
       ].join('\n');
 
-      // Write skill to local directory
+      // Step 4: Write skill to local directory
+      sendGithubImportProgress('write', `正在写入技能...`);
       const targetDir = join(SKILLS_DIR, skillName);
       await mkdir(targetDir, { recursive: true });
       await writeFile(join(targetDir, 'SKILL.md'), skillMdContent, 'utf-8');
@@ -281,8 +316,10 @@ export function registerSkillMarketIpc(): void {
       // Clean up temp
       rm(tmpDir, { recursive: true, force: true }).catch(() => {});
 
+      sendGithubImportProgress('done', `技能 ${skillName} 生成完成！`);
       return { success: true, name: skillName, skillPath: targetDir };
     } catch (error: any) {
+      sendGithubImportProgress('error', error.message);
       return { success: false, error: error.message };
     }
   });
@@ -309,7 +346,7 @@ export function registerSkillMarketIpc(): void {
         // Try to fetch latest version from skills.sh or GitHub
         // For skills.sh skills, check for updates
         try {
-          const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_API}/api/v1/skills/www/${encodeURIComponent(dir)}`);
+          const { statusCode, data } = await httpsGet(`https://${SKILLS_SH_PROXY}/skills/www/${encodeURIComponent(dir)}`);
           if (statusCode === 200) {
             const json = JSON.parse(data);
             const latest = json.version;

@@ -123,6 +123,31 @@ export async function initDatabase(): Promise<SqlJsDatabase> {
     try {
       const fileBuffer = await readFile(dbPath);
       db = new SQL.Database(new Uint8Array(fileBuffer));
+
+      // ── Integrity check after loading ──
+      // sql.js may load a corrupted file without throwing; PRAGMA integrity_check
+      // catches silent corruption before queries start failing with "database disk
+      // image is malformed".
+      try {
+        const checkResult = db.exec('PRAGMA integrity_check');
+        const isOk = checkResult.length > 0
+          && checkResult[0].values.length > 0
+          && checkResult[0].values[0][0] === 'ok';
+        if (!isOk) {
+          const errors = checkResult[0]?.values?.map((r: any) => r[0]).join('; ') || 'unknown';
+          throw new Error(`PRAGMA integrity_check failed: ${errors}`);
+        }
+        console.log('[DB] Integrity check passed');
+      } catch (integrityErr: any) {
+        console.error('[DB] Database integrity check failed:', integrityErr.message);
+        try { db.close(); } catch { /* ignore */ }
+        db = null;
+        // Backup corrupted file before recreating
+        const backupPath = dbPath + '.corrupted.' + Date.now();
+        try { renameSync(dbPath, backupPath); } catch { /* ignore */ }
+        console.log('[DB] Corrupted database backed up to:', backupPath);
+        db = new SQL.Database();
+      }
     } catch (err) {
       console.error('[DB] Failed to load existing database, creating new one:', err);
       db = new SQL.Database();
@@ -376,6 +401,22 @@ export async function saveDatabase(): Promise<void> {
     if (!db) return;
 
     try {
+      // 0. Quick integrity check before saving — prevent persisting corrupted state
+      try {
+        const quickCheck = db.exec('PRAGMA quick_check');
+        const isOk = quickCheck.length > 0
+          && quickCheck[0].values.length > 0
+          && quickCheck[0].values[0][0] === 'ok';
+        if (!isOk) {
+          const errors = quickCheck[0]?.values?.map((r: any) => r[0]).join('; ') || 'unknown';
+          console.error('[DB] PRAGMA quick_check failed, skipping save to preserve last good state:', errors);
+          return; // Don't overwrite disk with corrupted data
+        }
+      } catch (checkErr: any) {
+        console.error('[DB] PRAGMA quick_check threw, skipping save:', checkErr.message);
+        return; // Don't risk writing corrupted data
+      }
+
       // 1. Export the in-memory database snapshot
       const data = db.export();
       const buffer = Buffer.from(data);

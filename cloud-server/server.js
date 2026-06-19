@@ -518,10 +518,12 @@ function readVersionInfo() {
   try {
     // Try multiple paths to find versions.json
     const searchPaths = [
+      '/var/www/html/versions.json',
       '/var/www/html/downloads/versions.json',
       '/root/lingjing-update/data/versions.json',
       '/var/www/update-server/data/versions.json',
       '/opt/lingjing-update/data/versions.json',
+      '/var/www/downloads/versions.json',
       resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
       resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
     ];
@@ -568,8 +570,10 @@ function readVersionInfo() {
     if (data.versions) {
       // Only published versions should be visible to clients.
       // Draft and pending_review versions are hidden until admin publishes them.
-      const publishedVersions = data.versions.filter(v => v.status === 'published');
-      const latestEntry = data.versions.find(v => v.version === data.latest && v.status === 'published');
+      // Backward compat: missing status field defaults to 'published'
+      const isPublished = (v) => !v.status || v.status === 'published';
+      const publishedVersions = data.versions.filter(isPublished);
+      const latestEntry = data.versions.find(v => v.version === data.latest && isPublished(v));
       const latest = latestEntry || publishedVersions[0];
       if (latest) {
         _verCache = {

@@ -486,7 +486,7 @@ app.get('/api/fusion/audit', (req, res) => {
   if (resource) results = results.filter(l => l.resource === resource);
   if (from) results = results.filter(l => l.timestamp >= from);
   if (to) results = results.filter(l => l.timestamp <= to);
-  const n = parseInt(limit as string) || 100;
+  const n = parseInt(limit) || 100;
   res.json({ total: results.length, logs: results.slice(-n) });
 });
 

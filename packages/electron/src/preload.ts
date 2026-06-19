@@ -242,6 +242,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('skills:read-agent', { path }),
   },
 
+  skillMarket: {
+    getLeaderboard: (opts: { page?: number; limit?: number }) =>
+      ipcRenderer.invoke('skill-market:get-leaderboard', opts),
+    search: (opts: { query?: string; page?: number; limit?: number }) =>
+      ipcRenderer.invoke('skill-market:search', opts),
+    getInstalledSkillIds: () =>
+      ipcRenderer.invoke('skill-market:get-installed-ids'),
+    install: (opts: { skillId: string; skill: any }) =>
+      ipcRenderer.invoke('skill-market:install', opts),
+    installFromGithub: (opts: { url: string }) =>
+      ipcRenderer.invoke('skill-market:install-from-github', opts),
+    checkUpdates: () =>
+      ipcRenderer.invoke('skill-market:check-updates'),
+    update: (opts: { skillPath: string }) =>
+      ipcRenderer.invoke('skill-market:update', opts),
+  },
+
   indexing: {
     status: () => ipcRenderer.invoke('indexing:status'),
     build: () => ipcRenderer.invoke('indexing:build'),

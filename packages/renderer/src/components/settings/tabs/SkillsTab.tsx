@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import SkillMarketTab from './SkillMarketTab';
 
 /* --- Types --- */
 
@@ -165,6 +166,9 @@ export function SkillsTab({ config, saveKey }: SkillsTabProps) {
   const [newCmdLevel, setNewCmdLevel] = useState<'user' | 'project'>('user');
   const [newCmdContent, setNewCmdContent] = useState('');
 
+  // Market toggle
+  const [showMarket, setShowMarket] = useState(false);
+
   // Commands from config
   const commands: Command[] = useMemo(() => {
     const raw = config?.commands;
@@ -312,6 +316,19 @@ export function SkillsTab({ config, saveKey }: SkillsTabProps) {
       <p className="text-[11px] text-cp-text-dim/50 leading-relaxed">
         通过技能<span className="text-cp-text-dim/70">(默认包含 .lingjing/skills)</span>和自定义智能体扩展智能体能力边界，创建指令简化工作流程。
       </p>
+
+      {/* Skill Market Toggle */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setShowMarket(!showMarket)}
+          className={"text-xs px-3 py-1.5 rounded-md transition-colors "+(showMarket?"bg-cp-accent/20 text-cp-accent":"bg-white/[0.03] text-cp-text-dim/50 hover:text-cp-text")}>
+          {showMarket ? "← 返回本地技能" : "🛒 技能市场"}
+        </button>
+      </div>
+
+      {showMarket ? (
+        <SkillMarketTab onRefresh={loadAll} />
+      ) : (
+        <>
 
       {/* Level filter */}
       <div className="flex items-center gap-1">
@@ -615,6 +632,8 @@ export function SkillsTab({ config, saveKey }: SkillsTabProps) {
           </div>
         </div>
       </div>
+      </>
+    )}
     </div>
   );
 }

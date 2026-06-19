@@ -295,6 +295,15 @@ declare interface ElectronAPI {
     read: (path: string) => Promise<any>;
     readAgent: (path: string) => Promise<any>;
   };
+  skillMarket: {
+    getLeaderboard: (opts: { page?: number; limit?: number }) => Promise<any>;
+    search: (opts: { query?: string; page?: number; limit?: number }) => Promise<any>;
+    getInstalledSkillIds: () => Promise<any>;
+    install: (opts: { skillId: string; skill: any }) => Promise<any>;
+    installFromGithub: (opts: { url: string }) => Promise<any>;
+    checkUpdates: () => Promise<any>;
+    update: (opts: { skillPath: string }) => Promise<any>;
+  };
   integrations: {
     githubValidate: (token: string) => Promise<any>;
     githubGetSavedToken: () => Promise<any>;

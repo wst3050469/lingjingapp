@@ -10,7 +10,7 @@
 
 ### 1.1 EventBus 事件总线
 
-- [ ] **T-H14-01** 实现EventBus核心类与类型定义
+- [x] **T-H14-01** 实现EventBus核心类与类型定义
   - **优先级**：P0
   - **所属模块**：fusion/event-bus
   - **涉及文件**：`packages/core/src/fusion/event-bus/types.ts`（新建）、`packages/core/src/fusion/event-bus/event-bus.ts`（新建）
@@ -23,7 +23,7 @@
     - 实现 `EventBus` 类：内部维护 `Map<string, Set<Subscriber>>`、全局过滤器数组、指标计数器
     - publish方法：构造EventMessage → 全局过滤器过滤 → 主题匹配订阅者 → 按优先级排序 → 逐个执行handler（超时100ms跳过） → 异常捕获不中断
 
-- [ ] **T-H14-02** 实现EventBus指标采集与降级策略
+- [x] **T-H14-02** 实现EventBus指标采集与降级策略
   - **优先级**：P0
   - **所属模块**：fusion/event-bus
   - **涉及文件**：`packages/core/src/fusion/event-bus/event-bus.ts`（修改）、`packages/core/src/fusion/event-bus/metrics.ts`（新建）
@@ -35,7 +35,7 @@
     - 实现降级：初始化失败时所有publish/subscribe为no-op，模块独立运行
     - 实现healthCheck接口
 
-- [ ] **T-H14-03** 实现EventBus单元测试
+- [x] **T-H14-03** 实现EventBus单元测试
   - **优先级**：P0
   - **所属模块**：fusion/event-bus
   - **涉及文件**：`packages/core/src/fusion/event-bus/__tests__/event-bus.test.ts`（新建）
@@ -52,7 +52,7 @@
 
 ### 1.2 HookRegistry Hook机制
 
-- [ ] **T-H15-01** 实现HookRegistry核心类与类型定义
+- [x] **T-H15-01** 实现HookRegistry核心类与类型定义
   - **优先级**：P0
   - **所属模块**：fusion/hook-registry
   - **涉及文件**：`packages/core/src/fusion/hook-registry/types.ts`（新建）、`packages/core/src/fusion/hook-registry/hook-registry.ts`（新建）
@@ -66,7 +66,7 @@
     - register方法：生成唯一ID，创建HookEntry，按priority插入排序
     - execute方法：查找HookEntry → 按priority升序 → 逐个执行callback（sync模式await，async模式Promise.race + timeout） → 异常捕获 → 返回最终context
 
-- [ ] **T-H15-02** 实现Hook超时跳过与降级策略
+- [x] **T-H15-02** 实现Hook超时跳过与降级策略
   - **优先级**：P0
   - **所属模块**：fusion/hook-registry
   - **涉及文件**：`packages/core/src/fusion/hook-registry/hook-registry.ts`（修改）
@@ -79,7 +79,7 @@
     - 异常捕获：Hook回调异常记录日志，不中断主流程
     - 降级：初始化失败时execute直接返回原context
 
-- [ ] **T-H15-03** 实现HookRegistry单元测试
+- [x] **T-H15-03** 实现HookRegistry单元测试
   - **优先级**：P0
   - **所属模块**：fusion/hook-registry
   - **涉及文件**：`packages/core/src/fusion/hook-registry/__tests__/hook-registry.test.ts`（新建）
@@ -96,7 +96,7 @@
 
 ### 1.3 适配器基础框架
 
-- [ ] **T-ADP-01** 定义适配器统一类型与版本化接口
+- [x] **T-ADP-01** 定义适配器统一类型与版本化接口
   - **优先级**：P0
   - **所属模块**：fusion/adapters
   - **涉及文件**：`packages/core/src/fusion/adapters/types.ts`（新建）、`packages/core/src/fusion/adapters/index.ts`（新建）
@@ -111,7 +111,7 @@
     - 所有适配器包含 `version` 字段，版本不兼容时拒绝加载
     - 导出适配器工厂方法
 
-- [ ] **T-ADP-02** 实现LLMAdapter适配器
+- [x] **T-ADP-02** 实现LLMAdapter适配器
   - **优先级**：P0
   - **所属模块**：fusion/adapters
   - **涉及文件**：`packages/core/src/fusion/adapters/llm-adapter.ts`（新建）
@@ -124,7 +124,7 @@
     - 实现 `isAvailable(model)` 检查模型可用性
     - 降级：LLM服务不可用时返回错误提示
 
-- [ ] **T-ADP-03** 实现MemoryAdapter适配器
+- [x] **T-ADP-03** 实现MemoryAdapter适配器
   - **优先级**：P0
   - **所属模块**：fusion/adapters
   - **涉及文件**：`packages/core/src/fusion/adapters/memory-adapter.ts`（新建）
@@ -135,7 +135,7 @@
     - 实现 `write(entry)` 写入结构化记忆
     - 实现 `query(filter)` 查询结构化记忆（category/scope/keyword过滤）
 
-- [ ] **T-ADP-04** 实现SkillAdapter适配器
+- [x] **T-ADP-04** 实现SkillAdapter适配器
   - **优先级**：P0
   - **所属模块**：fusion/adapters
   - **涉及文件**：`packages/core/src/fusion/adapters/skill-adapter.ts`（新建）
@@ -147,7 +147,7 @@
     - 实现 `load(skillId)` 加载Skill
     - 实现 `list()` 列出Skill目录
 
-- [ ] **T-ADP-05** 实现ToolAdapter适配器
+- [x] **T-ADP-05** 实现ToolAdapter适配器
   - **优先级**：P0
   - **所属模块**：fusion/adapters
   - **涉及文件**：`packages/core/src/fusion/adapters/tool-adapter.ts`（新建）
@@ -158,7 +158,7 @@
     - 实现 `register(tool)` 注册工具（增量注册）
     - 实现 `get(name)` 获取工具定义
 
-- [ ] **T-ADP-06** 实现SchedulerAdapter适配器
+- [x] **T-ADP-06** 实现SchedulerAdapter适配器
   - **优先级**：P0
   - **所属模块**：fusion/adapters
   - **涉及文件**：`packages/core/src/fusion/adapters/scheduler-adapter.ts`（新建）
@@ -172,7 +172,7 @@
 
 ### 1.4 数据库迁移 migration003
 
-- [ ] **T-DB-01** 实现migration003数据库迁移（不含沙箱相关表）
+- [x] **T-DB-01** 实现migration003数据库迁移（不含沙箱相关表）
   - **优先级**：P0
   - **所属模块**：fusion/database
   - **涉及文件**：`packages/electron/src/database/migrations/migration003_hermes_fusion.ts`（新建）
@@ -197,7 +197,7 @@
 
 ### 2.1 SlidingWindowMemoryManager（REQ-H01）
 
-- [ ] **T-H01-01** 实现SlidingWindowMemoryManager核心逻辑
+- [x] **T-H01-01** 实现SlidingWindowMemoryManager核心逻辑
   - **优先级**：P1
   - **所属模块**：fusion/sliding-window
   - **涉及文件**：`packages/core/src/fusion/sliding-window/types.ts`（新建）、`packages/core/src/fusion/sliding-window/sliding-window-manager.ts`（新建）
@@ -210,7 +210,7 @@
     - 实现 `compactWithSlidingWindow`：tokenCount > windowUpperLimit时 → 计算importanceScore（importance*importanceWeight + recency*recencyWeight） → 标记最近preserveRecentN条不可淘汰 → 按score升序选择淘汰候选 → 淘汰至tokenCount <= windowLowerLimit → 发布memory:window_compacted事件
     - 初始化：注册after_compaction Hook
 
-- [ ] **T-H01-02** 实现降级策略与单元测试
+- [x] **T-H01-02** 实现降级策略与单元测试
   - **优先级**：P1
   - **所属模块**：fusion/sliding-window
   - **涉及文件**：`packages/core/src/fusion/sliding-window/sliding-window-manager.ts`（修改）、`packages/core/src/fusion/sliding-window/__tests__/sliding-window.test.ts`（新建）
@@ -223,7 +223,7 @@
 
 ### 2.2 VectorMemoryStore（REQ-H02）
 
-- [ ] **T-H02-01** 实现VectorMemoryStore核心逻辑
+- [x] **T-H02-01** 实现VectorMemoryStore核心逻辑
   - **优先级**：P1
   - **所属模块**：fusion/vector-memory
   - **涉及文件**：`packages/core/src/fusion/vector-memory/types.ts`（新建）、`packages/core/src/fusion/vector-memory/vector-memory-store.ts`（新建）
@@ -238,7 +238,7 @@
     - 实现syncFromMemory：订阅memory:updated事件，自动同步新记忆到向量索引
     - 实现delete方法
 
-- [ ] **T-H02-02** 实现VectorStoreAdapter（sqlite-vss适配器）
+- [x] **T-H02-02** 实现VectorStoreAdapter（sqlite-vss适配器）
   - **优先级**：P1
   - **所属模块**：fusion/vector-memory
   - **涉及文件**：`packages/core/src/fusion/vector-memory/adapters/sqlite-vss-adapter.ts`（新建）
@@ -250,7 +250,7 @@
     - search：向量相似度检索
     - 初始化：创建vss虚拟表（若不存在）
 
-- [ ] **T-H02-03** 注册remember_vector/recall_vector工具与测试
+- [x] **T-H02-03** 注册remember_vector/recall_vector工具与测试
   - **优先级**：P1
   - **所属模块**：fusion/vector-memory
   - **涉及文件**：`packages/core/src/fusion/vector-memory/tools/remember-vector.ts`（新建）、`packages/core/src/fusion/vector-memory/tools/recall-vector.ts`（新建）、`packages/core/src/fusion/vector-memory/__tests__/vector-memory.test.ts`（新建）
@@ -264,7 +264,7 @@
 
 ### 2.3 NudgeReviewEngine（REQ-H03）
 
-- [ ] **T-H03-01** 实现NudgeReviewEngine核心逻辑
+- [x] **T-H03-01** 实现NudgeReviewEngine核心逻辑
   - **优先级**：P1
   - **所属模块**：fusion/review-engine
   - **涉及文件**：`packages/core/src/fusion/review-engine/types.ts`（新建）、`packages/core/src/fusion/review-engine/nudge-review-engine.ts`（新建）
@@ -279,7 +279,7 @@
     - 订阅agent:message_end事件触发审查
     - 审查失败/超时：发布review:failed，静默降级
 
-- [ ] **T-H03-02** 实现LLM配额管理与测试
+- [x] **T-H03-02** 实现LLM配额管理与测试
   - **优先级**：P1
   - **所属模块**：fusion/review-engine
   - **涉及文件**：`packages/core/src/fusion/review-engine/llm-quota-manager.ts`（新建）、`packages/core/src/fusion/review-engine/__tests__/review-engine.test.ts`（新建）
@@ -292,7 +292,7 @@
 
 ### 2.4 SkillSecurityLoader（REQ-H05）
 
-- [ ] **T-H05-01** 实现SecurityScanner安全扫描器
+- [x] **T-H05-01** 实现SecurityScanner安全扫描器
   - **优先级**：P1
   - **所属模块**：fusion/skill-security
   - **涉及文件**：`packages/core/src/fusion/skill-security/types.ts`（新建）、`packages/core/src/fusion/skill-security/security-scanner.ts`（新建）
@@ -309,7 +309,7 @@
       - checkDataLeakage：检测敏感数据泄露
     - scan方法：执行4类检查 → 汇总findings → 计算riskLevel
 
-- [ ] **T-H05-02** 实现ProgressiveLoader渐进式加载与SkillSecurityLoader组合
+- [x] **T-H05-02** 实现ProgressiveLoader渐进式加载与SkillSecurityLoader组合
   - **优先级**：P1
   - **所属模块**：fusion/skill-security
   - **涉及文件**：`packages/core/src/fusion/skill-security/progressive-loader.ts`（新建）、`packages/core/src/fusion/skill-security/skill-security-loader.ts`（新建）
@@ -320,7 +320,7 @@
     - SkillSecurityLoader组合：scanAndLoad → SecurityScanner.scan → 高风险阻止（发布skill:blocked）→ 中低风险标记受限 → 通过扫描则ProgressiveLoader.loadMetadata → 调用时loadFullContent
     - 注册before_skill_load Hook
 
-- [ ] **T-H05-03** 实现SkillSecurityLoader测试
+- [x] **T-H05-03** 实现SkillSecurityLoader测试
   - **优先级**：P1
   - **所属模块**：fusion/skill-security
   - **涉及文件**：`packages/core/src/fusion/skill-security/__tests__/skill-security.test.ts`（新建）
@@ -336,7 +336,7 @@
 
 ### 2.5 ExecutionTraceHarvester（REQ-H04）
 
-- [ ] **T-H04-01** 实现ExecutionTraceHarvester核心逻辑
+- [x] **T-H04-01** 实现ExecutionTraceHarvester核心逻辑
   - **优先级**：P1
   - **所属模块**：fusion/trace-harvester
   - **涉及文件**：`packages/core/src/fusion/trace-harvester/types.ts`（新建）、`packages/core/src/fusion/trace-harvester/execution-trace-harvester.ts`（新建）
@@ -350,7 +350,7 @@
     - analyzeAndGenerateSkill：对话轮次结束 → traceBuffer.length >= minToolCalls → extractWorkflowPattern → 使用LLM生成SKILL.md（level='auto-generated'） → skillAdapter.register
     - 轨迹分析失败静默跳过
 
-- [ ] **T-H04-02** 实现工作流模式提取与测试
+- [x] **T-H04-02** 实现工作流模式提取与测试
   - **优先级**：P1
   - **所属模块**：fusion/trace-harvester
   - **涉及文件**：`packages/core/src/fusion/trace-harvester/execution-trace-harvester.ts`（修改）、`packages/core/src/fusion/trace-harvester/__tests__/trace-harvester.test.ts`（新建）
@@ -366,7 +366,7 @@
 
 ### 3.1 DAGOrchestrator（REQ-H06）
 
-- [ ] **T-H06-01** 实现DAGOrchestrator核心逻辑
+- [x] **T-H06-01** 实现DAGOrchestrator核心逻辑
   - **优先级**：P2
   - **所属模块**：fusion/dag-orchestrator
   - **涉及文件**：`packages/core/src/fusion/dag-orchestrator/types.ts`（新建）、`packages/core/src/fusion/dag-orchestrator/dag-orchestrator.ts`（新建）
@@ -381,7 +381,7 @@
     - execute：验证 → 分层 → 逐层执行 → scheduleReadyNodes → 并行执行ready节点（≤maxConcurrency） → 条件分支评估 → 收集结果 → 失败节点+下游标记 → 支持从失败节点重试 → 发布dag:completed/dag:failed
     - 注册dag_execute工具
 
-- [ ] **T-H06-02** 实现DAG重试恢复与测试
+- [x] **T-H06-02** 实现DAG重试恢复与测试
   - **优先级**：P2
   - **所属模块**：fusion/dag-orchestrator
   - **涉及文件**：`packages/core/src/fusion/dag-orchestrator/dag-orchestrator.ts`（修改）、`packages/core/src/fusion/dag-orchestrator/__tests__/dag-orchestrator.test.ts`（新建）
@@ -394,7 +394,7 @@
 
 ### 3.2 MultiAgentExecutor（REQ-H07）
 
-- [ ] **T-H07-01** 实现MultiAgentExecutor核心逻辑
+- [x] **T-H07-01** 实现MultiAgentExecutor核心逻辑
   - **优先级**：P2
   - **所属模块**：fusion/multi-agent
   - **涉及文件**：`packages/core/src/fusion/multi-agent/types.ts`（新建）、`packages/core/src/fusion/multi-agent/multi-agent-executor.ts`（新建）
@@ -408,7 +408,7 @@
     - execute：任务数 > maxConcurrency时分批 → 每批Promise.allSettled并行 → 超时终止 → 收集结果 → 释放资源 → 配额不足降级串行 → 发布parallel:completed
     - 注册parallel_execute工具
 
-- [ ] **T-H07-02** 实现MultiAgentExecutor测试
+- [x] **T-H07-02** 实现MultiAgentExecutor测试
   - **优先级**：P2
   - **所属模块**：fusion/multi-agent
   - **涉及文件**：`packages/core/src/fusion/multi-agent/__tests__/multi-agent.test.ts`（新建）
@@ -419,7 +419,7 @@
 
 ### 3.3 DynamicModelRouter（REQ-H08）
 
-- [ ] **T-H08-01** 实现DynamicModelRouter核心逻辑
+- [x] **T-H08-01** 实现DynamicModelRouter核心逻辑
   - **优先级**：P2
   - **所属模块**：fusion/model-router
   - **涉及文件**：`packages/core/src/fusion/model-router/types.ts`（新建）、`packages/core/src/fusion/model-router/dynamic-model-router.ts`（新建）
@@ -435,7 +435,7 @@
     - route：before_llm_call Hook触发 → evaluateTaskFeatures → matchRule → selectModel → 检查可用性 → 不可用降级到fallbackModel（发布model:fallback） → 替换request模型 → 记录RoutingDecision审计日志
     - addRule/removeRule动态管理规则
 
-- [ ] **T-H08-02** 实现路由审计日志与测试
+- [x] **T-H08-02** 实现路由审计日志与测试
   - **优先级**：P2
   - **所属模块**：fusion/model-router
   - **涉及文件**：`packages/core/src/fusion/model-router/dynamic-model-router.ts`（修改）、`packages/core/src/fusion/model-router/__tests__/model-router.test.ts`（新建）
@@ -447,7 +447,7 @@
 
 ### 3.4 HonchoUserModeler（REQ-H10）
 
-- [ ] **T-H10-01** 实现HonchoUserModeler核心逻辑
+- [x] **T-H10-01** 实现HonchoUserModeler核心逻辑
   - **优先级**：P2
   - **所属模块**：fusion/user-modeler
   - **涉及文件**：`packages/core/src/fusion/user-modeler/types.ts`（新建）、`packages/core/src/fusion/user-modeler/honcho-user-modeler.ts`（新建）
@@ -461,7 +461,7 @@
     - getCurrentModel返回当前用户模型
     - 定时持久化（persistInterval）
 
-- [ ] **T-H10-02** 实现增量合并与测试
+- [x] **T-H10-02** 实现增量合并与测试
   - **优先级**：P2
   - **所属模块**：fusion/user-modeler
   - **涉及文件**：`packages/core/src/fusion/user-modeler/honcho-user-modeler.ts`（修改）、`packages/core/src/fusion/user-modeler/__tests__/user-modeler.test.ts`（新建）
@@ -477,7 +477,7 @@
 
 ### 4.1 NLCronScheduler（REQ-H09）
 
-- [ ] **T-H09-01** 实现NLCronScheduler核心逻辑
+- [x] **T-H09-01** 实现NLCronScheduler核心逻辑
   - **优先级**：P3
   - **所属模块**：fusion/nl-cron
   - **涉及文件**：`packages/core/src/fusion/nl-cron/types.ts`（新建）、`packages/core/src/fusion/nl-cron/nl-cron-scheduler.ts`（新建）、`packages/core/src/fusion/nl-cron/nl-to-cron-converter.ts`（新建）
@@ -491,7 +491,7 @@
     - listSchedules/cancelSchedule管理调度
     - NL转换失败返回解析错误+示例格式提示
 
-- [ ] **T-H09-02** 实现NLCronScheduler测试
+- [x] **T-H09-02** 实现NLCronScheduler测试
   - **优先级**：P3
   - **所属模块**：fusion/nl-cron
   - **涉及文件**：`packages/core/src/fusion/nl-cron/__tests__/nl-cron.test.ts`（新建）
@@ -502,7 +502,7 @@
 
 ### 4.2 Renderer UI组件
 
-- [ ] **T-UI-01** 实现VectorMemoryPanel向量记忆面板
+- [x] **T-UI-01** 实现VectorMemoryPanel向量记忆面板
   - **优先级**：P3
   - **所属模块**：fusion/ui
   - **涉及文件**：`packages/renderer/src/components/fusion/VectorMemoryPanel.vue`（新建）、`packages/renderer/src/stores/fusion/useVectorMemoryStore.ts`（新建）
@@ -512,7 +512,7 @@
     - Store：封装fusion:vector:search/status/delete/sync IPC调用
     - 组件：向量记忆列表展示、语义搜索输入框、同步状态指示、记忆详情预览、删除操作
 
-- [ ] **T-UI-02** 实现DAGCanvas DAG编排画布
+- [x] **T-UI-02** 实现DAGCanvas DAG编排画布
   - **优先级**：P3
   - **所属模块**：fusion/ui
   - **涉及文件**：`packages/renderer/src/components/fusion/DAGCanvas.vue`（新建）、`packages/renderer/src/stores/fusion/useDAGStore.ts`（新建）
@@ -522,7 +522,7 @@
     - Store：封装fusion:dag:execute/status/retry/cancel IPC调用
     - 组件：可视化DAG节点和边、拖拽编排、执行状态实时更新（pending/running/completed/failed）、失败节点重试按钮
 
-- [ ] **T-UI-03** 实现MultiAgentPanel多Agent状态面板
+- [x] **T-UI-03** 实现MultiAgentPanel多Agent状态面板
   - **优先级**：P3
   - **所属模块**：fusion/ui
   - **涉及文件**：`packages/renderer/src/components/fusion/MultiAgentPanel.vue`（新建）、`packages/renderer/src/stores/fusion/useMultiAgentStore.ts`（新建）
@@ -532,7 +532,7 @@
     - Store：封装fusion:parallel:execute/status IPC调用
     - 组件：并行Agent实例列表、各Agent状态（运行/完成/超时/失败）、结果汇总
 
-- [ ] **T-UI-04** 实现ModelRouterConfig模型路由配置
+- [x] **T-UI-04** 实现ModelRouterConfig模型路由配置
   - **优先级**：P3
   - **所属模块**：fusion/ui
   - **涉及文件**：`packages/renderer/src/components/fusion/ModelRouterConfig.vue`（新建）、`packages/renderer/src/stores/fusion/useModelRouterStore.ts`（新建）
@@ -542,7 +542,7 @@
     - Store：封装fusion:router:rules/addRule/removeRule/audit/status IPC调用
     - 组件：路由规则CRUD、审计日志查看、规则优先级拖拽排序、模型可用性检测
 
-- [ ] **T-UI-05** 实现CronScheduleManager Cron调度管理
+- [x] **T-UI-05** 实现CronScheduleManager Cron调度管理
   - **优先级**：P3
   - **所属模块**：fusion/ui
   - **涉及文件**：`packages/renderer/src/components/fusion/CronScheduleManager.vue`（新建）、`packages/renderer/src/stores/fusion/useCronStore.ts`（新建）
@@ -552,7 +552,7 @@
     - Store：封装fusion:cron:schedule/list/cancel/preview IPC调用
     - 组件：自然语言输入框、Cron表达式预览、调度列表管理、执行历史
 
-- [ ] **T-UI-06** 实现ReviewReportPanel审查报告面板
+- [x] **T-UI-06** 实现ReviewReportPanel审查报告面板
   - **优先级**：P3
   - **所属模块**：fusion/ui
   - **涉及文件**：`packages/renderer/src/components/fusion/ReviewReportPanel.vue`（新建）、`packages/renderer/src/stores/fusion/useReviewStore.ts`（新建）
@@ -562,7 +562,7 @@
     - Store：封装fusion:review:reports/status IPC调用
     - 组件：审查报告列表、评分可视化（0-10）、建议详情、风险标记
 
-- [ ] **T-UI-07** 实现UserProfilePanel用户画像面板
+- [x] **T-UI-07** 实现UserProfilePanel用户画像面板
   - **优先级**：P3
   - **所属模块**：fusion/ui
   - **涉及文件**：`packages/renderer/src/components/fusion/UserProfilePanel.vue`（新建）、`packages/renderer/src/stores/fusion/useUserModelStore.ts`（新建）
@@ -572,7 +572,7 @@
     - Store：封装fusion:usermodel:profile/trigger/status IPC调用
     - 组件：用户偏好展示、编码风格/技术栈/工作流模式标签云、手动触发更新
 
-- [ ] **T-UI-08** 实现FusionSettings融合层全局设置
+- [x] **T-UI-08** 实现FusionSettings融合层全局设置
   - **优先级**：P3
   - **所属模块**：fusion/ui
   - **涉及文件**：`packages/renderer/src/components/fusion/FusionSettings.vue`（新建）、`packages/renderer/src/stores/fusion/useFusionStore.ts`（新建）
@@ -584,7 +584,7 @@
 
 ### 4.3 IPC注册集成
 
-- [ ] **T-IPC-01** 实现EventBus IPC通道注册
+- [x] **T-IPC-01** 实现EventBus IPC通道注册
   - **优先级**：P3
   - **所属模块**：fusion/ipc
   - **涉及文件**：`packages/electron/src/ipc/fusion/eventbus-ipc.ts`（新建）
@@ -594,7 +594,7 @@
     - 注册 `fusion:eventbus:publish`、`fusion:eventbus:subscribe`、`fusion:eventbus:metrics` IPC通道
     - ipcMain.handle桥接Core层EventBus方法
 
-- [ ] **T-IPC-02** 实现HookRegistry IPC通道注册
+- [x] **T-IPC-02** 实现HookRegistry IPC通道注册
   - **优先级**：P3
   - **所属模块**：fusion/ipc
   - **涉及文件**：`packages/electron/src/ipc/fusion/hook-ipc.ts`（新建）
@@ -603,7 +603,7 @@
   - **实现要点**：
     - 注册 `fusion:hook:list`、`fusion:hook:unregister` IPC通道
 
-- [ ] **T-IPC-03** 实现增强模块IPC通道注册（批量）
+- [x] **T-IPC-03** 实现增强模块IPC通道注册（批量）
   - **优先级**：P3
   - **所属模块**：fusion/ipc
   - **涉及文件**：`packages/electron/src/ipc/fusion/memory-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/vector-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/review-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/trace-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/skill-security-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/dag-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/multi-agent-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/model-router-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/cron-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/user-model-ipc.ts`（新建）、`packages/electron/src/ipc/fusion/fusion-global-ipc.ts`（新建）
@@ -622,7 +622,7 @@
     - UserModel：`fusion:usermodel:profile`、`fusion:usermodel:trigger`、`fusion:usermodel:status`
     - FusionGlobal：`fusion:health:check`、`fusion:config:get`、`fusion:config:set`、`fusion:module:toggle`
 
-- [ ] **T-IPC-04** 实现IPC注册入口与Electron集成
+- [x] **T-IPC-04** 实现IPC注册入口与Electron集成
   - **优先级**：P3
   - **所属模块**：fusion/ipc
   - **涉及文件**：`packages/electron/src/ipc/fusion/index.ts`（新建）、`packages/electron/src/ipc/fusion/register.ts`（新建）
@@ -635,7 +635,7 @@
 
 ### 4.4 ConnectorHub扩展接口（REQ-H12）
 
-- [ ] **T-H12-01** 实现ConnectorHub扩展适配器
+- [x] **T-H12-01** 实现ConnectorHub扩展适配器
   - **优先级**：P3
   - **所属模块**：fusion/connectors
   - **涉及文件**：`packages/core/src/fusion/connectors/connector-hub-adapter.ts`（新建）、`packages/core/src/fusion/connectors/types.ts`（新建）
@@ -649,7 +649,7 @@
 
 ### 4.5 跨平台消息网关增强（REQ-H11）
 
-- [ ] **T-H11-01** 实现统一消息网关抽象层
+- [x] **T-H11-01** 实现统一消息网关抽象层
   - **优先级**：P3
   - **所属模块**：fusion/gateway
   - **涉及文件**：`packages/core/src/fusion/gateway/types.ts`（新建）、`packages/core/src/fusion/gateway/message-gateway.ts`（新建）
@@ -664,7 +664,7 @@
 
 ### 4.6 熔断器与融合层初始化
 
-- [ ] **T-CB-01** 实现CircuitBreaker熔断器
+- [x] **T-CB-01** 实现CircuitBreaker熔断器
   - **优先级**：P3
   - **所属模块**：fusion/common
   - **涉及文件**：`packages/core/src/fusion/circuit-breaker.ts`（新建）
@@ -675,7 +675,7 @@
     - 状态机：closed → open（连续3次异常）→ half-open（resetTimeout后尝试）→ closed（成功）
     - execute方法：检查状态 → 执行函数 → 成功/失败回调
 
-- [ ] **T-INIT-01** 实现融合层统一初始化与模块管理
+- [x] **T-INIT-01** 实现融合层统一初始化与模块管理
   - **优先级**：P3
   - **所属模块**：fusion
   - **涉及文件**：`packages/core/src/fusion/fusion-initializer.ts`（新建）、`packages/core/src/fusion/types.ts`（新建）
@@ -689,7 +689,7 @@
 
 ### 4.7 融合测试与兼容性验证
 
-- [ ] **T-TEST-01** 融合层集成测试
+- [x] **T-TEST-01** 融合层集成测试
   - **优先级**：P3
   - **所属模块**：fusion/testing
   - **涉及文件**：`packages/core/src/fusion/__tests__/integration/fusion-integration.test.ts`（新建）
@@ -703,7 +703,7 @@
     - 测试模块间事件驱动通信
     - 测试融合层初始化（≤500ms）
 
-- [ ] **T-TEST-02** 兼容性与降级验证测试
+- [x] **T-TEST-02** 兼容性与降级验证测试
   - **优先级**：P3
   - **所属模块**：fusion/testing
   - **涉及文件**：`packages/core/src/fusion/__tests__/integration/compatibility.test.ts`（新建）
@@ -717,7 +717,7 @@
     - 验证：IPC通道不与已有通道冲突
     - 验证：migration003为纯增量DDL，不影响已有表
 
-- [ ] **T-TEST-03** 性能约束验证测试
+- [x] **T-TEST-03** 性能约束验证测试
   - **优先级**：P3
   - **所属模块**：fusion/testing
   - **涉及文件**：`packages/core/src/fusion/__tests__/integration/performance.test.ts`（新建）

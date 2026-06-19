@@ -10,7 +10,7 @@
 
 ### 1. 公共类型定义
 
-- [ ] **T-OS01** — 定义 OpenSpace 融合层公共类型
+- [x] **T-OS01** — 定义 OpenSpace 融合层公共类型
   - 优先级：P0
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/types.ts`（新建）
@@ -32,7 +32,7 @@
 
 ### 2. OpenSpaceProcessManager — 进程生命周期管理
 
-- [ ] **T-OS02** — 实现 OpenSpaceProcessManager 核心逻辑
+- [x] **T-OS02** — 实现 OpenSpaceProcessManager 核心逻辑
   - 优先级：P0
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/process-manager.ts`（新建）
@@ -54,7 +54,7 @@
 
 ### 3. OpenSpaceBridge — 双向通信桥接
 
-- [ ] **T-OS03** — 实现 OpenSpaceBridge 核心逻辑
+- [x] **T-OS03** — 实现 OpenSpaceBridge 核心逻辑
   - 优先级：P0
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/bridge.ts`（新建）
@@ -77,7 +77,7 @@
 
 ### 4. 脚本安全审查
 
-- [ ] **T-OS04** — 实现脚本安全审查模块
+- [x] **T-OS04** — 实现脚本安全审查模块
   - 优先级：P0
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/security-review.ts`（新建）
@@ -94,7 +94,7 @@
 
 ### 5. 内置脚本模板库
 
-- [ ] **T-OS05** — 实现内置脚本模板库
+- [x] **T-OS05** — 实现内置脚本模板库
   - 优先级：P0
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/script-templates.ts`（新建）
@@ -111,7 +111,7 @@
 
 ### 6. openspace_execute 工具
 
-- [ ] **T-OS06** — 实现 openspace_execute Agent 工具
+- [x] **T-OS06** — 实现 openspace_execute Agent 工具
   - 优先级：P0
   - 所属模块：`fusion/openspace/tools`
   - 涉及文件：`packages/core/src/fusion/openspace/tools/openspace-execute.ts`（新建）
@@ -130,7 +130,7 @@
 
 ### 7. EventBus 事件主题扩展
 
-- [ ] **T-OS07** — 扩展 EventBus 事件主题
+- [x] **T-OS07** — 扩展 EventBus 事件主题
   - 优先级：P0
   - 所属模块：`fusion/openspace`
   - 涉及文件：
@@ -149,7 +149,7 @@
 
 ### 8. 数据库迁移
 
-- [ ] **T-OS08** — 实现 migration004_openspace 数据库迁移
+- [x] **T-OS08** — 实现 migration004_openspace 数据库迁移
   - 优先级：P0
   - 所属模块：`electron/database`
   - 涉及文件：`packages/electron/src/database/migrations/migration004_openspace.ts`（新建）
@@ -169,7 +169,7 @@
 
 ### 9. 模块导出
 
-- [ ] **T-OS09** — 实现 OpenSpace 模块入口导出
+- [x] **T-OS09** — 实现 OpenSpace 模块入口导出
   - 优先级：P0
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/index.ts`（新建）
@@ -187,7 +187,7 @@
 
 ### 10. OpenSpaceScriptGenerator — AI 脚本生成器
 
-- [ ] **T-OS10** — 实现 OpenSpaceScriptGenerator 核心逻辑
+- [x] **T-OS10** — 实现 OpenSpaceScriptGenerator 核心逻辑
   - 优先级：P1
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/script-generator.ts`（新建）
@@ -208,7 +208,7 @@
 
 ### 11. OpenSpaceProfileManager — Profile/场景管理
 
-- [ ] **T-OS11** — 实现 OpenSpaceProfileManager 核心逻辑
+- [x] **T-OS11** — 实现 OpenSpaceProfileManager 核心逻辑
   - 优先级：P1
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/profile-manager.ts`（新建）
@@ -228,7 +228,7 @@
 
 ### 12. OpenSpaceDatasetBrowser — 数据集浏览器
 
-- [ ] **T-OS12** — 实现 OpenSpaceDatasetBrowser 核心逻辑
+- [x] **T-OS12** — 实现 OpenSpaceDatasetBrowser 核心逻辑
   - 优先级：P1
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/dataset-browser.ts`（新建）
@@ -247,7 +247,7 @@
 
 ### 13. OpenSpace Skills — 导航技能
 
-- [ ] **T-OS13** — 实现 openspace-navigation Skill
+- [x] **T-OS13** — 实现 openspace-navigation Skill
   - 优先级：P1
   - 所属模块：`fusion/openspace/skills`
   - 涉及文件：`packages/core/src/fusion/openspace/skills/openspace-navigate/SKILL.md`（新建）
@@ -263,7 +263,7 @@
 
 ### 14. OpenSpace Skills — 场景管理技能
 
-- [ ] **T-OS14** — 实现 openspace-scene-management Skill
+- [x] **T-OS14** — 实现 openspace-scene-management Skill
   - 优先级：P1
   - 所属模块：`fusion/openspace/skills`
   - 涉及文件：`packages/core/src/fusion/openspace/skills/openspace-scene/SKILL.md`（新建）
@@ -278,7 +278,7 @@
 
 ### 15. OpenSpace Skills — 录制技能
 
-- [ ] **T-OS15** — 实现 openspace-recording Skill
+- [x] **T-OS15** — 实现 openspace-recording Skill
   - 优先级：P1
   - 所属模块：`fusion/openspace/skills`
   - 涉及文件：`packages/core/src/fusion/openspace/skills/openspace-record/SKILL.md`（新建）
@@ -293,7 +293,7 @@
 
 ### 16. Skill 可用性联动机制
 
-- [ ] **T-OS16** — 实现 OpenSpace Skill 可用性联动机制
+- [x] **T-OS16** — 实现 OpenSpace Skill 可用性联动机制
   - 优先级：P1
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/fusion-adapter.ts`（修改）
@@ -310,7 +310,7 @@
 
 ### 17. OpenSpaceRenderer — 可视化窗口嵌入
 
-- [ ] **T-OS17** — 实现 OpenSpaceRenderer 核心逻辑
+- [x] **T-OS17** — 实现 OpenSpaceRenderer 核心逻辑
   - 优先级：P2
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/renderer.ts`（新建）
@@ -329,7 +329,7 @@
 
 ### 18. OpenSpaceRecorder — 会话录制回放
 
-- [ ] **T-OS18** — 实现 OpenSpaceRecorder 核心逻辑
+- [x] **T-OS18** — 实现 OpenSpaceRecorder 核心逻辑
   - 优先级：P2
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/recorder.ts`（新建）
@@ -348,7 +348,7 @@
 
 ### 19. OpenSpaceSyncManager — 全球同步连接管理
 
-- [ ] **T-OS19** — 实现 OpenSpaceSyncManager 核心逻辑
+- [x] **T-OS19** — 实现 OpenSpaceSyncManager 核心逻辑
   - 优先级：P2
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/sync-manager.ts`（新建）
@@ -368,7 +368,7 @@
 
 ### 20. IPC 注册
 
-- [ ] **T-OS20** — 注册 openspace:* 系列 IPC 通道
+- [x] **T-OS20** — 注册 openspace:* 系列 IPC 通道
   - 优先级：P2
   - 所属模块：`electron/ipc`
   - 涉及文件：`packages/electron/src/ipc/openspace-ipc.ts`（新建）
@@ -390,7 +390,7 @@
 
 ### 21. Zustand Store
 
-- [ ] **T-OS21** — 实现 OpenSpace Zustand Store
+- [x] **T-OS21** — 实现 OpenSpace Zustand Store
   - 优先级：P2
   - 所属模块：`renderer/stores`
   - 涉及文件：`packages/renderer/src/stores/openspace-store.ts`（新建）
@@ -406,7 +406,7 @@
 
 ### 22. UI 组件 — OpenSpacePanel 主面板
 
-- [ ] **T-OS22** — 实现 OpenSpacePanel 主面板组件
+- [x] **T-OS22** — 实现 OpenSpacePanel 主面板组件
   - 优先级：P2
   - 所属模块：`renderer/components/openspace`
   - 涉及文件：`packages/renderer/src/components/openspace/OpenSpacePanel.tsx`（新建）
@@ -424,7 +424,7 @@
 
 ### 23. UI 组件 — OpenSpaceScriptEditor 脚本编辑器
 
-- [ ] **T-OS23** — 实现 OpenSpaceScriptEditor 脚本编辑器组件
+- [x] **T-OS23** — 实现 OpenSpaceScriptEditor 脚本编辑器组件
   - 优先级：P2
   - 所属模块：`renderer/components/openspace`
   - 涉及文件：`packages/renderer/src/components/openspace/OpenSpaceScriptEditor.tsx`（新建）
@@ -443,7 +443,7 @@
 
 ### 24. UI 组件 — OpenSpaceDatasetTree 数据集树
 
-- [ ] **T-OS24** — 实现 OpenSpaceDatasetTree 数据集树组件
+- [x] **T-OS24** — 实现 OpenSpaceDatasetTree 数据集树组件
   - 优先级：P2
   - 所属模块：`renderer/components/openspace`
   - 涉及文件：`packages/renderer/src/components/openspace/OpenSpaceDatasetTree.tsx`（新建）
@@ -461,7 +461,7 @@
 
 ### 25. UI 组件 — OpenSpaceProfileManager Profile 管理
 
-- [ ] **T-OS25** — 实现 OpenSpaceProfileManager Profile 管理组件
+- [x] **T-OS25** — 实现 OpenSpaceProfileManager Profile 管理组件
   - 优先级：P2
   - 所属模块：`renderer/components/openspace`
   - 涉及文件：`packages/renderer/src/components/openspace/OpenSpaceProfileManager.tsx`（新建）
@@ -480,7 +480,7 @@
 
 ### 26. UI 组件 — OpenSpaceRecorderPanel 录制回放
 
-- [ ] **T-OS26** — 实现 OpenSpaceRecorderPanel 录制回放组件
+- [x] **T-OS26** — 实现 OpenSpaceRecorderPanel 录制回放组件
   - 优先级：P2
   - 所属模块：`renderer/components/openspace`
   - 涉及文件：`packages/renderer/src/components/openspace/OpenSpaceRecorderPanel.tsx`（新建）
@@ -497,7 +497,7 @@
 
 ### 27. UI 组件 — OpenSpaceInstallGuide 安装引导
 
-- [ ] **T-OS27** — 实现 OpenSpaceInstallGuide 安装引导组件
+- [x] **T-OS27** — 实现 OpenSpaceInstallGuide 安装引导组件
   - 优先级：P2
   - 所属模块：`renderer/components/openspace`
   - 涉及文件：`packages/renderer/src/components/openspace/OpenSpaceInstallGuide.tsx`（新建）
@@ -514,7 +514,7 @@
 
 ### 28. 降级与兼容性测试
 
-- [ ] **T-OS28** — 降级容错与兼容性验证
+- [x] **T-OS28** — 降级容错与兼容性验证
   - 优先级：P2
   - 所属模块：`fusion/openspace`
   - 涉及文件：`packages/core/src/fusion/openspace/` （修改 fusion-adapter.ts 等相关文件）

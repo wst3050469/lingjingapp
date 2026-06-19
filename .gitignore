@@ -99,3 +99,4 @@ clean_build.py
 rebuild-deb.*
 update-versions.py
 build-deb.py
+.qoder  

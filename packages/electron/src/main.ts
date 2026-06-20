@@ -894,16 +894,6 @@ async function bootstrap(): Promise<void> {
     console.warn('[Main] Fallback handler registration:', err);
   }
 
-  // Review fallback IPC handlers (shared with chat diff review)
-  try {
-    for (const ch of ['review:execute','review:listReports','review:getReport','review:listRules','review:saveRule','review:deleteRule','review:applyFix']) {
-      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
-    }
-    console.log('[Main] Registered review fallback handlers');
-  } catch (err) {
-    console.warn('[Main] Review fallback registration:', err);
-  }
-
   // Subscription fallback IPC handlers (preload exposes subscription:xxx but no backend impl)
   try {
     ipcMain.handle('subscription:status', async () => ({ success: false, error: 'Not implemented' }));

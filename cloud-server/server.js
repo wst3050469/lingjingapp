@@ -6,7 +6,7 @@
 
 import http from 'node:http';
 import { randomUUID, createHmac, timingSafeEqual, scryptSync, randomBytes } from 'node:crypto';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -599,6 +599,81 @@ function readVersionInfo() {
   }
   return { hasUpdate: false, version: '0.0.0' };
 }
+
+// ── versions.json auto-backup & recovery ──
+const VER_PRIMARY = '/var/www/downloads/versions.json';
+const MIN_VERSIONS = 5;
+
+function backupVersionsJson() {
+  try {
+    if (!existsSync(VER_PRIMARY)) return;
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const bakPath = `/var/www/downloads/versions.json.auto-${ts}`;
+    writeFileSync(bakPath, readFileSync(VER_PRIMARY, 'utf8'));
+    // Keep only last 10 auto-backups
+    try {
+      const files = readdirSync('/var/www/downloads')
+        .filter(f => f.startsWith('versions.json.auto-'))
+        .sort().reverse();
+      for (const f of files.slice(10)) {
+        unlinkSync(`/var/www/downloads/${f}`);
+      }
+    } catch (_) {}
+    console.log('[Version] Auto-backup created:', bakPath);
+  } catch (e) {
+    console.warn('[Version] Auto-backup failed:', e.message);
+  }
+}
+
+function recoverVersionsJson() {
+  try {
+    if (!existsSync(VER_PRIMARY)) return;
+    const data = JSON.parse(readFileSync(VER_PRIMARY, 'utf8'));
+    const count = data.versions ? data.versions.length : 0;
+    if (count >= MIN_VERSIONS) return;
+
+    console.warn(`[Version] Only ${count} versions, attempting recovery...`);
+    const bakFiles = readdirSync('/var/www/downloads')
+      .filter(f => f.startsWith('versions.json.') && !f.includes('auto-'))
+      .sort().reverse();
+
+    for (const bak of bakFiles) {
+      const bakPath = `/var/www/downloads/${bak}`;
+      try {
+        const bakData = JSON.parse(readFileSync(bakPath, 'utf8'));
+        const bakCount = bakData.versions ? bakData.versions.length : 0;
+        if (bakCount > count) {
+          const currentSet = new Set((data.versions || []).map(v => v.version));
+          const merged = [...(data.versions || [])];
+          for (const v of (bakData.versions || [])) {
+            if (!currentSet.has(v.version)) merged.push(v);
+          }
+          merged.sort((a, b) => {
+            const ap = (a.version || '').replace(/[^0-9.]/g, '').split('.').map(Number);
+            const bp = (b.version || '').replace(/[^0-9.]/g, '').split('.').map(Number);
+            for (let i = 0; i < Math.max(ap.length, bp.length); i++)
+              if ((ap[i] || 0) !== (bp[i] || 0)) return (bp[i] || 0) - (ap[i] || 0);
+            return 0;
+          });
+          data.versions = merged.slice(0, 20);
+          writeFileSync(VER_PRIMARY, JSON.stringify(data, null, 2));
+          try { writeFileSync('/var/www/html/versions.json', JSON.stringify(data, null, 2)); } catch (_) {}
+          console.log(`[Version] Recovered from ${bak}: now ${data.versions.length} versions`);
+          return;
+        }
+      } catch (_) {}
+    }
+    console.warn('[Version] No suitable backup found');
+  } catch (e) {
+    console.warn('[Version] Recovery failed:', e.message);
+  }
+}
+
+recoverVersionsJson();
+setInterval(backupVersionsJson, 6 * 60 * 60 * 1000);
+process.on('SIGTERM', () => { backupVersionsJson(); process.exit(0); });
+process.on('SIGINT', () => { backupVersionsJson(); process.exit(0); });
+
 app.get('/api/latest', (req, res) => {
   res.json(readVersionInfo());
 });

@@ -47,8 +47,6 @@ interface HealthCheckDeps {
   userModeler?: IHonchoUserModeler;
   connectorHub?: IConnectorHubAdapter;
   messageGateway?: IMessageGateway;
-  openSpaceProcessAlive?: boolean;
-  openSpaceWsConnected?: boolean;
 }
 
 function isModuleEnabled(config: FusionConfig, configName: string): boolean {
@@ -154,20 +152,6 @@ export function runFusionHealthCheck(deps: HealthCheckDeps): FusionHealthReport 
     enabled: true,
     healthy: deps.connectorHub !== undefined,
     details: deps.connectorHub ? 'available' : 'not available',
-  });
-
-  modules.push({
-    name: 'OpenSpaceProcessManager',
-    enabled: true,
-    healthy: deps.openSpaceProcessAlive ?? false,
-    details: deps.openSpaceProcessAlive ? 'process alive' : 'process not running',
-  });
-
-  modules.push({
-    name: 'OpenSpaceBridge',
-    enabled: true,
-    healthy: deps.openSpaceWsConnected ?? false,
-    details: deps.openSpaceWsConnected ? 'WebSocket connected' : 'WebSocket disconnected',
   });
 
   const enabledModules = modules.filter((m) => m.enabled);

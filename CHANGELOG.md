@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v1.73.131 (2026-06-20)
+
+### Fixed
+- **下载页 stuck on v1.73.120**: `downloads.js` 中 `macX64Url`/`macArm64Url` 未声明导致 ReferenceError，JS 崩溃后触发硬编码 v1.73.120 fallback。修复: 添加 macOS 变量声明 + fallback 版本号更新
+
 ## v1.73.130 (2026-06-20)
 
 ### Added

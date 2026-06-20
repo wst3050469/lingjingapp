@@ -1,5 +1,5 @@
-// 灵境IDE 移动端 - 全局状态管理 (Zustand)
-// 合并 lingjing-mobile/app-store.ts + mobile/store.ts 全部字段
+// 灵境IDE 移动端轻量版 - 全局状态管理 (Zustand)
+// v2: 精简为纯对话，移除任务/计划/订阅/定时/设备状态
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -22,89 +22,11 @@ export interface Message {
   created_at: string;
 }
 
-export interface QuestTask {
-  id: string;
-  title: string;
-  status: string;
-  scenario: string;
-  created_at: string;
-}
-
-export interface Plan {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  current_step: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PlanDetail extends Plan {
-  goals: string[];
-  constraints?: string[];
-  steps: { index: number; title: string; status: string }[];
-}
-
 interface SessionDetail {
   id: string;
   title: string;
   created_at: string;
   messages: Message[];
-}
-
-interface DeviceStatus {
-  device: string;
-  platform: string;
-  uptime: number;
-  memory: { total: number; free: number };
-  cpu: string;
-  stats: {
-    conversations: number;
-    quest_tasks: number;
-    plans: number;
-    mobile_clients: number;
-  };
-  version: string;
-}
-
-// ── Subscription Types ──
-export interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  billing_cycle: string;
-  features: { name: string; desc: string; included: boolean }[];
-  limits: Record<string, number>;
-  recommended: number;
-}
-
-export interface SubscriptionInfo {
-  id: string;
-  plan_id: string;
-  plan_name: string;
-  status: string;
-  started_at: string;
-  expires_at: string;
-  usage: {
-    apiCalls: number;
-    sessions: number;
-    memories: number;
-    storageFiles: number;
-    apiKeys: number;
-    limits: Record<string, number>;
-  };
-}
-
-// ── Schedule Types (移植自 mobile/store.ts) ──
-export interface Schedule {
-  id: string;
-  name: string;
-  cron_expr: string;
-  action_type: string;
-  status: string;
-  last_run: string | null;
-  next_run: string | null;
 }
 
 export interface UserInfo {
@@ -118,13 +40,9 @@ export interface UserInfo {
 interface AppState {
   // Connection
   connected: boolean;
-  mode: 'lan' | 'cloud' | 'cloud_account';
+  mode: 'cloud_account';
   baseUrl: string;
-  setConnection: (connected: boolean, mode: 'lan' | 'cloud' | 'cloud_account', baseUrl: string) => void;
-
-  // Device status
-  status: DeviceStatus | null;
-  setStatus: (s: DeviceStatus) => void;
+  setConnection: (connected: boolean, mode: 'cloud_account', baseUrl: string) => void;
 
   // Sessions
   sessions: Session[];
@@ -132,39 +50,9 @@ interface AppState {
   setSessions: (s: Session[]) => void;
   setSelectedSession: (s: SessionDetail | null) => void;
 
-  // Quest tasks
-  tasks: QuestTask[];
-  setTasks: (t: QuestTask[]) => void;
-
-  // Plans (quest plans)
-  plans: Plan[];
-  setPlans: (p: Plan[]) => void;
-
-  // Subscription
-  subscription: SubscriptionInfo | null;
-  subscriptionPlans: SubscriptionPlan[];
-  setSubscription: (s: SubscriptionInfo | null) => void;
-  setSubscriptionPlans: (p: SubscriptionPlan[]) => void;
-
-  // Schedules (移植自 mobile/store.ts)
-  schedules: Schedule[];
-  setSchedules: (s: Schedule[]) => void;
-
-  // Cloud connection (移植自 mobile/store.ts)
-  cloudConnected: boolean;
-  setCloudConnected: (connected: boolean) => void;
-
-  // UI (移植自 mobile/store.ts)
-  isLoading: boolean;
-  setLoading: (loading: boolean) => void;
-
-  // Settings
+  // Auth
   token: string;
   setToken: (t: string) => void;
-  lanIp: string;
-  setLanIp: (ip: string) => void;
-
-  // Auth (移植自 mobile/store.ts)
   isAuthenticated: boolean;
   deviceId: string | null;
   user: UserInfo | null;
@@ -175,38 +63,17 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   connected: false,
-  mode: 'lan',
+  mode: 'cloud_account',
   baseUrl: '',
   setConnection: (connected, mode, baseUrl) => set({ connected, mode, baseUrl }),
-
-  status: null,
-  setStatus: (status) => set({ status }),
 
   sessions: [],
   selectedSession: null,
   setSessions: (sessions) => set({ sessions }),
   setSelectedSession: (session) => set({ selectedSession: session }),
 
-  tasks: [],
-  setTasks: (tasks) => set({ tasks }),
-
-  plans: [],
-  setPlans: (plans) => set({ plans }),
-
-  subscription: null,
-  subscriptionPlans: [],
-  setSubscription: (subscription) => set({ subscription }),
-  setSubscriptionPlans: (subscriptionPlans) => set({ subscriptionPlans }),
-
-  // === 新增: 移植自 mobile/store.ts ===
-  schedules: [],
-  setSchedules: (schedules) => set({ schedules }),
-
-  cloudConnected: false,
-  setCloudConnected: (cloudConnected) => set({ cloudConnected }),
-
-  isLoading: false,
-  setLoading: (isLoading) => set({ isLoading }),
+  token: '',
+  setToken: (token) => set({ token }),
 
   isAuthenticated: false,
   deviceId: null,
@@ -224,14 +91,9 @@ export const useAppStore = create<AppState>((set) => ({
     AsyncStorage.removeItem(STORAGE_KEY_USER).catch(() => {});
     set({
       isAuthenticated: false, deviceId: null, user: null,
-      token: '', connected: false, mode: 'lan',
+      token: '', connected: false,
     });
   },
-
-  token: '',
-  setToken: (token) => set({ token }),
-  lanIp: '',
-  setLanIp: (lanIp) => set({ lanIp }),
 }));
 
 // ── Persistence helpers (AsyncStorage) ──

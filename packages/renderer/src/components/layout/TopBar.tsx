@@ -263,21 +263,11 @@ function buildMenus(): MenuDef[] {
       label: '工作流',
       hotkey: 'W',
       items: [
-        { label: '新建工作流', shortcut: 'Ctrl+Shift+N', action: () => {
-          useUIStore.getState().setSidebarPanel('workflow');
-        }},
-        { label: '打开工作流', shortcut: 'Ctrl+Shift+O', action: () => {
+        { label: '打开工作流监控', shortcut: 'Ctrl+Shift+W', action: () => {
           useUIStore.getState().setSidebarPanel('workflow');
         }},
         { label: '', divider: true },
         { label: '工作流设置', action: () => {
-          useUIStore.getState().setShowSettingsModal(true);
-        }},
-        { label: '', divider: true },
-        { label: 'Connector管理', action: () => {
-          useUIStore.getState().setShowSettingsModal(true);
-        }},
-        { label: 'Trigger管理', action: () => {
           useUIStore.getState().setShowSettingsModal(true);
         }},
       ],

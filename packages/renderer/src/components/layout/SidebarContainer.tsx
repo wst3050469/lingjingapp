@@ -8,7 +8,7 @@ import { RunDebugPanel } from '../run-debug/RunDebugPanel';
 import { ExtensionPanel } from '../extension/ExtensionPanel';
 import { RemotePanel } from '../remote/RemotePanel';
 import { AdminPanel } from '../admin/AdminPanel';
-import { WorkflowList, WorkflowEditor, WorkflowMonitor } from '../workflow';
+import { WorkflowList, WorkflowMonitor } from '../workflow';
 import { ErrorBoundary } from './ErrorBoundary';
 
 const LazyFusionSettings = lazy(() => import('../fusion/FusionSettings').then(m => ({ default: m.FusionSettings })));
@@ -23,43 +23,26 @@ const LazyUserProfilePanel = lazy(() => import('../fusion/UserProfilePanel').the
 const fusionFallback = <div className="flex items-center justify-center h-full text-cp-text-dim/50 text-sm">加载中...</div>;
 
 function WorkflowPanel() {
-  const [activeTab, setActiveTab] = useState<'list' | 'editor' | 'monitor'>('list');
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
 
   return (
     <div className="h-full flex flex-col">
-      <div className="h-9 flex items-center gap-1 px-2 border-b border-cp-border">
-        <button
-          onClick={() => setActiveTab('list')}
-          className={`px-2 py-1 rounded text-xs ${activeTab === 'list' ? 'bg-cp-surface text-cp-text' : 'text-cp-text-dim/70'}`}
-        >
-          列表
-        </button>
-        <button
-          onClick={() => setActiveTab('editor')}
-          className={`px-2 py-1 rounded text-xs ${activeTab === 'editor' ? 'bg-cp-surface text-cp-text' : 'text-cp-text-dim/70'}`}
-        >
-          编辑器
-        </button>
-        <button
-          onClick={() => setActiveTab('monitor')}
-          className={`px-2 py-1 rounded text-xs ${activeTab === 'monitor' ? 'bg-cp-surface text-cp-text' : 'text-cp-text-dim/70'}`}
-        >
-          监控
-        </button>
+      <div className="h-9 flex items-center px-3 border-b border-cp-border">
+        <span className="text-xs text-cp-text font-medium">工作流监控</span>
+        {selectedWorkflowId && (
+          <button
+            onClick={() => setSelectedWorkflowId(null)}
+            className="ml-auto text-[10px] text-cp-text-dim hover:text-cp-text"
+          >
+            ← 返回列表
+          </button>
+        )}
       </div>
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'list' && (
-          <WorkflowList {...({ onSelectWorkflow: (id: string) => {
-              setSelectedWorkflowId(id);
-              setActiveTab('editor');
-            } } as any)} />
-        )}
-        {activeTab === 'editor' && selectedWorkflowId && (
-          <WorkflowEditor workflowId={selectedWorkflowId} />
-        )}
-        {activeTab === 'monitor' && selectedWorkflowId && (
+        {selectedWorkflowId ? (
           <WorkflowMonitor workflowId={selectedWorkflowId} />
+        ) : (
+          <WorkflowList onSelectWorkflow={(id: string) => setSelectedWorkflowId(id)} />
         )}
       </div>
     </div>

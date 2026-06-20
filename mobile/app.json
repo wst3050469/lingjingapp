@@ -1,44 +1,32 @@
 {
   "expo": {
-    "name": "灵境",
+    "name": "灵境IDE",
     "slug": "lingjing-mobile",
-    "version": "1.73.139",
+    "version": "1.73.35",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "lingjing",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1e1e1e"
+      "backgroundColor": "#0d1117"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lingjing.codepilot"
+      "bundleIdentifier": "com.zhejiangjinmo.lingjing.mobile"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1e1e1e"
+        "backgroundColor": "#0d1117"
       },
-      "package": "com.lingjing.codepilot",
-      "edgeToEdgeEnabled": false
+      "package": "com.zhejiangjinmo.lingjing.mobile"
     },
-    "plugins": [
-      "expo-notifications",
-      "expo-updates"
-    ],
-    "updates": {
-      "enabled": true,
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 3000,
-      "url": "https://u.expo.dev/2c8f346b-10e0-4b26-b893-124eb212602f"
-    },
-    "runtimeVersion": "1.73.139",
+    "plugins": [],
     "extra": {
-      "cloudUrl": "https://ide.zhejiangjinmo.com",
-      "apiKey": ""
-    }
-  }
+      "eas": {
+        "projectId": "2c8f346b-10e0-4b26-b893-124eb212602f"
+      }
+    },
+    "owner": "wst3050469",
+    "versionCode": 67
+  },
+  "version": "1.73.35"
 }

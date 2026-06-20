@@ -199,7 +199,7 @@ export function registerFusionModuleIpc(): void {
     return { success: true, key, value };
   });
   ipcMain.handle('fusion:module:toggle', async (_event, moduleName: string, enabled: boolean) => {
-    if (!fusionInitializer) throw new Error('FusionInitializer not initialized');
+    if (!fusionInitializer) { return { success: false, degraded: true, message: 'Fusion modules not yet initialized, retry later' }; }
     fusionInitializer.toggleModule(moduleName as any, enabled);
     return { success: true };
   });

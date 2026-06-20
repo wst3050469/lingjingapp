@@ -418,14 +418,14 @@ const db = initDB();
 // Register Admin Management API
 registerAdminAPI(app, db);
 
-// ====== Fusion & OpenSpace API (DEF-010/011 fix) ======
+// ====== Megaclouder Fusion API (DEF-010/011 fix) ======
 
 // Fusion health check
 app.get('/api/fusion/health', (req, res) => {
   try {
     const modules = ['event-bus', 'hook-registry', 'sliding-window', 'vector-memory', 'review-engine',
       'skill-security', 'trace-harvester', 'dag-orchestrator', 'multi-agent', 'model-router',
-      'user-modeler', 'nl-cron', 'connectors', 'gateway', 'openspace'];
+      'user-modeler', 'nl-cron', 'connectors', 'gateway'];
     const report = modules.map(m => ({ module: m, status: 'active', uptime: process.uptime() }));
     res.json({ status: 'ok', modules: report, timestamp: new Date().toISOString() });
   } catch (err) { res.status(500).json({ status: 'error', error: err.message }); }
@@ -448,27 +448,6 @@ app.post('/api/fusion/parallel/execute', (req, res) => {
   const { agents } = req.body;
   if (!agents || !Array.isArray(agents)) return res.status(400).json({ error: 'agents array required' });
   res.json({ status: 'accepted', message: `Parallel execution queued for ${agents.length} agents`, executionId: `par-${Date.now()}` });
-});
-
-// OpenSpace status
-app.get('/api/openspace/status', (req, res) => {
-  res.json({ connected: false, processes: [], timestamp: new Date().toISOString() });
-});
-
-// OpenSpace script execution
-app.post('/api/openspace/execute', (req, res) => {
-  const { script, language } = req.body;
-  if (!script) return res.status(400).json({ error: 'Script content required' });
-  res.json({ status: 'accepted', message: `Script queued for execution (${language || 'lua'})`, scriptId: `os-${Date.now()}` });
-});
-
-// OpenSpace process management
-app.get('/api/openspace/processes', (req, res) => {
-  res.json({ processes: [] });
-});
-app.post('/api/openspace/processes/stop', (req, res) => {
-  const { processId } = req.body;
-  res.json({ status: 'ok', message: `Process ${processId} stop requested` });
 });
 
 // Audit log API (DEF-011)

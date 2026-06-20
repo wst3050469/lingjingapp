@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## v1.73.132 (2026-06-20)
+
+### Changed
+- **OpenSpace 清理**: 移除 OpenSpace 宇宙功能所有代码引用（主进程 IPC、UI Store、数据库迁移、Core 融合层、cloud-server API、测试文件等），tsc 编译通过无错误
+
 ## v1.73.131 (2026-06-20)
 
 ### Fixed

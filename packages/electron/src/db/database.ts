@@ -353,15 +353,7 @@ export async function initDatabase(): Promise<SqlJsDatabase> {
     console.warn('[DB] Migration003 (Hermes Fusion) skipped or failed:', m3err);
   }
 
-  // Run OpenSpace migrations (openspace_processes, openspace_profiles, openspace_scripts, openspace_recordings)
-  try {
-    const { getMigration004SQL } = await import('@codepilot/core/fusion');
-    const migration004 = getMigration004SQL();
-    db.run(migration004);
-    console.log('[DB] Migration004 (OpenSpace) applied successfully');
-  } catch (m4err) {
-    console.warn('[DB] Migration004 (OpenSpace) skipped or failed:', m4err);
-  }
+  // OpenSpace migrations removed — Migration004 skipped intentionally
 
   } catch (schemaErr) {
     // Database file is corrupted — recreate from scratch

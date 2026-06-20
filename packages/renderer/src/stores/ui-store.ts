@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 type ViewMode = 'editor' | 'quest';
-export type SidebarPanel = 'explorer' | 'search' | 'chat' | 'git' | 'run-debug' | 'extension' | 'remote' | 'workflow' | 'admin' | 'pipeline' | 'review' | 'pm' | 'security' | 'fusion-settings' | 'vector-memory' | 'dag-canvas' | 'multi-agent' | 'model-router' | 'cron-scheduler' | 'review-report' | 'user-profile';
+export type SidebarPanel = 'explorer' | 'search' | 'chat' | 'git' | 'run-debug' | 'extension' | 'remote' | 'workflow' | 'admin' | 'fusion-settings' | 'vector-memory' | 'dag-canvas' | 'multi-agent' | 'model-router' | 'cron-scheduler' | 'review-report' | 'user-profile';
 export type BottomTab = 'terminal' | 'problems' | 'chat' | 'ssh-terminal';
 export type TopTab = 'Spec' | 'Changed Files' | 'Preview';
 export type ThemeMode = 'dark' | 'light' | 'scifi-dark';
@@ -62,7 +62,7 @@ export const useUIStore = create<UIState>((set) => ({
   activeSidebarPanel: (() => {
     try {
       const saved = localStorage.getItem('last_sidebar_panel');
-      const valid: SidebarPanel[] = ['explorer','search','chat','git','run-debug','extension','remote','workflow','admin','pipeline','review','pm','security','fusion-settings','vector-memory','dag-canvas','multi-agent','model-router','cron-scheduler','review-report','user-profile'];
+      const valid: SidebarPanel[] = ['explorer','search','chat','git','run-debug','extension','remote','workflow','admin','fusion-settings','vector-memory','dag-canvas','multi-agent','model-router','cron-scheduler','review-report','user-profile'];
       if (saved && valid.includes(saved as SidebarPanel)) return saved as SidebarPanel;
     } catch {}
     return 'explorer';

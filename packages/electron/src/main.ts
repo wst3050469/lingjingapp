@@ -894,29 +894,14 @@ async function bootstrap(): Promise<void> {
     console.warn('[Main] Fallback handler registration:', err);
   }
 
-  // Pipeline/PM/Review/Security fallback IPC handlers
+  // Review fallback IPC handlers (shared with chat diff review)
   try {
-    // Pipeline
-    for (const ch of ['pipeline:list','pipeline:save','pipeline:delete','pipeline:trigger','pipeline:cancel','pipeline:runHistory']) {
-      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
-    }
-    // Project Management
-    for (const ch of ['pm:getBoard','pm:listWorkItems','pm:createWorkItem','pm:updateWorkItem','pm:deleteWorkItem',
-      'pm:updateStatus','pm:listMilestones','pm:linkCommit','pm:updateWipLimit','pm:exportData']) {
-      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
-    }
-    // Review
     for (const ch of ['review:execute','review:listReports','review:getReport','review:listRules','review:saveRule','review:deleteRule','review:applyFix']) {
       ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
     }
-    // Security
-    for (const ch of ['security:scan','security:listResults','security:getResult','security:compareResults',
-      'security:cancel','security:listRules','security:saveRule','security:deleteRule','security:applyFix']) {
-      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
-    }
-    console.log('[Main] Registered pipeline/pm/review/security fallback handlers');
+    console.log('[Main] Registered review fallback handlers');
   } catch (err) {
-    console.warn('[Main] Pipeline fallback registration:', err);
+    console.warn('[Main] Review fallback registration:', err);
   }
 
   // Subscription fallback IPC handlers (preload exposes subscription:xxx but no backend impl)

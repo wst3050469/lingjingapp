@@ -9,10 +9,6 @@ import { ExtensionPanel } from '../extension/ExtensionPanel';
 import { RemotePanel } from '../remote/RemotePanel';
 import { AdminPanel } from '../admin/AdminPanel';
 import { WorkflowList, WorkflowEditor, WorkflowMonitor } from '../workflow';
-import { PipelineEditor } from '../pipeline/PipelineEditor';
-import { ReviewPanel } from '../review/ReviewPanel';
-import { PMPanel } from '../pm/PMPanel';
-import { SecurityPanel } from '../security/SecurityPanel';
 import { ErrorBoundary } from './ErrorBoundary';
 
 const LazyFusionSettings = lazy(() => import('../fusion/FusionSettings').then(m => ({ default: m.FusionSettings })));
@@ -95,10 +91,6 @@ export function SidebarContainer() {
       {activeSidebarPanel === 'remote' && <RemotePanel />}
       {activeSidebarPanel === 'admin' && <AdminPanel />}
       {activeSidebarPanel === 'workflow' && <WorkflowPanel />}
-      {activeSidebarPanel === 'pipeline' && <PipelineEditor projectPath={window.__codepilot_project_path__ || ''} />}
-      {activeSidebarPanel === 'review' && <ReviewPanel projectPath={window.__codepilot_project_path__ || ''} />}
-      {activeSidebarPanel === 'pm' && <PMPanel projectPath={window.__codepilot_project_path__ || ''} />}
-      {activeSidebarPanel === 'security' && <SecurityPanel projectPath={window.__codepilot_project_path__ || ''} />}
       {activeSidebarPanel === 'fusion-settings' && <Suspense fallback={fusionFallback}><LazyFusionSettings /></Suspense>}
       {activeSidebarPanel === 'vector-memory' && <Suspense fallback={fusionFallback}><LazyVectorMemoryPanel /></Suspense>}
       {activeSidebarPanel === 'dag-canvas' && <Suspense fallback={fusionFallback}><LazyDAGCanvas /></Suspense>}

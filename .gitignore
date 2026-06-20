@@ -100,3 +100,4 @@ rebuild-deb.*
 update-versions.py
 build-deb.py
 .qoder  
+latest.yml  

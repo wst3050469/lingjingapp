@@ -381,6 +381,11 @@ function createWindow(): void {
     return { action: 'deny' };
   });
 
+  // Register Fusion IPC handlers BEFORE renderer loads (FIX: race condition)
+  // This ensures fusion:health:check and all fusion handlers are registered
+  // before the renderer FusionSettings component mounts and tries to call them.
+  registerFusionIPC(mainWindow);
+
   // Load renderer
   if (IS_DEV) {
     // In dev mode, load from Vite dev server
@@ -1043,8 +1048,7 @@ async function bootstrap(): Promise<void> {
 
     // Fusion IPC + Full Initialization (DEF-002/003 fix) — comprehensive module init
     try {
-      registerFusionIPC(mainWindow);
-      // Initialize all Fusion modules and inject into IPC layer
+      // Initialize all Fusion modules and inject into IPC layer (IPC registered in createWindow)
       try {
         const fusionMod = await import('@codepilot/core/fusion');
         const {

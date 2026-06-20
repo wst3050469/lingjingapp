@@ -56,7 +56,7 @@ const SkillMarketTab: React.FC<{ onRefresh?: () => void }> = ({ onRefresh }) => 
   const loadLeaderboard = useCallback(async (p = 1) => {
     setLoading(true);
     try {
-      const res = await window.electronAPI.skillMarket.getLeaderboard({ page: p, limit: 20 });
+      const res = await window.electronAPI.skillMarket.getLeaderboard({ page: p, limit: 200 });
       if (res.success) {
         setSkills(prev => p === 1 ? res.data : [...prev, ...res.data]);
         setPage(p);

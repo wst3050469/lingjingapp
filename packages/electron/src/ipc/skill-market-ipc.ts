@@ -105,7 +105,7 @@ export function registerSkillMarketIpc(): void {
   // Get leaderboard (trending/popular skills)
   ipcMain.handle('skill-market:get-leaderboard', async (_event, args: { page?: number; limit?: number }) => {
     try {
-      const { page = 1, limit = 20 } = args || {};
+      const { page = 1, limit = 200 } = args || {};
       const { skills, hasMore } = await fetchLeaderboard(page, limit);
 
       // Check which are already installed

@@ -1,5 +1,41 @@
 # CHANGELOG
 
+## v1.73.130 (2026-06-20)
+
+### Added
+- **RemoteFolderPicker 上传/下载**: 远程文件夹选择器新增文件列表、下载按钮、上传按钮、刷新功能
+- **cloud-server 自动备份**: versions.json 每6小时自动备份 + 启动时自动恢复（版本数<5触发）
+
+### Fixed
+- **Windows 安装包修复**: 解决 app-builder-bin@5.0.0-alpha.10 文件锁定 bug，Windows 安装包现为真正 v1.73.130
+- **versions.json 历史恢复**: 从备份恢复 12 个版本历史（曾被截断到2条）
+
+### Changed
+- 6 平台完整部署: Windows Setup + Portable + Blockmap + Linux AppImage + DEB + Android
+
+---
+
+## v1.73.129 (2026-06-20)
+
+### Fixed
+- **工作区持久化**: `loadWorkspaceFromConfig()` 提前到 `createWindow()` 之前，修复重启后工作区丢失
+- **技能详情 404**: `fetchSkillDetail` 添加 `encodeURIComponent`
+- **GitHub 导入退出**: `spawn('git',...)` stderr 累计匹配 + 中文 Git 输出正则 + 超时竞态修复
+
+### Added
+- `PRAGMA integrity_check` + `quick_check` 防 SQLite 损坏
+
+---
+
+## v1.73.127 (2026-06-19)
+
+### Fixed
+- 技能市场: skills.sh API 401 → cloud-server 代理
+- GitHub 一键生成: `spawn` 替代 `exec` + 分步进度事件
+- 远程文件夹: 支持上传下载文件
+
+---
+
 ## v1.73.120 (2026-06-19)
 
 ### Fixed

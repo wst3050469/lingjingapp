@@ -101,3 +101,8 @@ update-versions.py
 build-deb.py
 .qoder  
 latest.yml  
+  
+# Linux build artifacts  
+packages/electron/_linux_build/  
+packages/electron/lingjing-linux-build.zip  
+packages/electron/scripts/patch-fusion-race.js 

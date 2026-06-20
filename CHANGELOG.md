@@ -13,6 +13,9 @@
 ### Changed
 - 6 平台完整部署: Windows Setup + Portable + Blockmap + Linux AppImage + DEB + Android
 
+### Fixed (Hotfix)
+- **下载页 v1.73.120**: `downloads.js` 中 `macX64Url`/`macArm64Url` 未声明导致 ReferenceError，JS 崩溃后触发硬编码 fallback。修复: 添加 macOS 变量声明 + fallback 版本号更新至 v1.73.130
+
 ---
 
 ## v1.73.129 (2026-06-20)

@@ -119,6 +119,7 @@ const EXTERNAL = [
   'gpt-tokenizer',
   'yaml',
   'cron-parser',
+  'nodemailer',
   // pnpm store resolution issues
   'underscore',
   'readable-stream',

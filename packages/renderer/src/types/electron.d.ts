@@ -493,6 +493,25 @@ declare interface ElectronAPI {
     api: (opts: { endpoint: string; method?: string; body?: unknown; token?: string; baseUrl?: string }) => Promise<any>;
     setUserToken: (token: string) => Promise<any>;
   };
+
+  // 应用控制 - 跨平台应用管理
+  appControl: {
+    getInstalledApps: () => Promise<{ success: boolean; data: Array<{ name: string; path?: string; icon?: string; isRunning: boolean }>; error?: string }>;
+    getWindows: () => Promise<{ success: boolean; data: Array<{ title: string; processId?: number; isFocused: boolean }>; error?: string }>;
+    launchApp: (appName: string, args?: string[]) => Promise<{ success: boolean; error?: string }>;
+    closeApp: (appName: string) => Promise<{ success: boolean; error?: string }>;
+    focusWindow: (title: string) => Promise<{ success: boolean; error?: string }>;
+  };
+
+  // 邮件服务 - SMTP 收发邮件
+  emailService: {
+    initSmtp: (config: { host: string; port: number; secure: boolean; user: string; pass: string; fromName?: string }) => Promise<{ success: boolean; error?: string }>;
+    validateConfig: (config: { host: string; port: number; secure: boolean; user: string; pass: string }) => Promise<{ valid: boolean; error?: string }>;
+    getPresetList: () => Promise<{ success: boolean; data: Array<{ key: string; name: string; description: string }>; error?: string }>;
+    sendMail: (mailConfig: { to: string; subject: string; body: string; html?: string; cc?: string; bcc?: string; attachments?: Array<{ filename: string; path?: string; content?: string }> }) => Promise<{ success: boolean; error?: string }>;
+    sendWithPreset: (presetKey: string, replacements: Record<string, string>, mailConfig: { to: string; subject: string; body: string }) => Promise<{ success: boolean; error?: string }>;
+  };
+
 }
 
 declare interface Window {

@@ -1,18 +1,27 @@
-// 对话详情页 — 云AI直连 + 模型选择
-import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
+// 对话详情页 — 云AI直连 + 模型选择 + Action Bar（任务控制·文件上传·语音输入）
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import {
+  View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, SafeAreaView, Alert, ActivityIndicator,
+} from 'react-native';
 import { api } from '../services/api';
 import { useAppStore, Message } from '../stores/app-store';
 import { Ionicons } from '@expo/vector-icons';
 
+// ── 模型列表 ──
 const MODELS = [
   { id: 'deepseek', name: 'DeepSeek', icon: 'bulb-outline' },
   { id: 'thinking', name: '深度思考', icon: 'git-branch-outline' },
 ];
 
+// ── 任务状态枚举 ──
+type TaskStatus = 'idle' | 'running' | 'paused' | 'stopped';
+
 export default function ChatDetailScreen({ route }: any) {
-  if (!route?.params) { return null; }
+  if (!route?.params) return null;
   const { sessionId, title } = route.params;
+
+  // ── 对话状态 ──
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -20,12 +29,26 @@ export default function ChatDetailScreen({ route }: any) {
   const [selectedModel, setSelectedModel] = useState('deepseek');
   const flatListRef = useRef<FlatList>(null);
 
+  // ── 任务控制状态 ──
+  const [taskStatus, setTaskStatus] = useState<TaskStatus>('idle');
+  const [recording, setRecording] = useState(false);
+
+  // ── 加载会话 ──
   useEffect(() => { loadSession(); }, [sessionId]);
+
+  // ── 监听 WebSocket 任务状态变更 ──
+  useEffect(() => {
+    const unsub = api.onTaskStatusChange?.((newStatus: TaskStatus) => {
+      setTaskStatus(newStatus);
+    });
+    return () => { unsub?.(); };
+  }, [sessionId]);
 
   async function loadSession() {
     try {
       const data = await api.getSession(sessionId);
       if (data?.messages) setMessages(data.messages);
+      if (data?.taskStatus) setTaskStatus(data.taskStatus);
     } catch (e) {
       console.log('Failed to load session:', e);
     } finally {
@@ -33,6 +56,7 @@ export default function ChatDetailScreen({ route }: any) {
     }
   }
 
+  // ── 发送消息 ──
   async function handleSend() {
     if (!input.trim() || sending) return;
     const msg = input.trim();
@@ -45,53 +69,115 @@ export default function ChatDetailScreen({ route }: any) {
 
     try {
       let result: any;
-
       if (selectedModel === 'thinking') {
-        // Show thinking indicator
         const thinkingMsg: Message = {
           role: 'assistant' as const,
-          content: '🤔 深度思考中...',
+          content: '深度思考中...',
           created_at: new Date().toISOString(),
         };
         setMessages(prev => [...prev, thinkingMsg]);
-
         result = await api.sendMessage(sessionId, '请逐步思考后回答：' + msg);
-
-        // Remove thinking indicator and add real reply
         setMessages(prev => {
           const filtered = prev.filter(m => m !== thinkingMsg);
-          const aiMsg: Message = {
+          return [...filtered, {
             role: 'assistant' as const,
             content: result?.reply || '思考完毕',
             created_at: new Date().toISOString(),
-          };
-          return [...filtered, aiMsg];
+          }];
         });
       } else {
         result = await api.sendMessage(sessionId, msg);
         if (result?.reply) {
-          const aiMsg: Message = {
+          setMessages(prev => [...prev, {
             role: 'assistant',
             content: result.reply,
             created_at: new Date().toISOString(),
-          };
-          setMessages(prev => [...prev, aiMsg]);
+          }]);
         }
       }
-
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     } catch (e: any) {
-      const errMsg: Message = {
+      setMessages(prev => [...prev, {
         role: 'assistant' as const,
         content: '❌ ' + (e.message || '发送失败'),
         created_at: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errMsg]);
+      }]);
     } finally {
       setSending(false);
     }
   }
 
+  // ── 任务控制 ──
+  async function handleTaskControl(action: 'pause' | 'resume' | 'stop') {
+    try {
+      await api.controlTask(sessionId, action);
+      // 乐观更新 UI
+      if (action === 'pause') setTaskStatus('paused');
+      if (action === 'resume') setTaskStatus('running');
+      if (action === 'stop') setTaskStatus('stopped');
+    } catch (e: any) {
+      Alert.alert('操作失败', e.message || '无法执行任务控制');
+    }
+  }
+
+  // ── 文件上传 ──
+  async function handlePickFile() {
+    try {
+      // 动态导入 expo-document-picker（按需加载）
+      const { pick } = require('expo-document-picker') as typeof import('expo-document-picker');
+      const result = await pick({ type: '*/*', copyToCacheDirectory: true });
+      if (!result.canceled && result.assets?.length) {
+        const file = result.assets[0];
+        await api.uploadFile(sessionId, {
+          uri: file.uri,
+          name: file.name,
+          mimeType: file.mimeType,
+          size: file.size,
+        });
+        setMessages(prev => [...prev, {
+          role: 'user',
+          content: `[文件] ${file.name}`,
+          created_at: new Date().toISOString(),
+        }]);
+      }
+    } catch (e: any) {
+      if (e?.message?.includes('Cannot find module')) {
+        Alert.alert('提示', '文件上传功能需要安装 expo-document-picker');
+      } else {
+        Alert.alert('上传失败', e.message || '未知错误');
+      }
+    }
+  }
+
+  // ── 语音输入 ──
+  async function handleVoiceInput() {
+    if (recording) {
+      // 停止录音并发送
+      setRecording(false);
+      try {
+        const { stopRecording } = require('expo-av') as typeof import('*');
+        const result = await stopRecording();
+        if (result?.uri) {
+          const text = await api.transcribeAudio(result.uri);
+          if (text) setInput(prev => prev + text);
+        }
+      } catch (e: any) {
+        Alert.alert('语音识别失败', e.message || '未知错误');
+      }
+    } else {
+      // 开始录音
+      setRecording(true);
+      try {
+        const { startRecording } = require('expo-av') as typeof import('*');
+        await startRecording();
+      } catch (e: any) {
+        setRecording(false);
+        Alert.alert('录音失败', e.message || '未知错误');
+      }
+    }
+  }
+
+  // ── 渲染消息 ──
   function renderMessage({ item }: { item: Message }) {
     const isUser = item.role === 'user';
     return (
@@ -106,6 +192,11 @@ export default function ChatDetailScreen({ route }: any) {
     );
   }
 
+  // ── 任务控制按钮是否可用 ──
+  const canPause = taskStatus === 'running';
+  const canResume = taskStatus === 'paused';
+  const canStop = taskStatus === 'running' || taskStatus === 'paused';
+
   if (loading) {
     return <View style={styles.center}><Text style={styles.loadingText}>加载中...</Text></View>;
   }
@@ -113,7 +204,8 @@ export default function ChatDetailScreen({ route }: any) {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/* Model selector */}
+
+        {/* ── 模型选择器 ── */}
         <View style={styles.modelBar}>
           {MODELS.map(m => (
             <TouchableOpacity
@@ -129,6 +221,7 @@ export default function ChatDetailScreen({ route }: any) {
           ))}
         </View>
 
+        {/* ── 消息列表 ── */}
         <FlatList
           ref={flatListRef}
           data={messages}
@@ -143,6 +236,54 @@ export default function ChatDetailScreen({ route }: any) {
             </View>
           }
         />
+
+        {/* ══════ Action Bar（任务控制 + 文件上传 + 语音输入）══════ */}
+        <View style={styles.actionBar}>
+          {/* 左侧：任务控制 */}
+          <View style={styles.taskControls}>
+            <TouchableOpacity
+              style={[styles.controlBtn, canPause && styles.controlBtnActivePause]}
+              disabled={!canPause}
+              onPress={() => handleTaskControl('pause')}
+            >
+              <Ionicons name="pause" size={18} color={canPause ? '#ffb02e' : '#484f58'} />
+              <Text style={[styles.controlLabel, canPause && styles.controlLabelActive]}>暂停</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.controlBtn, canResume && styles.controlBtnActiveResume]}
+              disabled={!canResume}
+              onPress={() => handleTaskControl('resume')}
+            >
+              <Ionicons name="play" size={18} color={canResume ? '#3fb950' : '#484f58'} />
+              <Text style={[styles.controlLabel, canResume && styles.controlLabelActive]}>继续</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.controlBtn, canStop && styles.controlBtnActiveStop]}
+              disabled={!canStop}
+              onPress={() => handleTaskControl('stop')}
+            >
+              <Ionicons name="stop" size={18} color={canStop ? '#f85149' : '#484f58'} />
+              <Text style={[styles.controlLabel, canStop && styles.controlLabelActive]}>停止</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 右侧：文件上传 + 语音输入 */}
+          <View style={styles.extraControls}>
+            <TouchableOpacity style={styles.extraBtn} onPress={handlePickFile}>
+              <Ionicons name="attach" size={20} color="#8b949e" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.extraBtn, recording && styles.extraBtnActive]}
+              onPress={handleVoiceInput}
+            >
+              <Ionicons name="mic" size={20} color={recording ? '#f85149' : '#8b949e'} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ── 输入栏 ── */}
         <View style={styles.inputBar}>
           <TextInput
             style={styles.input}
@@ -165,6 +306,7 @@ export default function ChatDetailScreen({ route }: any) {
             )}
           </TouchableOpacity>
         </View>
+
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -174,16 +316,29 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0d1117' },
   center: { flex: 1, backgroundColor: '#0d1117', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#8b949e', fontSize: 14 },
-  modelBar: { flexDirection: 'row', padding: 6, gap: 6, backgroundColor: '#161b22', borderBottomWidth: 1, borderBottomColor: '#21262d', justifyContent: 'center' },
-  modelBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#21262d' },
+
+  // ── 模型选择器 ──
+  modelBar: {
+    flexDirection: 'row', padding: 6, gap: 6,
+    backgroundColor: '#161b22', borderBottomWidth: 1, borderBottomColor: '#21262d',
+    justifyContent: 'center',
+  },
+  modelBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#21262d',
+  },
   modelBtnActive: { backgroundColor: '#1f6feb' },
   modelText: { color: '#8b949e', fontSize: 12 },
   modelTextActive: { color: '#fff', fontWeight: '600' },
+
+  // ── 消息列表 ──
   list: { flex: 1 },
   listContent: { padding: 12, paddingBottom: 20 },
   emptyContainer: { flex: 1 },
   emptyWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyText: { color: '#484f58', marginTop: 8 },
+
+  // ── 消息气泡 ──
   msgRow: { flexDirection: 'row', marginBottom: 12 },
   userRow: { justifyContent: 'flex-end' },
   aiRow: { justifyContent: 'flex-start' },
@@ -194,8 +349,45 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: 14, lineHeight: 20 },
   userText: { color: '#fff' },
   aiText: { color: '#c9d1d9' },
-  inputBar: { flexDirection: 'row', alignItems: 'flex-end', padding: 8, gap: 8, backgroundColor: '#161b22', borderTopWidth: 1, borderTopColor: '#21262d' },
-  input: { flex: 1, color: '#c9d1d9', fontSize: 14, backgroundColor: '#0d1117', borderRadius: 10, padding: 10, maxHeight: 100, borderWidth: 1, borderColor: '#21262d' },
-  sendBtn: { backgroundColor: '#1f6feb', borderRadius: 20, padding: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+
+  // ══════ Action Bar ══════
+  actionBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 12, paddingVertical: 6,
+    backgroundColor: '#161b22', borderTopWidth: 1, borderTopColor: '#21262d',
+  },
+  taskControls: { flexDirection: 'row', gap: 8 },
+  controlBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
+    backgroundColor: '#21262d',
+  },
+  controlBtnActivePause: { backgroundColor: '#3d2e00' },
+  controlBtnActiveResume: { backgroundColor: '#0d3320' },
+  controlBtnActiveStop: { backgroundColor: '#3d1518' },
+  controlLabel: { color: '#484f58', fontSize: 11, fontWeight: '500' },
+  controlLabelActive: { color: '#c9d1d9' },
+
+  extraControls: { flexDirection: 'row', gap: 12 },
+  extraBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: '#21262d', alignItems: 'center', justifyContent: 'center',
+  },
+  extraBtnActive: { backgroundColor: '#3d1518' },
+
+  // ── 输入栏 ──
+  inputBar: {
+    flexDirection: 'row', alignItems: 'flex-end', padding: 8, gap: 8,
+    backgroundColor: '#161b22', borderTopWidth: 1, borderTopColor: '#21262d',
+  },
+  input: {
+    flex: 1, color: '#c9d1d9', fontSize: 14,
+    backgroundColor: '#0d1117', borderRadius: 10, padding: 10, maxHeight: 100,
+    borderWidth: 1, borderColor: '#21262d',
+  },
+  sendBtn: {
+    backgroundColor: '#1f6feb', borderRadius: 20,
+    padding: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
+  },
   sendBtnDisabled: { backgroundColor: '#21262d' },
 });

@@ -555,13 +555,33 @@ function readVersionInfo() {
       const latestEntry = data.versions.find(v => v.version === data.latest && isPublished(v));
       const latest = latestEntry || publishedVersions[0];
       if (latest) {
+        // Normalize files paths: ensure all URLs are absolute
+        const rawFiles = latest.files || {};
+        const normalizedFiles = {};
+        for (const [key, value] of Object.entries(rawFiles)) {
+          if (typeof value === 'string') {
+            normalizedFiles[key] = value.includes('://')
+              ? value
+              : `https://ide.zhejiangjinmo.com/downloads/${value}`;
+          } else if (value && typeof value === 'object' && value.url) {
+            normalizedFiles[key] = {
+              ...value,
+              url: value.url.includes('://')
+                ? value.url
+                : `https://ide.zhejiangjinmo.com/downloads/${value.url.replace(/^\//, '')}`
+            };
+          } else {
+            normalizedFiles[key] = value;
+          }
+        }
+
         _verCache = {
           hasUpdate: true,
           version: latest.version || '1.4.0',
           status: 'published',
           releaseDate: latest.releaseDate || new Date().toISOString(),
           releaseNotes: latest.releaseNotes || ('灵境IDE v' + (latest.version || '1.4.0')),
-          files: latest.files || {},
+          files: normalizedFiles,
         };
         _verCacheTime = _now;
         return _verCache;
@@ -2034,6 +2054,116 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
   res.json({ ok: true, version });
 });
 
+// ═══════════════════════════════════════════════════════════════════
+// Mobile Thin-Client API — Task Control / Upload / Transcribe
+// ═══════════════════════════════════════════════════════════════════
+
+// POST /api/mobile/task-control — Mobile sends task control command relayed to desktop
+app.post('/api/mobile/task-control', auth, (req, res) => {
+  const { sessionId, action } = req.body || {};
+  const userId = req.user?.sub || req.user?.userId;
+  if (!sessionId || !action) {
+    return res.status(400).json({ error: 'sessionId and action required' });
+  }
+  if (!['pause', 'resume', 'stop'].includes(action)) {
+    return res.status(400).json({ error: 'Invalid action. Use pause/resume/stop' });
+  }
+  const desktops = findDesktopRelays(userId);
+  if (desktops.length === 0) {
+    return res.status(503).json({ error: 'desktop_offline', message: '桌面端不在线，无法执行任务控制' });
+  }
+  let relayed = 0;
+  for (const entry of desktops) {
+    try {
+      entry.ws.send(JSON.stringify({
+        type: 'relay:from-mobile',
+        channel: 'quest',
+        action: 'task-control',
+        payload: { sessionId, action, userId },
+        timestamp: new Date().toISOString(),
+      }));
+      relayed++;
+    } catch (e) { /* ignore */ }
+  }
+  console.log('[Mobile] Task control ' + action + ' -> ' + relayed + '/' + desktops.length + ' desktops');
+  res.json({ ok: true, action, relayed });
+});
+
+// POST /api/mobile/upload — Mobile uploads file metadata, relayed to desktop
+app.post('/api/mobile/upload', auth, (req, res) => {
+  const { sessionId, fileName, mimeType, size, uri } = req.body || {};
+  const userId = req.user?.sub || req.user?.userId;
+  if (!sessionId || !fileName) {
+    return res.status(400).json({ error: 'sessionId and fileName required' });
+  }
+  const desktops = findDesktopRelays(userId);
+  if (desktops.length === 0) {
+    console.log('[Mobile] Upload queued (desktop offline): ' + fileName);
+    return res.status(202).json({ ok: true, queued: true, message: '文件已暂存，桌面端上线后将自动处理' });
+  }
+  let relayed = 0;
+  for (const entry of desktops) {
+    try {
+      entry.ws.send(JSON.stringify({
+        type: 'relay:from-mobile',
+        channel: 'file',
+        action: 'upload',
+        payload: { sessionId, fileName, mimeType, size, uri, userId },
+        timestamp: new Date().toISOString(),
+      }));
+      relayed++;
+    } catch (e) { /* ignore */ }
+  }
+  console.log('[Mobile] File upload ' + fileName + ' -> ' + relayed + '/' + desktops.length + ' desktops');
+  res.json({ ok: true, fileName, relayed });
+});
+
+// POST /api/mobile/transcribe — Mobile sends audio for cloud-side transcription relay
+app.post('/api/mobile/transcribe', auth, (req, res) => {
+  const { audioUri } = req.body || {};
+  if (!audioUri) {
+    return res.status(400).json({ error: 'audioUri required' });
+  }
+  const userId = req.user?.sub || req.user?.userId;
+  const desktops = findDesktopRelays(userId);
+  if (desktops.length === 0) {
+    return res.status(503).json({ error: 'desktop_offline', message: '桌面端不在线，语音转写需要桌面端处理' });
+  }
+  let relayed = 0;
+  for (const entry of desktops) {
+    try {
+      entry.ws.send(JSON.stringify({
+        type: 'relay:from-mobile',
+        channel: 'voice',
+        action: 'transcribe',
+        payload: { audioUri, userId },
+        timestamp: new Date().toISOString(),
+      }));
+      relayed++;
+    } catch (e) { /* ignore */ }
+  }
+  console.log('[Mobile] Transcribe request -> ' + relayed + '/' + desktops.length + ' desktops');
+  res.json({ ok: true, processing: true, message: '语音转写请求已发送到桌面端处理' });
+});
+
+// GET /api/mobile/desktop-status — Check if desktop is online for this user
+app.get('/api/mobile/desktop-status', auth, (req, res) => {
+  const userId = req.user?.sub || req.user?.userId;
+  const desktops = findDesktopRelays(userId);
+  res.json({
+    hasDesktop: desktops.length > 0,
+    onlineCount: desktops.length,
+    devices: desktops.map(function(d) { return { deviceId: d.deviceId, isOnline: true }; }),
+  });
+});
+
+// ── Helper: find all online desktop WebSocket connections for a user ──
+function findDesktopRelays(userId) {
+  const relays = desktopRelays.get(userId);
+  if (!relays) return [];
+  return [...relays].filter(function(e) { return e.ws.readyState === 1; });
+}
+
 // ====== Scheduler ======
 const scheduler = new CloudScheduler(db, {
   tickInterval: 10000,   // check every 10 seconds
@@ -2097,6 +2227,7 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (raw) => {
     try {
       const data = JSON.parse(raw);
+      var clientsArr = []; // Pre-compute for task broadcast iteration
       
       // Heartbeat
       if (data.type === 'ping') {
@@ -2205,6 +2336,40 @@ wss.on('connection', (ws, req) => {
       // Sync (existing functionality)
       if (data.type === 'sync') {
         broadcast({ type: 'sync', from: data.id, payload: data.payload });
+
+      // ═══════ Task status broadcast (desktop -> cloud -> mobile) ═══════
+      } else if (data.type === 'task:status-change') {
+        var sessionId2 = data.sessionId;
+        var status2 = data.status;
+        var targetUserId2 = data.userId;
+        var originUserId2 = wsUserId;
+        if (!sessionId2 || !status2) {
+          ws.send(JSON.stringify({ type: 'task:status-change:ack', ok: false, error: 'missing_sessionId_or_status' }));
+          return;
+        }
+        try {
+          var now2 = new Date().toISOString();
+          db.prepare("UPDATE sessions SET metadata = json_set(COALESCE(metadata,'{}'), '$.taskStatus', ?), updated_at = ? WHERE id = ?")
+            .run(status2, now2, sessionId2);
+        } catch (e) { /* best-effort */ }
+        var pushed2 = 0;
+        for (var _i = 0; _i < clientsArr.length; _i++) {
+          var client2 = clientsArr[_i];
+          if (client2._wsUserId === (targetUserId2 || originUserId2) && client2.readyState === 1) {
+            try {
+              client2.send(JSON.stringify({
+                type: 'push',
+                channel: 'task',
+                event: 'status-change',
+                data: { sessionId: sessionId2, status: status2, timestamp: new Date().toISOString() },
+              }));
+              pushed2++;
+            } catch (e) { /* ignore */ }
+          }
+        }
+        ws.send(JSON.stringify({ type: 'task:status-change:ack', ok: true, pushed: pushed2 }));
+        console.log('[Task] Status ' + status2 + ' broadcast to ' + pushed2 + ' clients');
+
       } else if (data.type === 'sync:push') {
         const userId = data.userId;
         const dataType = data.dataType || 'unknown';

@@ -1,5 +1,5 @@
 // 对话列表页
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useLayoutEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { api } from '../services/api';
@@ -12,6 +12,17 @@ export default function ChatListScreen() {
   const [refreshing, setRefreshing] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
   const navigation = useNavigation<any>();
+
+  // Header: settings gear icon → navigate to Settings
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ marginRight: 12 }}>
+          <Ionicons name="settings-outline" size={22} color="#c9d1d9" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const loadSessions = useCallback(async () => {
     try {

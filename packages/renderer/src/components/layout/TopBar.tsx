@@ -272,6 +272,31 @@ function buildMenus(): MenuDef[] {
         }},
       ],
     },
+        {
+      label: '工具',
+      hotkey: 'T',
+      items: [
+        { label: '收发邮件', action: () => {
+          useUIStore.getState().setShowSettingsModal(true);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('settings:switch-tab', { detail: { tab: 'email' } }));
+          }, 100);
+        }},
+        { label: '应用控制', action: () => {
+          useUIStore.getState().setShowSettingsModal(true);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('settings:switch-tab', { detail: { tab: 'appcontrol' } }));
+          }, 100);
+        }},
+        { label: '', divider: true },
+        { label: '邮件设置', action: () => {
+          useUIStore.getState().setShowSettingsModal(true);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('settings:switch-tab', { detail: { tab: 'email' } }));
+          }, 100);
+        }},
+      ],
+    },
     {
       label: '帮助',
       hotkey: 'H',

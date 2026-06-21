@@ -892,4 +892,25 @@ contextBridge.exposeInMainWorld('electronAPI', {
     offlinePayment: (params: { token: string; amount: number; companyName: string; bankName?: string; bankAccount?: string; remark?: string; receiptUrl?: string }) => ipcRenderer.invoke('subscription:offline-payment', params),
   },
 
+
+
+  // 应用控制 API
+  appControl: {
+    getInstalledApps: () => ipcRenderer.invoke('app-control:get-installed-apps'),
+    getWindows: () => ipcRenderer.invoke('app-control:get-windows'),
+    launchApp: (appName: string, args?: string[]) => ipcRenderer.invoke('app-control:launch-app', appName, args),
+    closeApp: (appName: string) => ipcRenderer.invoke('app-control:close-app', appName),
+    focusWindow: (title: string) => ipcRenderer.invoke('app-control:focus-window', title),
+  },
+
+  // 邮件服务 API
+  emailService: {
+    initSmtp: (config: any) => ipcRenderer.invoke('email:init-smtp', config),
+    validateConfig: (config: any) => ipcRenderer.invoke('email:validate-config', config),
+    getPresetList: () => ipcRenderer.invoke('email:get-presets'),
+    sendMail: (mailConfig: any) => ipcRenderer.invoke('email:send', mailConfig),
+    sendWithPreset: (presetKey: string, replacements: Record<string, string>, mailConfig: any) =>
+      ipcRenderer.invoke('email:send-with-preset', presetKey, replacements, mailConfig),
+  },
+
 });

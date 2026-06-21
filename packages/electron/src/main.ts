@@ -51,6 +51,8 @@ import { verifyIpcRegistrations } from './ipc/ipc-verifier.js';
 import { registerBatchIPC } from './ipc/batch-ipc.js';
 import { registerConnectorIPC } from './ipc/connector-ipc.js';
 import { registerTriggerIPC } from './ipc/trigger-ipc.js';
+import { registerAppControlIpc } from './ipc/app-control-ipc.js';
+import { registerEmailIpc } from './ipc/email-ipc.js';
 
 const IS_DEV = !app.isPackaged;
 
@@ -907,6 +909,10 @@ async function bootstrap(): Promise<void> {
     console.warn('[Main] Subscription fallback registration:', err);
   }
 
+  // App Control & Email IPC (window-independent)
+  try { registerAppControlIpc(); console.log('[Main] AppControl IPC registered'); } catch (err) { console.error('[Main] registerAppControlIpc failed:', err); }
+  try { registerEmailIpc(); console.log('[Main] Email IPC registered'); } catch (err) { console.error('[Main] registerEmailIpc failed:', err); }
+
   // Initialize cloud sync and GitHub integration
   try {
     const deviceId = generateDeviceFingerprint().fingerprint;
@@ -1480,3 +1486,5 @@ ipcMain.on('quest:cancel-from-mobile', (_event, data: any) => {
     mainWindow.webContents.send('quest:cancel-from-mobile', data);
   }
 });
+"" 
+

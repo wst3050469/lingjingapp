@@ -34,7 +34,7 @@ import { initDatabase, closeDatabase, getDatabase, saveDatabase, saveDatabaseSyn
 import { registerSshIpc, destroyAllSshSessions, setSshTerminalChangeCallback } from './ssh/ssh-ipc.js';
 import { initWebServerFunctions, startWebServer, stopWebServer, broadcastToMobile, isWebServerRunning, generateToken, getDiagnostics } from './web-server.js';
 import { startFrpClient, stopFrpClient, getFrpStatus } from './frp-client.js';
-import { registerCloudIpc, autoConnectCloud, pushMemoryToCloud, pushSessionToCloud } from './ipc/cloud-ipc.js';
+import { registerCloudIpc, autoConnectCloud, pushMemoryToCloud, pushSessionToCloud, pushTaskStatusToCloud, startAutoSync } from './ipc/cloud-ipc.js';
 import { registerScheduleIpc } from './ipc/schedule-ipc.js';
 import { registerAdminIpc } from './ipc/admin-ipc.js';
 import { initCloudSyncIpc } from './ipc/cloud-sync-ipc.js';
@@ -980,6 +980,7 @@ async function bootstrap(): Promise<void> {
     try {
       registerCloudIpc(mainWindow);
       autoConnectCloud();
+      startAutoSync(30000); // Auto-push changes to cloud every 30s
     } catch (err) {
       console.error('[Main] Cloud IPC registration failed:', err);
     }

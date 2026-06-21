@@ -39,7 +39,7 @@ export default function UpdateChecker() {
         if (!isNewer(latestVer, currentVersion)) return;
 
         const downloadUrl = typeof data.files?.android === 'string'
-          ? data.files.android
+          ? (data.files.android.startsWith('http') ? data.files.android : `https://ide.zhejiangjinmo.com/downloads/${data.files.android}`)
           : data.files?.android?.url?.startsWith('http')
             ? data.files.android.url
             : `https://ide.zhejiangjinmo.com/downloads/${data.files?.android?.url || `lingjing-v${latestVer}.apk`}`;

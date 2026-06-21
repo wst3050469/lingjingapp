@@ -107,6 +107,43 @@ class ApiService {
    });
  }
 
+
+  // ── Task Control (Pause / Resume / Stop) ──
+  async controlTask(sessionId: string, action: string) {
+    return this.request<any>('/mobile/task-control', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, action, platform: 'mobile' }),
+    });
+  }
+
+  // ── File Upload ──
+  async uploadFile(sessionId: string, file: any) {
+    return this.request<any>('/mobile/upload', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, fileName: file.name, mimeType: file.mimeType, size: file.size, uri: file.uri }),
+    });
+  }
+
+  // ── Voice Transcription ──
+  async transcribeAudio(audioUri: string): Promise<string> {
+    var result = await this.request<any>('/mobile/transcribe', {
+      method: 'POST',
+      body: JSON.stringify({ audioUri, platform: 'mobile' }),
+    });
+    return result?.text || '';
+  }
+
+  // ── Task Status Listener (WebSocket) ──
+  onTaskStatusChange(callback: (status: string) => void): () => void {
+    var self = this;
+    var wsKey = 'task-status-' + Date.now();
+    self.wsCallbacks.set(wsKey, function(msg: any) {
+      if (msg.type === 'push' && msg.channel === 'task' && msg.event === 'status-change') {
+        callback(msg.data?.status || 'idle');
+      }
+    });
+    return function() { self.wsCallbacks.delete(wsKey); };
+  }
  // --- Plans ---
  async getPlans() { return this.request<any>('/plans'); }
  async getPlan(id: string) { return this.request<any>('/plans/' + id); }

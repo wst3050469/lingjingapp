@@ -1,20 +1,23 @@
 # ACTIVE_TASK
 
-## 当前状态：✅ v1.73.142 — 移动端订阅管理导航注册
+## ✅ v1.73.142 — 全平台部署完成 (2026-06-21 18:10)
+
+### 变更摘要
+| 类别 | 内容 |
+|:-----|:-----|
+| 📱 Mobile | 订阅管理导航注册 (Settings + Subscription screen) |
+| 🐧 Linux | AppImage 175MB + DEB 212MB |
+| 🪟 Windows | Setup 136MB + Portable 136MB |
+| 🔧 修复 | 下载页URL、APK clean rebuild、latest.yml 更新 |
 
 ### 服务状态
-| 组件 | 状态 | 版本/详情 |
-|:-----|:----:|:----------|
-| 🖥️ 灵境IDE桌面端 | ✅ active | v1.73.140 |
-| ☁️ Cloud API (ide.zhejiangjinmo.com) | ✅ active | v1.73.142 |
-| 📡 自动更新服务 | ✅ 运行中 | v1.73.142 |
-| 📱 移动端 (Android) | ✅ | v1.73.142 (APK 35MB) |
-| 🐧 Linux AppImage | ✅ | v1.73.140 (175MB) |
-| 🐧 Linux DEB | ✅ | v1.73.140 (106MB) |
-| 🪟 Windows Setup/Portable | ✅ | v1.73.140 (137MB each) |
+| 组件 | 版本 | 状态 |
+|:-----|:----:|:----:|
+| /api/latest | v1.73.142 | ✅ hasUpdate:true |
+| latest.yml | v1.73.142 | ✅ Windows auto-update |
+| latest-linux.yml | v1.73.142 | ✅ Linux auto-update |
+| versions.json (3处) | v1.73.142 | ✅ 已同步 |
+| PM2 | 6/6 | ✅ online |
+| Nginx | OK | ✅ running |
 
-### 最近完成 — v1.73.142
-- **spec-subscription.md Phase 14**: 移动端订阅管理导航注册
-- **ChatListScreen**: header 添加设置齿轮图标
-- **App.tsx**: 注册 Settings + Subscription 导航栈
-- **部署**: APK 35MB → /var/www/downloads/v1.73.142/, versions.json 3处同步
+### 等待新任务...

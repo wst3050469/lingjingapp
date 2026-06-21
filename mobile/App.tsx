@@ -23,6 +23,8 @@ import { CLOUD_SERVER_URL, CLOUD_SERVER_WS } from './src/constants';
 import ChatListScreen from './src/screens/ChatListScreen';
 import ChatDetailScreen from './src/screens/ChatDetailScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import SubscriptionScreen from './src/screens/SubscriptionScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -32,6 +34,8 @@ function ChatStackScreen() {
     <Stack.Navigator screenOptions={{ headerStyle: { backgroundColor: '#0d1117' }, headerTintColor: '#c9d1d9' }}>
       <Stack.Screen name="ChatList" component={ChatListScreen} options={{ title: '对话列表' }} />
       <Stack.Screen name="ChatDetail" component={ChatDetailScreen} options={{ title: '对话详情' }} />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: '设置' }} />
+      <Stack.Screen name="Subscription" component={SubscriptionScreen} options={{ title: '订阅管理' }} />
     </Stack.Navigator>
   );
 }

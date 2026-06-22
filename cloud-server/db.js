@@ -210,6 +210,7 @@ export function initDB(dbPath) {
       user_id TEXT NOT NULL,
       name TEXT,
       path TEXT,
+      content TEXT DEFAULT '',
       size INTEGER,
       type TEXT,
       category TEXT,
@@ -298,6 +299,23 @@ export function initDB(dbPath) {
       email TEXT,
       status TEXT DEFAULT 'pending',
       created_at TEXT
+    )
+  `);
+
+  // Requirements (需求 + 审批)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS requirements (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT DEFAULT '',
+      assignee TEXT DEFAULT '',
+      priority TEXT DEFAULT 'normal',
+      status TEXT DEFAULT 'pending',
+      reviewer_comment TEXT DEFAULT '',
+      created_by TEXT DEFAULT '',
+      created_at TEXT,
+      updated_at TEXT
     )
   `);
 

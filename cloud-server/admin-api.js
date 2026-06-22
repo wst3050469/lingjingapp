@@ -1457,6 +1457,7 @@ export function registerAdminAPI(app, db) {
   function writeVersionsJson(data) {
     const apiPath = findVersionsJsonPath();
     const dlPath = findVersionsJsonDownloadPath();
+    const htmlPath = '/var/www/html/versions.json';
     const json = JSON.stringify(data, null, 2);
     if (apiPath) {
       fs.writeFileSync(apiPath, json, 'utf8');
@@ -1465,6 +1466,13 @@ export function registerAdminAPI(app, db) {
     if (dlPath) {
       fs.writeFileSync(dlPath, json, 'utf8');
       console.log('[Admin API] Updated download versions.json:', dlPath);
+    }
+    // Sync to /var/www/html/versions.json (downloads page fetches /versions.json)
+    try {
+      fs.writeFileSync(htmlPath, json, 'utf8');
+      console.log('[Admin API] Synced html versions.json:', htmlPath);
+    } catch (e) {
+      console.warn('[Admin API] Failed to sync html versions.json:', e.message);
     }
     return true;
   }

@@ -13,7 +13,24 @@ import { promisify } from 'util';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
-import si from 'systeminformation';
+
+// 延迟加载 systeminformation — 避免启动时因模块缺失导致应用崩溃
+let _si: any = null;
+let _siLoadError: string | null = null;
+
+function getSI(): any {
+  if (_si) return _si;
+  if (_siLoadError) {
+    throw new Error(`systeminformation 模块不可用: ${_siLoadError}`);
+  }
+  try {
+    _si = require('systeminformation');
+    return _si;
+  } catch (err: any) {
+    _siLoadError = err?.message || String(err);
+    throw new Error(`systeminformation 模块加载失败: ${_siLoadError}`);
+  }
+}
 
 const execFileAsync = promisify(execFile);
 
@@ -64,10 +81,10 @@ export function registerSystemControlIpc(): void {
     if (!(await checkDesktopControlEnabled())) return PERMISSION_DENIED;
     return wrapResult(async () => {
       const [os, cpu, mem, net] = await Promise.all([
-        si.osInfo(),
-        si.cpu(),
-        si.mem(),
-        si.networkInterfaces(),
+        getSI().osInfo(),
+        getSI().cpu(),
+        getSI().mem(),
+        getSI().networkInterfaces(),
       ]);
       return {
         os: { platform: os.platform, distro: os.distro, release: os.release, hostname: os.hostname },
@@ -82,35 +99,35 @@ export function registerSystemControlIpc(): void {
 
   ipcMain.handle('system:cpu-load', async () => {
     if (!(await checkDesktopControlEnabled())) return PERMISSION_DENIED;
-    return wrapResult(() => si.currentLoad());
+    return wrapResult(() => getSI().currentLoad());
   });
 
   // ── 内存详情 ──
 
   ipcMain.handle('system:memory', async () => {
     if (!(await checkDesktopControlEnabled())) return PERMISSION_DENIED;
-    return wrapResult(() => si.mem());
+    return wrapResult(() => getSI().mem());
   });
 
   // ── 电池状态 ──
 
   ipcMain.handle('system:battery', async () => {
     if (!(await checkDesktopControlEnabled())) return PERMISSION_DENIED;
-    return wrapResult(() => si.battery());
+    return wrapResult(() => getSI().battery());
   });
 
   // ── CPU 温度 ──
 
   ipcMain.handle('system:temperature', async () => {
     if (!(await checkDesktopControlEnabled())) return PERMISSION_DENIED;
-    return wrapResult(() => si.cpuTemperature());
+    return wrapResult(() => getSI().cpuTemperature());
   });
 
   // ── 磁盘使用 ──
 
   ipcMain.handle('system:disks', async () => {
     if (!(await checkDesktopControlEnabled())) return PERMISSION_DENIED;
-    return wrapResult(() => si.fsSize());
+    return wrapResult(() => getSI().fsSize());
   });
 
   // ── 进程列表 ──
@@ -118,7 +135,7 @@ export function registerSystemControlIpc(): void {
   ipcMain.handle('system:processes', async () => {
     if (!(await checkDesktopControlEnabled())) return PERMISSION_DENIED;
     return wrapResult(async () => {
-      const list = await si.processes();
+      const list = await getSI().processes();
       // 只返回前 50 个 CPU 占用最高的进程
       return list.list
         .sort((a, b) => b.cpu - a.cpu)

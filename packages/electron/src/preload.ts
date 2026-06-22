@@ -923,4 +923,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setEnabled: (enabled: boolean) => ipcRenderer.invoke('desktop-control:set-enabled', { enabled }),
   },
 
+  // 设备权限管理 API（摄像头 / 麦克风）
+  permissions: {
+    camera: {
+      isEnabled: () => ipcRenderer.invoke('permission:camera:is-enabled'),
+      setEnabled: (enabled: boolean) => ipcRenderer.invoke('permission:camera:set-enabled', { enabled }),
+      getStatus: () => ipcRenderer.invoke('permission:camera:get-status'),
+    },
+    microphone: {
+      isEnabled: () => ipcRenderer.invoke('permission:microphone:is-enabled'),
+      setEnabled: (enabled: boolean) => ipcRenderer.invoke('permission:microphone:set-enabled', { enabled }),
+      getStatus: () => ipcRenderer.invoke('permission:microphone:get-status'),
+    },
+  },
+
 });

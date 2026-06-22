@@ -5,6 +5,7 @@ import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { registerAgentIpc, initAgent, setWorkingDirectory, setSshTerminalId, reinitProvider } from './ipc/agent-ipc.js';
 import { registerFsIpc } from './ipc/fs-ipc.js';
 import { registerTerminalIpc, destroyAllTerminals } from './ipc/terminal-ipc.js';
@@ -912,6 +913,144 @@ async function bootstrap(): Promise<void> {
   // App Control & Email IPC (window-independent)
   try { registerAppControlIpc(); console.log('[Main] AppControl IPC registered'); } catch (err) { console.error('[Main] registerAppControlIpc failed:', err); }
   try { registerEmailIpc(); console.log('[Main] Email IPC registered'); } catch (err) { console.error('[Main] registerEmailIpc failed:', err); }
+
+  // Desktop Control Permission IPC — scrypt password management
+  const CONFIG_PATH = join(homedir(), '.lingjing', 'config.json');
+
+  const _readConfig = async (): Promise<Record<string, unknown>> => {
+    try {
+      const raw = await readFile(CONFIG_PATH, 'utf8');
+      return JSON.parse(raw);
+    } catch { return {}; }
+  };
+
+  const _writeConfig = async (cfg: Record<string, unknown>) => {
+    const dir = dirname(CONFIG_PATH);
+    if (!existsSync(dir)) await mkdir(dir, { recursive: true });
+    await writeFile(CONFIG_PATH, JSON.stringify(cfg, null, 2));
+  };
+
+  const _ensureAdvanced = (cfg: Record<string, unknown>) => {
+    if (!cfg.advanced || typeof cfg.advanced !== 'object') {
+      cfg.advanced = {};
+    }
+    return cfg.advanced as Record<string, unknown>;
+  };
+
+  ipcMain.handle('desktop-control:has-password', async () => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    return !!(adv?.desktopControlPasswordHash);
+  });
+
+  ipcMain.handle('desktop-control:set-password', async (_event, { password }: { password: string }) => {
+    if (!password || password.length < 6) {
+      return { success: false, error: '密码至少需要6个字符' };
+    }
+    const salt = randomBytes(32);
+    const hash = scryptSync(password, salt, 64);
+    const cfg = await _readConfig();
+    const adv = _ensureAdvanced(cfg);
+    adv.desktopControlPasswordHash = hash.toString('base64');
+    adv.desktopControlPasswordSalt = salt.toString('base64');
+    await _writeConfig(cfg);
+    return { success: true };
+  });
+
+  ipcMain.handle('desktop-control:verify-password', async (_event, { password }: { password: string }) => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    const hashB64 = adv?.desktopControlPasswordHash as string | undefined;
+    const saltB64 = adv?.desktopControlPasswordSalt as string | undefined;
+    if (!hashB64 || !saltB64) {
+      return { success: false, error: '尚未设置密码' };
+    }
+    try {
+      const storedHash = Buffer.from(hashB64, 'base64');
+      const salt = Buffer.from(saltB64, 'base64');
+      const inputHash = scryptSync(password, salt, 64);
+      if (timingSafeEqual(storedHash, inputHash)) {
+        return { success: true };
+      }
+      return { success: false, error: '密码错误' };
+    } catch {
+      return { success: false, error: '密码验证异常' };
+    }
+  });
+
+  ipcMain.handle('desktop-control:is-enabled', async () => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    return !!(adv?.desktopControlEnabled);
+  });
+
+  ipcMain.handle('desktop-control:set-enabled', async (_event, { enabled }: { enabled: boolean }) => {
+    const cfg = await _readConfig();
+    const adv = _ensureAdvanced(cfg);
+    adv.desktopControlEnabled = enabled;
+    await _writeConfig(cfg);
+    return { success: true };
+  });
+
+  // ── Camera Permission ──
+  ipcMain.handle('permission:camera:is-enabled', async () => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    return !!(adv?.cameraEnabled);
+  });
+
+  ipcMain.handle('permission:camera:set-enabled', async (_event, { enabled }: { enabled: boolean }) => {
+    const cfg = await _readConfig();
+    const adv = _ensureAdvanced(cfg);
+    adv.cameraEnabled = enabled;
+    await _writeConfig(cfg);
+    return { success: true };
+  });
+
+  ipcMain.handle('permission:camera:get-status', async () => {
+    // Check system-level camera permission status
+    try {
+      const { systemPreferences } = require('electron');
+      if (process.platform === 'darwin') {
+        const status = systemPreferences.getMediaAccessStatus('camera');
+        return { status: status }; // 'granted' | 'denied' | 'not-determined'
+      }
+      // Windows/Linux: no system-level camera permission API
+      return { status: 'unknown' };
+    } catch {
+      return { status: 'unknown' };
+    }
+  });
+
+  // ── Microphone Permission ──
+  ipcMain.handle('permission:microphone:is-enabled', async () => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    return !!(adv?.microphoneEnabled);
+  });
+
+  ipcMain.handle('permission:microphone:set-enabled', async (_event, { enabled }: { enabled: boolean }) => {
+    const cfg = await _readConfig();
+    const adv = _ensureAdvanced(cfg);
+    adv.microphoneEnabled = enabled;
+    await _writeConfig(cfg);
+    return { success: true };
+  });
+
+  ipcMain.handle('permission:microphone:get-status', async () => {
+    try {
+      const { systemPreferences } = require('electron');
+      if (process.platform === 'darwin') {
+        const status = systemPreferences.getMediaAccessStatus('microphone');
+        return { status: status };
+      }
+      return { status: 'unknown' };
+    } catch {
+      return { status: 'unknown' };
+    }
+  });
+
+  console.log('[Main] DesktopControl + Permissions IPC registered');
 
   // Initialize cloud sync and GitHub integration
   try {

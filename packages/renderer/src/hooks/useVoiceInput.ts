@@ -206,10 +206,23 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
   }, []);
 
   // ── 切换录音 ──
-  const toggleRecording = useCallback((currentText?: string) => {
+  const toggleRecording = useCallback(async (currentText?: string) => {
     if (isRecordingRef.current) {
       stopAll();
       return;
+    }
+
+    // 检查麦克风权限是否已开启
+    try {
+      if (window.electronAPI?.permissions?.microphone?.isEnabled) {
+        const micEnabled = await window.electronAPI.permissions.microphone.isEnabled();
+        if (!micEnabled) {
+          alert('麦克风权限未开启，请在 设置 → 高级 → 麦克风权限 中开启。');
+          return;
+        }
+      }
+    } catch {
+      // 如果 permissions API 不可用（如非 Electron 环境），继续执行
     }
 
     baseTextRef.current = currentText || '';

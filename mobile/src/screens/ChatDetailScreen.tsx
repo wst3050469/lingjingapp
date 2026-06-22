@@ -2,8 +2,10 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, SafeAreaView, Alert, ActivityIndicator,
+  KeyboardAvoidingView, Platform, SafeAreaView, Alert, ActivityIndicator, PermissionsAndroid,
 } from 'react-native';
+import { Audio } from 'expo-av';
+import * as DocumentPicker from 'expo-document-picker';
 import { api } from '../services/api';
 import { useAppStore, Message } from '../stores/app-store';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,8 +20,17 @@ const MODELS = [
 type TaskStatus = 'idle' | 'running' | 'paused' | 'stopped';
 
 export default function ChatDetailScreen({ route }: any) {
-  if (!route?.params) return null;
-  const { sessionId, title } = route.params;
+  const sessionId = route?.params?.sessionId;
+  const title = route?.params?.title;
+
+  // ── 防御性检查：缺少 sessionId 时显示错误 ──
+  if (!sessionId) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.loadingText}>❌ 无效的会话 ID</Text>
+      </View>
+    );
+  }
 
   // ── 对话状态 ──
   const [messages, setMessages] = useState<Message[]>([]);
@@ -28,6 +39,7 @@ export default function ChatDetailScreen({ route }: any) {
   const [sending, setSending] = useState(false);
   const [selectedModel, setSelectedModel] = useState('deepseek');
   const flatListRef = useRef<FlatList>(null);
+  const recordingRef = useRef<Audio.Recording | null>(null);
 
   // ── 任务控制状态 ──
   const [taskStatus, setTaskStatus] = useState<TaskStatus>('idle');
@@ -123,9 +135,7 @@ export default function ChatDetailScreen({ route }: any) {
   // ── 文件上传 ──
   async function handlePickFile() {
     try {
-      // 动态导入 expo-document-picker（按需加载）
-      const { pick } = require('expo-document-picker') as typeof import('expo-document-picker');
-      const result = await pick({ type: '*/*', copyToCacheDirectory: true });
+      const result = await DocumentPicker.pick({ type: '*/*', copyToCacheDirectory: true });
       if (!result.canceled && result.assets?.length) {
         const file = result.assets[0];
         await api.uploadFile(sessionId, {
@@ -141,11 +151,7 @@ export default function ChatDetailScreen({ route }: any) {
         }]);
       }
     } catch (e: any) {
-      if (e?.message?.includes('Cannot find module')) {
-        Alert.alert('提示', '文件上传功能需要安装 expo-document-picker');
-      } else {
-        Alert.alert('上传失败', e.message || '未知错误');
-      }
+      Alert.alert('上传失败', e.message || '未知错误');
     }
   }
 
@@ -155,23 +161,47 @@ export default function ChatDetailScreen({ route }: any) {
       // 停止录音并发送
       setRecording(false);
       try {
-        const { stopRecording } = require('expo-av') as typeof import('*');
-        const result = await stopRecording();
-        if (result?.uri) {
-          const text = await api.transcribeAudio(result.uri);
+        const rec = recordingRef.current;
+        if (!rec) return;
+        await rec.stopAndUnloadAsync();
+        const uri = rec.getURI();
+        recordingRef.current = null;
+        if (uri) {
+          const text = await api.transcribeAudio(uri);
           if (text) setInput(prev => prev + text);
         }
       } catch (e: any) {
+        recordingRef.current = null;
         Alert.alert('语音识别失败', e.message || '未知错误');
       }
     } else {
+      // Android 权限请求
+      if (Platform.OS === 'android') {
+        try {
+          const perm = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+            { title: '录音权限', message: '灵境需要使用麦克风进行语音输入', buttonPositive: '允许', buttonNegative: '拒绝' }
+          );
+          if (perm !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert('权限被拒绝', '请在系统设置中允许灵境使用麦克风');
+            return;
+          }
+        } catch (e: any) {
+          Alert.alert('权限错误', e.message);
+          return;
+        }
+      }
       // 开始录音
       setRecording(true);
       try {
-        const { startRecording } = require('expo-av') as typeof import('*');
-        await startRecording();
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+        const rec = new Audio.Recording();
+        await rec.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        await rec.startAsync();
+        recordingRef.current = rec;
       } catch (e: any) {
         setRecording(false);
+        recordingRef.current = null;
         Alert.alert('录音失败', e.message || '未知错误');
       }
     }

@@ -138,6 +138,20 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
   // Reset
   const [confirmReset, setConfirmReset] = useState(false);
 
+  // Desktop Control Permission
+  const [desktopControlEnabled, setDesktopControlEnabled] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordModalMode, setPasswordModalMode] = useState<'set' | 'verify'>('verify');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [hasDesktopControlPassword, setHasDesktopControlPassword] = useState(false);
+
+  // Camera & Microphone Permissions
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
+
   useEffect(() => {
     window.electronAPI.app.getVersion().then(setVersion);
     window.electronAPI.app.platform().then(setPlatform);
@@ -153,6 +167,10 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
     setProxy(a.proxy ?? '');
     setAutoUpdate(a.autoUpdate ?? true);
     setProcessIsolation(a.processIsolation ?? true);
+    // Desktop control: check state on config load
+    checkDesktopControlState();
+    // Camera & Microphone: check state on config load
+    checkDevicePermissions();
   }, [config]);
 
   // Handlers
@@ -201,6 +219,128 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
       showStatus(`重置失败: ${err.message}`);
     }
     setConfirmReset(false);
+  };
+
+  // Desktop Control handlers
+  const checkDesktopControlState = async () => {
+    try {
+      const [enabled, hasPwd] = await Promise.all([
+        window.electronAPI.desktopControl.isEnabled(),
+        window.electronAPI.desktopControl.hasPassword(),
+      ]);
+      setDesktopControlEnabled(enabled);
+      setHasDesktopControlPassword(hasPwd);
+    } catch {
+      // silently ignore
+    }
+  };
+
+  // Camera & Microphone permission handlers
+  const checkDevicePermissions = async () => {
+    try {
+      const [cam, mic] = await Promise.all([
+        window.electronAPI.permissions.camera.isEnabled(),
+        window.electronAPI.permissions.microphone.isEnabled(),
+      ]);
+      setCameraEnabled(cam);
+      setMicrophoneEnabled(mic);
+    } catch {
+      // silently ignore
+    }
+  };
+
+  const handleCameraToggle = async (v: boolean) => {
+    setCameraEnabled(v);
+    try {
+      await window.electronAPI.permissions.camera.setEnabled(v);
+      showStatus(v ? '摄像头权限已开启' : '摄像头权限已关闭');
+    } catch (err: any) {
+      setCameraEnabled(!v);
+      showStatus(`操作失败: ${err.message}`);
+    }
+  };
+
+  const handleMicrophoneToggle = async (v: boolean) => {
+    setMicrophoneEnabled(v);
+    try {
+      await window.electronAPI.permissions.microphone.setEnabled(v);
+      showStatus(v ? '麦克风权限已开启' : '麦克风权限已关闭');
+    } catch (err: any) {
+      setMicrophoneEnabled(!v);
+      showStatus(`操作失败: ${err.message}`);
+    }
+  };
+
+  const handleDesktopControlToggle = async () => {
+    const newState = !desktopControlEnabled;
+    if (newState) {
+      // Turning ON: check if password is set
+      const hasPwd = await window.electronAPI.desktopControl.hasPassword();
+      setHasDesktopControlPassword(hasPwd);
+      if (!hasPwd) {
+        setPasswordModalMode('set');
+      } else {
+        setPasswordModalMode('verify');
+      }
+    } else {
+      // Turning OFF: verify password first
+      setPasswordModalMode('verify');
+    }
+    setPasswordInput('');
+    setPasswordConfirm('');
+    setPasswordError('');
+    setPasswordModalOpen(true);
+  };
+
+  const handlePasswordSubmit = async () => {
+    setPasswordError('');
+    if (!passwordInput || passwordInput.length < 6) {
+      setPasswordError('密码至少需要6个字符');
+      return;
+    }
+    if (passwordModalMode === 'set') {
+      if (passwordInput !== passwordConfirm) {
+        setPasswordError('两次输入的密码不一致');
+        return;
+      }
+      setPasswordLoading(true);
+      try {
+        const result = await window.electronAPI.desktopControl.setPassword(passwordInput);
+        if (result.success) {
+          await window.electronAPI.desktopControl.setEnabled(true);
+          setDesktopControlEnabled(true);
+          setHasDesktopControlPassword(true);
+          setPasswordModalOpen(false);
+          showStatus('鼠标键盘操控权限已开启');
+        } else {
+          setPasswordError(result.error || '设置失败');
+        }
+      } catch (err: any) {
+        setPasswordError(err.message || '设置异常');
+      } finally {
+        setPasswordLoading(false);
+      }
+    } else {
+      setPasswordLoading(true);
+      try {
+        const result = await window.electronAPI.desktopControl.verifyPassword(passwordInput);
+        if (result.success) {
+          const newState = !desktopControlEnabled;
+          await window.electronAPI.desktopControl.setEnabled(newState);
+          setDesktopControlEnabled(newState);
+          setPasswordModalOpen(false);
+          showStatus(newState ? '鼠标键盘操控权限已开启' : '鼠标键盘操控权限已关闭');
+        } else {
+          setPasswordError(result.error || '密码错误');
+          setPasswordInput('');
+        }
+      } catch (err: any) {
+        setPasswordError(err.message || '验证异常');
+        setPasswordInput('');
+      } finally {
+        setPasswordLoading(false);
+      }
+    }
   };
 
   return (
@@ -521,6 +661,155 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
           </div>
         </Card>
       </div>
+
+      {/* --- 摄像头权限 --- */}
+      <div>
+        <SectionHeader title="摄像头权限" />
+        <Card className="!border-amber-500/20 !bg-amber-500/[0.02]">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-cp-text font-medium">摄像头</p>
+              <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
+                允许灵境访问摄像头设备。关闭后所有摄像头相关功能将不可用。默认关闭。
+              </p>
+            </div>
+            <Toggle checked={cameraEnabled} onChange={handleCameraToggle} />
+          </div>
+        </Card>
+      </div>
+
+      {/* --- 麦克风权限 --- */}
+      <div>
+        <SectionHeader title="麦克风权限" />
+        <Card className="!border-amber-500/20 !bg-amber-500/[0.02]">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-cp-text font-medium">麦克风</p>
+              <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
+                允许灵境使用麦克风进行语音输入。关闭后语音输入功能将被禁用。默认关闭。
+              </p>
+            </div>
+            <Toggle checked={microphoneEnabled} onChange={handleMicrophoneToggle} />
+          </div>
+        </Card>
+      </div>
+
+      {/* --- 鼠标键盘操控权限 --- */}
+      <div>
+        <SectionHeader title="鼠标键盘操控权限" />
+        <Card className="!border-red-500/20 !bg-red-500/[0.02]">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-cp-text font-medium">鼠标键盘绝对操控权限</p>
+              <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
+                允许 AI 直接操控鼠标和键盘，实现完整的桌面操作能力。此功能具有极高风险，开启后 AI 将能够操作任何桌面应用程序。
+              </p>
+            </div>
+            <Toggle checked={desktopControlEnabled} onChange={handleDesktopControlToggle} />
+          </div>
+        </Card>
+      </div>
+
+      {/* --- 桌面操控密码弹窗 --- */}
+      {passwordModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => { setPasswordModalOpen(false); }}>
+          <div className="bg-cp-panel border border-cp-border rounded-xl w-[380px] shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-cp-border/30">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <h3 className="text-sm text-cp-text font-semibold">
+                  {passwordModalMode === 'set' ? '设置操控密码' : '验证操控密码'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setPasswordModalOpen(false)}
+                className="text-cp-text-dim/40 hover:text-cp-text"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-[11px] text-cp-text-dim/60 leading-relaxed">
+                {passwordModalMode === 'set'
+                  ? '首次开启此功能，请设置一个独立的专用密码。该密码与登录密码无关，请妥善保管。'
+                  : `请输入专用密码以${desktopControlEnabled ? '关闭' : '开启'}鼠标键盘绝对操控权限。`}
+              </p>
+
+              <div>
+                <label className="text-[11px] text-cp-text-dim mb-1 block">密码</label>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(''); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordSubmit(); }}
+                  placeholder="输入专用密码"
+                  className="w-full bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-2 text-sm text-cp-text outline-none focus:border-cp-accent"
+                  autoFocus
+                />
+              </div>
+
+              {passwordModalMode === 'set' && (
+                <div>
+                  <label className="text-[11px] text-cp-text-dim mb-1 block">确认密码</label>
+                  <input
+                    type="password"
+                    value={passwordConfirm}
+                    onChange={(e) => { setPasswordConfirm(e.target.value); setPasswordError(''); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordSubmit(); }}
+                    placeholder="再次输入密码"
+                    className="w-full bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-2 text-sm text-cp-text outline-none focus:border-cp-accent"
+                  />
+                </div>
+              )}
+
+              {passwordError && (
+                <div className="flex items-center gap-1.5 text-red-400">
+                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-[11px]">{passwordError}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-cp-border/30">
+              <button
+                onClick={() => setPasswordModalOpen(false)}
+                className="text-xs px-3 py-1.5 rounded-md text-cp-text-dim hover:text-cp-text hover:bg-white/5 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handlePasswordSubmit}
+                disabled={passwordLoading || !passwordInput}
+                className="text-xs px-4 py-1.5 rounded-md bg-red-500/20 text-red-400 hover:bg-red-500/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {passwordLoading ? '验证中...' : passwordModalMode === 'set' ? '设置并开启' : '确认'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- 调试信息 --- */}
       <div>

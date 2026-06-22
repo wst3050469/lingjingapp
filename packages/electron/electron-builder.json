@@ -65,10 +65,7 @@
     "compression": "gz"
   },
   "asar": {
-    "unpack": [
-      "node_modules/robotjs/**",
-      "node_modules/cpu-features/**"
-    ]
+    "smartUnpack": true
   },
   "publish": {
     "provider": "generic",

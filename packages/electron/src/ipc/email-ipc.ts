@@ -46,10 +46,14 @@ export function registerEmailIpc(): void {
     }
   });
 
-  // 读取已保存的 SMTP 配置
+  // 读取已保存的 SMTP 配置（同时恢复内存状态）
   ipcMain.handle('email:get-config', async () => {
     try {
       const cfg = await readConfig();
+      if (cfg.smtp) {
+        // 恢复 EmailService 内存状态，避免重启后发送邮件报"未初始化"
+        emailService.init(cfg.smtp as any);
+      }
       return { success: true, data: cfg.smtp || null };
     } catch (error: any) {
       console.error('[Email] getConfig error:', error);

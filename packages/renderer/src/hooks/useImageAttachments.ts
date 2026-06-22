@@ -3,6 +3,8 @@ import { useState, useRef, useCallback } from 'react';
 export interface AttachedImage {
   name: string;
   dataUrl: string;
+  /** MIME type of the file, e.g. "image/png", "application/pdf", "text/plain" */
+  mediaType: string;
 }
 
 export function useImageAttachments() {
@@ -17,23 +19,22 @@ export function useImageAttachments() {
     const files = e.target.files;
     if (!files) return;
     Array.from(files).forEach((file) => {
-      if (!file.type.startsWith('image/')) return;
       const reader = new FileReader();
       reader.onload = (ev) => {
         const dataUrl = ev.target?.result as string;
-        setImages((prev) => [...prev, { name: file.name, dataUrl }]);
+        setImages((prev) => [...prev, { name: file.name, dataUrl, mediaType: file.type || 'application/octet-stream' }]);
       };
+      // Images: read as data URL (base64). Others: also read as data URL for consistency
       reader.readAsDataURL(file);
     });
     e.target.value = '';
   }, []);
 
   const addImageFromFile = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
       const dataUrl = ev.target?.result as string;
-      setImages((prev) => [...prev, { name: file.name || 'screenshot.png', dataUrl }]);
+      setImages((prev) => [...prev, { name: file.name || 'attachment', dataUrl, mediaType: file.type || 'application/octet-stream' }]);
     };
     reader.readAsDataURL(file);
   }, []);

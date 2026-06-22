@@ -8,6 +8,8 @@ export type ChatMode = 'ask' | 'agent' | 'experts' | 'research';
 export interface AttachedImage {
   name: string;
   dataUrl: string;
+  /** MIME type of the file, e.g. "image/png", "application/pdf", "text/plain" */
+  mediaType?: string;
 }
 
 export interface CodeContext {

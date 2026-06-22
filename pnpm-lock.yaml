@@ -196,6 +196,9 @@ importers:
       ssh2:
         specifier: ^1.17.0
         version: 1.17.0
+      systeminformation:
+        specifier: 5.23.0
+        version: 5.23.0
       tmp:
         specifier: 0.2.5
         version: 0.2.5
@@ -5569,6 +5572,12 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
+
+  systeminformation@5.23.0:
+    resolution: {integrity: sha512-bMIqNOlKD7wf7FYkSTgWWw6d7F/r82/YI/075JoHkDRjI9ZO9hImbvwp+/hqK2GKcv5eWi/ckhNRyzXVUj3wUQ==}
+    engines: {node: '>=8.0.0'}
+    os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
+    hasBin: true
 
   tailwindcss@3.4.19:
     resolution: {integrity: sha512-3ofp+LL8E+pK/JuPLPggVAIaEuhvIz4qNcf3nA1Xn2o/7fb7s/TYpHhwGDv1ZU3PkBluUVaF8PyCHcm48cKLWQ==}
@@ -12447,6 +12456,8 @@ snapshots:
       supports-color: 7.2.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  systeminformation@5.23.0: {}
 
   tailwindcss@3.4.19(yaml@2.9.0):
     dependencies:

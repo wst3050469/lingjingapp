@@ -52,7 +52,21 @@ export function EmailTab() {
 
   useEffect(() => {
     loadPresets();
+    loadSavedConfig();
   }, []);
+
+  const loadSavedConfig = async () => {
+    try {
+      if (window.electronAPI?.emailService?.getConfig) {
+        const result = await window.electronAPI.emailService.getConfig();
+        if (result?.success && result?.data) {
+          setSmtpConfig((prev) => ({ ...prev, ...result.data }));
+        }
+      }
+    } catch (err: any) {
+      console.error('[EmailTab] Failed to load saved config:', err);
+    }
+  };
 
   const loadPresets = async () => {
     try {

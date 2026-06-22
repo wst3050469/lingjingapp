@@ -506,10 +506,20 @@ declare interface ElectronAPI {
   // 邮件服务 - SMTP 收发邮件
   emailService: {
     initSmtp: (config: { host: string; port: number; secure: boolean; user: string; pass: string; fromName?: string }) => Promise<{ success: boolean; error?: string }>;
+    getConfig: () => Promise<{ success: boolean; data: { host: string; port: number; secure: boolean; user: string; pass: string; fromName?: string } | null; error?: string }>;
     validateConfig: (config: { host: string; port: number; secure: boolean; user: string; pass: string }) => Promise<{ valid: boolean; error?: string }>;
     getPresetList: () => Promise<{ success: boolean; data: Array<{ key: string; name: string; description: string }>; error?: string }>;
     sendMail: (mailConfig: { to: string; subject: string; body: string; html?: string; cc?: string; bcc?: string; attachments?: Array<{ filename: string; path?: string; content?: string }> }) => Promise<{ success: boolean; error?: string }>;
     sendWithPreset: (presetKey: string, replacements: Record<string, string>, mailConfig: { to: string; subject: string; body: string }) => Promise<{ success: boolean; error?: string }>;
+  };
+
+  // 桌面操控权限 - 安全密码管理
+  desktopControl: {
+    hasPassword: () => Promise<boolean>;
+    setPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+    verifyPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+    isEnabled: () => Promise<boolean>;
+    setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
   };
 
 }

@@ -906,11 +906,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 邮件服务 API
   emailService: {
     initSmtp: (config: any) => ipcRenderer.invoke('email:init-smtp', config),
+    getConfig: () => ipcRenderer.invoke('email:get-config'),
     validateConfig: (config: any) => ipcRenderer.invoke('email:validate-config', config),
     getPresetList: () => ipcRenderer.invoke('email:get-presets'),
     sendMail: (mailConfig: any) => ipcRenderer.invoke('email:send', mailConfig),
     sendWithPreset: (presetKey: string, replacements: Record<string, string>, mailConfig: any) =>
       ipcRenderer.invoke('email:send-with-preset', presetKey, replacements, mailConfig),
+  },
+
+  // 桌面操控权限 API
+  desktopControl: {
+    hasPassword: () => ipcRenderer.invoke('desktop-control:has-password'),
+    setPassword: (password: string) => ipcRenderer.invoke('desktop-control:set-password', { password }),
+    verifyPassword: (password: string) => ipcRenderer.invoke('desktop-control:verify-password', { password }),
+    isEnabled: () => ipcRenderer.invoke('desktop-control:is-enabled'),
+    setEnabled: (enabled: boolean) => ipcRenderer.invoke('desktop-control:set-enabled', { enabled }),
   },
 
 });

@@ -2,7 +2,7 @@
   "expo": {
     "name": "灵境IDE",
     "slug": "lingjing-mobile",
-    "version": "1.73.162",
+    "version": "1.73.163",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -18,12 +18,18 @@
         "backgroundColor": "#0d1117"
       },
       "package": "com.zhejiangjinmo.lingjing.mobile",
-      "permissions": ["RECORD_AUDIO", "INTERNET"]
+      "permissions": [
+        "RECORD_AUDIO",
+        "INTERNET"
+      ],
+      "versionCode": 83
     },
     "plugins": [
       [
         "expo-av",
-        { "microphonePermission": "允许灵境使用麦克风进行语音输入" }
+        {
+          "microphonePermission": "允许灵境使用麦克风进行语音输入"
+        }
       ]
     ],
     "extra": {

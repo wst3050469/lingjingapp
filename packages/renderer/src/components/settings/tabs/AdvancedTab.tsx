@@ -151,6 +151,9 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
   // Camera & Microphone Permissions
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
+  const [photoResult, setPhotoResult] = useState<string | null>(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
 
   useEffect(() => {
     window.electronAPI.app.getVersion().then(setVersion);
@@ -257,6 +260,27 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
     } catch (err: any) {
       setCameraEnabled(!v);
       showStatus(`操作失败: ${err.message}`);
+    }
+  };
+
+  const handleCapturePhoto = async () => {
+    setPhotoLoading(true);
+    setPhotoError('');
+    setPhotoResult(null);
+    try {
+      const result = await window.electronAPI.permissions.camera.capturePhoto();
+      if (result.success && result.data) {
+        setPhotoResult(result.data);
+        showStatus('拍照成功');
+      } else {
+        setPhotoError(result.error || '拍照失败');
+        showStatus(result.error || '拍照失败');
+      }
+    } catch (err: any) {
+      setPhotoError(err.message || '拍照异常');
+      showStatus(`拍照异常: ${err.message}`);
+    } finally {
+      setPhotoLoading(false);
     }
   };
 
@@ -677,6 +701,31 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
               <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
                 允许灵境访问摄像头设备。关闭后所有摄像头相关功能将不可用。默认关闭。
               </p>
+              {/* 测试拍照按钮 */}
+              {cameraEnabled && (
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    onClick={handleCapturePhoto}
+                    disabled={photoLoading}
+                    className="text-xs px-3 py-1.5 rounded-md bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 disabled:opacity-40 transition-colors"
+                  >
+                    {photoLoading ? '拍照中...' : '📷 测试拍照'}
+                  </button>
+                  {photoError && (
+                    <span className="text-[11px] text-red-400">{photoError}</span>
+                  )}
+                </div>
+              )}
+              {/* 拍照预览 */}
+              {photoResult && (
+                <div className="mt-2">
+                  <img
+                    src={photoResult}
+                    alt="拍照预览"
+                    className="max-w-[200px] max-h-[150px] rounded-lg border border-cp-border/30"
+                  />
+                </div>
+              )}
             </div>
             <Toggle checked={cameraEnabled} onChange={handleCameraToggle} />
           </div>

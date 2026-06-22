@@ -986,6 +986,69 @@ contextBridge.exposeInMainWorld('electronAPI', {
       isEnabled: () => ipcRenderer.invoke('permission:camera:is-enabled'),
       setEnabled: (enabled: boolean) => ipcRenderer.invoke('permission:camera:set-enabled', { enabled }),
       getStatus: () => ipcRenderer.invoke('permission:camera:get-status'),
+
+      // 拍照：使用浏览器 getUserMedia + canvas 截图，返回 base64 JPEG
+      capturePhoto: async (): Promise<{ success: boolean; data?: string; error?: string }> => {
+        try {
+          // 1. 检查摄像头权限
+          const isEnabled = await ipcRenderer.invoke('permission:camera:is-enabled');
+          if (!isEnabled) {
+            return { success: false, error: '摄像头权限未开启，请在 设置→高级→摄像头权限 中开启' };
+          }
+
+          // 2. 获取摄像头流
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          });
+
+          // 3. 用 video 元素播放一帧
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          video.setAttribute('playsinline', '');
+          video.setAttribute('autoplay', '');
+
+          await new Promise<void>((resolve, reject) => {
+            video.onloadedmetadata = () => {
+              video.play().then(resolve).catch(reject);
+            };
+            video.onerror = () => reject(new Error('视频流加载失败'));
+            // 超时 5 秒
+            setTimeout(() => reject(new Error('摄像头启动超时')), 5000);
+          });
+
+          // 等待足够帧以确保画面稳定
+          await new Promise(r => setTimeout(r, 500));
+
+          // 4. 绘制到 canvas 并导出 base64
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            stream.getTracks().forEach(t => t.stop());
+            return { success: false, error: '无法创建 canvas 上下文' };
+          }
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+          // 5. 清理
+          stream.getTracks().forEach(t => t.stop());
+          video.remove();
+          canvas.remove();
+
+          return { success: true, data: base64 };
+        } catch (err: any) {
+          const msg = err?.message || String(err);
+          if (msg.includes('NotAllowed') || msg.includes('Permission')) {
+            return { success: false, error: '摄像头访问被拒绝，请检查系统权限设置' };
+          }
+          if (msg.includes('NotFound') || msg.includes('Devices')) {
+            return { success: false, error: '未检测到摄像头设备' };
+          }
+          return { success: false, error: msg || '拍照失败' };
+        }
+      },
     },
     microphone: {
       isEnabled: () => ipcRenderer.invoke('permission:microphone:is-enabled'),

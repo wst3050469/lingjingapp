@@ -46,6 +46,7 @@ class WindowsAppController implements IAppController {
     try {
       // 使用 PowerShell 读取注册表（比 wmic product 快得多）
       const script = `
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
         $apps = @()
         $paths = @(
           'HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
@@ -92,6 +93,7 @@ class WindowsAppController implements IAppController {
   async getWindows(): Promise<WindowInfo[]> {
     try {
       const script = `
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
         Get-Process | Where-Object { $_.MainWindowTitle -ne '' } | 
         Select-Object Id, MainWindowTitle, ProcessName |
         ConvertTo-Json -Compress

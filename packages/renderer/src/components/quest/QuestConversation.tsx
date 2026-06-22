@@ -639,12 +639,12 @@ function QuestFileChangeSummary() {
   const files = Object.values(fileChanges);
   const [collapsed, setCollapsed] = useState(true);
   const [countOnAppear, setCountOnAppear] = useState(0);
-  const [fileChangeBehavior, setFileChangeBehavior] = useState<string>('ask');
+  const [fileChangeBehavior, setFileChangeBehavior] = useState<string>('auto-accept');
 
   // Load file change behavior config on mount
   useEffect(() => {
     window.electronAPI.config.get().then((c: any) => {
-      const behavior = c?.quest?.fileChangeBehavior ?? 'ask';
+      const behavior = c?.quest?.fileChangeBehavior ?? 'auto-accept';
       setFileChangeBehavior(behavior);
     }).catch(() => {});
   }, []);

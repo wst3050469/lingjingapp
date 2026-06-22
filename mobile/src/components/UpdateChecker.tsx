@@ -17,7 +17,7 @@ function isNewer(a: string, b: string): boolean {
   return false;
 }
 
-const LATEST_URL = 'https://ide.zhejiangjinmo.com/api/latest';
+const LATEST_URL = 'https://ide.zhejiangjinmo.com/downloads/version.json';
 
 export default function UpdateChecker() {
   const checkedRef = useRef(false);
@@ -31,20 +31,21 @@ export default function UpdateChecker() {
     const currentVersion = Constants.expoConfig?.version || '0.0.0';
 
     fetch(LATEST_URL)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
       .then((data: any) => {
         const latestVer = data.version;
         if (!latestVer) return;
         // Only show when server version is strictly newer
         if (!isNewer(latestVer, currentVersion)) return;
 
-        const downloadUrl = typeof data.files?.android === 'string'
-          ? (data.files.android.startsWith('http') ? data.files.android : `https://ide.zhejiangjinmo.com/downloads/${data.files.android}`)
-          : data.files?.android?.url?.startsWith('http')
-            ? data.files.android.url
-            : `https://ide.zhejiangjinmo.com/downloads/${data.files?.android?.url || `lingjing-v${latestVer}.apk`}`;
-        const sizeMb = data.platforms?.android?.size
-          ? Math.round(data.platforms.android.size / 1048576)
+        // version.json format: { version, apkUrl, fileSize, md5, releaseNotes, ... }
+        const downloadUrl = data.apkUrl || '';
+        if (!downloadUrl) return;
+        const sizeMb = data.fileSize
+          ? Math.round(data.fileSize / 1048576)
           : 0;
         const notes = data.releaseNotes || '';
 

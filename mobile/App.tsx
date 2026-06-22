@@ -108,7 +108,6 @@ export default function App() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <UpdateChecker />
         <NavigationContainer theme={{
           dark: isDarkMode,
           colors: isDarkMode ? {
@@ -143,6 +142,7 @@ export default function App() {
           })}>
             <Tab.Screen name="ChatTab" component={ChatStackScreen} options={{ title: '对话' }} />
           </Tab.Navigator>
+          <UpdateChecker />
         </NavigationContainer>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       </SafeAreaProvider>

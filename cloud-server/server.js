@@ -668,8 +668,24 @@ function recoverVersionsJson() {
   }
 }
 
+// Sync /var/www/downloads/versions.json → /var/www/html/versions.json
+// The downloads page fetches /versions.json (served from /var/www/html/),
+// so we must keep it in sync with the canonical copy in /var/www/downloads/.
+function syncHtmlVersionsJson() {
+  try {
+    if (existsSync(VER_PRIMARY)) {
+      writeFileSync('/var/www/html/versions.json', readFileSync(VER_PRIMARY, 'utf8'));
+      console.log('[Version] Synced /var/www/html/versions.json from primary');
+    }
+  } catch (e) {
+    console.warn('[Version] syncHtmlVersionsJson failed:', e.message);
+  }
+}
+
 recoverVersionsJson();
+syncHtmlVersionsJson();
 setInterval(backupVersionsJson, 6 * 60 * 60 * 1000);
+setInterval(syncHtmlVersionsJson, 30 * 60 * 1000); // Also sync every 30 min
 process.on('SIGTERM', () => { backupVersionsJson(); process.exit(0); });
 process.on('SIGINT', () => { backupVersionsJson(); process.exit(0); });
 
@@ -2051,6 +2067,20 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
 
   writeFileSync(versionsPath, JSON.stringify(versions, null, 2));
   console.log(`[Version] Updated ${versionsPath} with ${version}`);
+
+  // Sync to download page paths
+  try {
+    const dlPaths = [
+      '/var/www/downloads/versions.json',
+      '/var/www/html/versions.json',
+      '/var/www/html/downloads/versions.json',
+    ];
+    const json = JSON.stringify(versions, null, 2);
+    for (const p of dlPaths) {
+      try { writeFileSync(p, json, 'utf8'); console.log('[Version] Synced:', p); } catch (_) {}
+    }
+  } catch (_) {}
+
   res.json({ ok: true, version });
 });
 
@@ -2712,6 +2742,241 @@ app.get('/api/api-keys/stats', auth, requireSubscription(), (req, res) => {
   } catch (err) {
     console.error('[API Keys] stats error:', err.message);
     res.json({ totalKeys: 0, activeKeys: 0, totalCalls: 0, totalErrors: 0, avgCallsPerDay: 0 });
+  }
+});
+
+// ── Server Status (for mobile app) ──
+app.get('/api/status', auth, (req, res) => {
+  try {
+    const desktopCount = (db.prepare('SELECT COUNT(*) as cnt FROM user_devices WHERE is_online = 1').get() || {}).cnt || 0;
+    const sessionCount = (db.prepare('SELECT COUNT(*) as cnt FROM sessions').get() || {}).cnt || 0;
+    const taskCount = (db.prepare('SELECT COUNT(*) as cnt FROM schedules WHERE status = ?').get('active') || {}).cnt || 0;
+    const planCount = (db.prepare('SELECT COUNT(*) as cnt FROM plans').get() || {}).cnt || 0;
+    const mobileCount = clients.size || 0;
+    res.json({
+      device: 'cloud-server',
+      platform: 'linux',
+      version: '3.0.0',
+      uptime: process.uptime(),
+      memory: { total: 0, free: 0 },
+      cpu: 'cloud',
+      stats: {
+        conversations: sessionCount,
+        quest_tasks: taskCount,
+        plans: planCount,
+        mobile_clients: mobileCount,
+        desktops: desktopCount,
+      },
+    });
+  } catch (err) {
+    res.json({ device: 'cloud-server', platform: 'linux', version: '3.0.0' });
+  }
+});
+
+// ── Plans: single plan detail ──
+app.get('/api/plans/:id', (req, res) => {
+  try {
+    const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(req.params.id);
+    if (!plan) return res.status(404).json({ error: 'not_found' });
+    res.json({
+      id: plan.id,
+      name: plan.name,
+      price: plan.price,
+      billingCycle: plan.billing_cycle,
+      features: JSON.parse(plan.features || '[]'),
+      limits: JSON.parse(plan.limits || '{}'),
+      recommended: !!plan.recommended,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// ── Requirements (需求 + 审批) ──
+app.get('/api/requirements', auth, (req, res) => {
+  try {
+    const { status, assignee } = req.query;
+    let rows;
+    if (status && assignee) {
+      rows = db.prepare('SELECT * FROM requirements WHERE user_id = ? AND status = ? AND assignee = ? ORDER BY updated_at DESC').all(req.userId || '', status, assignee);
+    } else if (status) {
+      rows = db.prepare('SELECT * FROM requirements WHERE user_id = ? AND status = ? ORDER BY updated_at DESC').all(req.userId || '', status);
+    } else if (assignee) {
+      rows = db.prepare('SELECT * FROM requirements WHERE user_id = ? AND assignee = ? ORDER BY updated_at DESC').all(req.userId || '', assignee);
+    } else {
+      rows = db.prepare('SELECT * FROM requirements WHERE user_id = ? ORDER BY updated_at DESC').all(req.userId || '');
+    }
+    res.json((rows || []).map(r => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      assignee: r.assignee,
+      priority: r.priority,
+      status: r.status,
+      reviewer_comment: r.reviewer_comment,
+      created_by: r.created_by,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    })));
+  } catch (err) {
+    console.error('[Requirements] list error:', err.message);
+    res.json([]);
+  }
+});
+
+app.post('/api/requirements', auth, (req, res) => {
+  try {
+    const { title, description, assignee, priority } = req.body;
+    if (!title) return res.status(400).json({ error: 'title_required' });
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    db.prepare('INSERT INTO requirements (id, user_id, title, description, assignee, priority, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(id, req.userId || '', title, description || '', assignee || '', priority || 'normal', 'pending', req.username || '', now, now);
+    console.log('[Requirement] Created:', title, 'by', req.username);
+    res.status(201).json({ ok: true, id, title, status: 'pending', created_at: now });
+  } catch (err) {
+    console.error('[Requirements] create error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.put('/api/requirements/:id', auth, (req, res) => {
+  try {
+    const { title, description, assignee, priority } = req.body;
+    const now = new Date().toISOString();
+    const result = db.prepare('UPDATE requirements SET title = ?, description = ?, assignee = ?, priority = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+      .run(title || '', description || '', assignee || '', priority || 'normal', now, req.params.id, req.userId || '');
+    if (result.changes === 0) return res.status(404).json({ error: 'not_found' });
+    res.json({ ok: true, id: req.params.id });
+  } catch (err) {
+    console.error('[Requirements] update error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.put('/api/requirements/:id/approve', auth, (req, res) => {
+  try {
+    const { comment } = req.body;
+    const now = new Date().toISOString();
+    const result = db.prepare('UPDATE requirements SET status = ?, reviewer_comment = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+      .run('approved', comment || '', now, req.params.id, req.userId || '');
+    if (result.changes === 0) return res.status(404).json({ error: 'not_found' });
+    console.log('[Requirement] Approved:', req.params.id, 'by', req.username);
+    res.json({ ok: true, id: req.params.id, status: 'approved' });
+  } catch (err) {
+    console.error('[Requirements] approve error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.put('/api/requirements/:id/reject', auth, (req, res) => {
+  try {
+    const { comment } = req.body;
+    const now = new Date().toISOString();
+    const result = db.prepare('UPDATE requirements SET status = ?, reviewer_comment = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+      .run('rejected', comment || '', now, req.params.id, req.userId || '');
+    if (result.changes === 0) return res.status(404).json({ error: 'not_found' });
+    console.log('[Requirement] Rejected:', req.params.id, 'by', req.username);
+    res.json({ ok: true, id: req.params.id, status: 'rejected' });
+  } catch (err) {
+    console.error('[Requirements] reject error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.delete('/api/requirements/:id', auth, (req, res) => {
+  try {
+    const result = db.prepare('DELETE FROM requirements WHERE id = ? AND user_id = ?').run(req.params.id, req.userId || '');
+    if (result.changes === 0) return res.status(404).json({ error: 'not_found' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Requirements] delete error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// ── CI/CD Status ──
+app.get('/api/ci/status', auth, (req, res) => {
+  try {
+    // Return scheduled CI jobs from schedules table
+    const jobs = db.prepare("SELECT * FROM schedules WHERE action_type IN ('ci','deploy','build') ORDER BY updated_at DESC").all();
+    const ciJobs = (jobs || []).map(j => ({
+      id: j.id,
+      name: j.name,
+      action: j.action_type,
+      status: j.status || 'idle',
+      cron: j.cron_expr,
+      lastRun: j.last_run || null,
+      nextRun: j.next_run || null,
+    }));
+    res.json({ jobs: ciJobs, history: [], total: ciJobs.length });
+  } catch (err) {
+    console.error('[CI] status error:', err.message);
+    res.json({ jobs: [], history: [], total: 0 });
+  }
+});
+
+// ── File Operations (cloud-server side, for mobile fallback) ──
+app.get('/api/files/list', auth, (req, res) => {
+  try {
+    const dirPath = req.query.path || '/';
+    const files = db.prepare('SELECT name, path, size, type FROM storage_files WHERE user_id = ? AND path LIKE ? ORDER BY type DESC, name ASC')
+      .all(req.userId || '', (dirPath === '/' ? '%' : dirPath + '%'));
+    res.json({ path: dirPath, entries: (files || []).map(f => ({
+      name: f.name, path: f.path, type: f.type, size: f.size,
+    })) });
+  } catch (err) {
+    res.json({ path: req.query.path || '/', entries: [] });
+  }
+});
+
+app.get('/api/files/read', auth, (req, res) => {
+  try {
+    const filePath = req.query.path;
+    if (!filePath) return res.status(400).json({ error: 'path_required' });
+    const file = db.prepare('SELECT * FROM storage_files WHERE user_id = ? AND path = ?').get(req.userId || '', filePath);
+    if (!file) return res.status(404).json({ error: 'not_found' });
+    res.json({ path: file.path, content: file.content || '', size: file.size, mtime: file.modified_at || file.created_at });
+  } catch (err) {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.put('/api/files/write', auth, (req, res) => {
+  try {
+    const { path, content } = req.body;
+    if (!path) return res.status(400).json({ error: 'path_required' });
+    const now = new Date().toISOString();
+    const existing = db.prepare('SELECT id FROM storage_files WHERE user_id = ? AND path = ?').get(req.userId || '', path);
+    if (existing) {
+      db.prepare('UPDATE storage_files SET content = ?, size = ?, modified_at = ? WHERE id = ?')
+        .run(content || '', (content || '').length, now, existing.id);
+    } else {
+      const id = randomUUID();
+      const name = path.split('/').pop() || 'untitled';
+      db.prepare('INSERT INTO storage_files (id, user_id, name, path, content, size, type, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(id, req.userId || '', name, path, content || '', (content || '').length, 'file', now, now);
+    }
+    res.json({ success: true, path });
+  } catch (err) {
+    console.error('[Files] write error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// ── Quest Tasks (cloud fallback: maps requirements as tasks) ──
+app.get('/api/quest-tasks', auth, (req, res) => {
+  try {
+    const reqs = db.prepare('SELECT * FROM requirements WHERE user_id = ? ORDER BY updated_at DESC').all(req.userId || '');
+    res.json((reqs || []).map(r => ({
+      id: r.id,
+      title: r.title,
+      status: r.status === 'approved' ? 'idle' : r.status === 'in_progress' ? 'running' : r.status === 'completed' ? 'completed' : 'idle',
+      scenario: 'spec',
+      created_at: r.created_at,
+    })));
+  } catch (err) {
+    res.json([]);
   }
 });
 

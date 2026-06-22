@@ -1,4 +1,4 @@
-﻿// 云账号登录/注册页
+// 云账号登录/注册页
 // 支持登录和注册两种模式，使用 cloud-server /api/auth/login + /api/auth/signup
 import React, { useState } from 'react';
 import {

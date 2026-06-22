@@ -79,7 +79,7 @@ class ApiService {
  }
  async verifyToken(): Promise<any> {
  if (!this._jwtToken && !this.config.token) throw new Error('Not authenticated');
- return this.request('/auth/verify');
+ return this.request('/auth/verify', { method: 'POST' });
  }
 
  // --- Auth ---
@@ -101,7 +101,7 @@ class ApiService {
  async sendMessage(conversationId: string, message: string) {
    // Directly use cloud AI — faster and works without desktop
    console.log('[Mobile API] Sending via cloud AI...');
-   return this.request<any>('/mobile/chat', {
+   return this.request<any>('/agent/chat', {
      method: 'POST',
      body: JSON.stringify({ message, conversationId, platform: 'mobile' }),
    });
@@ -272,8 +272,8 @@ class ApiService {
  async confirmPayment(orderId: string) { return this.request<any>('/payments/confirm/' + orderId, { method: 'POST' }); }
  async queryPayment(orderId: string) { return this.request<any>('/payments/query/' + orderId); }
  async getDevices() { return this.request<any>('/auth/devices'); }
- async registerDeviceEndpoint(deviceInfo: any) { return this.request<any>('/user/devices/register', { method: 'POST', body: JSON.stringify(deviceInfo) }); }
- async heartbeat() { return this.request<any>('/user/devices/heartbeat', { method: 'PUT' }); }
+ async registerDeviceEndpoint(deviceInfo: any) { return this.request<any>('/devices/register', { method: 'POST', body: JSON.stringify(deviceInfo) }); }
+ async heartbeat() { return this.request<any>('/devices/heartbeat', { method: 'PUT' }); }
  async getStatus() { return this.request<any>('/status'); }
  sendRelayToDesktop(targetDeviceId: string, payload: any) {
    this.wsSend({ type: 'relay:to-desktop', targetDeviceId, payload, correlationId: `mobile-${Date.now()}`, timestamp: new Date().toISOString() });
@@ -322,7 +322,7 @@ class ApiService {
   // ── Desktop Online Check ──
   async getDesktopStatus(): Promise<{hasDesktop: boolean; onlineCount: number; devices: any[]; message: string}> {
     try {
-      return await this.request<any>('/desktop/status');
+      return await this.request<any>('/mobile/desktop-status');
     } catch {
       return { hasDesktop: false, onlineCount: 0, devices: [], message: '无法检查桌面状态' };
     }
@@ -330,11 +330,12 @@ class ApiService {
 
   async checkForUpdates(currentVersion: string): Promise<UpdateInfo | null> {
     try {
-      const res = await fetch('https://ide.zhejiangjinmo.com/api/latest');
-      const data: any = await res.json();
+      const res = await fetch('https://ide.zhejiangjinmo.com/downloads/version.json');
       if (!res.ok) return null;
-      // Use proper semver comparison (only newer, not equal)
+      const data: any = await res.json();
+      // version.json format: { version, versionCode, apkUrl, fileSize, md5, releaseNotes, ... }
       const latest = data.version || '';
+      if (!latest || !data.apkUrl) return null;
       const isNewer = (a: string, b: string) => {
         const pa = a.split('.').map(Number), pb = b.split('.').map(Number);
         for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
@@ -343,14 +344,16 @@ class ApiService {
         }
         return false;
       };
-      const hasUpdate = data.hasUpdate === true && isNewer(latest, currentVersion);
-      const androidUrl = typeof data.files?.android === 'string'
-        ? data.files.android
-        : data.files?.android?.url?.startsWith('http')
-          ? data.files.android.url
-          : `https://ide.zhejiangjinmo.com/downloads/lingjing-v${latest}.apk`;
-      const androidSize = data.platforms?.android?.size || data.files?.android?.size || 0;
-      return { hasUpdate, version: latest, status: data.status || '', releaseDate: data.releaseDate || '', releaseNotes: data.releaseNotes || '', downloadUrl: androidUrl, fileSize: androidSize };
+      const hasUpdate = isNewer(latest, currentVersion);
+      return {
+        hasUpdate,
+        version: latest,
+        status: 'published',
+        releaseDate: data.releaseDate || '',
+        releaseNotes: data.releaseNotes || '',
+        downloadUrl: data.apkUrl,
+        fileSize: data.fileSize || 0,
+      };
     } catch { return null; }
   }
 }

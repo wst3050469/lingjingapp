@@ -522,6 +522,20 @@ declare interface ElectronAPI {
     setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
   };
 
+  // 设备权限管理（摄像头 / 麦克风）- 默认关闭
+  permissions: {
+    camera: {
+      isEnabled: () => Promise<boolean>;
+      setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
+      getStatus: () => Promise<{ status: string }>;
+    };
+    microphone: {
+      isEnabled: () => Promise<boolean>;
+      setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
+      getStatus: () => Promise<{ status: string }>;
+    };
+  };
+
 }
 
 declare interface Window {

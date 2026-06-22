@@ -1,6 +1,6 @@
 {
   "name": "lingjing-ide",
-  "version": "1.73.153",
+  "version": "1.73.155",
   "description": "灵境IDE - AI 驱动的智能开发平台",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
@@ -21,9 +21,9 @@
     "expo-asset": "~55.0.17",
     "expo-clipboard": "~55.0.13",
     "expo-crypto": "~55.0.15",
-    "expo-av": "*",
+    "expo-av": "~16.0.8",
     "expo-constants": "~55.0.16",
-    "expo-document-picker": "*",
+    "expo-document-picker": "~55.0.13",
     "expo-file-system": "~55.0.22",
     "expo-font": "~55.0.8",
     "expo-intent-launcher": "~55.0.6",

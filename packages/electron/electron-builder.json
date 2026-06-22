@@ -64,6 +64,12 @@
   "deb": {
     "compression": "gz"
   },
+  "asar": {
+    "unpack": [
+      "node_modules/robotjs/**",
+      "node_modules/cpu-features/**"
+    ]
+  },
   "publish": {
     "provider": "generic",
     "url": "https://ide.zhejiangjinmo.com/downloads"

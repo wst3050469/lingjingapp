@@ -133,6 +133,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on('update:error', handler);
       return () => ipcRenderer.removeListener('update:error', handler);
     },
+    exportSkills: (targetDir: string) =>
+      ipcRenderer.invoke('update:export-skills', { targetDir }),
   },
 
   window: {
@@ -240,6 +242,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('skills:read', { path }),
     readAgent: (path: string) =>
       ipcRenderer.invoke('skills:read-agent', { path }),
+    leaderboard: () =>
+      ipcRenderer.invoke('skills:leaderboard'),
+    incrementUsage: (skillName: string) =>
+      ipcRenderer.invoke('skills:increment-usage', { skillName }),
+    exportBuiltin: (targetDir: string) =>
+      ipcRenderer.invoke('skills:export-builtin', { targetDir }),
   },
 
   skillMarket: {
@@ -921,6 +929,55 @@ contextBridge.exposeInMainWorld('electronAPI', {
     verifyPassword: (password: string) => ipcRenderer.invoke('desktop-control:verify-password', { password }),
     isEnabled: () => ipcRenderer.invoke('desktop-control:is-enabled'),
     setEnabled: (enabled: boolean) => ipcRenderer.invoke('desktop-control:set-enabled', { enabled }),
+    // 鼠标操作
+    mouse: {
+      getPosition: () => ipcRenderer.invoke('desktop-control:mouse-position'),
+      move: (x: number, y: number) => ipcRenderer.invoke('desktop-control:mouse-move', { x, y }),
+      moveSmooth: (x: number, y: number, speed?: number) => ipcRenderer.invoke('desktop-control:mouse-move-smooth', { x, y, speed }),
+      click: (button?: string, double?: boolean) => ipcRenderer.invoke('desktop-control:mouse-click', { button, double }),
+      toggle: (down?: string, button?: string) => ipcRenderer.invoke('desktop-control:mouse-toggle', { down, button }),
+      drag: (x: number, y: number) => ipcRenderer.invoke('desktop-control:mouse-drag', { x, y }),
+      scroll: (x: number, y: number) => ipcRenderer.invoke('desktop-control:mouse-scroll', { x, y }),
+    },
+    // 键盘操作
+    keyboard: {
+      type: (text: string) => ipcRenderer.invoke('desktop-control:keyboard-type', { text }),
+      typeDelayed: (text: string, cpm: number) => ipcRenderer.invoke('desktop-control:keyboard-type-delayed', { text, cpm }),
+      tap: (key: string, modifiers?: string | string[]) => ipcRenderer.invoke('desktop-control:keyboard-tap', { key, modifiers }),
+      toggle: (key: string, down: string, modifiers?: string | string[]) => ipcRenderer.invoke('desktop-control:keyboard-toggle', { key, down, modifiers }),
+    },
+    // 屏幕操作
+    screen: {
+      getSize: () => ipcRenderer.invoke('desktop-control:screen-size'),
+      capture: (x?: number, y?: number, width?: number, height?: number) =>
+        ipcRenderer.invoke('desktop-control:screen-capture', { x, y, width, height }),
+      pixelColor: (x: number, y: number) => ipcRenderer.invoke('desktop-control:pixel-color', { x, y }),
+    },
+    // 延迟设置
+    setMouseDelay: (delay: number) => ipcRenderer.invoke('desktop-control:set-mouse-delay', { delay }),
+    setKeyboardDelay: (delay: number) => ipcRenderer.invoke('desktop-control:set-keyboard-delay', { delay }),
+  },
+
+  // 系统控制 API（硬件监控 + 音量/亮度）
+  systemControl: {
+    monitor: {
+      info: () => ipcRenderer.invoke('system:info'),
+      cpuLoad: () => ipcRenderer.invoke('system:cpu-load'),
+      memory: () => ipcRenderer.invoke('system:memory'),
+      battery: () => ipcRenderer.invoke('system:battery'),
+      temperature: () => ipcRenderer.invoke('system:temperature'),
+      disks: () => ipcRenderer.invoke('system:disks'),
+      processes: () => ipcRenderer.invoke('system:processes'),
+    },
+    volume: {
+      get: () => ipcRenderer.invoke('system:volume-get'),
+      set: (volume: number) => ipcRenderer.invoke('system:volume-set', { volume }),
+      mute: () => ipcRenderer.invoke('system:volume-mute'),
+    },
+    brightness: {
+      get: () => ipcRenderer.invoke('system:brightness-get'),
+      set: (brightness: number) => ipcRenderer.invoke('system:brightness-set', { brightness }),
+    },
   },
 
   // 设备权限管理 API（摄像头 / 麦克风）

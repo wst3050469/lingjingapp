@@ -90,6 +90,7 @@ function importMetaPlugin() {
 const EXTERNAL = [
   // Native/binary modules - cannot be bundled by esbuild
   'electron',
+  'robotjs',
   'sql.js',
   'ssh2',
   'cpu-features',
@@ -120,6 +121,7 @@ const EXTERNAL = [
   'yaml',
   'cron-parser',
   'nodemailer',
+  'systeminformation',
   // pnpm store resolution issues
   'underscore',
   'readable-stream',
@@ -448,6 +450,35 @@ try {
     }
   }
   syncExternalNodeModules();
+
+  // Phase 2: Verify native modules for ASAR unpack compatibility
+  // Native .node files cannot be loaded from inside ASAR archives.
+  // electron-builder.json must have asar.unpack configured for these.
+  // This check ensures the compiled binaries exist before packaging.
+  function verifyNativeModules() {
+    const BUILD_NM = join(root, 'release', 'build', 'node_modules');
+    const nativeModules = [
+      { name: 'robotjs', path: join('robotjs', 'build', 'Release', 'robotjs.node') },
+    ];
+
+    for (const mod of nativeModules) {
+      const fullPath = join(BUILD_NM, mod.path);
+      if (existsSync(fullPath)) {
+        console.log(`[build-main] ✅ Native module '${mod.name}' binary found: ${mod.path}`);
+      } else {
+        // Also check source node_modules (before copy to release/build)
+        const srcPath = join(root, 'node_modules', mod.path);
+        if (existsSync(srcPath)) {
+          console.log(`[build-main] ⚠️  Native module '${mod.name}' found in source but not in release/build. Check copy.`);
+        } else {
+          console.warn(`[build-main] ⚠️  Native module '${mod.name}' binary NOT found. It will fail at runtime unless compiled.`);
+          console.warn(`[build-main]    Expected at: ${mod.path}`);
+          console.warn(`[build-main]    Run 'pnpm rebuild robotjs' on build machine to compile.`);
+        }
+      }
+    }
+  }
+  verifyNativeModules();
 
 } catch (err) {
   console.error('[build-main] Build failed:', err);

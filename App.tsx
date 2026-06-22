@@ -119,10 +119,10 @@ export default function App() {
         <NavigationContainer theme={{
           dark: isDark,
           fonts: {
-            regular: { fontFamily: 'System', fontWeight: '400' as const },
-            medium: { fontFamily: 'System', fontWeight: '500' as const },
-            bold: { fontFamily: 'System', fontWeight: '700' as const },
-            heavy: { fontFamily: 'System', fontWeight: '900' as const },
+            regular: { fontFamily: 'sans-serif', fontWeight: 'normal' as const },
+            medium: { fontFamily: 'sans-serif-medium', fontWeight: 'normal' as const },
+            bold: { fontFamily: 'sans-serif', fontWeight: '600' as const },
+            heavy: { fontFamily: 'sans-serif', fontWeight: '700' as const },
           },
           colors: isDark ? {
             primary: '#58a6ff',

@@ -54,6 +54,8 @@ import { registerConnectorIPC } from './ipc/connector-ipc.js';
 import { registerTriggerIPC } from './ipc/trigger-ipc.js';
 import { registerAppControlIpc } from './ipc/app-control-ipc.js';
 import { registerEmailIpc } from './ipc/email-ipc.js';
+import { registerDesktopControlIpc } from './ipc/desktop-control-ipc.js';
+import { registerSystemControlIpc } from './ipc/system-control-ipc.js';
 
 const IS_DEV = !app.isPackaged;
 
@@ -913,6 +915,8 @@ async function bootstrap(): Promise<void> {
   // App Control & Email IPC (window-independent)
   try { registerAppControlIpc(); console.log('[Main] AppControl IPC registered'); } catch (err) { console.error('[Main] registerAppControlIpc failed:', err); }
   try { registerEmailIpc(); console.log('[Main] Email IPC registered'); } catch (err) { console.error('[Main] registerEmailIpc failed:', err); }
+  try { registerDesktopControlIpc(); console.log('[Main] DesktopControl IPC registered'); } catch (err) { console.error('[Main] registerDesktopControlIpc failed:', err); }
+  try { registerSystemControlIpc(); console.log('[Main] SystemControl IPC registered'); } catch (err) { console.error('[Main] registerSystemControlIpc failed:', err); }
 
   // Desktop Control Permission IPC — scrypt password management
   const CONFIG_PATH = join(homedir(), '.lingjing', 'config.json');
@@ -1051,6 +1055,53 @@ async function bootstrap(): Promise<void> {
   });
 
   console.log('[Main] DesktopControl + Permissions IPC registered');
+
+  // ── Update: Export installed skills as built-in for version upgrade ──
+  ipcMain.handle('update:export-skills', async (_event, { targetDir }: { targetDir: string }) => {
+    try {
+      const { mkdir } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+      const { homedir } = await import('node:os');
+      const { existsSync } = await import('node:fs');
+      await mkdir(targetDir, { recursive: true });
+
+      // Scan user-level skills
+      const userSkillsDir = join(homedir(), '.lingjing', 'skills');
+      let exported = 0;
+      if (existsSync(userSkillsDir)) {
+        const { readdir, cp } = await import('node:fs/promises');
+        const entries = await readdir(userSkillsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const src = join(userSkillsDir, entry.name);
+          const dst = join(targetDir, entry.name);
+          await cp(src, dst, { recursive: true, force: true });
+          exported++;
+        }
+      }
+
+      // Also scan project-level skills if workspace available
+      // (workspacePath is a variable in main.ts scope)
+      const ws = workspacePath;
+      if (ws && existsSync(join(ws, '.lingjing', 'skills'))) {
+        const { readdir, cp } = await import('node:fs/promises');
+        const projectSkillsDir = join(ws, '.lingjing', 'skills');
+        const entries = await readdir(projectSkillsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const dst = join(targetDir, entry.name);
+          if (existsSync(dst)) continue;
+          const src = join(projectSkillsDir, entry.name);
+          await cp(src, dst, { recursive: true, force: true });
+          exported++;
+        }
+      }
+
+      return { success: true, exported, targetDir };
+    } catch (err: any) {
+      return { success: false, error: err?.message || String(err) };
+    }
+  });
 
   // Initialize cloud sync and GitHub integration
   try {

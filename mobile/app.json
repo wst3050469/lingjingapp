@@ -2,7 +2,7 @@
   "expo": {
     "name": "灵境IDE",
     "slug": "lingjing-mobile",
-    "version": "1.73.155",
+    "version": "1.73.161",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -32,6 +32,6 @@
       }
     },
     "owner": "wst3050469",
-    "versionCode": 78
+    "versionCode": 81
   }
 }

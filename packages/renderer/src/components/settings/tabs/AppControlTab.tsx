@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface InstalledApp {
   name: string;
@@ -20,10 +20,27 @@ export function AppControlTab() {
   const [status, setStatus] = useState('');
   const [launchName, setLaunchName] = useState('');
   const [launchArgs, setLaunchArgs] = useState('');
+  const [desktopControlEnabled, setDesktopControlEnabled] = useState<boolean | null>(null);
+
+  // Ref to avoid async state race on app list launch button
+  const launchNameRef = useRef(launchName);
+  launchNameRef.current = launchName;
 
   useEffect(() => {
     loadData();
+    checkPermission();
   }, []);
+
+  const checkPermission = async () => {
+    try {
+      if (window.electronAPI?.desktopControl?.isEnabled) {
+        const enabled = await window.electronAPI.desktopControl.isEnabled();
+        setDesktopControlEnabled(enabled);
+      }
+    } catch {
+      setDesktopControlEnabled(false);
+    }
+  };
 
   const showStatus = (msg: string) => {
     setStatus(msg);
@@ -37,12 +54,16 @@ export function AppControlTab() {
         const result = await window.electronAPI.appControl.getInstalledApps();
         if (result?.data) {
           setInstalledApps(result.data);
+        } else if (result?.error) {
+          showStatus(`加载应用失败: ${result.error}`);
         }
       }
       if (window.electronAPI?.appControl?.getWindows) {
         const result = await window.electronAPI.appControl.getWindows();
         if (result?.data) {
           setRunningWindows(result.data);
+        } else if (result?.error) {
+          showStatus(`加载窗口失败: ${result.error}`);
         }
       }
     } catch (err: any) {
@@ -52,27 +73,38 @@ export function AppControlTab() {
     }
   };
 
-  const handleLaunch = async () => {
-    if (!launchName.trim()) {
+  // Direct launch function that takes app name explicitly (avoids state race)
+  const doLaunch = useCallback(async (appName: string, args?: string[]) => {
+    if (!appName.trim()) {
       showStatus('请输入应用名称');
+      return;
+    }
+    if (!desktopControlEnabled) {
+      showStatus('桌面控制权限未开启，请在 设置→高级→鼠标键盘操控权限 中开启');
       return;
     }
     try {
       if (window.electronAPI?.appControl?.launchApp) {
-        const args = launchArgs.trim() ? launchArgs.split(' ').filter(Boolean) : undefined;
-        const result = await window.electronAPI.appControl.launchApp(launchName.trim(), args);
+        const result = await window.electronAPI.appControl.launchApp(appName.trim(), args);
         if (result?.success) {
-          showStatus(`已启动 ${launchName}`);
+          showStatus(`已启动 ${appName}`);
           setLaunchName('');
           setLaunchArgs('');
-          loadData();
+          setTimeout(() => loadData(), 1000);
         } else {
           showStatus(`启动失败: ${result?.error || '未知错误'}`);
         }
+      } else {
+        showStatus('启动功能不可用');
       }
     } catch (err: any) {
       showStatus(`错误: ${err.message}`);
     }
+  }, [desktopControlEnabled]);
+
+  const handleLaunch = () => {
+    const args = launchArgs.trim() ? launchArgs.split(' ').filter(Boolean) : undefined;
+    doLaunch(launchName, args);
   };
 
   const handleClose = async (appName: string) => {
@@ -81,7 +113,7 @@ export function AppControlTab() {
         const result = await window.electronAPI.appControl.closeApp(appName);
         if (result?.success) {
           showStatus(`已关闭 ${appName}`);
-          loadData();
+          setTimeout(() => loadData(), 1000);
         } else {
           showStatus(`关闭失败: ${result?.error || '未知错误'}`);
         }
@@ -108,6 +140,21 @@ export function AppControlTab() {
 
   return (
     <div className="space-y-6">
+      {/* Permission status */}
+      {desktopControlEnabled === false && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <div>
+            <p className="text-sm text-amber-300 font-medium">桌面控制权限未开启</p>
+            <p className="text-[11px] text-amber-400/60 mt-1">
+              请在 设置→高级→鼠标键盘操控权限 中开启此功能
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* 应用启动 */}
       <div className="bg-white/[0.03] border border-cp-border/40 rounded-xl p-5 space-y-4">
         <h3 className="text-sm font-medium text-cp-text">启动应用</h3>
@@ -139,7 +186,7 @@ export function AppControlTab() {
           </div>
           <button
             onClick={handleLaunch}
-            disabled={!launchName.trim()}
+            disabled={!launchName.trim() || desktopControlEnabled === false}
             className="text-xs px-4 py-1.5 rounded-md bg-cp-accent/20 text-cp-accent hover:bg-cp-accent/30 disabled:opacity-50 transition-colors whitespace-nowrap"
           >
             启动
@@ -214,10 +261,7 @@ export function AppControlTab() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button
-                    onClick={() => {
-                      setLaunchName(app.name);
-                      handleLaunch();
-                    }}
+                    onClick={() => doLaunch(app.name)}
                     className="text-[10px] text-green-400/70 hover:text-green-400 px-1.5 py-0.5 rounded hover:bg-green-500/10 transition-colors"
                   >
                     启动

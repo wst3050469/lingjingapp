@@ -1,10 +1,16 @@
 // Skills, Agents & Commands IPC - file-system based skill discovery
 
 import { ipcMain } from 'electron';
-import { readdir, readFile, mkdir, writeFile, rm } from 'node:fs/promises';
-import { join } from 'node:path';
+import { readdir, readFile, mkdir, writeFile, rm, cp, access } from 'node:fs/promises';
+import { join, basename, dirname } from 'node:path';
 import { homedir } from 'node:os';
-import { existsSync } from 'node:fs';
+import { existsSync, createReadStream, createWriteStream, readFileSync } from 'node:fs';
+import { createGzip } from 'node:zlib';
+import { pipeline } from 'node:stream/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
+const execFileAsync = promisify(execFile);
 import { scanAllSkills, getSkill, type SkillConfig } from '@codepilot/core';
 
 export interface SkillInfo {
@@ -470,6 +476,126 @@ export function registerSkillsIpc(getWorkspace: () => string): void {
       return { success: true };
     } catch (err) {
       console.error('skills:save-agent error:', err);
+      return { success: false, error: String(err instanceof Error ? err.message : err) };
+    }
+  });
+
+  // ─── Leaderboard: installed skills with call counts ───
+  const CONFIG_PATH = join(homedir(), '.lingjing', 'config.json');
+
+  async function readUsageCounts(): Promise<Record<string, number>> {
+    try {
+      const raw = await readFile(CONFIG_PATH, 'utf8');
+      const cfg = JSON.parse(raw);
+      return (cfg.skillUsageCounts as Record<string, number>) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  async function writeUsageCounts(counts: Record<string, number>): Promise<void> {
+    let cfg: any = {};
+    try {
+      const raw = await readFile(CONFIG_PATH, 'utf8');
+      cfg = JSON.parse(raw);
+    } catch {}
+    cfg.skillUsageCounts = counts;
+    await writeFile(CONFIG_PATH, JSON.stringify(cfg, null, 2));
+  }
+
+  ipcMain.handle('skills:leaderboard', async () => {
+    try {
+      const workspace = getWorkspace();
+      const skillsMap = await scanAllSkills(workspace);
+      const usageCounts = await readUsageCounts();
+
+      // Also scan ~/.lingjing/skills/ for GitHub-generated skills
+      const userSkillsDir = getUserSkillsDir();
+      const userSkills = existsSync(userSkillsDir)
+        ? await readdir(userSkillsDir, { withFileTypes: true })
+        : [];
+
+      const leaderboard = Array.from(skillsMap.values()).map(skill => {
+        const callCount = usageCounts[skill.name] || 0;
+        // Detect GitHub-generated skills by checking for 'source: github' in SKILL.md
+        let isGitHub = false;
+        try {
+          const skillMdPath = join(skill.path, 'SKILL.md');
+          if (existsSync(skillMdPath)) {
+            // Check FRONTMATTER for source: github
+            const content = readFileSync(skillMdPath, 'utf8');
+            isGitHub = /source:\s*github/i.test(content) || /repo:\s*https?:\/\/github\.com/i.test(content);
+          }
+        } catch {}
+        return {
+          name: skill.name,
+          description: skill.description,
+          level: skill.level,
+          path: skill.path,
+          callCount,
+          isGitHub,
+        };
+      }).sort((a, b) => b.callCount - a.callCount);
+
+      return leaderboard;
+    } catch (err) {
+      console.error('skills:leaderboard error:', err);
+      return [];
+    }
+  });
+
+  // Increment call count for a skill (called when agent invokes a skill)
+  ipcMain.handle('skills:increment-usage', async (_event, { skillName }: { skillName: string }) => {
+    try {
+      const counts = await readUsageCounts();
+      counts[skillName] = (counts[skillName] || 0) + 1;
+      await writeUsageCounts(counts);
+      return { success: true, count: counts[skillName] };
+    } catch (err) {
+      console.error('skills:increment-usage error:', err);
+      return { success: false, error: String(err instanceof Error ? err.message : err) };
+    }
+  });
+
+  // Export all installed skills to a built-in directory (for version upgrade packaging)
+  ipcMain.handle('skills:export-builtin', async (_event, { targetDir }: { targetDir: string }) => {
+    try {
+      const workspace = getWorkspace();
+      const skillsMap = await scanAllSkills(workspace);
+      await mkdir(targetDir, { recursive: true });
+
+      let exported = 0;
+      for (const [skillName, skill] of skillsMap) {
+        const srcDir = skill.path;
+        const dstDir = join(targetDir, skillName);
+        if (!existsSync(srcDir)) continue;
+        await cp(srcDir, dstDir, { recursive: true, force: true });
+        exported++;
+      }
+
+      // Also export user-level skills not in scanAllSkills (e.g., GitHub-generated)
+      const userSkillsDir = getUserSkillsDir();
+      if (existsSync(userSkillsDir)) {
+        const entries = await readdir(userSkillsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const dstDir = join(targetDir, entry.name);
+          if (existsSync(dstDir)) continue; // already exported
+          const srcDir = join(userSkillsDir, entry.name);
+          await cp(srcDir, dstDir, { recursive: true, force: true });
+          exported++;
+        }
+      }
+
+      // Create a manifest
+      await writeFile(
+        join(targetDir, 'skills-manifest.json'),
+        JSON.stringify({ exportedAt: new Date().toISOString(), skillCount: exported }, null, 2)
+      );
+
+      return { success: true, exported, targetDir };
+    } catch (err) {
+      console.error('skills:export-builtin error:', err);
       return { success: false, error: String(err instanceof Error ? err.message : err) };
     }
   });

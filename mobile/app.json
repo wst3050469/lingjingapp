@@ -2,7 +2,7 @@
   "expo": {
     "name": "灵境IDE",
     "slug": "lingjing-mobile",
-    "version": "1.73.168",
+    "version": "1.73.170",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -22,7 +22,7 @@
         "RECORD_AUDIO",
         "INTERNET"
       ],
-      "versionCode": 168
+      "versionCode": 170
     },
     "plugins": [
       [
@@ -38,6 +38,6 @@
       }
     },
     "owner": "wst3050469",
-    "versionCode": 84
+    "versionCode": 170
   }
 }

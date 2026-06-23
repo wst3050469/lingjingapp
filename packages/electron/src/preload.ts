@@ -1055,7 +1055,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       setEnabled: (enabled: boolean) => ipcRenderer.invoke('permission:microphone:set-enabled', { enabled }),
       getStatus: () => ipcRenderer.invoke('permission:microphone:get-status'),
 
-      // 录音：使用浏览器 MediaRecorder API，返回 base64 WAV/WebM
+      // 录音：使用浏览器 MediaRecorder API，返回 base64 WAV/WebM，最长60秒
       startRecording: async (): Promise<{ success: boolean; error?: string }> => {
         try {
           const isEnabled = await ipcRenderer.invoke('permission:microphone:is-enabled');
@@ -1067,6 +1067,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
           }
           if ((window as any).__micRecorder && (window as any).__micRecorder.state !== 'inactive') {
             (window as any).__micRecorder.stop();
+          }
+          if ((window as any).__micTimeout) {
+            clearTimeout((window as any).__micTimeout);
+            (window as any).__micTimeout = null;
           }
           (window as any).__micChunks = [];
 
@@ -1081,10 +1085,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
               if (e.data.size > 0) (window as any).__micChunks.push(e.data);
             };
             recorder.onerror = () => {
+              clearTimeout((window as any).__micTimeout);
               stream.getTracks().forEach((t) => t.stop());
               resolve({ success: false, error: '录音启动失败' });
             };
             recorder.onstart = () => {
+              // 60秒超时自动停止录音
+              (window as any).__micTimeout = setTimeout(() => {
+                if ((window as any).__micRecorder && (window as any).__micRecorder.state === 'recording') {
+                  (window as any).__micRecorder.stop();
+                }
+              }, 60000);
               resolve({ success: true });
             };
             recorder.start(1000); // 每秒收集一个 chunk
@@ -1102,6 +1113,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
           const recorder = (window as any).__micRecorder;
           const stream = (window as any).__micStream;
           if (!recorder) return { success: false, error: '没有正在进行的录音' };
+
+          // 清除超时定时器
+          if ((window as any).__micTimeout) {
+            clearTimeout((window as any).__micTimeout);
+            (window as any).__micTimeout = null;
+          }
 
           return new Promise((resolve) => {
             recorder.onstop = async () => {

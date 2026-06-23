@@ -1,40 +1,25 @@
 # ACTIVE_TASK
 
-## ✅ v1.73.167 — 录音60秒超时自动停止 (2026-06-23 10:00)
+## ✅ ChatActionBar — 桌面端输入栏上方操作条 (2026-06-23 10:15)
 
 ### 变更摘要
 | 类别 | 内容 |
 |:-----|:-----|
-| 🎤 修复 | startRecording 添加 60s setTimeout 超时自动停止 |
-| 🎤 修复 | stopRecording 清理超时定时器防泄漏 |
-| 🧪 测试 | test-peripheral.html 补充录音测试UI |
-| 🌐 部署 | 5平台全量部署 (Win+Linux+Android) |
+| 🎨 UI | 新建 ChatActionBar 组件（文件上传+语音+任务停止） |
+| 🎨 UI | ChatInput 集成 ActionBar，InputToolbar 精简 |
+| 🔗 对齐 | 桌面端与移动端 ChatDetailScreen Action Bar 设计对齐 |
 
-### 构建产物
-| 平台 | 文件 | 大小 | HTTP |
-|:-----|:-----|:----:|:----:|
-| Windows | LingJing-Setup-1.73.167-win-x64.exe | 143MB | ✅ 200 |
-| Windows | LingJing-Portable-1.73.167-win-x64.exe | 143MB | ✅ 200 |
-| Linux | LingJing-1.73.167-linux-x86_64.AppImage | 184MB | ✅ 200 |
-| Linux | LingJing-1.73.167-linux-x86_64.deb | 181MB | ✅ 200 |
-| Android | LingJing-Mobile-1.73.167.apk | 86MB | ✅ 200 |
+### 新增/修改
+| 文件 | 操作 |
+|:-----|:-----|
+| `ChatActionBar.tsx` | 新建 |
+| `ChatInput.tsx` | 集成 ActionBar + 移除冗余 props |
+| `InputToolbar.tsx` | 精简（仅保留 polish + send） |
 
-### 服务状态
-| 组件 | 版本 | 状态 |
-|:-----|:----:|:----:|
-| /api/latest | v1.73.167 | ✅ 5平台 |
-| latest.yml | v1.73.167 | ✅ Windows |
-| latest-linux.yml | v1.73.167 | ✅ Linux |
-| version.json | v1.73.167 (vc:167) | ✅ Android |
-| versions.json (3处) | latest=1.73.167 | ✅ |
-| PM2 cloud-server | online | ✅ |
-
-### 验证
-- ✅ verify-audio-api.cjs 9/9 PASSED
-- ✅ 60s超时逻辑: setTimeout + clearTimeout + recorder.stop()
-
-### Git
-- `4453f04c9` feat: v1.73.167 - add 60s timeout auto-stop to mic recording
+### 构建
+- ✅ Vite build 通过，0 TypeScript 错误
+- ℹ️ 纯前端 UI 改动，无 Electron 构建/版本号变更
 
 ### 等待新任务...
+
 

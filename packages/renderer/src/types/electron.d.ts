@@ -544,8 +544,8 @@ declare interface ElectronAPI {
     // 屏幕操作
     screen: {
       getSize: () => Promise<{ success: boolean; data?: { width: number; height: number }; error?: string }>;
-      capture: (x?: number, y?: number, width?: number, height?: number) =>
-        Promise<{ success: boolean; data?: { width: number; height: number; bytesPerPixel: number; base64: string }; error?: string }>;
+      capture: (x?: number, y?: number, width?: number, height?: number, format?: 'png' | 'bmp') =>
+        Promise<{ success: boolean; data?: { width: number; height: number; bytesPerPixel: number; format?: string; base64: string }; error?: string }>;
       pixelColor: (x: number, y: number) => Promise<{ success: boolean; data?: string; error?: string }>;
     };
     // 延迟设置

@@ -949,8 +949,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // 屏幕操作
     screen: {
       getSize: () => ipcRenderer.invoke('desktop-control:screen-size'),
-      capture: (x?: number, y?: number, width?: number, height?: number) =>
-        ipcRenderer.invoke('desktop-control:screen-capture', { x, y, width, height }),
+      capture: (x?: number, y?: number, width?: number, height?: number, format?: 'png' | 'bmp') =>
+        ipcRenderer.invoke('desktop-control:screen-capture', { x, y, width, height, format }),
       pixelColor: (x: number, y: number) => ipcRenderer.invoke('desktop-control:pixel-color', { x, y }),
     },
     // 延迟设置

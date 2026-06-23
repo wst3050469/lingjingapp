@@ -13,6 +13,7 @@ import { ipcMain } from 'electron';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
+import { deflateSync } from 'zlib';
 
 // 延迟加载 robotjs 原生模块 — 避免启动时因 .node 缺失/版本不匹配导致应用崩溃
 let _robot: any = null;
@@ -64,47 +65,124 @@ function wrapRobot<T>(fn: () => T): { success: true; data: T } | { success: fals
   }
 }
 
-// ── 帮助函数：截屏转 base64 ──
+// ── 帮助函数：截屏转 base64 (BMP/PNG) ──
 
-function bitmapToBase64(bitmap: { width: number; height: number; image: Buffer; bytesPerPixel: number }): string {
+// CRC32 查表（PNG 规范）
+const _crcTable: number[] = [];
+for (let n = 0; n < 256; n++) {
+  let c = n;
+  for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+  _crcTable[n] = c;
+}
+function crc32(buf: Buffer): number {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) c = _crcTable[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+
+function chunk(type: string, data: Buffer): Buffer {
+  const typeLen = Buffer.from(type, 'ascii');
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length, 0);
+  const crcInput = Buffer.concat([typeLen, data]);
+  const crcVal = Buffer.alloc(4);
+  crcVal.writeUInt32BE(crc32(crcInput), 0);
+  return Buffer.concat([len, typeLen, data, crcVal]);
+}
+
+function bitmapToPng(bitmap: { width: number; height: number; image: Buffer; bytesPerPixel: number }): Buffer {
   const { width, height, image, bytesPerPixel } = bitmap;
-  // 创建 PNG 格式（简化实现：使用 BMP 头 + 像素数据，然后包装为 base64）
-  // 更优雅的方式是直接创建 BMP buffer
+
+  // 获取原始 BGRA 像素
+  const src = Buffer.isBuffer(image) ? image : Buffer.from(image as any);
+  const rowLen = width * 4; // RGBA 输出每行字节数
+
+  // 构建过滤后的像素数据：每行前加 filter=0 (None), BGRA→RGBA
+  const rawData = Buffer.alloc((rowLen + 1) * height);
+  for (let y = 0; y < height; y++) {
+    const dstOff = y * (rowLen + 1);
+    rawData[dstOff] = 0; // filter byte
+    for (let x = 0; x < width; x++) {
+      const srcOff = y * width * bytesPerPixel + x * bytesPerPixel;
+      const dstPixel = dstOff + 1 + x * 4;
+      // BGRA → RGBA
+      rawData[dstPixel]     = src[srcOff + 2]; // R (from B)
+      rawData[dstPixel + 1] = src[srcOff + 1]; // G
+      rawData[dstPixel + 2] = src[srcOff];     // B (from R)
+      rawData[dstPixel + 3] = bytesPerPixel >= 4 ? src[srcOff + 3] : 255; // A
+    }
+  }
+
+  // 压缩
+  const compressed = deflateSync(rawData, { level: 6 });
+
+  // PNG 签名
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+
+  // IHDR
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;  // bit depth
+  ihdr[9] = 6;  // color type: RGBA
+  ihdr[10] = 0; // compression
+  ihdr[11] = 0; // filter
+  ihdr[12] = 0; // interlace
+
+  // IDAT
+  const idat = compressed;
+
+  // IEND (空)
+  const iend = Buffer.alloc(0);
+
+  return Buffer.concat([
+    signature,
+    chunk('IHDR', ihdr),
+    chunk('IDAT', idat),
+    chunk('IEND', iend),
+  ]);
+}
+
+type CaptureFormat = 'png' | 'bmp';
+
+function bitmapToBase64(
+  bitmap: { width: number; height: number; image: Buffer; bytesPerPixel: number },
+  format: CaptureFormat = 'png',
+): string {
+  if (format === 'png') {
+    const png = bitmapToPng(bitmap);
+    return `data:image/png;base64,${png.toString('base64')}`;
+  }
+
+  // BMP (legacy)
+  const { width, height, image, bytesPerPixel } = bitmap;
   const dataSize = width * height * bytesPerPixel;
   const fileHeaderSize = 14;
   const infoHeaderSize = 40;
   const fileSize = fileHeaderSize + infoHeaderSize + dataSize;
 
   const buffer = Buffer.alloc(fileSize);
-
-  // BMP File Header
   buffer.write('BM', 0, 'ascii');
   buffer.writeUInt32LE(fileSize, 2);
-  buffer.writeUInt32LE(0, 6);  // reserved
-  buffer.writeUInt32LE(fileHeaderSize + infoHeaderSize, 10); // pixel data offset
-
-  // DIB Header (BITMAPINFOHEADER)
+  buffer.writeUInt32LE(0, 6);
+  buffer.writeUInt32LE(fileHeaderSize + infoHeaderSize, 10);
   buffer.writeUInt32LE(infoHeaderSize, 14);
   buffer.writeInt32LE(width, 18);
-  buffer.writeInt32LE(-height, 22); // negative = top-down (BGRA)
-  buffer.writeUInt16LE(1, 26);  // planes
-  buffer.writeUInt32LE(bytesPerPixel * 8, 28); // bits per pixel
-  buffer.writeUInt32LE(0, 30);  // BI_RGB = no compression
+  buffer.writeInt32LE(-height, 22);
+  buffer.writeUInt16LE(1, 26);
+  buffer.writeUInt32LE(bytesPerPixel * 8, 28);
+  buffer.writeUInt32LE(0, 30);
   buffer.writeUInt32LE(dataSize, 34);
-  buffer.writeUInt32LE(0, 38);  // horizontal resolution
-  buffer.writeUInt32LE(0, 42);  // vertical resolution
-  buffer.writeUInt32LE(0, 46);  // colors in palette
-  buffer.writeUInt32LE(0, 50);  // important colors
+  buffer.writeUInt32LE(0, 38);
+  buffer.writeUInt32LE(0, 42);
+  buffer.writeUInt32LE(0, 46);
+  buffer.writeUInt32LE(0, 50);
 
-  // Pixel data (robotjs 返回的 image 是 BGRA 顺序的 Buffer)
   if (Buffer.isBuffer(image)) {
     image.copy(buffer, fileHeaderSize + infoHeaderSize);
   } else if (typeof image === 'object' && image !== null) {
-    // robotjs Bitmap.image 在某些版本是 Uint8Array-like
-    const imgBuf = Buffer.from(image as any);
-    imgBuf.copy(buffer, fileHeaderSize + infoHeaderSize);
+    Buffer.from(image as any).copy(buffer, fileHeaderSize + infoHeaderSize);
   }
-
   return `data:image/bmp;base64,${buffer.toString('base64')}`;
 }
 
@@ -253,8 +331,9 @@ export function registerDesktopControlIpc(): void {
     return wrapRobot(() => getRobot().getScreenSize());
   });
 
-  ipcMain.handle('desktop-control:screen-capture', async (_event, opts?: { x?: number; y?: number; width?: number; height?: number }) => {
+  ipcMain.handle('desktop-control:screen-capture', async (_event, opts?: { x?: number; y?: number; width?: number; height?: number; format?: 'png' | 'bmp' }) => {
     if (!(await checkDesktopControlEnabled())) return PERMISSION_DENIED;
+    const format: CaptureFormat = opts?.format === 'bmp' ? 'bmp' : 'png';
     const result = wrapRobot(() => {
       const bitmap = getRobot().screen.capture(
         opts?.x,
@@ -266,13 +345,14 @@ export function registerDesktopControlIpc(): void {
     });
     if (!result.success) return result;
     try {
-      const base64 = bitmapToBase64(result.data);
+      const base64 = bitmapToBase64(result.data, format);
       return {
         success: true as const,
         data: {
           width: result.data.width,
           height: result.data.height,
           bytesPerPixel: result.data.bytesPerPixel,
+          format,
           base64,
         },
       };

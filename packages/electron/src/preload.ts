@@ -1049,6 +1049,101 @@ contextBridge.exposeInMainWorld('electronAPI', {
           return { success: false, error: msg || '拍照失败' };
         }
       },
+
+      // 录像：使用浏览器 MediaRecorder API，返回 base64 WebM，最长60秒
+      startRecording: async (): Promise<{ success: boolean; error?: string }> => {
+        try {
+          const isEnabled = await ipcRenderer.invoke('permission:camera:is-enabled');
+          if (!isEnabled) return { success: false, error: '摄像头权限未开启，请在 设置→高级→摄像头权限 中开启' };
+
+          // 清理上一次录像
+          if ((window as any).__camStream) {
+            (window as any).__camStream.getTracks().forEach((t: any) => t.stop());
+          }
+          if ((window as any).__camRecorder && (window as any).__camRecorder.state !== 'inactive') {
+            (window as any).__camRecorder.stop();
+          }
+          if ((window as any).__camTimeout) {
+            clearTimeout((window as any).__camTimeout);
+            (window as any).__camTimeout = null;
+          }
+          (window as any).__camChunks = [];
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          });
+          (window as any).__camStream = stream;
+
+          const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+          (window as any).__camRecorder = recorder;
+
+          return new Promise((resolve) => {
+            recorder.ondataavailable = (e: BlobEvent) => {
+              if (e.data.size > 0) (window as any).__camChunks.push(e.data);
+            };
+            recorder.onerror = () => {
+              clearTimeout((window as any).__camTimeout);
+              stream.getTracks().forEach((t) => t.stop());
+              resolve({ success: false, error: '录像启动失败' });
+            };
+            recorder.onstart = () => {
+              // 60秒超时自动停止
+              (window as any).__camTimeout = setTimeout(() => {
+                if ((window as any).__camRecorder && (window as any).__camRecorder.state === 'recording') {
+                  (window as any).__camRecorder.stop();
+                }
+              }, 60000);
+              resolve({ success: true });
+            };
+            recorder.start(1000); // 每秒收集一个 chunk
+          });
+        } catch (err: any) {
+          if (err.name === 'NotAllowedError') return { success: false, error: '摄像头访问被拒绝，请检查系统权限设置' };
+          if (err.name === 'NotFoundError') return { success: false, error: '未检测到摄像头设备' };
+          return { success: false, error: err.message || '录像启动失败' };
+        }
+      },
+
+      // 停止录像并返回 base64
+      stopRecording: async (): Promise<{ success: boolean; data?: string; duration?: number; error?: string }> => {
+        try {
+          const recorder = (window as any).__camRecorder;
+          const stream = (window as any).__camStream;
+          if (!recorder) return { success: false, error: '没有正在进行的录像' };
+
+          if ((window as any).__camTimeout) {
+            clearTimeout((window as any).__camTimeout);
+            (window as any).__camTimeout = null;
+          }
+
+          return new Promise((resolve) => {
+            recorder.onstop = async () => {
+              stream.getTracks().forEach((t: any) => t.stop());
+              (window as any).__camStream = null;
+              (window as any).__camRecorder = null;
+
+              const chunks = (window as any).__camChunks || [];
+              if (chunks.length === 0) {
+                resolve({ success: false, error: '录像数据为空' });
+                return;
+              }
+              const blob = new Blob(chunks, { type: 'video/webm' });
+              (window as any).__camChunks = [];
+
+              const duration = chunks.length;
+              const base64 = await new Promise<string>((r) => {
+                const reader = new FileReader();
+                reader.onloadend = () => r((reader.result as string).split(',')[1]);
+                reader.readAsDataURL(blob);
+              });
+              resolve({ success: true, data: base64, duration });
+            };
+            recorder.stop();
+          });
+        } catch (err: any) {
+          return { success: false, error: err.message || '停止录像失败' };
+        }
+      },
     },
     microphone: {
       isEnabled: () => ipcRenderer.invoke('permission:microphone:is-enabled'),

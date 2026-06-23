@@ -1,20 +1,20 @@
 /**
- * v1.73.165 Audio API Deployment Verification Script
+ * v1.73.166 Audio API Deployment Verification Script
  * Uses HEAD requests for large files, GET for small config files
  */
 const https = require("https");
 
 const BASE = "https://ide.zhejiangjinmo.com";
 const TESTS = [
-  { name: "Setup.exe", method: "HEAD", url: "/downloads/LingJing-Setup-1.73.165-win-x64.exe", minSize: 140000000 },
-  { name: "Portable.exe", method: "HEAD", url: "/downloads/LingJing-Portable-1.73.165-win-x64.exe", minSize: 140000000 },
-  { name: "AppImage", method: "HEAD", url: "/downloads/LingJing-1.73.165-linux-x86_64.AppImage", minSize: 180000000 },
-  { name: "DEB", method: "HEAD", url: "/downloads/LingJing-1.73.165-linux-x86_64.deb", minSize: 180000000 },
-  { name: "APK", method: "HEAD", url: "/downloads/LingJing-Mobile-1.73.165.apk", minSize: 80000000 },
-  { name: "latest.yml (GET)", method: "GET", url: "/downloads/latest.yml", minContent: "version: 1.73.165" },
-  { name: "latest-linux.yml (GET)", method: "GET", url: "/downloads/latest-linux.yml", minContent: "version: 1.73.165" },
-  { name: "version.json (GET)", method: "GET", url: "/downloads/version.json", minContent: "1.73.165" },
-  { name: "/api/latest (GET)", method: "GET", url: "/api/latest", minContent: "1.73.165" },
+  { name: "Setup.exe", method: "HEAD", url: "/downloads/LingJing-Setup-1.73.166-win-x64.exe", minSize: 140000000 },
+  { name: "Portable.exe", method: "HEAD", url: "/downloads/LingJing-Portable-1.73.166-win-x64.exe", minSize: 140000000 },
+  { name: "AppImage", method: "HEAD", url: "/downloads/LingJing-1.73.166-linux-x86_64.AppImage", minSize: 180000000 },
+  { name: "DEB", method: "HEAD", url: "/downloads/LingJing-1.73.166-linux-x86_64.deb", minSize: 180000000 },
+  { name: "APK", method: "HEAD", url: "/downloads/LingJing-Mobile-1.73.166.apk", minSize: 80000000 },
+  { name: "latest.yml (GET)", method: "GET", url: "/downloads/latest.yml", minContent: "version: 1.73.166" },
+  { name: "latest-linux.yml (GET)", method: "GET", url: "/downloads/latest-linux.yml", minContent: "version: 1.73.166" },
+  { name: "version.json (GET)", method: "GET", url: "/downloads/version.json", minContent: "1.73.166" },
+  { name: "/api/latest (GET)", method: "GET", url: "/api/latest", minContent: "1.73.166" },
 ];
 
 let pass = 0;
@@ -50,7 +50,7 @@ function check(test) {
 }
 
 async function run() {
-  console.log("=== v1.73.165 Deployment Verification ===\n");
+  console.log("=== v1.73.166 Deployment Verification ===\n");
   for (var i = 0; i < TESTS.length; i++) {
     await check(TESTS[i]);
   }

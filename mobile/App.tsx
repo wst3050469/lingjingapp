@@ -3,7 +3,7 @@ import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -108,22 +108,10 @@ export default function App() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <NavigationContainer theme={{
-          dark: isDarkMode,
-          colors: isDarkMode ? {
-            primary: '#58a6ff',
-            background: '#0d1117',
-            card: '#161b22',
-            text: '#c9d1d9',
-            border: '#30363d',
-          } : {
-            primary: '#0969da',
-            background: '#ffffff',
-            card: '#f6f8fa',
-            text: '#1f2328',
-            border: '#d0d7de',
-          },
-        }}>
+        <NavigationContainer theme={isDarkMode
+          ? { ...DarkTheme, colors: { ...DarkTheme.colors, primary: '#58a6ff', background: '#0d1117', card: '#161b22', text: '#c9d1d9', border: '#30363d' } }
+          : { ...DefaultTheme, colors: { ...DefaultTheme.colors, primary: '#0969da', background: '#ffffff', card: '#f6f8fa', text: '#1f2328', border: '#d0d7de' } }
+        }>
           <ConnectionBanner />
           <Tab.Navigator screenOptions={({ route }) => ({
             headerShown: false,

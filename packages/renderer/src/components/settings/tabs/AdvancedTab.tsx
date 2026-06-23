@@ -153,6 +153,11 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
   const [powerError, setPowerError] = useState('');
 
+  // Audio Output Device Switching
+  const [audioDevices, setAudioDevices] = useState<Array<{ id: string; name: string; type: string; isActive: boolean }>>([]);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [audioError, setAudioError] = useState('');
+
   // Camera & Microphone Permissions
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
@@ -437,6 +442,50 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
       setPowerLoading(null);
     }
   };
+
+  // ── 音频输出设备 ──
+
+  const loadAudioDevices = async () => {
+    setAudioLoading(true);
+    setAudioError('');
+    try {
+      const result = await window.electronAPI.audio.enumerateDevices();
+      if (result.success && result.data) {
+        // 只显示输出设备 (扬声器)
+        const outputs = result.data.filter((d: any) => d.type === 'output' || d.type === 'both');
+        setAudioDevices(outputs);
+      } else {
+        setAudioError('无法枚举音频设备');
+      }
+    } catch (err: any) {
+      setAudioError(err.message || '枚举失败');
+    } finally {
+      setAudioLoading(false);
+    }
+  };
+
+  const handleSetOutputDevice = async (deviceId: string) => {
+    setAudioLoading(true);
+    setAudioError('');
+    try {
+      const result = await window.electronAPI.audio.setOutputDevice(deviceId);
+      if (result.success) {
+        await loadAudioDevices(); // 刷新列表
+        showStatus('音频输出设备已切换');
+      } else {
+        setAudioError(result.error || '切换失败');
+      }
+    } catch (err: any) {
+      setAudioError(err.message || '切换失败');
+    } finally {
+      setAudioLoading(false);
+    }
+  };
+
+  // 首次加载音频设备
+  useEffect(() => {
+    loadAudioDevices();
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -941,6 +990,83 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
           </Card>
         </div>
       )}
+
+      {/* --- 音频输出设备 --- */}
+      <div>
+        <SectionHeader title="音频输出设备" />
+        <Card>
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-cp-text font-medium">扬声器输出设备</p>
+              <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
+                选择音频输出设备。跨平台支持 Windows、macOS 和 Linux。
+              </p>
+            </div>
+          </div>
+
+          {audioLoading && audioDevices.length === 0 && (
+            <p className="text-[11px] text-cp-text-dim/60">正在加载设备列表...</p>
+          )}
+
+          {audioError && (
+            <div className="flex items-center gap-1.5 text-red-400 text-[11px] mb-2">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {audioError}
+            </div>
+          )}
+
+          {audioDevices.length === 0 && !audioLoading && !audioError && (
+            <p className="text-[11px] text-cp-text-dim/60">未检测到输出设备</p>
+          )}
+
+          {audioDevices.length > 0 && (
+            <div className="space-y-1 max-h-[200px] overflow-y-auto">
+              {audioDevices.map((device) => (
+                <button
+                  key={device.id}
+                  onClick={() => handleSetOutputDevice(device.id)}
+                  disabled={audioLoading || device.isActive}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors ${
+                    device.isActive
+                      ? 'bg-green-500/10 border border-green-500/20 cursor-default'
+                      : 'bg-white/[0.02] border border-transparent hover:bg-white/[0.05] hover:border-cp-border/30'
+                  } ${audioLoading ? 'opacity-40' : ''}`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <svg className={`w-3.5 h-3.5 shrink-0 ${device.isActive ? 'text-green-400' : 'text-cp-text-dim/40'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                    </svg>
+                    <span className={`truncate ${device.isActive ? 'text-green-400 font-medium' : 'text-cp-text-dim'}`}>
+                      {device.name}
+                    </span>
+                  </div>
+                  {device.isActive && (
+                    <span className="text-[10px] text-green-400 font-medium shrink-0 ml-2">当前</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* 刷新按钮 */}
+          <div className="mt-3 flex items-center justify-end">
+            <button
+              onClick={loadAudioDevices}
+              disabled={audioLoading}
+              className="text-[10px] px-2 py-1 rounded text-cp-text-dim hover:text-cp-text hover:bg-white/5 transition-colors disabled:opacity-40"
+            >
+              {audioLoading ? '刷新中...' : '刷新设备列表'}
+            </button>
+          </div>
+        </Card>
+      </div>
 
       {/* --- 桌面操控密码弹窗 --- */}
       {passwordModalOpen && (

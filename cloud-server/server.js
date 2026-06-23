@@ -1824,7 +1824,7 @@ app.get('/api/schedules/:id/logs', auth, (req, res) => {
 
 // ====== Agent Chat (for bot gateways) ======
 
-async function deepseekChat(messages) {
+async function deepseekChat(messages, maxTokens = 2048, temperature = 0.3) {
   const res = await fetch(DEEPSEEK_BASE_URL + '/chat/completions', {
     method: 'POST',
     headers: {
@@ -1834,8 +1834,8 @@ async function deepseekChat(messages) {
     body: JSON.stringify({
       model: 'deepseek-chat',
       messages,
-      max_tokens: 2048,
-      temperature: 0.3,
+      max_tokens: maxTokens,
+      temperature,
     }),
   });
   if (!res.ok) {
@@ -1848,6 +1848,45 @@ async function deepseekChat(messages) {
   }
   return data.choices[0].message.content;
 }
+
+// ====== Prompt Polish (润色提示词) ======
+const POLISH_SYSTEM_PROMPT = `You are a professional prompt engineering expert. Your task is to improve user prompts to make them more effective for AI coding assistants.
+
+Rules:
+1. Preserve the original intent, core request, and all technical details
+2. Improve clarity: make instructions unambiguous and specific
+3. Add structure: organize complex requests with clear sections
+4. Provide context: if the user asks about code, add relevant implementation details
+5. Keep it concise: remove redundancy while preserving all key information
+6. Only output the polished prompt text, no explanations or meta-commentary
+7. Do NOT change the language of the original prompt (if it's Chinese, keep it Chinese)
+8. If the original prompt is already clear and well-structured, only make minimal improvements`;
+
+app.post('/api/prompt/polish', auth, async (req, res) => {
+  const { text } = req.body;
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'text required' });
+  }
+  if (!DEEPSEEK_API_KEY) {
+    return res.status(503).json({ error: 'DeepSeek API key not configured' });
+  }
+
+  try {
+    const llmMessages = [
+      { role: 'system', content: POLISH_SYSTEM_PROMPT },
+      { role: 'user', content: `Please polish and improve the following prompt:\n\n${text.trim()}` },
+    ];
+    const polished = await deepseekChat(llmMessages, 2048, 0.4);
+    
+    if (!polished || !polished.trim()) {
+      return res.json({ polished: text });
+    }
+    res.json({ polished: polished.trim() });
+  } catch (err) {
+    console.error('[Polish] Error:', err.message);
+    res.status(500).json({ error: 'Polish failed: ' + err.message.slice(0, 200) });
+  }
+});
 
 app.post('/api/agent/chat', auth, requireSubscription(null, true), async (req, res) => {
   const { message, userId, userName, conversationId, platform } = req.body;

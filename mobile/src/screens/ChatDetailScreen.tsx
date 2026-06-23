@@ -1,4 +1,4 @@
-// 对话详情页 — 云AI直连 + 模型选择 + Action Bar（任务控制·文件上传·语音输入）
+// 对话详情页 — 云AI直连 + 模型选择 + Action Bar（任务控制·文件上传·语音输入·润色）
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet,
@@ -44,6 +44,7 @@ export default function ChatDetailScreen({ route }: any) {
   // ── 任务控制状态 ──
   const [taskStatus, setTaskStatus] = useState<TaskStatus>('idle');
   const [recording, setRecording] = useState(false);
+  const [polishing, setPolishing] = useState(false);
 
   // ── 加载会话 ──
   useEffect(() => { loadSession(); }, [sessionId]);
@@ -108,6 +109,23 @@ export default function ChatDetailScreen({ route }: any) {
         }
       }
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+
+      // ── 同步到服务器会话列表（电脑端可见）──
+      try {
+        const allMessages = [...messages, userMsg].map(m => ({
+          role: m.role, content: m.content, created_at: m.created_at,
+        }));
+        if (result?.reply) {
+          allMessages.push({ role: 'assistant', content: result.reply, created_at: new Date().toISOString() });
+        }
+        await api.upsertSession({
+          id: sessionId,
+          title: title || msg.slice(0, 30),
+          messages: allMessages,
+        });
+      } catch (syncErr: any) {
+        console.log('Session sync skipped:', syncErr.message);
+      }
     } catch (e: any) {
       setMessages(prev => [...prev, {
         role: 'assistant' as const,
@@ -152,6 +170,22 @@ export default function ChatDetailScreen({ route }: any) {
       }
     } catch (e: any) {
       Alert.alert('上传失败', e.message || '未知错误');
+    }
+  }
+
+  // ── 润色提示词 ──
+  async function handlePolish() {
+    if (!input.trim() || polishing) return;
+    setPolishing(true);
+    try {
+      const result = await api.polishPrompt(input.trim());
+      if (result?.polished) {
+        setInput(result.polished);
+      }
+    } catch (e: any) {
+      Alert.alert('润色失败', e.message || '无法润色提示词');
+    } finally {
+      setPolishing(false);
     }
   }
 
@@ -233,7 +267,7 @@ export default function ChatDetailScreen({ route }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'padding'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
 
         {/* ── 模型选择器 ── */}
         <View style={styles.modelBar}>
@@ -299,8 +333,19 @@ export default function ChatDetailScreen({ route }: any) {
             </TouchableOpacity>
           </View>
 
-          {/* 右侧：文件上传 + 语音输入 */}
+          {/* 右侧：润色 + 文件上传 + 语音输入 */}
           <View style={styles.extraControls}>
+            <TouchableOpacity
+              style={[styles.extraBtn, polishing && styles.extraBtnPolishActive]}
+              onPress={handlePolish}
+              disabled={polishing || !input.trim()}
+            >
+              {polishing ? (
+                <ActivityIndicator size="small" color="#d2a8ff" />
+              ) : (
+                <Ionicons name="sparkles" size={20} color={input.trim() ? '#d2a8ff' : '#484f58'} />
+              )}
+            </TouchableOpacity>
             <TouchableOpacity style={styles.extraBtn} onPress={handlePickFile}>
               <Ionicons name="attach" size={20} color="#8b949e" />
             </TouchableOpacity>
@@ -404,6 +449,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#21262d', alignItems: 'center', justifyContent: 'center',
   },
   extraBtnActive: { backgroundColor: '#3d1518' },
+  extraBtnPolishActive: { backgroundColor: '#2d1f3d' },
 
   // ── 输入栏 ──
   inputBar: {

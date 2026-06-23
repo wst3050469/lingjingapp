@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import * as Updates from 'expo-updates';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -116,30 +116,10 @@ export default function App() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <NavigationContainer theme={{
-          dark: isDark,
-          fonts: {
-            regular: { fontFamily: 'sans-serif', fontWeight: 'normal' as const },
-            medium: { fontFamily: 'sans-serif-medium', fontWeight: 'normal' as const },
-            bold: { fontFamily: 'sans-serif', fontWeight: '600' as const },
-            heavy: { fontFamily: 'sans-serif', fontWeight: '700' as const },
-          },
-          colors: isDark ? {
-            primary: '#58a6ff',
-            background: '#0d1117',
-            card: '#161b22',
-            text: '#c9d1d9',
-            border: '#30363d',
-            notification: '#f85149',
-          } : {
-            primary: '#0969da',
-            background: '#ffffff',
-            card: '#f6f8fa',
-            text: '#1f2328',
-            border: '#d0d7de',
-            notification: '#cf222e',
-          },
-        }}>
+        <NavigationContainer theme={isDark
+          ? { ...DarkTheme, colors: { ...DarkTheme.colors, primary: '#58a6ff', background: '#0d1117', card: '#161b22', text: '#c9d1d9', border: '#30363d', notification: '#f85149' } }
+          : { ...DefaultTheme, colors: { ...DefaultTheme.colors, primary: '#0969da', background: '#ffffff', card: '#f6f8fa', text: '#1f2328', border: '#d0d7de', notification: '#cf222e' } }
+        }>
           <Stack.Navigator
             screenOptions={{
               headerStyle: { backgroundColor: isDark ? '#161b22' : '#f6f8fa' },

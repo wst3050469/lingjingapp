@@ -1849,7 +1849,7 @@ async function deepseekChat(messages) {
   return data.choices[0].message.content;
 }
 
-app.post('/api/agent/chat', auth, requireSubscription('personal', true), async (req, res) => {
+app.post('/api/agent/chat', auth, requireSubscription(null, true), async (req, res) => {
   const { message, userId, userName, conversationId, platform } = req.body;
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message required' });

@@ -1,25 +1,22 @@
 # ACTIVE_TASK
 
-## ✅ v1.73.181 — APP对话 subscription_required 修复 (2026-06-23 19:30)
+## ✅ v1.73.182 — 同步修复 + App润色提示词 + 键盘遮挡修复 (2026-06-24 00:02)
 
 ### 已完成
 | # | 任务 | 版本 | Git |
 |---|------|:--:|------|
-| 1 | 修复 APP 对话 subscription_required | v1.73.181 | `8f4d9953f` |
-| 2 | PM2 ecosystem.config.cjs (.env 自动加载) | v1.73.181 | `7dfe6085e` |
-| 3 | 全子包版本同步 | v1.73.181 | `0925755cc` |
+| 1 | App消息同步至桌面端 (upsertSession) | v1.73.182 | — |
+| 2 | App端润色提示词功能 (polishPrompt API) | v1.73.182 | — |
+| 3 | Android键盘遮挡修复 | v1.73.182 | — |
+| 4 | cloud-server /api/prompt/polish 端点 | v1.73.182 | — |
+| 5 | APK 构建部署 | v1.73.182 | — |
 
-### 修复内容
-- `cloud-server/server.js` L1852: `requireSubscription('personal',true)` → `(null,true)`
-- 移除最低套餐门槛，保留每日 API 配额检查
-- server-only fix，无需客户端重建
-
-### 部署状态 v1.73.181
-| 平台 | 版本 | 类型 |
+### 部署状态 v1.73.182
+| 平台 | 版本 | 状态 |
 |------|------|:--:|
-| Cloud Server | v1.73.181 | ✅ 已部署 |
-| Android | v1.73.181 (vc:181) | 📦 无需重建 |
-| Windows/Linux | v1.73.181 | 📦 无需重建 |
+| Cloud Server | v1.73.182 | ✅ 已部署 |
+| Android APK | v1.73.182 (vc:182) | ✅ 已部署 |
+| Windows/Linux | v1.73.181 | 📦 无需重建(server+app only) |
 
 ### 状态
 🎉 无待办任务。

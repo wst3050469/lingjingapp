@@ -163,6 +163,10 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
   const [muted, setMuted] = useState(false);
   const [volumeLoading, setVolumeLoading] = useState(false);
 
+  // Hardware Monitor
+  const [hwMonitor, setHwMonitor] = useState<{ cpu: number; memUsed: number; memTotal: number; memPct: number } | null>(null);
+  const [hwLoading, setHwLoading] = useState(false);
+
   // Camera & Microphone Permissions
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
@@ -527,6 +531,34 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
 
   useEffect(() => {
     loadVolume();
+  }, []);
+
+  // ── 硬件监控 ──
+
+  const loadHwMonitor = async () => {
+    setHwLoading(true);
+    try {
+      const [cpuRes, memRes] = await Promise.all([
+        window.electronAPI.systemControl.monitor.cpuLoad(),
+        window.electronAPI.systemControl.monitor.memory(),
+      ]);
+      const cpu = cpuRes.success ? cpuRes.data?.currentLoad || 0 : 0;
+      const mem = memRes.success ? memRes.data : { used: 0, total: 1 };
+      setHwMonitor({
+        cpu,
+        memUsed: mem.used || 0,
+        memTotal: mem.total || 1,
+        memPct: mem.total ? ((mem.used || 0) / mem.total * 100) : 0,
+      });
+    } catch {
+      setHwMonitor(null);
+    } finally {
+      setHwLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHwMonitor();
   }, []);
 
   return (
@@ -1168,6 +1200,78 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
             <span className={`text-xs font-mono w-9 text-right ${muted ? 'text-red-400' : 'text-cp-text-dim'}`}>
               {muted ? '--' : volume}
             </span>
+          </div>
+        </Card>
+      </div>
+
+      {/* --- 硬件状态 --- */}
+      <div>
+        <SectionHeader title="硬件状态" />
+        <Card>
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-cp-text font-medium">CPU / 内存</p>
+              <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
+                实时系统资源使用情况
+              </p>
+            </div>
+          </div>
+
+          {hwMonitor ? (
+            <div className="space-y-3">
+              {/* CPU */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] text-cp-text-dim">CPU</span>
+                  <span className="text-[11px] text-cp-text-dim font-mono">{Math.round(hwMonitor.cpu)}%</span>
+                </div>
+                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      hwMonitor.cpu > 80 ? 'bg-red-500' : hwMonitor.cpu > 50 ? 'bg-amber-500' : 'bg-cyan-500'
+                    }`}
+                    style={{ width: `${Math.min(hwMonitor.cpu, 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* 内存 */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] text-cp-text-dim">内存</span>
+                  <span className="text-[11px] text-cp-text-dim font-mono">
+                    {(hwMonitor.memUsed / 1e9).toFixed(1)} / {(hwMonitor.memTotal / 1e9).toFixed(1)} GB
+                  </span>
+                </div>
+                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      hwMonitor.memPct > 80 ? 'bg-red-500' : hwMonitor.memPct > 50 ? 'bg-amber-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(hwMonitor.memPct, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[11px] text-cp-text-dim/60">
+              {hwLoading ? '正在获取硬件信息...' : '无法获取硬件信息（可能需要桌面操控权限）'}
+            </p>
+          )}
+
+          <div className="mt-3 flex items-center justify-end">
+            <button
+              onClick={loadHwMonitor}
+              disabled={hwLoading}
+              className="text-[10px] px-2 py-1 rounded text-cp-text-dim hover:text-cp-text hover:bg-white/5 transition-colors disabled:opacity-40"
+            >
+              {hwLoading ? '刷新中...' : '刷新'}
+            </button>
           </div>
         </Card>
       </div>

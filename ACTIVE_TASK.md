@@ -1,25 +1,35 @@
 # ACTIVE_TASK
 
-## ✅ ChatActionBar — 桌面端输入栏上方操作条 (2026-06-23 10:15)
+## ✅ v1.73.171 - 键盘中文输入支持 (2026-06-23 14:30)
 
 ### 变更摘要
 | 类别 | 内容 |
 |:-----|:-----|
-| 🎨 UI | 新建 ChatActionBar 组件（文件上传+语音+任务停止） |
-| 🎨 UI | ChatInput 集成 ActionBar，InputToolbar 精简 |
-| 🔗 对齐 | 桌面端与移动端 ChatDetailScreen Action Bar 设计对齐 |
+| 🐛 修复 | 桌面控制键盘不支持中文（robotjs typeString 仅 ASCII） |
+| 🔧 方案 | ASCII→robotjs 原生；非 ASCII→clipboard Ctrl+V 粘贴 |
 
-### 新增/修改
-| 文件 | 操作 |
+### 修改文件
+| 文件 | 改动 |
 |:-----|:-----|
-| `ChatActionBar.tsx` | 新建 |
-| `ChatInput.tsx` | 集成 ActionBar + 移除冗余 props |
-| `InputToolbar.tsx` | 精简（仅保留 polish + send） |
+| `packages/electron/src/ipc/desktop-control-ipc.ts` | +48行 (clipboard import + typeText/isAsciiOnly/sleep + 重构2个handler) |
 
-### 构建
-- ✅ Vite build 通过，0 TypeScript 错误
-- ℹ️ 纯前端 UI 改动，无 Electron 构建/版本号变更
+### 构建部署
+| 平台 | 状态 |
+|:-----|:----:|
+| Windows (Setup+Portable) | ✅ |
+| Linux (AppImage+deb) | ✅ |
+| Android (APK) | ✅ |
+| version.json | ✅ v1.73.171 vc:171 |
+| latest.yml + latest-linux.yml | ✅ |
+| versions.json (3处) | ✅ |
+| PM2 cloud-server | ✅ |
+
+### 已知缺陷剩余
+| # | 缺陷 | 优先级 |
+|---|------|:------:|
+| ③ | 音频输出切换仅Windows | 低 |
+| ④ | 截屏仅BMP格式（已有PNG但API默认仍BMP） | 低 |
+| ⑤ | 摄像头无录像 | 中 |
+| ⑥ | 物理操作缺失（电源/蓝牙等）| 低 |
 
 ### 等待新任务...
-
-

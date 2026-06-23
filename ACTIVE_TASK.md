@@ -1,55 +1,63 @@
 # ACTIVE_TASK
 
-## ✅ v1.73.179 全部部署完成 — 高级设置面板完整集成 (2026-06-23 17:25)
+## ✅ v1.73.180 — APP页面崩溃修复 (NavigationContainer theme) (2026-06-23 18:10)
 
-### 高级设置面板功能清单
-| 版本 | 功能 | 权限保护 |
-|:--:|------|:--:|
-| v1.73.179 | ☀️ 亮度控制滑块（音量与亮度合并卡片） | desktopControl |
-| v1.73.178 | 🖥️ 硬件状态监控（CPU/RAM 实时进度条） | desktopControl |
-| v1.73.177 | 🎚️ 音量控制（滑块+静音切换） | desktopControl |
-| v1.73.176 | 🎵 音频输出设备切换（枚举/切换/高亮） | desktopControl |
-| v1.73.175 | ⚡ 系统电源控制（关机/重启/休眠/锁屏） | desktopControl |
+### 问题
+用户报告 APP 登录后"页面出错了" -> `Cannot read property 'regular' of undefined`
 
-### 高级设置面板完整结构
+### 根因
+`App.tsx` 中 `NavigationContainer` 的 `theme` prop 使用手动构造，缺少 `fonts` 字段。
+React Navigation v7 内部 `@react-navigation/elements` 通过 `useTheme()` 获取主题后访问 `fonts.regular`，手动构造导致 `fonts` 为 `undefined` → 崩溃。
+
+**此 bug 第3次复现！** 之前修复:
+- v1.73.156 (2026-06-22) — 首次修复
+- v1.73.170 (2026-06-23) — 第二次修复（被覆盖）
+- v1.73.180 (2026-06-23) — **第三次修复**（又被覆盖）
+
+### 修复
+```tsx
+// Before: 手动构造（缺 fonts）
+<NavigationContainer theme={{ dark: isDarkMode, colors: {...} }}>
+
+// After: 基于标准主题展开（含 fonts）
+<NavigationContainer theme={isDarkMode
+  ? { ...DarkTheme, colors: { ...DarkTheme.colors, ...customDarkColors } }
+  : { ...DefaultTheme, colors: { ...DefaultTheme.colors, ...customLightColors } }
+}>
 ```
-├─ 🔌 硬件状态 [CPU bar, RAM bar, 5s 自动刷新]
-├─ 🔊 音量与亮度 [音量滑块, 静音按钮, 亮度滑块]
-├─ 🎵 音频输出设备 [枚举列表, 切换, 当前设备标记]
-├─ ⚡ 系统电源 [关机, 重启, 休眠, 锁屏, 二次确认]
-├─ 📷 摄像头权限 [Toggle + 测试拍照]
-├─ 🎤 麦克风权限 [Toggle]
-└─ 🖱️ 鼠标键盘操控权限 [Toggle + 密码保护]
-```
 
-### 全平台状态 v1.73.179
-| 平台 | 文件 | 大小 | HTTP |
-|------|------|------|:--:|
-| Windows Setup | LingJing-Setup-1.73.179-win-x64.exe | 143MB | ✅ |
-| Windows Portable | LingJing-Portable-1.73.179-win-x64.exe | 143MB | ✅ |
-| Linux AppImage | LingJing-1.73.179-linux-x86_64.AppImage | 184MB | ✅ |
-| Linux DEB | LingJing-1.73.179-linux-x86_64.deb | 181MB | ✅ |
-| Android APK | lingjing-ide-1.73.179.apk | 83MB | ✅ |
-| OTA (latest.yml + latest-linux.yml) | v1.73.179 | - | ✅ |
-| /api/latest | v1.73.179 (5平台) | - | ✅ |
-| version.json (Android) | v1.73.179 vc:179 | - | ✅ |
-| versions.json (3处) | latest=1.73.179 | - | ✅ |
+### 代码改动
+| 文件 | 改动 |
+|------|------|
+| `mobile/App.tsx` | +1 import (DefaultTheme/DarkTheme)，-14/+2 行 theme 重构 |
 
-### Android APK 构建详情
-- **构建机**: 192.168.1.9 (liuhui)
-- **构建时间**: 2026-06-23 17:19 - 17:23
-- **构建时长**: ~1m 35s
-- **APK MD5**: `0b03858149f12d4e25b3e1045535fde7`
-- **APK 大小**: 86,210,838 bytes (83MB)
-- **修复**: `lintVitalRelease` 在 Gradle 9.0.0 中需要单独跳过 (`-x lintVitalRelease`)
-- **部署**: rsync 绕过 PAM MOTD 从构建机→生产服务器
+### 构建验证
+| 检查项 | 状态 |
+|--------|:--:|
+| Metro JS bundle 重新打包 (43199ms, 1363 modules) | ✅ (确认修复打入) |
+| APK 大小 83MB | ✅ |
+| MD5: `ce3831f86c23b782b72ea0a0a2dfe866` | ✅ |
 
-### Git
-- `6ef30861a` feat: v1.73.179 - 亮度控制滑块
-- `adc4c5e05` feat: v1.73.178 - 硬件状态面板
-- `22acf855f` feat: v1.73.177 - 音量控制UI
-- `c2bcc27cc` feat: v1.73.176 - 音频输出设备切换UI
-- `20d1e2624` feat: v1.73.175 - 系统电源控制UI
+### 版本号
+| 文件 | 旧版本 | 新版本 |
+|------|--------|--------|
+| `mobile/app.json` | 1.73.179 (vc:179) | 1.73.180 (vc:180) |
+| `mobile/package.json` | 1.73.179 | 1.73.180 |
 
-### 状态
-🎉 **v1.73.179 全平台部署完成！** 无待办任务。
+### 部署
+| 项目 | 状态 |
+|------|:--:|
+| APK 上传 | ✅ 86,211,010 bytes |
+| version.json | ✅ v1.73.180 vc:180 |
+| versions.json (3处) | ✅ latest=1.73.180 |
+| /api/latest android | ✅ |
+| PM2 cloud-server | ✅ |
+
+### ⚠️ 关键教训
+1. 此修复已第三次被覆盖，说明存在代码合并/同步问题导致修复丢失
+2. v1.73.179 APK 构建时 Metro bundle 为 UP-TO-DATE（用了旧缓存），**首次安装就会崩溃**
+3. **必须确保修复代码在构建前已真正同步到构建机**
+4. Metro 缓存检测基于文件 hash，App.tsx 修改后会自动重新打包
+
+🎉 **v1.73.180 全平台部署完成！** 无待办任务。
+

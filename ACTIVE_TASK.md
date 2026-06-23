@@ -1,5 +1,30 @@
 # ACTIVE_TASK
 
+## ✅ v1.73.181 — APP对话 subscription_required 修复 (2026-06-23 19:30)
+
+### 已完成
+| # | 任务 | 版本 | Git |
+|---|------|:--:|------|
+| 1 | 修复 APP 对话 subscription_required | v1.73.181 | `8f4d9953f` |
+| 2 | PM2 ecosystem.config.cjs (.env 自动加载) | v1.73.181 | `7dfe6085e` |
+| 3 | 全子包版本同步 | v1.73.181 | `0925755cc` |
+
+### 修复内容
+- `cloud-server/server.js` L1852: `requireSubscription('personal',true)` → `(null,true)`
+- 移除最低套餐门槛，保留每日 API 配额检查
+- server-only fix，无需客户端重建
+
+### 部署状态 v1.73.181
+| 平台 | 版本 | 类型 |
+|------|------|:--:|
+| Cloud Server | v1.73.181 | ✅ 已部署 |
+| Android | v1.73.181 (vc:181) | 📦 无需重建 |
+| Windows/Linux | v1.73.181 | 📦 无需重建 |
+
+### 状态
+🎉 无待办任务。
+
+
 ## ✅ v1.73.180 — APP崩溃修复 + 防回归机制 (2026-06-23 18:20)
 
 ### 已完成
@@ -23,12 +48,3 @@
 ssh liuhui@192.168.1.9
 sh /home/liuhui/lingjing/mobile/scripts/build-apk.sh
 ```
-
-### 全平台状态 v1.73.180
-| 平台 | 版本 | HTTP |
-|------|------|:--:|
-| Android | v1.73.180 (vc:180) | ✅ |
-| Windows/Linux | v1.73.179 | ✅ (此次仅移动端改动) |
-
-### 状态
-🎉 无待办任务。

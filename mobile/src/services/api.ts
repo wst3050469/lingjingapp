@@ -124,6 +124,14 @@ class ApiService {
     });
   }
 
+  // ── Prompt Polish (润色提示词) ──
+  async polishPrompt(text: string): Promise<{polished: string}> {
+    return this.request<any>('/prompt/polish', {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
+  }
+
   // ── Voice Transcription ──
   async transcribeAudio(audioUri: string): Promise<string> {
     var result = await this.request<any>('/mobile/transcribe', {

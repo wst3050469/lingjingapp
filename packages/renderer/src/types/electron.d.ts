@@ -601,6 +601,13 @@ declare interface ElectronAPI {
     checkMicAvailable: () => Promise<{ success: boolean; available: boolean; device?: { id: string; name: string; type: string; isActive: boolean } | null }>;
   };
 
+  systemPower: {
+    shutdown: () => Promise<{ success: boolean; error?: string }>;
+    restart: () => Promise<{ success: boolean; error?: string }>;
+    sleep: () => Promise<{ success: boolean; error?: string }>;
+    lock: () => Promise<{ success: boolean; error?: string }>;
+  };
+
 }
 
 declare interface Window {

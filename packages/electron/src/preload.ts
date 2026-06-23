@@ -1255,4 +1255,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     checkMicAvailable: () => ipcRenderer.invoke('audio:check-mic-available'),
   },
 
+  // 系统电源控制 API（关机/重启/休眠/锁屏）
+  systemPower: {
+    shutdown: () => ipcRenderer.invoke('system-power:shutdown'),
+    restart: () => ipcRenderer.invoke('system-power:restart'),
+    sleep: () => ipcRenderer.invoke('system-power:sleep'),
+    lock: () => ipcRenderer.invoke('system-power:lock'),
+  },
+
 });

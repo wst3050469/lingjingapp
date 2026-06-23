@@ -235,6 +235,16 @@ export function ChatInput({
             )}
             <div className="flex-1" />
             <InputToolbar
+              onImage={() => {
+                console.log('[ChatInput] onImage called, onImage exists:', !!onImage, 'externalFileInputRef exists:', !!externalFileInputRef?.current);
+                if (onImage) {
+                  onImage();
+                } else {
+                  console.log('[ChatInput] No onImage callback, using internal file input directly');
+                  externalFileInputRef?.current?.click();
+                }
+              }}
+              onVoice={onVoice}
               onPolish={() => {
                 console.log('[ChatInput] onPolish called, onPolish exists:', !!onPolish);
                 if (onPolish) {
@@ -244,7 +254,9 @@ export function ChatInput({
                 }
               }}
               onSend={handleSubmit}
+              onStop={onStop || (() => {})}
               isStreaming={!!isStreaming}
+              isRecording={isRecording}
               isPolishing={isPolishing}
               canSend={typeof canSendProp === 'boolean' ? canSendProp : (!!text.trim() || (!!images && images.length > 0))}
             />

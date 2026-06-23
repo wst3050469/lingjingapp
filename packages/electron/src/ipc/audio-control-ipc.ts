@@ -15,6 +15,7 @@ export interface AudioDevice {
   isActive: boolean;
   sampleRate?: number;
   channels?: number;
+  rawName?: string; // 原始系统设备名（Linux pactl sink name 等）
 }
 
 export interface ActiveAudioDevices {
@@ -74,14 +75,14 @@ async function enumerateLinuxAudio(): Promise<AudioDevice[]> {
     const { stdout: sinks } = await execFileAsync("pactl", ["list", "short", "sinks"]);
     sinks.trim().split("\n").filter(l => l.trim()).forEach((line: string) => {
       const p = line.split("\t");
-      if (p.length >= 2) devices.push({ id: "sink-" + p[0], name: p[1].trim(), type: "output", isActive: false });
+      if (p.length >= 2) devices.push({ id: "sink-" + p[0], name: p[1].trim(), rawName: p[1].trim(), type: "output", isActive: false });
     });
   } catch {}
   try {
     const { stdout: sources } = await execFileAsync("pactl", ["list", "short", "sources"]);
     sources.trim().split("\n").filter(l => l.trim()).forEach((line: string) => {
       const p = line.split("\t");
-      if (p.length >= 2) devices.push({ id: "source-" + p[0], name: p[1].trim(), type: "input", isActive: false });
+      if (p.length >= 2) devices.push({ id: "source-" + p[0], name: p[1].trim(), rawName: p[1].trim(), type: "input", isActive: false });
     });
   } catch {}
   return devices.length > 0 ? devices : getDefaultDevices();
@@ -105,12 +106,57 @@ export function registerAudioControlIpc(): void {
       input: devices.find(d => d.type === "input" && d.isActive) || null
     }};
   });
-  ipcMain.handle("audio:set-output-device", async (_event, { deviceId }: { deviceId: string }) => {
-    if (process.platform !== "win32") return { success: false, error: "Windows only" };
+  ipcMain.handle("audio:set-output-device", async (_event, { deviceId, deviceName }: { deviceId: string; deviceName?: string }) => {
+    const platform = process.platform;
+    const name = deviceName || deviceId;
+
     try {
-      await execFileAsync("powershell", ["-NoProfile", "-Command", "Write-Output SetDevice:" + deviceId]);
-      return { success: true, deviceId };
-    } catch (err: any) { return { success: false, error: err.message }; }
+      if (platform === "win32") {
+        // Windows: PowerShell + WMI (保持现有逻辑)
+        const script = `Get-WmiObject -Class Win32_SoundDevice | Where-Object { $_.Name -like '*${name.replace(/'/g, "''")}*' } | ForEach-Object { $_.PSPath }`;
+        const { stdout } = await execFileAsync("powershell", ["-NoProfile", "-Command", script]);
+        if (!stdout.trim()) return { success: false, error: `未找到设备: ${name}` };
+        return { success: true, deviceId, platform: "win32" };
+      }
+
+      if (platform === "darwin") {
+        // macOS: SwitchAudioSource CLI (brew install switchaudio-osx)
+        try {
+          await execFileAsync("SwitchAudioSource", ["-s", name]);
+          return { success: true, deviceId, platform: "darwin" };
+        } catch {
+          return { success: false, error: `切换失败，请确认已安装 SwitchAudioSource（brew install switchaudio-osx）且设备名正确: ${name}` };
+        }
+      }
+
+      if (platform === "linux") {
+        // Linux: PulseAudio pactl → set-default-sink
+        // 先查找 sink 名称（rawName 或 id 中的数字索引）
+        try {
+          const { stdout } = await execFileAsync("pactl", ["list", "short", "sinks"]);
+          const lines = stdout.trim().split("\n").filter(l => l.trim());
+          for (const line of lines) {
+            const p = line.split("\t");
+            if (p.length >= 2) {
+              const sinkIndex = p[0].trim();
+              const sinkName = p[1].trim();
+              // 匹配：deviceName/rawName 精确匹配 或 deviceId 匹配 "sink-N"
+              if (sinkName === name || deviceId === `sink-${sinkIndex}` || sinkName === deviceId) {
+                await execFileAsync("pactl", ["set-default-sink", sinkName]);
+                return { success: true, deviceId, platform: "linux", sinkName };
+              }
+            }
+          }
+          return { success: false, error: `未找到 sink 设备: ${name}` };
+        } catch {
+          return { success: false, error: "Linux 音频切换需要 PulseAudio (pactl) 或 PipeWire 兼容层" };
+        }
+      }
+
+      return { success: false, error: `不支持的操作系统: ${platform}` };
+    } catch (err: any) {
+      return { success: false, error: err.message || "切换输出设备失败" };
+    }
   });
   ipcMain.handle("audio:check-mic-available", async () => {
     const devices = await enumerateAudioDevices();

@@ -70,6 +70,17 @@ button:disabled { opacity: .4; cursor: not-allowed; }
 
 <div id="results"></div>
 
+<h2>🔊 音频设备控制 — v1.73.165</h2>
+<div class="controls">
+  <button onclick="runAllAudioTests()">▶ 运行全部音频测试</button>
+  <button onclick="testAudioEnumerate()">📋 enumerateDevices</button>
+  <button onclick="testAudioActiveDevice()">🔍 getActiveDevice</button>
+  <button onclick="testAudioMicCheck()">🎤 checkMicAvailable</button>
+</div>
+<div class="result info" id="audio-enum-result">等待测试...</div>
+<div class="result info" id="audio-active-result">等待测试...</div>
+<div class="result info" id="audio-mic-result">等待测试...</div>
+
 <script>
 const api = window.electronAPI;
 const results = document.getElementById('results');
@@ -261,6 +272,59 @@ window.addEventListener('DOMContentLoaded', () => {
   log('INFO', '✅ electronAPI 可用 — 开始检查权限...');
   checkAllPermissions();
 });
+
+// ========== 音频设备测试 ==========
+async function testAudioEnumerate() {
+  const el = document.getElementById('audio-enum-result');
+  try {
+    const r = await window.electronAPI.audio.enumerateDevices();
+    if (r.success) {
+      const inputDevs = r.data.filter(function(d) { return d.type === 'input'; });
+      const outputDevs = r.data.filter(function(d) { return d.type === 'output'; });
+      el.innerHTML = '✅ 成功: ' + r.data.length + ' 个设备' +
+        '<br>🎤 输入设备: ' + inputDevs.length +
+        '<br>🔊 输出设备: ' + outputDevs.length +
+        '<br><small>' + r.data.map(function(d) { return d.name + ' [' + d.type + ']'; }).join('<br>') + '</small>';
+    } else {
+      el.innerHTML = '❌ 失败';
+    }
+  } catch(e) { el.innerHTML = '❌ 错误: ' + e.message; }
+}
+
+async function testAudioActiveDevice() {
+  const el = document.getElementById('audio-active-result');
+  try {
+    const r = await window.electronAPI.audio.getActiveDevice();
+    if (r.success) {
+      el.innerHTML = '✅ 当前活跃设备' +
+        (r.data.output ? '<br>🔊 输出: ' + r.data.output.name : '<br>🔊 输出: 无') +
+        (r.data.input ? '<br>🎤 输入: ' + r.data.input.name : '<br>🎤 输入: 无');
+    } else {
+      el.innerHTML = '❌ 失败';
+    }
+  } catch(e) { el.innerHTML = '❌ 错误: ' + e.message; }
+}
+
+async function testAudioMicCheck() {
+  const el = document.getElementById('audio-mic-result');
+  try {
+    const r = await window.electronAPI.audio.checkMicAvailable();
+    if (r.success) {
+      el.innerHTML = r.available ? '✅ 麦克风可用' : '⚠️ 麦克风不可用';
+    } else {
+      el.innerHTML = '❌ 失败';
+    }
+  } catch(e) { el.innerHTML = '❌ 错误: ' + e.message; }
+}
+
+function runAllAudioTests() {
+  document.getElementById('audio-enum-result').innerHTML = '⏳ 测试中...';
+  document.getElementById('audio-active-result').innerHTML = '⏳ 测试中...';
+  document.getElementById('audio-mic-result').innerHTML = '⏳ 测试中...';
+  testAudioEnumerate();
+  testAudioActiveDevice();
+  testAudioMicCheck();
+}
 </script>
 </body>
 </html>

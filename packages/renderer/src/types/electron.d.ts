@@ -587,6 +587,8 @@ declare interface ElectronAPI {
       isEnabled: () => Promise<boolean>;
       setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
       getStatus: () => Promise<{ status: string }>;
+      startRecording: () => Promise<{ success: boolean; error?: string }>;
+      stopRecording: () => Promise<{ success: boolean; data?: string; duration?: number; error?: string }>;
     };
   };
 

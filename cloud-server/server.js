@@ -601,7 +601,7 @@ function readVersionInfo() {
 
 // ── versions.json auto-backup & recovery ──
 const VER_PRIMARY = '/var/www/downloads/versions.json';
-const MIN_VERSIONS = 5;
+const MIN_VERSIONS = 1; // lowered from 5 after disk cleanup (2026-06-24)
 
 function backupVersionsJson() {
   try {

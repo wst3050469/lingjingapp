@@ -148,6 +148,11 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [hasDesktopControlPassword, setHasDesktopControlPassword] = useState(false);
 
+  // System Power Control
+  const [powerLoading, setPowerLoading] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
+  const [powerError, setPowerError] = useState('');
+
   // Camera & Microphone Permissions
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
@@ -364,6 +369,72 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
       } finally {
         setPasswordLoading(false);
       }
+    }
+  };
+
+  // ── 系统电源控制 ──
+
+  const handleShutdown = async () => {
+    if (confirmAction !== 'shutdown') {
+      setConfirmAction('shutdown');
+      setPowerError('');
+      return;
+    }
+    setPowerLoading('shutdown');
+    setPowerError('');
+    try {
+      const result = await window.electronAPI.systemPower.shutdown();
+      if (!result.success) setPowerError(result.error || '关机失败');
+    } catch (err: any) {
+      setPowerError(err.message || '关机失败');
+    } finally {
+      setPowerLoading(null);
+      setConfirmAction(null);
+    }
+  };
+
+  const handleRestart = async () => {
+    if (confirmAction !== 'restart') {
+      setConfirmAction('restart');
+      setPowerError('');
+      return;
+    }
+    setPowerLoading('restart');
+    setPowerError('');
+    try {
+      const result = await window.electronAPI.systemPower.restart();
+      if (!result.success) setPowerError(result.error || '重启失败');
+    } catch (err: any) {
+      setPowerError(err.message || '重启失败');
+    } finally {
+      setPowerLoading(null);
+      setConfirmAction(null);
+    }
+  };
+
+  const handleSleep = async () => {
+    setPowerLoading('sleep');
+    setPowerError('');
+    try {
+      const result = await window.electronAPI.systemPower.sleep();
+      if (!result.success) setPowerError(result.error || '休眠失败');
+    } catch (err: any) {
+      setPowerError(err.message || '休眠失败');
+    } finally {
+      setPowerLoading(null);
+    }
+  };
+
+  const handleLock = async () => {
+    setPowerLoading('lock');
+    setPowerError('');
+    try {
+      const result = await window.electronAPI.systemPower.lock();
+      if (!result.success) setPowerError(result.error || '锁屏失败');
+    } catch (err: any) {
+      setPowerError(err.message || '锁屏失败');
+    } finally {
+      setPowerLoading(null);
     }
   };
 
@@ -773,6 +844,103 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
           </div>
         </Card>
       </div>
+
+      {/* --- 系统电源控制 --- */}
+      {desktopControlEnabled && (
+        <div>
+          <SectionHeader title="系统电源控制" />
+          <Card className="!border-orange-500/20 !bg-orange-500/[0.02]">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-cp-text font-medium">物理电源操作</p>
+                <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
+                  远程执行关机、重启、休眠和锁屏操作。关机/重启需要二次确认防止误触。
+                </p>
+              </div>
+            </div>
+
+            {/* 操作按钮 */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* 关机 */}
+              <button
+                onClick={handleShutdown}
+                disabled={powerLoading !== null}
+                className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-40 ${
+                  confirmAction === 'shutdown'
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-red-500/15 text-red-400 hover:bg-red-500/25'
+                }`}
+              >
+                {powerLoading === 'shutdown' ? '关机中...' : confirmAction === 'shutdown' ? '⚠ 确认关机' : '⏻ 关机'}
+              </button>
+
+              {/* 重启 */}
+              <button
+                onClick={handleRestart}
+                disabled={powerLoading !== null}
+                className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-40 ${
+                  confirmAction === 'restart'
+                    ? 'bg-orange-500 text-white hover:bg-orange-600'
+                    : 'bg-orange-500/15 text-orange-400 hover:bg-orange-500/25'
+                }`}
+              >
+                {powerLoading === 'restart' ? '重启中...' : confirmAction === 'restart' ? '⚠ 确认重启' : '↻ 重启'}
+              </button>
+
+              {/* 休眠 */}
+              <button
+                onClick={handleSleep}
+                disabled={powerLoading !== null}
+                className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-40 ${
+                  powerLoading === 'sleep'
+                    ? 'bg-blue-500/30 text-blue-300'
+                    : 'bg-blue-500/15 text-blue-400 hover:bg-blue-500/25'
+                }`}
+              >
+                {powerLoading === 'sleep' ? '休眠中...' : '☾ 休眠'}
+              </button>
+
+              {/* 锁屏 */}
+              <button
+                onClick={handleLock}
+                disabled={powerLoading !== null}
+                className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-40 ${
+                  powerLoading === 'lock'
+                    ? 'bg-slate-500/30 text-slate-300'
+                    : 'bg-slate-500/15 text-slate-400 hover:bg-slate-500/25'
+                }`}
+              >
+                {powerLoading === 'lock' ? '锁屏中...' : '🔒 锁屏'}
+              </button>
+
+              {/* 取消确认 */}
+              {confirmAction && (
+                <button
+                  onClick={() => { setConfirmAction(null); setPowerError(''); }}
+                  className="text-[10px] px-2 py-1 rounded text-cp-text-dim hover:text-cp-text hover:bg-white/5 transition-colors"
+                >
+                  取消
+                </button>
+              )}
+            </div>
+
+            {/* 错误提示 */}
+            {powerError && (
+              <div className="mt-2 flex items-center gap-1.5 text-red-400 text-[11px]">
+                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {powerError}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
 
       {/* --- 桌面操控密码弹窗 --- */}
       {passwordModalOpen && (

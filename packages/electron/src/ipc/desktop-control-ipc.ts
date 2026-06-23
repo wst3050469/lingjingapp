@@ -9,7 +9,7 @@
  * 所有操作受 desktopControlEnabled 权限开关保护。
  */
 
-import { ipcMain } from 'electron';
+import { ipcMain, clipboard } from 'electron';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
@@ -45,6 +45,57 @@ async function checkDesktopControlEnabled(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+// ── 中文输入支持 ──
+
+function isAsciiOnly(text: string): boolean {
+  return /^[\x00-\x7F]*$/.test(text);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function typeText(text: string, cpm?: number): Promise<{ length: number; method: 'robotjs' | 'clipboard' }> {
+  // ASCII 文本直接走 robotjs，速度更快且不干扰剪贴板
+  if (isAsciiOnly(text)) {
+    if (cpm !== undefined && cpm > 0) {
+      getRobot().typeStringDelayed(text, cpm);
+    } else {
+      getRobot().typeString(text);
+    }
+    return { length: text.length, method: 'robotjs' };
+  }
+
+  // 非 ASCII 文本走剪贴板粘贴
+  // 1. 保存当前剪贴板内容
+  const savedText = clipboard.readText();
+  const savedImage = clipboard.readImage();
+  const hasSavedImage = !savedImage.isEmpty();
+
+  try {
+    // 2. 写入目标文本
+    clipboard.writeText(text);
+
+    // 3. 模拟 Ctrl+V / Cmd+V
+    const isMac = process.platform === 'darwin';
+    const pasteKey = 'v';
+    const pasteModifier = isMac ? 'command' : 'control';
+    getRobot().keyTap(pasteKey, [pasteModifier]);
+
+    // 4. 等待粘贴完成（根据文本长度动态计算，最少 150ms）
+    const delay = Math.max(150, text.length * 2);
+    await sleep(delay);
+  } finally {
+    // 5. 恢复剪贴板
+    if (hasSavedImage) {
+      clipboard.writeImage(savedImage);
+    }
+    clipboard.writeText(savedText);
+  }
+
+  return { length: text.length, method: 'clipboard' };
 }
 
 // ── RobotJS 错误包装 ──
@@ -276,10 +327,13 @@ export function registerDesktopControlIpc(): void {
     if (typeof text !== 'string' || !text) {
       return { success: false, error: '输入文本不能为空' };
     }
-    return wrapRobot(() => {
-      getRobot().typeString(text);
-      return { length: text.length };
-    });
+    try {
+      const result = await typeText(text);
+      return { success: true as const, data: result };
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      return { success: false, error: msg || '文本输入失败' };
+    }
   });
 
   ipcMain.handle('desktop-control:keyboard-type-delayed', async (_event, { text, cpm }: { text: string; cpm: number }) => {
@@ -287,10 +341,13 @@ export function registerDesktopControlIpc(): void {
     if (typeof text !== 'string' || !text) {
       return { success: false, error: '输入文本不能为空' };
     }
-    return wrapRobot(() => {
-      getRobot().typeStringDelayed(text, cpm || 60);
-      return { length: text.length, cpm };
-    });
+    try {
+      const result = await typeText(text, cpm || 60);
+      return { success: true as const, data: result };
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      return { success: false, error: msg || '文本输入失败' };
+    }
   });
 
   ipcMain.handle('desktop-control:keyboard-tap', async (_event, { key, modifiers }: { key: string; modifiers?: string | string[] }) => {

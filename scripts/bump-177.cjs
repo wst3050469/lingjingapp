@@ -1,0 +1,2 @@
+var fs=require('fs'),v='1.73.177';
+['package.json','mobile/package.json','packages/core/package.json','packages/electron/package.json','packages/renderer/package.json'].forEach(function(f){var p=JSON.parse(fs.readFileSync(f,'utf8'));p.version=v;fs.writeFileSync(f,JSON.stringify(p,null,2)+'\n');console.log('Updated '+f);});var app=JSON.parse(fs.readFileSync('mobile/app.json','utf8'));app.expo.version=v;fs.writeFileSync('mobile/app.json',JSON.stringify(app,null,2)+'\n');console.log('v'+v);

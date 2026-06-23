@@ -158,6 +158,11 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioError, setAudioError] = useState('');
 
+  // Volume Control
+  const [volume, setVolume] = useState(50);
+  const [muted, setMuted] = useState(false);
+  const [volumeLoading, setVolumeLoading] = useState(false);
+
   // Camera & Microphone Permissions
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
@@ -485,6 +490,43 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
   // 首次加载音频设备
   useEffect(() => {
     loadAudioDevices();
+  }, []);
+
+  // ── 音量控制 ──
+
+  const loadVolume = async () => {
+    try {
+      const result = await window.electronAPI.systemControl.volume.get();
+      if (result.success && result.data) {
+        setVolume(result.data.volume);
+        setMuted(result.data.muted || false);
+      }
+    } catch { /* ignore */ }
+  };
+
+  const handleSetVolume = async (v: number) => {
+    setVolume(v);
+    try {
+      await window.electronAPI.systemControl.volume.set(v);
+      setMuted(false);
+    } catch (err: any) {
+      showStatus('音量设置失败: ' + (err.message || ''));
+    }
+  };
+
+  const handleToggleMute = async () => {
+    const newMuted = !muted;
+    setMuted(newMuted);
+    try {
+      await window.electronAPI.systemControl.volume.mute();
+    } catch (err: any) {
+      setMuted(!newMuted);
+      showStatus('静音切换失败: ' + (err.message || ''));
+    }
+  };
+
+  useEffect(() => {
+    loadVolume();
   }, []);
 
   return (
@@ -1064,6 +1106,68 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
             >
               {audioLoading ? '刷新中...' : '刷新设备列表'}
             </button>
+          </div>
+        </Card>
+      </div>
+
+      {/* --- 音量控制 --- */}
+      <div>
+        <SectionHeader title="音量控制" />
+        <Card>
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm text-cp-text font-medium">系统音量</p>
+              <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
+                调节系统音量。跨平台支持 Windows、macOS 和 Linux。
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* 静音按钮 */}
+            <button
+              onClick={handleToggleMute}
+              disabled={volumeLoading}
+              className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+                muted
+                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                  : 'bg-white/[0.05] text-cp-text-dim hover:bg-white/10'
+              }`}
+              title={muted ? '取消静音' : '静音'}
+            >
+              {muted ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+              )}
+            </button>
+
+            {/* 音量滑块 */}
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={muted ? 0 : volume}
+              onChange={(e) => handleSetVolume(parseInt(e.target.value))}
+              className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer
+                [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cp-accent [&::-webkit-slider-thumb]:cursor-pointer"
+            />
+
+            {/* 音量数值 */}
+            <span className={`text-xs font-mono w-9 text-right ${muted ? 'text-red-400' : 'text-cp-text-dim'}`}>
+              {muted ? '--' : volume}
+            </span>
           </div>
         </Card>
       </div>

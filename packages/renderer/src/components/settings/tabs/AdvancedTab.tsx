@@ -163,6 +163,10 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
   const [muted, setMuted] = useState(false);
   const [volumeLoading, setVolumeLoading] = useState(false);
 
+  // Brightness Control
+  const [brightness, setBrightness] = useState(80);
+  const [brightnessMax, setBrightnessMax] = useState(100);
+
   // Hardware Monitor
   const [hwMonitor, setHwMonitor] = useState<{ cpu: number; memUsed: number; memTotal: number; memPct: number } | null>(null);
   const [hwLoading, setHwLoading] = useState(false);
@@ -559,6 +563,31 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
 
   useEffect(() => {
     loadHwMonitor();
+  }, []);
+
+  // ── 亮度控制 ──
+
+  const loadBrightness = async () => {
+    try {
+      const result = await window.electronAPI.systemControl.brightness.get();
+      if (result.success && result.data) {
+        setBrightness(result.data.brightness);
+        setBrightnessMax(result.data.max || 100);
+      }
+    } catch { /* ignore */ }
+  };
+
+  const handleSetBrightness = async (v: number) => {
+    setBrightness(v);
+    try {
+      await window.electronAPI.systemControl.brightness.set(v);
+    } catch (err: any) {
+      showStatus('亮度设置失败: ' + (err.message || ''));
+    }
+  };
+
+  useEffect(() => {
+    loadBrightness();
   }, []);
 
   return (
@@ -1142,10 +1171,11 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
         </Card>
       </div>
 
-      {/* --- 音量控制 --- */}
+      {/* --- 音量与亮度 --- */}
       <div>
-        <SectionHeader title="音量控制" />
+        <SectionHeader title="音量与亮度" />
         <Card>
+          {/* 音量 */}
           <div className="flex items-start gap-3 mb-3">
             <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0 mt-0.5">
               <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1154,52 +1184,51 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm text-cp-text font-medium">系统音量</p>
-              <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
-                调节系统音量。跨平台支持 Windows、macOS 和 Linux。
-              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* 静音按钮 */}
+          <div className="flex items-center gap-3 mb-4">
             <button
               onClick={handleToggleMute}
-              disabled={volumeLoading}
               className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-                muted
-                  ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                  : 'bg-white/[0.05] text-cp-text-dim hover:bg-white/10'
-              }`}
-              title={muted ? '取消静音' : '静音'}
-            >
-              {muted ? (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                </svg>
-              )}
+                muted ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-white/[0.05] text-cp-text-dim hover:bg-white/10'
+              }`}>
+              {muted ? '🔇' : '🔊'}
             </button>
-
-            {/* 音量滑块 */}
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={muted ? 0 : volume}
+            <input type="range" min={0} max={100} value={muted ? 0 : volume}
               onChange={(e) => handleSetVolume(parseInt(e.target.value))}
               className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer
                 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
-                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cp-accent [&::-webkit-slider-thumb]:cursor-pointer"
-            />
-
-            {/* 音量数值 */}
+                [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cp-accent [&::-webkit-slider-thumb]:cursor-pointer" />
             <span className={`text-xs font-mono w-9 text-right ${muted ? 'text-red-400' : 'text-cp-text-dim'}`}>
               {muted ? '--' : volume}
             </span>
+          </div>
+
+          <div className="border-t border-cp-border/10 pt-3">
+            {/* 亮度 */}
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-cp-text font-medium">屏幕亮度</p>
+                <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
+                  仅笔记本/便携设备有效
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-cp-text-dim shrink-0">☀️</span>
+              <input type="range" min={0} max={brightnessMax} value={brightness}
+                onChange={(e) => handleSetBrightness(parseInt(e.target.value))}
+                className="flex-1 h-2 bg-white/10 rounded-full appearance-none cursor-pointer
+                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4
+                  [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:cursor-pointer" />
+              <span className="text-xs font-mono w-9 text-right text-cp-text-dim">{brightness}</span>
+            </div>
           </div>
         </Card>
       </div>

@@ -1,5 +1,23 @@
 # ACTIVE_TASK
 
+## ✅ v1.73.165 — 音频设备枚举和控制 API (2026-06-23 06:30)
+
+### 变更摘要
+| 类别 | 内容 |
+|:-----|:-----|
+| 🔊 音频 | 新建 audio-control-ipc.ts (4个 IPC handler) |
+| 🔊 枚举 | 跨平台音频设备枚举 (Win/Mac/Linux) |
+| 🔊 切换 | 输出设备切换 (Windows) + 麦克风检测 |
+| 🌐 部署 | 5平台全量部署 (Win+Linux+Android) |
+
+### 新增 API
+| 通道 | 功能 |
+|:-----|:-----|
+| `audio:enumerate-devices` | 枚举所有音频输入/输出设备 |
+| `audio:get-active-device` | 获取当前活跃设备 |
+| `audio:set-output-device` | 设置默认输出设备 (Win) |
+| `audio:check-mic-available` | 检测麦克风可用性 |
+
 ## ✅ v1.73.164 — 全平台部署完成 (2026-06-22 19:00)
 
 ### 变更摘要

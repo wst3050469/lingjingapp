@@ -1,0 +1,470 @@
+{
+  "latest": "1.73.172",
+  "versions": [
+    {
+      "version": "1.73.172",
+      "releaseDate": "2026-06-23T06:36:47.957Z",
+      "releaseNotes": "v1.73.172: 摄像头录像功能 (MediaRecorder, 最长60秒)",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.172-win-x64.exe",
+          "size": 143551763,
+          "sha512": "cNO4IFR6xDF5B+Ca+nfc3hhONmApeqHIGgqKz8VF+Nx+7CVLRj0zIWOz8hEnH3RVqGhguu7QFLMJhKK7l6LA=="
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.172-win-x64.exe",
+          "size": 143210223,
+          "sha512": "UJ6DwbeuVcUY+unugYg92LmXBTPCt86F48c4GOojr6nEZPV+gl5S6bYcrUtTrzujVR6rgtsv4kqY39t6vtWzaw=="
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.172-linux-x86_64.AppImage",
+          "size": 183636284,
+          "sha512": "1pCy2zlndKSsImfFDn9EcY0zZtZUHsBOrLk4Xk0UWXqvt55bQ/KR4Uj7Q/50Jrlz/4JNy3dJ48koZ5PRuBnNw=="
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.172-linux-x86_64.deb",
+          "size": 181335602,
+          "sha512": "AE2JEdMNbpHARXPTFTolgja5tDX6lEHnowTDA2K5uG3deGcSPiy7a04u+Ft+0+VnHyf+0wU95rBnwz4YbC2ovQ=="
+        }
+      }
+    },
+    {
+      "version": "1.73.171",
+      "releaseDate": "2026-06-23T06:29:06.627Z",
+      "releaseNotes": "v1.73.171: 键盘中文输入支持（剪贴板粘贴方案）",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.171-win-x64.exe",
+          "size": 143551980,
+          "sha512": "qOlS/YEVBADK7WNqO3rQCM/7tHNEL7D8ko4lcoigEMZ29pgDael9wqMyH7sewNYh1StulKmb5TWIWRQM4UCfgw=="
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.171-win-x64.exe",
+          "size": 143210470,
+          "sha512": "f95fyYmV+rA5MWjpAHofnhlZ5DF8HGzoTxI6dt8g7YSDGhkrKsxMj1sCNmK9AF2kC2bA5YcM2xhkfvEoD2Rj6Q=="
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.171-linux-x86_64.AppImage",
+          "size": 183636251,
+          "sha512": "5EpW/pUEpGTBKSAQuk5YVAuRoG70ZLvR+LALnAEhcDw157voToFY2aGHpk/jW8x5KH8syZp1XazGLxtHUOsP+Q=="
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.171-linux-x86_64.deb",
+          "size": 181334730,
+          "sha512": "3lvKAAzwRePLCrfCT8pJy1nLi35IMsxxJTv47ZKGIbbWa+cgZQPxCiKaZ7s0bPB8aB6kA56p+b0j8YTVXwYcJw=="
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/lingjing-ide-1.73.171.apk",
+          "size": 86210838,
+          "sha512": "Tpw7SK4g02JP5woHXCqJHNDua2FdbvXOEk0ElJ2hH8tgjvwsbQm63eSOSwIGEy04LyWpWzRL4hPOwFNBcGAAvw=="
+        }
+      }
+    },
+    {
+      "version": "1.73.170",
+      "releaseDate": "2026-06-23T05:05:40.608Z",
+      "releaseNotes": "v1.73.170: 修复APP登录后页面崩溃(NavigationContainer theme) + 电脑操控能力审查",
+      "files": {
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/lingjing-ide-1.73.170.apk",
+          "size": 86210838
+        },
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.170-win-x64.exe",
+          "size": 143312403
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.170-win-x64.exe",
+          "size": 142970917
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.170-linux-x86_64.AppImage",
+          "size": 183631817
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.170-linux-x86_64.deb",
+          "size": 362666774
+        }
+      }
+    },
+    {
+      "version": "1.73.169",
+      "releaseDate": "2026-06-23T11:21:38+08:00",
+      "releaseNotes": "v1.73.169: 恢复 InputToolbar 文件上传和语音输入按钮 (修复 ChatSidebar/QuestConversation 按钮消失)",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.169-win-x64.exe",
+          "size": 143312331
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.169-win-x64.exe",
+          "size": 142970825
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.169-linux-x86_64.AppImage",
+          "size": 183631845
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.169-linux-x86_64.deb",
+          "size": 181332864
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-1.73.169.apk",
+          "size": 86210842
+        }
+      }
+    },
+    {
+      "version": "1.73.168",
+      "releaseDate": "2026-06-23T02:24:59.554Z",
+      "releaseNotes": "v1.73.168: ChatActionBar - file upload + voice + task stop",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.168-win-x64.exe",
+          "size": 143312352
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.168-win-x64.exe",
+          "size": 142970804
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.168-linux-x86_64.AppImage",
+          "size": 183631837
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.168-linux-x86_64.deb",
+          "size": 181333648
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-1.73.168.apk",
+          "size": 86210842
+        }
+      }
+    },
+    {
+      "version": "1.73.167",
+      "releaseDate": "2026-06-23T02:12:56.768Z",
+      "releaseNotes": "v1.73.167: mic recording 60s timeout auto-stop",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.167-win-x64.exe",
+          "size": 143312063
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.167-win-x64.exe",
+          "size": 142970519
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.167-linux-x86_64.AppImage",
+          "size": 183631796
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.167-linux-x86_64.deb",
+          "size": 181333148
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-1.73.167.apk",
+          "size": 86210842
+        }
+      }
+    },
+    {
+      "version": "1.73.166",
+      "buildDate": "2026-06-23T01:38:39.881Z",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.166-win-x64.exe",
+          "size": 143311497
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.166-win-x64.exe",
+          "size": 142969952
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.166-linux-x86_64.AppImage",
+          "size": 183627646
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.166-linux-x86_64.deb",
+          "size": 181332864
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-1.73.166.apk",
+          "size": 86210842
+        }
+      }
+    },
+    {
+      "version": "1.73.165",
+      "buildDate": "2026-06-23T01:19:52.150Z",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.165-win-x64.exe",
+          "size": 143309799
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.165-win-x64.exe",
+          "size": 142968250
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.165-linux-x86_64.AppImage",
+          "size": 183623614
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.165-linux-x86_64.deb",
+          "size": 181329748
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-1.73.165.apk",
+          "size": 86210842
+        }
+      }
+    },
+    {
+      "version": "1.73.163",
+      "date": "2026-06-22",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.163-win-x64.exe",
+          "size": 143306915
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.163-win-x64.exe",
+          "size": 142588736
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.163-linux-x86_64.AppImage",
+          "size": 183361348,
+          "sha512": "SA/rA2m3iuorFnWfQ76aaYSjTyd+l0V11CYyvFpu4OKL/d1+7RacVFN9ADDvlZh3MbOBkL4M8VRPUbgoL2H0/g=="
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.163-linux-x86_64.deb",
+          "size": 181074172,
+          "sha512": "U+HnwGZUMoS0W2aPk+MZnEDfVReYkIaJhotjyr174ewsdw/GYEyP2djIc53ZqFIYoCQSpOg/R7cLQQdVsxe/tA=="
+        }
+      }
+    },
+    {
+      "version": "1.73.162",
+      "date": "2026-06-22",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.162-win-x64.exe",
+          "size": 143259299
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.162-win-x64.exe",
+          "size": 142925248
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.162-linux-x86_64.AppImage",
+          "size": 183356574
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.162-linux-x86_64.deb",
+          "size": 181069570
+        },
+        "android": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/lingjing-ide-1.73.162.apk",
+          "size": 36429428
+        }
+      }
+    },
+    {
+      "version": "1.73.161",
+      "date": "2026-06-22",
+      "files": {
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.161-linux-x86_64.AppImage",
+          "size": 183254023,
+          "sha512": "4nPQlefoHgJsTIOyBTgTKycgAgrc1J61AF0MTmBlzlVpypEp1ryPWHG1j8bjq42TmiSNXxfqDTjwz+oUIAEJpQ=="
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.161-linux-x86_64.deb",
+          "size": 180964106
+        },
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.161-win-x64.exe",
+          "size": 143259299,
+          "sha512": "kDpk32X1832JK/mH3Akne60ds+Qen7Fez3pUoemewKc1oSP1KzPjz2hG+APRAsqrKkQ8r4scHZCTLJOr+lWNzw=="
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.161-win-x64.exe",
+          "size": 142925248
+        }
+      }
+    },
+    {
+      "version": "1.73.160",
+      "status": "published",
+      "releaseDate": "2026-06-22T08:59:20.724Z",
+      "releaseNotes": "v1.73.160: skills leaderboard + app launch fix",
+      "files": {
+        "win-x64_setup": "LingJing-Setup-1.73.160-win-x64.exe",
+        "win-x64_portable": "LingJing-Portable-1.73.160-win-x64.exe",
+        "linux-x64_appimage": "LingJing-1.73.160-linux-x86_64.AppImage",
+        "linux-x64_deb": "LingJing-1.73.160-linux-x86_64.deb"
+      }
+    },
+    {
+      "version": "1.73.158",
+      "status": "published",
+      "releaseDate": "2026-06-22T08:41:55.577Z",
+      "releaseNotes": "v1.73.158: keyboard/mouse simulation via robotjs + 16 IPC handlers",
+      "files": {
+        "win-x64_setup": "LingJing-Setup-1.73.158-win-x64.exe",
+        "win-x64_portable": "LingJing-Portable-1.73.158-win-x64.exe",
+        "linux-x64_appimage": "LingJing-1.73.158-linux-x86_64.AppImage",
+        "linux-x64_deb": "LingJing-1.73.158-linux-x86_64.deb"
+      }
+    },
+    {
+      "version": "1.73.157",
+      "status": "published",
+      "releaseDate": "2026-06-22T08:11:52.587872+00:00",
+      "releaseNotes": "修复登录后页面崩溃-使用Android原生字体配置",
+      "files": {
+        "android": "lingjing-ide-1.73.157.apk"
+      }
+    },
+    {
+      "version": "1.73.157",
+      "status": "published",
+      "releaseDate": "2026-06-22T08:11:48.406148+00:00",
+      "releaseNotes": "修复登录后页面崩溃-使用Android原生字体配置",
+      "files": {
+        "android": "lingjing-ide-1.73.157.apk"
+      }
+    },
+    {
+      "version": "1.73.156",
+      "status": "published",
+      "releaseDate": "2026-06-22T07:24:44.531432+00:00",
+      "releaseNotes": "修复登录后页面崩溃（NavigationContainer theme兼容性）",
+      "files": {
+        "android": "lingjing-ide-1.73.156.apk"
+      }
+    },
+    {
+      "version": "1.73.155",
+      "status": "published",
+      "releaseDate": "2026-06-22T06:39:22.904Z",
+      "releaseNotes": "v1.73.155: 权限审查修复(摄像头/麦克风默认关闭) + APK闪退修复(锁定expo-av版本)",
+      "files": {
+        "android": "lingjing-ide-1.73.155.apk",
+        "win-x64_setup": "LingJing-Setup-1.73.155-win-x64.exe",
+        "win-x64_portable": "LingJing-Portable-1.73.155-win-x64.exe",
+        "linux-x64_appimage": "LingJing-1.73.155-linux-x86_64.AppImage",
+        "linux-x64_deb": "LingJing-1.73.155-linux-x86_64.deb"
+      }
+    },
+    {
+      "version": "1.73.154",
+      "status": "published",
+      "releaseDate": "2026-06-22T05:27:59.999Z",
+      "releaseNotes": "v1.73.154: SMTP配置持久化修复 + Windows窗口中文乱码修复",
+      "files": {
+        "win-x64_setup": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.154-win-x64.exe",
+          "sha512": "UYfrHk/WDnN5ES8U2LWc2aJfyBLaFT0KeAEjtAnj64OJEpCkpN8f27kQovsFLPiZpgL8fM+UvYfqGnGJAViCtA==",
+          "size": 143086697
+        },
+        "win-x64_portable": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.154-win-x64.exe",
+          "size": 142745186
+        },
+        "linux-x64_appimage": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.154-linux-x86_64.AppImage",
+          "size": 183020534
+        },
+        "linux-x64_deb": {
+          "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.154-linux-x86_64.deb",
+          "size": 180752398
+        }
+      }
+    },
+    {
+      "version": "1.73.153",
+      "status": "published",
+      "releaseDate": "2026-06-22T05:01:27.349706Z",
+      "releaseNotes": "v1.73.153: 全平台版本同步",
+      "files": {
+        "android": "lingjing-ide-1.73.153.apk",
+        "win-x64_setup": "LingJing-Setup-1.73.153-win-x64.exe",
+        "win-x64_portable": "LingJing-Portable-1.73.153-win-x64.exe",
+        "linux-x64_appimage": "LingJing-1.73.153-linux-x86_64.AppImage",
+        "linux-x64_deb": "LingJing-1.73.153-linux-x86_64.deb"
+      }
+    }
+  ],
+  "version": "1.73.148",
+  "releaseDate": "2026-06-21T14:07:05.913Z",
+  "releaseNotes": "v1.73.148: 应用控制+邮件服务(收发邮件右键集成)+ContextMenu+SendFileDialog+跨平台fix",
+  "1.73.154": {
+    "files": {
+      "win-x64_setup": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.154-win-x64.exe",
+      "win-x64_portable": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.154-win-x64.exe",
+      "linux-x64_appimage": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.154-linux-x86_64.AppImage",
+      "linux-x64_deb": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.154-linux-x86_64.deb"
+    }
+  },
+  "1.73.170": {
+    "version": "1.73.170",
+    "releaseDate": "2026-06-23T05:05:40.608Z",
+    "releaseNotes": "v1.73.170: 修复APP登录后页面崩溃(NavigationContainer theme) + 电脑操控能力审查",
+    "files": {
+      "android": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/lingjing-ide-1.73.170.apk",
+        "size": 86210838
+      },
+      "win-x64_setup": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.170-win-x64.exe",
+        "size": 143312403
+      },
+      "win-x64_portable": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.170-win-x64.exe",
+        "size": 142970917
+      },
+      "linux-x64_appimage": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.170-linux-x86_64.AppImage",
+        "size": 183631817
+      },
+      "linux-x64_deb": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.170-linux-x86_64.deb",
+        "size": 362666774
+      }
+    }
+  },
+  "1.73.171": {
+    "version": "1.73.171",
+    "releaseDate": "2026-06-23T06:29:06.627Z",
+    "releaseNotes": "v1.73.171: 键盘中文输入支持（剪贴板粘贴方案）",
+    "files": {
+      "win-x64_setup": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Setup-1.73.171-win-x64.exe",
+        "size": 143551980,
+        "sha512": "qOlS/YEVBADK7WNqO3rQCM/7tHNEL7D8ko4lcoigEMZ29pgDael9wqMyH7sewNYh1StulKmb5TWIWRQM4UCfgw=="
+      },
+      "win-x64_portable": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-Portable-1.73.171-win-x64.exe",
+        "size": 143210470,
+        "sha512": "f95fyYmV+rA5MWjpAHofnhlZ5DF8HGzoTxI6dt8g7YSDGhkrKsxMj1sCNmK9AF2kC2bA5YcM2xhkfvEoD2Rj6Q=="
+      },
+      "linux-x64_appimage": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.171-linux-x86_64.AppImage",
+        "size": 183636251,
+        "sha512": "5EpW/pUEpGTBKSAQuk5YVAuRoG70ZLvR+LALnAEhcDw157voToFY2aGHpk/jW8x5KH8syZp1XazGLxtHUOsP+Q=="
+      },
+      "linux-x64_deb": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/LingJing-1.73.171-linux-x86_64.deb",
+        "size": 181334730,
+        "sha512": "3lvKAAzwRePLCrfCT8pJy1nLi35IMsxxJTv47ZKGIbbWa+cgZQPxCiKaZ7s0bPB8aB6kA56p+b0j8YTVXwYcJw=="
+      },
+      "android": {
+        "url": "https://ide.zhejiangjinmo.com/downloads/lingjing-ide-1.73.171.apk",
+        "size": 86210838,
+        "sha512": "Tpw7SK4g02JP5woHXCqJHNDua2FdbvXOEk0ElJ2hH8tgjvwsbQm63eSOSwIGEy04LyWpWzRL4hPOwFNBcGAAvw=="
+      }
+    }
+  }
+}

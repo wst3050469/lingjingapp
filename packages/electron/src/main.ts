@@ -56,6 +56,7 @@ import { registerAppControlIpc } from './ipc/app-control-ipc.js';
 import { registerEmailIpc } from './ipc/email-ipc.js';
 import { registerDesktopControlIpc } from './ipc/desktop-control-ipc.js';
 import { registerSystemControlIpc } from './ipc/system-control-ipc.js';
+import { registerAudioControlIpc } from './ipc/audio-control-ipc.js';
 
 const IS_DEV = !app.isPackaged;
 
@@ -917,6 +918,7 @@ async function bootstrap(): Promise<void> {
   try { registerEmailIpc(); console.log('[Main] Email IPC registered'); } catch (err) { console.error('[Main] registerEmailIpc failed:', err); }
   try { registerDesktopControlIpc(); console.log('[Main] DesktopControl IPC registered'); } catch (err) { console.error('[Main] registerDesktopControlIpc failed:', err); }
   try { registerSystemControlIpc(); console.log('[Main] SystemControl IPC registered'); } catch (err) { console.error('[Main] registerSystemControlIpc failed:', err); }
+  try { registerAudioControlIpc(); console.log('[Main] AudioControl IPC registered'); } catch (err) { console.error('[Main] registerAudioControlIpc failed:', err); }
 
   // Desktop Control Permission IPC — scrypt password management
   const CONFIG_PATH = join(homedir(), '.lingjing', 'config.json');

@@ -590,6 +590,13 @@ declare interface ElectronAPI {
     };
   };
 
+  audio: {
+    enumerateDevices: () => Promise<{ success: boolean; data: Array<{ id: string; name: string; type: 'input' | 'output' | 'both'; isActive: boolean; sampleRate?: number; channels?: number }> }>;
+    getActiveDevice: () => Promise<{ success: boolean; data: { output: { id: string; name: string; type: string; isActive: boolean } | null; input: { id: string; name: string; type: string; isActive: boolean } | null } }>;
+    setOutputDevice: (deviceId: string) => Promise<{ success: boolean; deviceId?: string; error?: string }>;
+    checkMicAvailable: () => Promise<{ success: boolean; available: boolean; device?: { id: string; name: string; type: string; isActive: boolean } | null }>;
+  };
+
 }
 
 declare interface Window {

@@ -1057,4 +1057,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     },
   },
 
+  // 音频设备管理 API（扬声器/麦克风设备枚举）
+  audio: {
+    enumerateDevices: () => ipcRenderer.invoke('audio:enumerate-devices'),
+    getActiveDevice: () => ipcRenderer.invoke('audio:get-active-device'),
+    setOutputDevice: (deviceId: string) => ipcRenderer.invoke('audio:set-output-device', { deviceId }),
+    checkMicAvailable: () => ipcRenderer.invoke('audio:check-mic-available'),
+  },
+
 });

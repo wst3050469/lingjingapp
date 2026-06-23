@@ -1054,6 +1054,84 @@ contextBridge.exposeInMainWorld('electronAPI', {
       isEnabled: () => ipcRenderer.invoke('permission:microphone:is-enabled'),
       setEnabled: (enabled: boolean) => ipcRenderer.invoke('permission:microphone:set-enabled', { enabled }),
       getStatus: () => ipcRenderer.invoke('permission:microphone:get-status'),
+
+      // 录音：使用浏览器 MediaRecorder API，返回 base64 WAV/WebM
+      startRecording: async (): Promise<{ success: boolean; error?: string }> => {
+        try {
+          const isEnabled = await ipcRenderer.invoke('permission:microphone:is-enabled');
+          if (!isEnabled) return { success: false, error: '麦克风权限未开启，请在 设置→高级→麦克风权限 中开启' };
+
+          // 清理上一次录音
+          if ((window as any).__micStream) {
+            (window as any).__micStream.getTracks().forEach((t: any) => t.stop());
+          }
+          if ((window as any).__micRecorder && (window as any).__micRecorder.state !== 'inactive') {
+            (window as any).__micRecorder.stop();
+          }
+          (window as any).__micChunks = [];
+
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          (window as any).__micStream = stream;
+
+          const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+          (window as any).__micRecorder = recorder;
+
+          return new Promise((resolve) => {
+            recorder.ondataavailable = (e: BlobEvent) => {
+              if (e.data.size > 0) (window as any).__micChunks.push(e.data);
+            };
+            recorder.onerror = () => {
+              stream.getTracks().forEach((t) => t.stop());
+              resolve({ success: false, error: '录音启动失败' });
+            };
+            recorder.onstart = () => {
+              resolve({ success: true });
+            };
+            recorder.start(1000); // 每秒收集一个 chunk
+          });
+        } catch (err: any) {
+          if (err.name === 'NotAllowedError') return { success: false, error: '麦克风访问被拒绝，请检查系统权限设置' };
+          if (err.name === 'NotFoundError') return { success: false, error: '未检测到麦克风设备' };
+          return { success: false, error: err.message || '录音启动失败' };
+        }
+      },
+
+      // 停止录音并返回 base64
+      stopRecording: async (): Promise<{ success: boolean; data?: string; duration?: number; error?: string }> => {
+        try {
+          const recorder = (window as any).__micRecorder;
+          const stream = (window as any).__micStream;
+          if (!recorder) return { success: false, error: '没有正在进行的录音' };
+
+          return new Promise((resolve) => {
+            recorder.onstop = async () => {
+              stream.getTracks().forEach((t: any) => t.stop());
+              (window as any).__micStream = null;
+              (window as any).__micRecorder = null;
+
+              const chunks = (window as any).__micChunks || [];
+              if (chunks.length === 0) {
+                resolve({ success: false, error: '录音数据为空' });
+                return;
+              }
+              const blob = new Blob(chunks, { type: 'audio/webm' });
+              (window as any).__micChunks = [];
+
+              // 计算时长（近似）
+              const duration = chunks.length; // 每秒一个chunk
+              const base64 = await new Promise<string>((r) => {
+                const reader = new FileReader();
+                reader.onloadend = () => r((reader.result as string).split(',')[1]);
+                reader.readAsDataURL(blob);
+              });
+              resolve({ success: true, data: base64, duration });
+            };
+            recorder.stop();
+          });
+        } catch (err: any) {
+          return { success: false, error: err.message || '停止录音失败' };
+        }
+      },
     },
   },
 

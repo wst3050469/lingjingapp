@@ -5,6 +5,7 @@ export class VectorMemoryStore {
     adapter;
     eventBus = null;
     contentById = new Map();
+    embedFn = null;
     constructor(config, adapter) {
         this.config = { ...DEFAULT_VECTOR_MEMORY_CONFIG, ...config };
         this.adapter = adapter ?? new InMemoryVectorAdapter();
@@ -12,12 +13,15 @@ export class VectorMemoryStore {
     setEventBus(eventBus) {
         this.eventBus = eventBus;
     }
+    setEmbedFn(fn) {
+        this.embedFn = fn;
+    }
     async initializeAdapter() {
         await this.adapter.initialize();
     }
     async store(content, metadata) {
         const id = `vec_${Date.now()}_${hashString(content).toString(36)}`;
-        const vector = this.embed(content);
+        const vector = await this.embed(content);
         const enrichedMetadata = { ...metadata, content };
         this.contentById.set(id, content);
         await this.adapter.upsert(id, vector, enrichedMetadata);
@@ -26,7 +30,7 @@ export class VectorMemoryStore {
     }
     async search(query, topK) {
         const k = topK ?? this.config.defaultTopK;
-        const queryVector = this.embed(query);
+        const queryVector = await this.embed(query);
         return this.adapter.search(queryVector, k);
     }
     async remove(id) {
@@ -35,7 +39,7 @@ export class VectorMemoryStore {
     }
     async syncFromMemory(memoryEntries) {
         for (const entry of memoryEntries) {
-            const vector = this.embed(entry.content);
+            const vector = await this.embed(entry.content);
             await this.adapter.upsert(entry.id, vector, { content: entry.content, category: entry.category });
             this.contentById.set(entry.id, entry.content);
         }
@@ -43,7 +47,18 @@ export class VectorMemoryStore {
     healthCheck() {
         return { healthy: this.config.enabled };
     }
-    embed(text) {
+    async embed(text) {
+        if (this.embedFn) {
+            try {
+                return await this.embedFn(text);
+            }
+            catch (err) {
+                console.warn('[VectorMemory] External embed failed, falling back to hash:', err instanceof Error ? err.message : String(err));
+            }
+        }
+        return this.fallbackEmbed(text);
+    }
+    fallbackEmbed(text) {
         const dim = this.config.embeddingDimension;
         const vector = new Array(dim);
         for (let i = 0; i < dim; i++) {
@@ -56,7 +71,7 @@ export class VectorMemoryStore {
 function hashString(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
+        const char = str.charCodeAt(str.length - 1 - i);
         hash = ((hash << 5) - hash) + char;
         hash = hash & hash;
     }

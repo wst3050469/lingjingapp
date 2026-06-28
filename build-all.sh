@@ -15,18 +15,18 @@ export ANDROID_HOME=/opt/android-sdk
 export NODE_OPTIONS="--no-warnings"
 export ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES=true
 
-echo "=== 灵境 v$(cat /home/liuhui/lingjing/package.json | grep version | head -1 | cut -d'"' -f4) 构建 ==="
+echo "=== 灵境 v$(cat /home/liuhui/lingjingapp/package.json | grep version | head -1 | cut -d'"' -f4) 构建 ==="
 echo "平台: $(nproc)核 / $(free -h | grep Mem | awk '{print $2}') 内存"
 
-cd /home/liuhui/lingjing/packages/electron
+cd /home/liuhui/lingjingapp/packages/electron
 
 if [ "$MODE" = "all" ] || [ "$MODE" = "android" ]; then
   echo ""
   echo ">>> [Android] 构建 APK..."
-  cd /home/liuhui/lingjing/android
+  cd /home/liuhui/lingjingapp/android
   ./gradlew assembleRelease 2>&1 | tail -5
   echo "APK: $(ls -lh app/build/outputs/apk/release/app-release.apk 2>/dev/null | awk '{print $5, $NF}')"
-  cd /home/liuhui/lingjing/packages/electron
+  cd /home/liuhui/lingjingapp/packages/electron
 fi
 
 if [ "$MODE" = "all" ] || [ "$MODE" = "linux" ]; then

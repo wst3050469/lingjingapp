@@ -10,12 +10,12 @@ import { useTodoStore } from '../stores/todo-store';
 export function useQuestEvents(): void {
   useEffect(() => {
     // Load config values used during event processing
-    let cachedFileChangeBehavior = 'ask';
+    let cachedFileChangeBehavior = 'auto-accept';
     window.electronAPI.config.get().then((cfg: any) => {
       if (cfg?.maxContextTokens) {
         useQuestStore.getState().setMaxContextTokens(cfg.maxContextTokens);
       }
-      cachedFileChangeBehavior = cfg?.quest?.fileChangeBehavior ?? 'ask';
+      cachedFileChangeBehavior = cfg?.quest?.fileChangeBehavior ?? 'auto-accept';
     }).catch(() => { /* ignore */ });
 
     const unsubEvent = window.electronAPI.quest.onEvent((event: any) => {

@@ -5,6 +5,7 @@ import { useDragDropFiles } from '../../hooks/useDragDropFiles';
 import { ContextSelector } from '../context/ContextSelector';
 import { ContextChips } from '../context/ContextChips';
 import { InputToolbar } from './InputToolbar';
+import { ChatActionBar } from './ChatActionBar';
 import type { MentionItem } from '../../types/mention';
 import type { AttachedImage } from '../../stores/chat-store';
 
@@ -157,6 +158,16 @@ export function ChatInput({
           </div>
         )}
 
+        {/* ── Action Bar（文件上传 + 语音 + 任务停止）── */}
+        <ChatActionBar
+          onFileUpload={() => externalFileInputRef?.current?.click()}
+          onVoice={() => onVoice?.()}
+          onStop={() => onStop?.()}
+          isRecording={isRecording}
+          isStreaming={!!isStreaming}
+          disabled={inputDisabled}
+        />
+
         <textarea
           ref={textareaRef}
           data-chat-input
@@ -229,19 +240,11 @@ export function ChatInput({
                 if (onImage) {
                   onImage();
                 } else {
-                  // Fallback: directly trigger the internal file input
                   console.log('[ChatInput] No onImage callback, using internal file input directly');
                   externalFileInputRef?.current?.click();
                 }
               }}
-              onVoice={() => {
-                console.log('[ChatInput] onVoice called, onVoice exists:', !!onVoice);
-                if (onVoice) {
-                  onVoice();
-                } else {
-                  console.error('[ChatInput] No onVoice callback provided');
-                }
-              }}
+              onVoice={onVoice}
               onPolish={() => {
                 console.log('[ChatInput] onPolish called, onPolish exists:', !!onPolish);
                 if (onPolish) {

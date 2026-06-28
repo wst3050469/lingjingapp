@@ -2,10 +2,11 @@
   "expo": {
     "name": "灵境IDE",
     "slug": "lingjing-mobile",
-    "version": "1.56.0",
+    "version": "1.73.151",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
     "splash": {
       "backgroundColor": "#0d1117"
     },
@@ -19,13 +20,21 @@
       },
       "package": "com.zhejiangjinmo.lingjing.mobile"
     },
-    "plugins": [],
+    "plugins": [
+      "expo-updates"
+    ],
+    "updates": {
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 3000,
+      "url": "https://u.expo.dev/2c8f346b-10e0-4b26-b893-124eb212602f"
+    },
+    "runtimeVersion": "1.73.151",
     "extra": {
       "eas": {
         "projectId": "2c8f346b-10e0-4b26-b893-124eb212602f"
       }
     },
     "owner": "wst3050469"
-  },
-  "version": "1.56.0"
+  }
 }

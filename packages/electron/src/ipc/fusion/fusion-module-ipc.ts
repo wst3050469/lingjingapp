@@ -189,7 +189,7 @@ export function registerFusionModuleIpc(): void {
   });
 
   ipcMain.handle('fusion:health:check', async () => {
-    if (!fusionInitializer) throw new Error('FusionInitializer not initialized');
+    if (!fusionInitializer) { return { degraded: true, message: 'Fusion modules not yet initialized, retry later' }; }
     return Object.fromEntries(fusionInitializer.healthCheck());
   });
   ipcMain.handle('fusion:config:get', async () => {
@@ -199,7 +199,7 @@ export function registerFusionModuleIpc(): void {
     return { success: true, key, value };
   });
   ipcMain.handle('fusion:module:toggle', async (_event, moduleName: string, enabled: boolean) => {
-    if (!fusionInitializer) throw new Error('FusionInitializer not initialized');
+    if (!fusionInitializer) { return { success: false, degraded: true, message: 'Fusion modules not yet initialized, retry later' }; }
     fusionInitializer.toggleModule(moduleName as any, enabled);
     return { success: true };
   });

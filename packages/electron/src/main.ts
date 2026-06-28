@@ -5,6 +5,7 @@ import { join, dirname } from 'node:path';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
+import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { registerAgentIpc, initAgent, setWorkingDirectory, setSshTerminalId, reinitProvider } from './ipc/agent-ipc.js';
 import { registerFsIpc } from './ipc/fs-ipc.js';
 import { registerTerminalIpc, destroyAllTerminals } from './ipc/terminal-ipc.js';
@@ -14,6 +15,7 @@ import { registerOllamaIpc } from './ipc/ollama-ipc.js';
 import { registerGitIpc } from './ipc/git-ipc.js';
 import { registerMemoryIpc } from './ipc/memory-ipc.js';
 import { registerSkillsIpc } from './ipc/skills-ipc.js';
+import { registerSkillMarketIpc } from './ipc/skill-market-ipc.js';
 import { registerIndexingIpc } from './ipc/indexing-ipc.js';
 import { registerIntegrationsIpc } from './ipc/integrations-ipc.js';
 import { registerNetworkIpc } from './ipc/network-ipc.js';
@@ -33,7 +35,7 @@ import { initDatabase, closeDatabase, getDatabase, saveDatabase, saveDatabaseSyn
 import { registerSshIpc, destroyAllSshSessions, setSshTerminalChangeCallback } from './ssh/ssh-ipc.js';
 import { initWebServerFunctions, startWebServer, stopWebServer, broadcastToMobile, isWebServerRunning, generateToken, getDiagnostics } from './web-server.js';
 import { startFrpClient, stopFrpClient, getFrpStatus } from './frp-client.js';
-import { registerCloudIpc, autoConnectCloud, pushMemoryToCloud, pushSessionToCloud } from './ipc/cloud-ipc.js';
+import { registerCloudIpc, autoConnectCloud, pushMemoryToCloud, pushSessionToCloud, pushTaskStatusToCloud, startAutoSync } from './ipc/cloud-ipc.js';
 import { registerScheduleIpc } from './ipc/schedule-ipc.js';
 import { registerAdminIpc } from './ipc/admin-ipc.js';
 import { initCloudSyncIpc } from './ipc/cloud-sync-ipc.js';
@@ -50,6 +52,12 @@ import { verifyIpcRegistrations } from './ipc/ipc-verifier.js';
 import { registerBatchIPC } from './ipc/batch-ipc.js';
 import { registerConnectorIPC } from './ipc/connector-ipc.js';
 import { registerTriggerIPC } from './ipc/trigger-ipc.js';
+import { registerAppControlIpc } from './ipc/app-control-ipc.js';
+import { registerEmailIpc } from './ipc/email-ipc.js';
+import { registerDesktopControlIpc } from './ipc/desktop-control-ipc.js';
+import { registerSystemControlIpc } from './ipc/system-control-ipc.js';
+import { registerAudioControlIpc } from './ipc/audio-control-ipc.js';
+import { registerSystemPowerIpc } from './ipc/system-power-ipc.js';
 
 const IS_DEV = !app.isPackaged;
 
@@ -380,6 +388,11 @@ function createWindow(): void {
     return { action: 'deny' };
   });
 
+  // Register Fusion IPC handlers BEFORE renderer loads (FIX: race condition)
+  // This ensures fusion:health:check and all fusion handlers are registered
+  // before the renderer FusionSettings component mounts and tries to call them.
+  registerFusionIPC(mainWindow);
+
   // Load renderer
   if (IS_DEV) {
     // In dev mode, load from Vite dev server
@@ -705,7 +718,18 @@ async function bootstrap(): Promise<void> {
     console.error('[Main] Auth features will not work without database');
   }
 
-  // Create window FIRST — show UI immediately even if agent init is slow
+  // Load workspace BEFORE creating window — ensures renderer sees restored workspace immediately
+  try {
+    workspacePath = await loadWorkspaceFromConfig();
+    setWorkingDirectory(workspacePath);
+    console.log('[Main] Workspace loaded before window creation:', workspacePath);
+  } catch (wsErr) {
+    console.error('[Main] Failed to load workspace before window:', wsErr);
+    workspacePath = homedir();
+    setWorkingDirectory(workspacePath);
+  }
+
+  // Create window — show UI immediately even if agent init is slow
   createWindow();
 
   // Send startup logs and database status to renderer after window is created
@@ -877,31 +901,6 @@ async function bootstrap(): Promise<void> {
     console.warn('[Main] Fallback handler registration:', err);
   }
 
-  // Pipeline/PM/Review/Security fallback IPC handlers
-  try {
-    // Pipeline
-    for (const ch of ['pipeline:list','pipeline:save','pipeline:delete','pipeline:trigger','pipeline:cancel','pipeline:runHistory']) {
-      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
-    }
-    // Project Management
-    for (const ch of ['pm:getBoard','pm:listWorkItems','pm:createWorkItem','pm:updateWorkItem','pm:deleteWorkItem',
-      'pm:updateStatus','pm:listMilestones','pm:linkCommit','pm:updateWipLimit','pm:exportData']) {
-      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
-    }
-    // Review
-    for (const ch of ['review:execute','review:listReports','review:getReport','review:listRules','review:saveRule','review:deleteRule','review:applyFix']) {
-      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
-    }
-    // Security
-    for (const ch of ['security:scan','security:listResults','security:getResult','security:compareResults',
-      'security:cancel','security:listRules','security:saveRule','security:deleteRule','security:applyFix']) {
-      ipcMain.handle(ch, async () => ({ success: false, error: 'Not implemented' }));
-    }
-    console.log('[Main] Registered pipeline/pm/review/security fallback handlers');
-  } catch (err) {
-    console.warn('[Main] Pipeline fallback registration:', err);
-  }
-
   // Subscription fallback IPC handlers (preload exposes subscription:xxx but no backend impl)
   try {
     ipcMain.handle('subscription:status', async () => ({ success: false, error: 'Not implemented' }));
@@ -914,6 +913,199 @@ async function bootstrap(): Promise<void> {
   } catch (err) {
     console.warn('[Main] Subscription fallback registration:', err);
   }
+
+  // App Control & Email IPC (window-independent)
+  try { registerAppControlIpc(); console.log('[Main] AppControl IPC registered'); } catch (err) { console.error('[Main] registerAppControlIpc failed:', err); }
+  try { registerEmailIpc(); console.log('[Main] Email IPC registered'); } catch (err) { console.error('[Main] registerEmailIpc failed:', err); }
+  try { registerDesktopControlIpc(); console.log('[Main] DesktopControl IPC registered'); } catch (err) { console.error('[Main] registerDesktopControlIpc failed:', err); }
+  try { registerSystemControlIpc(); console.log('[Main] SystemControl IPC registered'); } catch (err) { console.error('[Main] registerSystemControlIpc failed:', err); }
+  try { registerAudioControlIpc(); console.log('[Main] AudioControl IPC registered'); } catch (err) { console.error('[Main] registerAudioControlIpc failed:', err); }
+  try { registerSystemPowerIpc(); console.log('[Main] SystemPower IPC registered'); } catch (err) { console.error('[Main] registerSystemPowerIpc failed:', err); }
+
+  // Desktop Control Permission IPC — scrypt password management
+  const CONFIG_PATH = join(homedir(), '.lingjing', 'config.json');
+
+  const _readConfig = async (): Promise<Record<string, unknown>> => {
+    try {
+      const raw = await readFile(CONFIG_PATH, 'utf8');
+      return JSON.parse(raw);
+    } catch { return {}; }
+  };
+
+  const _writeConfig = async (cfg: Record<string, unknown>) => {
+    const dir = dirname(CONFIG_PATH);
+    if (!existsSync(dir)) await mkdir(dir, { recursive: true });
+    await writeFile(CONFIG_PATH, JSON.stringify(cfg, null, 2));
+  };
+
+  const _ensureAdvanced = (cfg: Record<string, unknown>) => {
+    if (!cfg.advanced || typeof cfg.advanced !== 'object') {
+      cfg.advanced = {};
+    }
+    return cfg.advanced as Record<string, unknown>;
+  };
+
+  ipcMain.handle('desktop-control:has-password', async () => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    return !!(adv?.desktopControlPasswordHash);
+  });
+
+  ipcMain.handle('desktop-control:set-password', async (_event, { password }: { password: string }) => {
+    if (!password || password.length < 6) {
+      return { success: false, error: '密码至少需要6个字符' };
+    }
+    const salt = randomBytes(32);
+    const hash = scryptSync(password, salt, 64);
+    const cfg = await _readConfig();
+    const adv = _ensureAdvanced(cfg);
+    adv.desktopControlPasswordHash = hash.toString('base64');
+    adv.desktopControlPasswordSalt = salt.toString('base64');
+    await _writeConfig(cfg);
+    return { success: true };
+  });
+
+  ipcMain.handle('desktop-control:verify-password', async (_event, { password }: { password: string }) => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    const hashB64 = adv?.desktopControlPasswordHash as string | undefined;
+    const saltB64 = adv?.desktopControlPasswordSalt as string | undefined;
+    if (!hashB64 || !saltB64) {
+      return { success: false, error: '尚未设置密码' };
+    }
+    try {
+      const storedHash = Buffer.from(hashB64, 'base64');
+      const salt = Buffer.from(saltB64, 'base64');
+      const inputHash = scryptSync(password, salt, 64);
+      if (timingSafeEqual(storedHash, inputHash)) {
+        return { success: true };
+      }
+      return { success: false, error: '密码错误' };
+    } catch {
+      return { success: false, error: '密码验证异常' };
+    }
+  });
+
+  ipcMain.handle('desktop-control:is-enabled', async () => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    return !!(adv?.desktopControlEnabled);
+  });
+
+  ipcMain.handle('desktop-control:set-enabled', async (_event, { enabled }: { enabled: boolean }) => {
+    const cfg = await _readConfig();
+    const adv = _ensureAdvanced(cfg);
+    adv.desktopControlEnabled = enabled;
+    await _writeConfig(cfg);
+    return { success: true };
+  });
+
+  // ── Camera Permission ──
+  ipcMain.handle('permission:camera:is-enabled', async () => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    return !!(adv?.cameraEnabled);
+  });
+
+  ipcMain.handle('permission:camera:set-enabled', async (_event, { enabled }: { enabled: boolean }) => {
+    const cfg = await _readConfig();
+    const adv = _ensureAdvanced(cfg);
+    adv.cameraEnabled = enabled;
+    await _writeConfig(cfg);
+    return { success: true };
+  });
+
+  ipcMain.handle('permission:camera:get-status', async () => {
+    // Check system-level camera permission status
+    try {
+      const { systemPreferences } = require('electron');
+      if (process.platform === 'darwin') {
+        const status = systemPreferences.getMediaAccessStatus('camera');
+        return { status: status }; // 'granted' | 'denied' | 'not-determined'
+      }
+      // Windows/Linux: no system-level camera permission API
+      return { status: 'unknown' };
+    } catch {
+      return { status: 'unknown' };
+    }
+  });
+
+  // ── Microphone Permission ──
+  ipcMain.handle('permission:microphone:is-enabled', async () => {
+    const cfg = await _readConfig();
+    const adv = cfg.advanced as Record<string, unknown> | undefined;
+    return !!(adv?.microphoneEnabled);
+  });
+
+  ipcMain.handle('permission:microphone:set-enabled', async (_event, { enabled }: { enabled: boolean }) => {
+    const cfg = await _readConfig();
+    const adv = _ensureAdvanced(cfg);
+    adv.microphoneEnabled = enabled;
+    await _writeConfig(cfg);
+    return { success: true };
+  });
+
+  ipcMain.handle('permission:microphone:get-status', async () => {
+    try {
+      const { systemPreferences } = require('electron');
+      if (process.platform === 'darwin') {
+        const status = systemPreferences.getMediaAccessStatus('microphone');
+        return { status: status };
+      }
+      return { status: 'unknown' };
+    } catch {
+      return { status: 'unknown' };
+    }
+  });
+
+  console.log('[Main] DesktopControl + Permissions IPC registered');
+
+  // ── Update: Export installed skills as built-in for version upgrade ──
+  ipcMain.handle('update:export-skills', async (_event, { targetDir }: { targetDir: string }) => {
+    try {
+      const { mkdir } = await import('node:fs/promises');
+      const { join } = await import('node:path');
+      const { homedir } = await import('node:os');
+      const { existsSync } = await import('node:fs');
+      await mkdir(targetDir, { recursive: true });
+
+      // Scan user-level skills
+      const userSkillsDir = join(homedir(), '.lingjing', 'skills');
+      let exported = 0;
+      if (existsSync(userSkillsDir)) {
+        const { readdir, cp } = await import('node:fs/promises');
+        const entries = await readdir(userSkillsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const src = join(userSkillsDir, entry.name);
+          const dst = join(targetDir, entry.name);
+          await cp(src, dst, { recursive: true, force: true });
+          exported++;
+        }
+      }
+
+      // Also scan project-level skills if workspace available
+      // (workspacePath is a variable in main.ts scope)
+      const ws = workspacePath;
+      if (ws && existsSync(join(ws, '.lingjing', 'skills'))) {
+        const { readdir, cp } = await import('node:fs/promises');
+        const projectSkillsDir = join(ws, '.lingjing', 'skills');
+        const entries = await readdir(projectSkillsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const dst = join(targetDir, entry.name);
+          if (existsSync(dst)) continue;
+          const src = join(projectSkillsDir, entry.name);
+          await cp(src, dst, { recursive: true, force: true });
+          exported++;
+        }
+      }
+
+      return { success: true, exported, targetDir };
+    } catch (err: any) {
+      return { success: false, error: err?.message || String(err) };
+    }
+  });
 
   // Initialize cloud sync and GitHub integration
   try {
@@ -964,6 +1156,7 @@ async function bootstrap(): Promise<void> {
     registerTerminalIpc(mainWindow);
     registerGitIpc(() => workspacePath);
     registerSkillsIpc(() => workspacePath);
+    registerSkillMarketIpc();
     registerIndexingIpc(() => workspacePath, mainWindow);
     registerDiagnosticsIpc(mainWindow, () => workspacePath);
     console.log('[Main] About to call registerQuestIpc...');
@@ -987,6 +1180,7 @@ async function bootstrap(): Promise<void> {
     try {
       registerCloudIpc(mainWindow);
       autoConnectCloud();
+      startAutoSync(30000); // Auto-push changes to cloud every 30s
     } catch (err) {
       console.error('[Main] Cloud IPC registration failed:', err);
     }
@@ -1030,8 +1224,7 @@ async function bootstrap(): Promise<void> {
 
     // Fusion IPC + Full Initialization (DEF-002/003 fix) — comprehensive module init
     try {
-      registerFusionIPC(mainWindow);
-      // Initialize all Fusion modules and inject into IPC layer
+      // Initialize all Fusion modules and inject into IPC layer (IPC registered in createWindow)
       try {
         const fusionMod = await import('@codepilot/core/fusion');
         const {
@@ -1351,7 +1544,7 @@ function loadWebServerConfig(): any {
     frpServerAddr: 'wap.zhejiangjinmo.com',
     frpServerPort: 32200,
     frpRemotePort: 8080,
-    frpToken: 'lingjing_mobile_token_2024',
+    frpToken: generateToken(),
     frpCustomDomain: 'wap.zhejiangjinmo.com',
   };
 }
@@ -1487,3 +1680,5 @@ ipcMain.on('quest:cancel-from-mobile', (_event, data: any) => {
     mainWindow.webContents.send('quest:cancel-from-mobile', data);
   }
 });
+"" 
+

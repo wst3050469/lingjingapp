@@ -9,10 +9,7 @@ import { AgentModeEnhancer } from '@codepilot/core/agent-mode';
 import { MultiFileEditEngine } from '@codepilot/core/multi-file-edit';
 // @ts-ignore - RuleMerger available at runtime
 import { RuleMerger } from '@codepilot/core/rules';
-import { registerPipelineIPC } from '../pipeline/pipeline-ipc.js';
 import { registerReviewIPC } from '../review/review-ipc.js';
-import { registerPMIPC } from '../pm/pm-ipc.js';
-import { registerSecurityIPC } from '../security/security-ipc.js';
 
 export function registerNewFeatureIPC(config: {
   checkpointDir: string;
@@ -77,9 +74,6 @@ export function registerNewFeatureIPC(config: {
   ipcMain.handle('multiFileEdit:rejectFile', async () => {});
   ipcMain.handle('multiFileEdit:applyAll', async () => []);
 
-  // Platform module IPC registrations (pipeline/review/pm/security)
-  registerPipelineIPC();
+  // Platform module IPC registrations (review)
   registerReviewIPC();
-  registerPMIPC();
-  registerSecurityIPC();
 }

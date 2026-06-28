@@ -1,7 +1,12 @@
 {
   "name": "lingjing-ide",
-  "version": "1.73.117",
+<<<<<<< HEAD
+  "version": "1.73.184",
   "description": "\u7075\u5883 IDE - AI \u9a71\u52a8\u7684\u667a\u80fd\u5f00\u53d1\u5e73\u53f0",
+=======
+  "version": "1.73.183",
+  "description": "灵境 IDE - AI 驱动的智能开发平台",
+>>>>>>> fb56bb8d8db41d3f64fa88cc6a881b164347676a
   "homepage": "https://lingjing.ai",
   "author": {
     "name": "LingJing AI",
@@ -29,16 +34,19 @@
     "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.12.0",
+    "nodemailer": "^6.10.1",
     "pdf-parse": "^2.4.5",
     "picocolors": "^1.1.1",
     "playwright": "^1.60.0",
+    "robotjs": "^0.6.0",
     "sql.js": "^1.14.1",
     "ssh2": "^1.17.0",
     "tmp": "0.2.5",
     "uuid": "^11.1.1",
     "ws": "^8.20.0",
     "yaml": "^2.7.1",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "systeminformation": "5.23.0"
   },
   "devDependencies": {
     "electron": "^39.0.0",
@@ -51,6 +59,7 @@
       "cpu-features",
       "electron",
       "esbuild",
+      "robotjs",
       "ssh2"
     ]
   }

@@ -263,22 +263,37 @@ function buildMenus(): MenuDef[] {
       label: '工作流',
       hotkey: 'W',
       items: [
-        { label: '新建工作流', shortcut: 'Ctrl+Shift+N', action: () => {
-          useUIStore.getState().setSidebarPanel('workflow');
-        }},
-        { label: '打开工作流', shortcut: 'Ctrl+Shift+O', action: () => {
+        { label: '打开工作流监控', shortcut: 'Ctrl+Shift+W', action: () => {
           useUIStore.getState().setSidebarPanel('workflow');
         }},
         { label: '', divider: true },
         { label: '工作流设置', action: () => {
           useUIStore.getState().setShowSettingsModal(true);
         }},
-        { label: '', divider: true },
-        { label: 'Connector管理', action: () => {
+      ],
+    },
+        {
+      label: '工具',
+      hotkey: 'T',
+      items: [
+        { label: '收发邮件', action: () => {
           useUIStore.getState().setShowSettingsModal(true);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('settings:switch-tab', { detail: { tab: 'email' } }));
+          }, 100);
         }},
-        { label: 'Trigger管理', action: () => {
+        { label: '应用控制', action: () => {
           useUIStore.getState().setShowSettingsModal(true);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('settings:switch-tab', { detail: { tab: 'appcontrol' } }));
+          }, 100);
+        }},
+        { label: '', divider: true },
+        { label: '邮件设置', action: () => {
+          useUIStore.getState().setShowSettingsModal(true);
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('settings:switch-tab', { detail: { tab: 'email' } }));
+          }, 100);
         }},
       ],
     },

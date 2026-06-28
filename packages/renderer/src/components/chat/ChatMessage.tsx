@@ -45,9 +45,20 @@ export function ChatMessageView({ message }: { message: ChatMessage }) {
           {/* Attachment previews */}
           {message.attachments?.images && message.attachments.images.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">
-              {message.attachments.images.map((img, i) => (
-                <img key={i} src={img.dataUrl} alt={img.name} className="w-12 h-12 rounded object-cover border border-white/20" />
-              ))}
+              {message.attachments.images.map((att, i) => {
+                const isImage = (att.mediaType || '').startsWith('image/');
+                if (isImage) {
+                  return (
+                    <img key={i} src={att.dataUrl} alt={att.name} className="w-12 h-12 rounded object-cover border border-white/20" />
+                  );
+                }
+                return (
+                  <div key={i} className="flex items-center gap-1 bg-white/15 rounded px-2 py-1 text-[10px] font-mono max-w-[160px] truncate" title={att.name}>
+                    <FileIcon ext={att.name.split('.').pop() || ''} />
+                    <span className="truncate">{att.name}</span>
+                  </div>
+                );
+              })}
             </div>
           )}
           {message.attachments?.files && message.attachments.files.length > 0 && (
@@ -363,4 +374,18 @@ function TodoListFromResult({ content }: { content: string }) {
     );
   }
   return <TodoList items={items} />;
+}
+
+/** Helper: renders a file icon based on extension */
+const FILE_ICONS: Record<string, string> = {
+  pdf: '📄', txt: '📝', md: '📋', doc: '📃', docx: '📃',
+  xls: '📊', xlsx: '📊', ppt: '📽️', pptx: '📽️',
+  csv: '📊', json: '⚙️', xml: '⚙️', yml: '⚙️', yaml: '⚙️',
+  js: '💛', ts: '💙', tsx: '💙', jsx: '💜',
+  py: '🐍', rs: '🦀', go: '🔵', java: '☕', c: '⚙️', cpp: '⚙️',
+  zip: '📦', gz: '📦', tar: '📦',
+};
+
+function FileIcon({ ext }: { ext: string }) {
+  return <span className="shrink-0">{FILE_ICONS[ext.toLowerCase()] || '📎'}</span>;
 }

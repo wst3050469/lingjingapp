@@ -164,6 +164,20 @@ export function IntegrationsTab({ config, saveKey }: IntegrationsTabProps) {
     return () => clearInterval(interval);
   }, [frpEnabled]);
 
+  // Load GitHub saved token on mount (safety net for schema stripping)
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const saved = await window.electronAPI.integrations.githubGetSavedToken();
+        if (saved && saved.connected) {
+          setGhConnected(true);
+          setGhUsername(saved.username || '');
+        }
+      } catch { /* ignore - main flow uses config prop */ }
+    };
+    load();
+  }, []);
+
   // Load FRP config on mount
   useEffect(() => {
     const load = async () => {

@@ -100,6 +100,30 @@ async def check_update(version_code: int = 0, current_code: int = 0):
     }
 
 
+@router.get("/expo-version")
+async def expo_version():
+    """返回最新版本信息，供移动端Expo APP在OTA之外做版本参考"""
+    async with database.pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """SELECT id, version_name, version_code, release_notes, is_force_update
+               FROM app_versions
+               WHERE status='published'
+               ORDER BY version_code DESC LIMIT 1""",
+        )
+    if not row:
+        return {"has_update": False}
+    return {
+        "has_update": True,
+        "latest": {
+            "version_name": row["version_name"],
+            "version_code": row["version_code"],
+            "release_notes": row["release_notes"],
+            "is_force_update": row["is_force_update"],
+            "runtime_version": row["version_name"],
+        },
+    }
+
+
 @router.get("/download/{version_name}")
 async def download_version(version_name: str, request: Request = None):
     async with database.pool.acquire() as conn:

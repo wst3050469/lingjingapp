@@ -2,6 +2,7 @@
 // Quest IPC handler - independent pipeline for Quest Mode autonomous tasks
 
 import { ipcMain, Notification, type BrowserWindow } from 'electron';
+import { pushTaskStatusToCloud } from './cloud-ipc.js';
 
 import {
 
@@ -2368,6 +2369,8 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
       taskAgent.abortController.abort();
 
+      pushTaskStatusToCloud(taskId, 'stopped');
+
       // Clean up container if remote mode
 
       if (taskAgent.containerId) {
@@ -2443,6 +2446,7 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
 
     sendQuestEvent({ type: 'status_change', taskId, status: 'paused' });
+    pushTaskStatusToCloud(taskId, 'paused');
 
   });
 
@@ -2826,6 +2830,8 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
 
     taskAgents.set(taskId, { agent, abortController, runId });
 
+    pushTaskStatusToCloud(taskId, 'running');
+
 
 
     // Update status
@@ -3013,6 +3019,8 @@ export function registerQuestIpc(mainWindow: BrowserWindow, getWorkspace: () => 
       } catch { /* ignore */ }
 
       taskAgent.abortController.abort();
+
+      pushTaskStatusToCloud(taskId, 'stopped');
 
       if (taskAgent.worktreePath) {
 

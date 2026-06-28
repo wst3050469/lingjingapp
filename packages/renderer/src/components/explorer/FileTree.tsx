@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useFileStore } from '../../stores/file-store';
 import { useEditorStore } from '../../stores/editor-store';
 import { useRemoteContextStore } from '../../stores/remote-context-store';
+import { ContextMenu, type ContextMenuItem } from '../shared/ContextMenu';
+import { SendFileDialog } from '../email/SendFileDialog';
 import type { FileEntry } from '../../ipc/ipc-client';
 
 export function FileTree() {
@@ -110,18 +112,22 @@ function FileTreeItem({ entry, depth }: { entry: FileEntry; depth: number }) {
   const { expandedPaths, toggleExpanded, readDir, readFile } = useFileStore();
   const isExpanded = expandedPaths.has(entry.path);
 
+  // 右键菜单状态
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+  // 发送文件弹窗状态
+  const [sendDialog, setSendDialog] = useState<{ open: boolean; filePath: string; fileName: string }>({
+    open: false, filePath: '', fileName: '',
+  });
+
   const handleClick = async () => {
     if (entry.isDirectory) {
       toggleExpanded(entry.path);
-      // Lazy load children
       if (!isExpanded && (!entry.children || entry.children.length === 0)) {
         const children = await readDir(entry.path);
-        // Update tree (simplified - a production app would use a proper tree state)
         entry.children = children;
         useFileStore.getState().setFileTree([...useFileStore.getState().fileTree]);
       }
     } else {
-      // Open file in editor
       try {
         const { content, language } = await readFile(entry.path);
         useEditorStore.getState().openFile({
@@ -137,6 +143,25 @@ function FileTreeItem({ entry, depth }: { entry: FileEntry; depth: number }) {
     }
   };
 
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleSendEmail = () => {
+    setSendDialog({ open: true, filePath: entry.path, fileName: entry.name });
+  };
+
+  const menuItems: ContextMenuItem[] = [
+    { label: '通过邮件发送', icon: '📧', action: handleSendEmail },
+  ];
+
+  // 文件夹也可以右键打开（虽然没有实际意义，保持一致性）
+  if (!entry.isDirectory) {
+    // 只有文件才有邮件发送选项
+  }
+
   const icon = entry.isDirectory ? (isExpanded ? '\u25BE' : '\u25B8') : '\u00A0\u00A0';
 
   return (
@@ -145,6 +170,7 @@ function FileTreeItem({ entry, depth }: { entry: FileEntry; depth: number }) {
         className="flex items-center px-1 py-0.5 cursor-pointer hover:bg-white/5 select-none"
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
       >
         <span className="text-cp-text-dim text-xs w-4 flex-shrink-0">{icon}</span>
         <span className={`ml-1 truncate ${entry.isDirectory ? 'text-cp-text' : 'text-cp-text-dim'}`}>
@@ -154,6 +180,23 @@ function FileTreeItem({ entry, depth }: { entry: FileEntry; depth: number }) {
       {entry.isDirectory && isExpanded && entry.children?.map((child) => (
         <FileTreeItem key={child.path} entry={child} depth={depth + 1} />
       ))}
+
+      {/* 右键菜单 */}
+      <ContextMenu
+        open={ctxMenu !== null}
+        x={ctxMenu?.x ?? 0}
+        y={ctxMenu?.y ?? 0}
+        items={menuItems}
+        onClose={() => setCtxMenu(null)}
+      />
+
+      {/* 发送文件弹窗 */}
+      <SendFileDialog
+        open={sendDialog.open}
+        filePath={sendDialog.filePath}
+        fileName={sendDialog.fileName}
+        onClose={() => setSendDialog({ open: false, filePath: '', fileName: '' })}
+      />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import SkillMarketTab from './SkillMarketTab';
 
 /* --- Types --- */
 
@@ -165,6 +166,30 @@ export function SkillsTab({ config, saveKey }: SkillsTabProps) {
   const [newCmdLevel, setNewCmdLevel] = useState<'user' | 'project'>('user');
   const [newCmdContent, setNewCmdContent] = useState('');
 
+  // Market toggle
+  const [showMarket, setShowMarket] = useState(false);
+
+  // Leaderboard
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<Array<{ name: string; description: string; level: string; path: string; callCount: number; isGitHub: boolean }>>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+
+  const loadLeaderboard = async () => {
+    setLeaderboardLoading(true);
+    try {
+      const data = await window.electronAPI.skills.leaderboard();
+      setLeaderboardData(data || []);
+    } catch {
+      setLeaderboardData([]);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showLeaderboard) loadLeaderboard();
+  }, [showLeaderboard]);
+
   // Commands from config
   const commands: Command[] = useMemo(() => {
     const raw = config?.commands;
@@ -312,6 +337,84 @@ export function SkillsTab({ config, saveKey }: SkillsTabProps) {
       <p className="text-[11px] text-cp-text-dim/50 leading-relaxed">
         通过技能<span className="text-cp-text-dim/70">(默认包含 .lingjing/skills)</span>和自定义智能体扩展智能体能力边界，创建指令简化工作流程。
       </p>
+
+      {/* Skill Market Toggle */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => { setShowMarket(false); setShowLeaderboard(false); }}
+          className={"text-xs px-3 py-1.5 rounded-md transition-colors "+(!showMarket && !showLeaderboard ? "bg-cp-accent/20 text-cp-accent":"bg-white/[0.03] text-cp-text-dim/50 hover:text-cp-text")}>
+          本地技能
+        </button>
+        <button onClick={() => { setShowMarket(false); setShowLeaderboard(true); loadLeaderboard(); }}
+          className={"text-xs px-3 py-1.5 rounded-md transition-colors "+(showLeaderboard ? "bg-cp-accent/20 text-cp-accent":"bg-white/[0.03] text-cp-text-dim/50 hover:text-cp-text")}>
+          🏆 排行榜
+        </button>
+        <button onClick={() => { setShowMarket(true); setShowLeaderboard(false); }}
+          className={"text-xs px-3 py-1.5 rounded-md transition-colors "+(showMarket ? "bg-cp-accent/20 text-cp-accent":"bg-white/[0.03] text-cp-text-dim/50 hover:text-cp-text")}>
+          🛒 技能市场
+        </button>
+      </div>
+
+      {showLeaderboard ? (
+        <div className="bg-white/[0.02] border border-cp-border/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm text-cp-text font-medium">🏆 技能排行榜</h3>
+            <button onClick={loadLeaderboard} disabled={leaderboardLoading}
+              className="text-[10px] text-cp-text-dim hover:text-cp-text px-2 py-1 rounded hover:bg-white/5">
+              {leaderboardLoading ? '刷新中...' : '刷新'}
+            </button>
+          </div>
+          <p className="text-[11px] text-cp-text-dim/50">已安装技能按调用次数排行。GitHub 一键生成的技能会标注来源。</p>
+
+          {leaderboardLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="w-5 h-5 border-2 border-cp-accent/30 border-t-cp-accent rounded-full animate-spin" />
+            </div>
+          ) : leaderboardData.length === 0 ? (
+            <div className="flex flex-col items-center py-10 text-center">
+              <p className="text-xs text-cp-text-dim/40">暂无已安装技能</p>
+              <p className="text-[11px] text-cp-text-dim/25 mt-1">从技能市场安装或手动创建技能</p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              {leaderboardData.map((skill, idx) => (
+                <div key={skill.path} className="flex items-center gap-3 bg-white/[0.02] border border-cp-border/20 rounded-lg px-3 py-2.5">
+                  {/* Rank */}
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                    idx === 0 ? 'bg-amber-500/20 text-amber-400' :
+                    idx === 1 ? 'bg-slate-400/20 text-slate-300' :
+                    idx === 2 ? 'bg-orange-600/20 text-orange-400' :
+                    'bg-white/5 text-cp-text-dim/40'
+                  }`}>
+                    {idx + 1}
+                  </div>
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-cp-text truncate">{skill.name}</span>
+                      <LevelBadge level={skill.level} />
+                      {skill.isGitHub && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400/80 border border-purple-500/15 flex items-center gap-1">
+                          <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                          GitHub
+                        </span>
+                      )}
+                    </div>
+                    {skill.description && <p className="text-[11px] text-cp-text-dim/40 truncate mt-0.5">{skill.description}</p>}
+                  </div>
+                  {/* Call count */}
+                  <div className="text-right shrink-0">
+                    <span className="text-sm text-cp-accent font-mono font-medium">{skill.callCount}</span>
+                    <p className="text-[9px] text-cp-text-dim/30">次调用</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : showMarket ? (
+        <SkillMarketTab onRefresh={loadAll} />
+      ) : (
+        <>
 
       {/* Level filter */}
       <div className="flex items-center gap-1">
@@ -615,6 +718,8 @@ export function SkillsTab({ config, saveKey }: SkillsTabProps) {
           </div>
         </div>
       </div>
+      </>
+    )}
     </div>
   );
 }

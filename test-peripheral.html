@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>灵境外设控制 — 运行时验证面板</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
+h1 { font-size: 20px; margin-bottom: 4px; }
+h1 span { font-size: 12px; color: #8b949e; font-weight: normal; }
+h2 { font-size: 14px; color: #58a6ff; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #21262d; }
+.controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+button { padding: 6px 14px; border-radius: 6px; border: 1px solid #30363d; background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 13px; transition: all .15s; }
+button:hover { background: #30363d; border-color: #58a6ff; }
+button.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+button.primary:hover { background: #388bfd; }
+button.danger { background: #da3633; border-color: #da3633; color: #fff; }
+button:disabled { opacity: .4; cursor: not-allowed; }
+#results { margin-top: 12px; }
+.result { padding: 6px 10px; border-radius: 4px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; margin: 2px 0; }
+.result.pass { background: #04260f; color: #7ee787; border-left: 3px solid #238636; }
+.result.fail { background: #2a0a0a; color: #ffa198; border-left: 3px solid #da3633; }
+.result.info { background: #0d1117; color: #8b949e; }
+.result.warn { background: #1b1a00; color: #e3b341; border-left: 3px solid #d29922; }
+.status-bar { display: flex; gap: 16px; margin: 10px 0; font-size: 13px; }
+.badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.badge.ok { background: #23863633; color: #7ee787; }
+.badge.no { background: #da363333; color: #ffa198; }
+.badge.warn { background: #d2992233; color: #e3b341; }
+</style>
+</head>
+<body>
+
+<h1>🔬 灵境外设控制 <span>运行时验证面板 v1.73.166</span></h1>
+<div class="status-bar">
+  <span>Desktop Control: <span id="dc-status" class="badge no">⏳</span></span>
+  <span>Camera: <span id="cam-status" class="badge no">⏳</span></span>
+  <span>Microphone: <span id="mic-status" class="badge no">⏳</span></span>
+  <span>Pass: <span id="pass-count" class="badge ok">0</span></span>
+  <span>Fail: <span id="fail-count" class="badge no">0</span></span>
+</div>
+
+<h2>📋 权限状态</h2>
+<div class="controls">
+  <button onclick="checkAllPermissions()">检查所有权限</button>
+  <button onclick="toggleDesktopControl()" id="btn-dc">切换桌面控制</button>
+  <button onclick="toggleCamera()" id="btn-cam">切换摄像头</button>
+  <button onclick="toggleMic()" id="btn-mic">切换麦克风</button>
+</div>
+
+<h2>🐭 桌面控制 — 接口完整性</h2>
+<div class="controls">
+  <button onclick="testDesktopHandlers()" class="primary">测试所有桌面控制 Handler (16)</button>
+  <button onclick="testMousePosition()">鼠标位置</button>
+  <button onclick="testScreenSize()">屏幕尺寸</button>
+  <button onclick="testScreenCapture()">截屏(10x10)</button>
+</div>
+
+<h2>📷 摄像头 / 🎤 麦克风 — 权限API</h2>
+<div class="controls">
+  <button onclick="testCameraAPI()">摄像头 isEnabled/setEnabled/getStatus</button>
+  <button onclick="testMicAPI()">麦克风 isEnabled/setEnabled/getStatus</button>
+</div>
+
+<h2>🔍 反幻觉验证</h2>
+<div class="controls">
+  <button onclick="testNoFakeHandlers()">验证不存在 camera:capture-*</button>
+</div>
+
+<div id="results"></div>
+
+<h2>🔊 音频设备控制 — v1.73.165</h2>
+<div class="controls">
+  <button onclick="runAllAudioTests()">▶ 运行全部音频测试</button>
+  <button onclick="testAudioEnumerate()">📋 enumerateDevices</button>
+  <button onclick="testAudioActiveDevice()">🔍 getActiveDevice</button>
+  <button onclick="testAudioMicCheck()">🎤 checkMicAvailable</button>
+</div>
+<div class="result info" id="audio-enum-result">等待测试...</div>
+<div class="result info" id="audio-active-result">等待测试...</div>
+<div class="result info" id="audio-mic-result">等待测试...</div>
+
+<h2>🎙️ 麦克风录音 — v1.73.166</h2>
+<div class="controls">
+  <button onclick="testStartRecording()" id="btn-rec-start">⏺ 开始录音</button>
+  <button onclick="testStopRecording()" id="btn-rec-stop" disabled>⏹ 停止录音</button>
+  <button onclick="testPlayRecording()" id="btn-rec-play" disabled>▶ 播放录音</button>
+</div>
+<div class="result info" id="audio-rec-result">等待测试...</div>
+<audio id="audio-rec-player" controls style="display:none;width:100%;max-width:400px;margin-top:8px;"></audio>
+
+<script>
+const api = window.electronAPI;
+const results = document.getElementById('results');
+let passCount = 0, failCount = 0;
+
+function log(result, msg) {
+  const cls = result === 'PASS' ? 'pass' : result === 'FAIL' ? 'fail' : result === 'WARN' ? 'warn' : 'info';
+  if (result === 'PASS') passCount++; else if (result === 'FAIL') failCount++;
+  results.innerHTML += `<div class="result ${cls}">[${result}] ${msg}</div>`;
+  document.getElementById('pass-count').textContent = passCount;
+  document.getElementById('fail-count').textContent = failCount;
+  results.scrollTop = results.scrollHeight;
+}
+
+function updateBadge(id, ok) {
+  const el = document.getElementById(id);
+  el.className = ok ? 'badge ok' : 'badge no';
+  el.textContent = ok ? '已开启' : '已关闭';
+}
+
+async function checkAllPermissions() {
+  if (!api) { log('FAIL', 'electronAPI 不可用'); return; }
+  try {
+    const dc = await api.desktopControl.isEnabled();
+    log('INFO', 'desktopControl.isEnabled = ' + dc);
+    updateBadge('dc-status', dc);
+  } catch(e) { log('FAIL', 'desktopControl.isEnabled 异常: ' + e.message); }
+  try {
+    const cam = await api.permissions.camera.isEnabled();
+    log('INFO', 'camera.isEnabled = ' + cam);
+    updateBadge('cam-status', cam);
+  } catch(e) { log('FAIL', 'camera.isEnabled 异常: ' + e.message); }
+  try {
+    const mic = await api.permissions.microphone.isEnabled();
+    log('INFO', 'microphone.isEnabled = ' + mic);
+    updateBadge('mic-status', mic);
+  } catch(e) { log('FAIL', 'microphone.isEnabled 异常: ' + e.message); }
+}
+
+async function testDesktopHandlers() {
+  log('INFO', '===== 桌面控制 Handler 测试 =====');
+  if (!api) { log('FAIL', 'electronAPI 不可用'); return; }
+
+  // 检查权限状态
+  const enabled = await api.desktopControl.isEnabled();
+  log('INFO', 'desktopControlEnabled = ' + enabled);
+
+  const tests = [
+    ['mouse.getPosition', () => api.desktopControl.mouse.getPosition()],
+    ['mouse.move(100,100)', () => api.desktopControl.mouse.move(100, 100)],
+    ['mouse.moveSmooth(200,200)', () => api.desktopControl.mouse.moveSmooth(200, 200)],
+    ['mouse.click("left")', () => api.desktopControl.mouse.click('left')],
+    ['mouse.scroll(0,-1)', () => api.desktopControl.mouse.scroll(0, -1)],
+    ['mouse.drag(300,300)', () => api.desktopControl.mouse.drag(300, 300)],
+    ['keyboard.tap("escape")', () => api.desktopControl.keyboard.tap('escape')],
+    ['keyboard.type("test")', () => api.desktopControl.keyboard.type('test')],
+    ['screen.getSize', () => api.desktopControl.screen.getSize()],
+    ['screen.capture(0,0,10,10)', () => api.desktopControl.screen.capture(0, 0, 10, 10)],
+    ['screen.pixelColor(0,0)', () => api.desktopControl.screen.pixelColor(0, 0)],
+  ];
+
+  for (const [name, fn] of tests) {
+    try {
+      const r = await fn();
+      if (!enabled && r && r.success === false && r.error) {
+        log('PASS', name + ' → 权限拒绝: ' + r.error.substring(0, 60));
+      } else if (enabled && r && r.success === true) {
+        log('PASS', name + ' → OK');
+      } else if (enabled && r && r.success === false) {
+        log('FAIL', name + ' → ' + (r.error || 'unknown error'));
+      } else {
+        log('WARN', name + ' → ' + JSON.stringify(r).substring(0, 80));
+      }
+    } catch(e) {
+      log('FAIL', name + ' → 异常: ' + e.message);
+    }
+  }
+}
+
+async function testMousePosition() {
+  try {
+    const r = await api.desktopControl.mouse.getPosition();
+    log('INFO', 'mousePosition: ' + JSON.stringify(r));
+  } catch(e) { log('FAIL', e.message); }
+}
+
+async function testScreenSize() {
+  try {
+    const r = await api.desktopControl.screen.getSize();
+    log('INFO', 'screenSize: ' + JSON.stringify(r));
+  } catch(e) { log('FAIL', e.message); }
+}
+
+async function testScreenCapture() {
+  try {
+    const r = await api.desktopControl.screen.capture(0, 0, 10, 10);
+    log('INFO', 'screenCapture: success=' + r.success + ', data size=' + (r.data?.base64?.length || 0));
+  } catch(e) { log('FAIL', e.message); }
+}
+
+async function toggleDesktopControl() {
+  const cur = await api.desktopControl.isEnabled();
+  if (!cur) {
+    const hasPwd = await api.desktopControl.hasPassword();
+    if (!hasPwd) {
+      log('WARN', '需要先设置密码。调用 setPassword("test123456")...');
+      await api.desktopControl.setPassword('test123456');
+    }
+    await api.desktopControl.setEnabled(true);
+  } else {
+    await api.desktopControl.setEnabled(false);
+  }
+  checkAllPermissions();
+}
+
+async function toggleCamera() {
+  const cur = await api.permissions.camera.isEnabled();
+  await api.permissions.camera.setEnabled(!cur);
+  checkAllPermissions();
+}
+
+async function toggleMic() {
+  const cur = await api.permissions.microphone.isEnabled();
+  await api.permissions.microphone.setEnabled(!cur);
+  checkAllPermissions();
+}
+
+async function testCameraAPI() {
+  log('INFO', '===== 摄像头权限API测试 =====');
+  try {
+    const isEnabled = await api.permissions.camera.isEnabled();
+    log('PASS', 'isEnabled = ' + isEnabled);
+    
+    await api.permissions.camera.setEnabled(true);
+    const afterSet = await api.permissions.camera.isEnabled();
+    log(afterSet === true ? 'PASS' : 'FAIL', 'setEnabled(true) → isEnabled = ' + afterSet);
+    
+    await api.permissions.camera.setEnabled(false);
+    const afterUnset = await api.permissions.camera.isEnabled();
+    log(afterUnset === false ? 'PASS' : 'FAIL', 'setEnabled(false) → isEnabled = ' + afterUnset);
+    
+    // Restore
+    await api.permissions.camera.setEnabled(isEnabled);
+    
+    const status = await api.permissions.camera.getStatus();
+    log('PASS', 'getStatus = ' + JSON.stringify(status));
+  } catch(e) { log('FAIL', '异常: ' + e.message); }
+}
+
+async function testMicAPI() {
+  log('INFO', '===== 麦克风权限API测试 =====');
+  try {
+    const isEnabled = await api.permissions.microphone.isEnabled();
+    log('PASS', 'isEnabled = ' + isEnabled);
+    
+    await api.permissions.microphone.setEnabled(true);
+    log('PASS', 'setEnabled(true) → isEnabled = ' + (await api.permissions.microphone.isEnabled()));
+    
+    await api.permissions.microphone.setEnabled(false);
+    log('PASS', 'setEnabled(false) → isEnabled = ' + (await api.permissions.microphone.isEnabled()));
+    
+    await api.permissions.microphone.setEnabled(isEnabled);
+    
+    const status = await api.permissions.microphone.getStatus();
+    log('PASS', 'getStatus = ' + JSON.stringify(status));
+  } catch(e) { log('FAIL', '异常: ' + e.message); }
+}
+
+async function testNoFakeHandlers() {
+  log('INFO', '===== 反幻觉：验证 camera:capture-* 不存在 =====');
+  const fake = ['camera:capture-photo', 'camera:start-stream', 'camera:stop-stream', 'camera:capture-frame'];
+  for (const ch of fake) {
+    try {
+      const r = await api.invoke(ch);
+      log('PASS', ch + ' → 调用失败（正确：该 handler 不应存在）: ' + (r?.error || r));
+    } catch(e) {
+      log('PASS', ch + ' → 异常（正确：该 handler 不应存在）: ' + e.message.substring(0, 60));
+    }
+  }
+}
+
+// 自动加载状态
+window.addEventListener('DOMContentLoaded', () => {
+  if (!api) {
+    log('FAIL', '❌ electronAPI 不可用 — 请在灵境 Electron 应用中打开此页面');
+    document.getElementById('dc-status').textContent = 'N/A';
+    return;
+  }
+  log('INFO', '✅ electronAPI 可用 — 开始检查权限...');
+  checkAllPermissions();
+});
+
+// ========== 音频设备测试 ==========
+async function testAudioEnumerate() {
+  const el = document.getElementById('audio-enum-result');
+  try {
+    const r = await window.electronAPI.audio.enumerateDevices();
+    if (r.success) {
+      const inputDevs = r.data.filter(function(d) { return d.type === 'input'; });
+      const outputDevs = r.data.filter(function(d) { return d.type === 'output'; });
+      el.innerHTML = '✅ 成功: ' + r.data.length + ' 个设备' +
+        '<br>🎤 输入设备: ' + inputDevs.length +
+        '<br>🔊 输出设备: ' + outputDevs.length +
+        '<br><small>' + r.data.map(function(d) { return d.name + ' [' + d.type + ']'; }).join('<br>') + '</small>';
+    } else {
+      el.innerHTML = '❌ 失败';
+    }
+  } catch(e) { el.innerHTML = '❌ 错误: ' + e.message; }
+}
+
+async function testAudioActiveDevice() {
+  const el = document.getElementById('audio-active-result');
+  try {
+    const r = await window.electronAPI.audio.getActiveDevice();
+    if (r.success) {
+      el.innerHTML = '✅ 当前活跃设备' +
+        (r.data.output ? '<br>🔊 输出: ' + r.data.output.name : '<br>🔊 输出: 无') +
+        (r.data.input ? '<br>🎤 输入: ' + r.data.input.name : '<br>🎤 输入: 无');
+    } else {
+      el.innerHTML = '❌ 失败';
+    }
+  } catch(e) { el.innerHTML = '❌ 错误: ' + e.message; }
+}
+
+async function testAudioMicCheck() {
+  const el = document.getElementById('audio-mic-result');
+  try {
+    const r = await window.electronAPI.audio.checkMicAvailable();
+    if (r.success) {
+      el.innerHTML = r.available ? '✅ 麦克风可用' : '⚠️ 麦克风不可用';
+    } else {
+      el.innerHTML = '❌ 失败';
+    }
+  } catch(e) { el.innerHTML = '❌ 错误: ' + e.message; }
+}
+
+function runAllAudioTests() {
+  document.getElementById('audio-enum-result').innerHTML = '⏳ 测试中...';
+  document.getElementById('audio-active-result').innerHTML = '⏳ 测试中...';
+  document.getElementById('audio-mic-result').innerHTML = '⏳ 测试中...';
+  testAudioEnumerate();
+  testAudioActiveDevice();
+  testAudioMicCheck();
+}
+
+// ========== 麦克风录音测试 v1.73.166 ==========
+async function testStartRecording() {
+  const el = document.getElementById('audio-rec-result');
+  try {
+    el.innerHTML = '⏳ 正在请求麦克风权限...';
+    const r = await window.electronAPI.permissions.microphone.startRecording();
+    if (r.success) {
+      el.innerHTML = '⏺ <b>录音中...</b> (最长60秒，点击「停止录音」结束)';
+      document.getElementById('btn-rec-start').disabled = true;
+      document.getElementById('btn-rec-stop').disabled = false;
+    } else {
+      el.innerHTML = '❌ 启动失败: ' + (r.error || '未知错误');
+    }
+  } catch(e) { el.innerHTML = '❌ 错误: ' + e.message; }
+}
+
+async function testStopRecording() {
+  const el = document.getElementById('audio-rec-result');
+  try {
+    el.innerHTML = '⏳ 正在停止录音...';
+    const r = await window.electronAPI.permissions.microphone.stopRecording();
+    document.getElementById('btn-rec-start').disabled = false;
+    document.getElementById('btn-rec-stop').disabled = true;
+    if (r.success) {
+      const sizeKB = r.data ? (r.data.length * 0.75 / 1024).toFixed(1) : 0;
+      el.innerHTML = '✅ 录音完成! 时长: ' + (r.duration || '?') + ' 秒, 大小: ' + sizeKB + ' KB (base64 WebM)';
+      // 缓存录音数据用于播放
+      window.__lastRecording = r.data;
+      document.getElementById('btn-rec-play').disabled = false;
+      document.getElementById('audio-rec-player').style.display = 'block';
+      document.getElementById('audio-rec-player').src = 'data:audio/webm;base64,' + r.data;
+    } else {
+      el.innerHTML = '❌ 停止失败: ' + (r.error || '未知错误');
+    }
+  } catch(e) { el.innerHTML = '❌ 错误: ' + e.message; }
+}
+
+function testPlayRecording() {
+  const player = document.getElementById('audio-rec-player');
+  if (player.src) {
+    player.play().catch(function(e) {
+      document.getElementById('audio-rec-result').innerHTML = '❌ 播放失败: ' + e.message;
+    });
+  }
+}
+</script>
+</body>
+</html>

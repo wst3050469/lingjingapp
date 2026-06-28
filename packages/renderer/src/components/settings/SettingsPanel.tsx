@@ -18,10 +18,12 @@ import { NetworkTab } from './tabs/NetworkTab';
 import { WikiTab } from './tabs/WikiTab';
 import { CloudSyncTab } from './tabs/CloudSyncTab';
 import { SubscriptionTab } from './tabs/SubscriptionTab';
+import { EmailTab } from './tabs/EmailTab';
+import { AppControlTab } from './tabs/AppControlTab';
 
 import { ConnectorPanel } from '../workflow/ConnectorPanel';
 import { BatchTaskPanel } from '../workflow/BatchTaskPanel';
-type TabId = 'general' | 'model' | 'next' | 'session' | 'quest' | 'mcp' | 'rules' | 'memory' | 'skills' | 'agents' | 'codebase' | 'integrations' | 'network' | 'wiki' | 'cloud' | 'subscription' | 'workflow' | 'advanced';
+type TabId = 'general' | 'model' | 'next' | 'session' | 'quest' | 'mcp' | 'rules' | 'memory' | 'skills' | 'agents' | 'codebase' | 'integrations' | 'network' | 'wiki' | 'cloud' | 'subscription' | 'workflow' | 'advanced' | 'email' | 'appcontrol';
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: 'general', label: '\u901A\u7528' },
@@ -42,6 +44,8 @@ const TABS: Array<{ id: TabId; label: string }> = [
   { id: 'subscription', label: '订阅' },
   { id: 'workflow', label: '工作流' },
   { id: 'advanced', label: '高级' },
+  { id: 'email', label: '邮件' },
+  { id: 'appcontrol', label: '应用控制' },
 ];
 
 function PlaceholderTab({ label }: { label: string }) {
@@ -69,6 +73,16 @@ export function SettingsPanel() {
   useEffect(() => {
     loadAll();
     window.electronAPI.app.getVersion().then(setVersion);
+
+    // 监听来自 TopBar 等组件的 Tab 切换事件
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail?.tab;
+      if (tab && TABS.some((t) => t.id === tab)) {
+        setActiveTab(tab as TabId);
+      }
+    };
+    window.addEventListener('settings:switch-tab', handler);
+    return () => window.removeEventListener('settings:switch-tab', handler);
   }, []);
 
   const loadAll = () => {
@@ -198,6 +212,10 @@ export function SettingsPanel() {
             </div>
           </div>
         );
+      case 'email':
+        return <EmailTab />;
+      case 'appcontrol':
+        return <AppControlTab />;
       case 'advanced':
         return (
           <AdvancedTab

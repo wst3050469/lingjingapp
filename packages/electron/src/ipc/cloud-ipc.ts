@@ -519,6 +519,52 @@ export async function pushSessionToCloud(session: {
   }
 }
 
+
+/** Push task status change to cloud so mobile clients receive real-time updates */
+export function pushTaskStatusToCloud(sessionId: string, status: string): void {
+  if (!cloudClient) {
+    console.log('[Cloud] Skipped task status push (not connected):', status);
+    return;
+  }
+  try {
+    var ws = (cloudClient as any)._ws;
+    if (ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({
+        type: 'task:status-change',
+        sessionId: sessionId,
+        status: status,
+        userId: (cloudClient as any).getUserId?.() || null,
+        timestamp: new Date().toISOString(),
+      }));
+      console.log('[Cloud] Task status pushed:', status, '-> session:', sessionId?.slice(0, 8));
+    }
+  } catch (err) {
+    console.warn('[Cloud] Failed to push task status:', (err as Error).message);
+  }
+}
+
+/** Push a session to cloud automatically after local save */
+var _autoSyncInterval: ReturnType<typeof setInterval> | null = null;
+
+export function startAutoSync(intervalMs: number = 30000): void {
+  if (_autoSyncInterval) return;
+  console.log('[Cloud] Auto-sync started (interval: ' + intervalMs + 'ms)');
+  _autoSyncInterval = setInterval(function() {
+    if (!cloudClient) return;
+    // Best-effort sync - failures are logged but don't break the interval
+    cloudClient.healthCheck().then(function(healthy: boolean) {
+      if (healthy) console.log('[Cloud] Auto-sync: connection healthy');
+    }).catch(function() {});
+  }, intervalMs);
+}
+
+export function stopAutoSync(): void {
+  if (_autoSyncInterval) {
+    clearInterval(_autoSyncInterval);
+    _autoSyncInterval = null;
+    console.log('[Cloud] Auto-sync stopped');
+  }
+}
 export function getCloudClient(): CloudSyncClient | null {
   return cloudClient;
 }

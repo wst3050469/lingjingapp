@@ -1,35 +1,42 @@
 {
   "expo": {
-    "name": "灵境",
+    "name": "灵境IDE",
     "slug": "lingjing-mobile",
-    "version": "1.55.0",
+    "version": "1.73.183",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "lingjing",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#1e1e1e"
+      "backgroundColor": "#0d1117"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lingjing.codepilot"
+      "bundleIdentifier": "com.zhejiangjinmo.lingjing.mobile"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1e1e1e"
+        "backgroundColor": "#0d1117"
       },
-      "package": "com.lingjing.codepilot"
+      "package": "com.zhejiangjinmo.lingjing.mobile",
+      "permissions": [
+        "RECORD_AUDIO",
+        "INTERNET"
+      ],
+      "versionCode": 183
     },
     "plugins": [
-      "expo-notifications"
+      [
+        "expo-av",
+        {
+          "microphonePermission": "允许灵境使用麦克风进行语音输入"
+        }
+      ]
     ],
     "extra": {
-      "cloudUrl": "https://ide.zhejiangjinmo.com",
-      "apiKey": ""
-    }
+      "eas": {
+        "projectId": "2c8f346b-10e0-4b26-b893-124eb212602f"
+      }
+    },
+    "owner": "wst3050469"
   }
 }

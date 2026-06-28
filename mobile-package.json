@@ -1,0 +1,51 @@
+{
+  "name": "lingjing-ide",
+  "version": "1.73.139",
+  "description": "灵境IDE - AI 驱动的智能开发平台",
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "build": "expo export --platform web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-navigation/native": "^7.2.4",
+    "@react-navigation/native-stack": "^7.15.1",
+    "babel-preset-expo": "~55.0.22",
+    "expo": "~55.0.26",
+    "expo-asset": "~55.0.17",
+    "expo-clipboard": "~55.0.13",
+    "expo-crypto": "~55.0.15",
+    "expo-font": "~55.0.8",
+    "expo-intent-launcher": "^56.0.4",
+    "expo-notifications": "~55.0.23",
+    "expo-status-bar": "~55.0.6",
+    "expo-system-ui": "~55.0.18",
+    "expo-updates": "~55.0.24",
+    "react": "19.2.6",
+    "react-native": "0.83.6",
+    "react-native-gesture-handler": "~2.31.2",
+    "react-native-markdown-display": "^7.0.2",
+    "react-native-reanimated": "4.2.1",
+    "react-native-safe-area-context": "~5.8.0",
+    "react-native-screens": "~4.25.2",
+    "react-native-web": "^0.21.2",
+    "react-native-webview": "13.16.1",
+    "react-native-worklets": "0.7.4",
+    "ssh2": "^1.17.0",
+    "zustand": "^5.0.13"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "^20.1.3",
+    "@react-native-community/cli-platform-android": "^20.1.3",
+    "@types/react": "~19.2.15",
+    "@types/uuid": "^10.0.0",
+    "eas-cli": "^20.1.0",
+    "typescript": "~5.9.3"
+  },
+  "private": true
+}

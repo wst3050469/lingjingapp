@@ -133,6 +133,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on('update:error', handler);
       return () => ipcRenderer.removeListener('update:error', handler);
     },
+    exportSkills: (targetDir: string) =>
+      ipcRenderer.invoke('update:export-skills', { targetDir }),
   },
 
   window: {
@@ -240,6 +242,34 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('skills:read', { path }),
     readAgent: (path: string) =>
       ipcRenderer.invoke('skills:read-agent', { path }),
+    leaderboard: () =>
+      ipcRenderer.invoke('skills:leaderboard'),
+    incrementUsage: (skillName: string) =>
+      ipcRenderer.invoke('skills:increment-usage', { skillName }),
+    exportBuiltin: (targetDir: string) =>
+      ipcRenderer.invoke('skills:export-builtin', { targetDir }),
+  },
+
+  skillMarket: {
+    getLeaderboard: (opts: { page?: number; limit?: number }) =>
+      ipcRenderer.invoke('skill-market:get-leaderboard', opts),
+    search: (opts: { query?: string; page?: number; limit?: number }) =>
+      ipcRenderer.invoke('skill-market:search', opts),
+    getInstalledSkillIds: () =>
+      ipcRenderer.invoke('skill-market:get-installed-ids'),
+    install: (opts: { skillId: string; skill: any }) =>
+      ipcRenderer.invoke('skill-market:install', opts),
+    installFromGithub: (opts: { url: string }) =>
+      ipcRenderer.invoke('skill-market:install-from-github', opts),
+    checkUpdates: () =>
+      ipcRenderer.invoke('skill-market:check-updates'),
+    update: (opts: { skillPath: string }) =>
+      ipcRenderer.invoke('skill-market:update', opts),
+    onGithubImportProgress: (callback: (data: { step: string; detail?: string; timestamp: number }) => void) => {
+      const handler = (_event: any, data: any) => callback(data);
+      ipcRenderer.on('skill-market:github-import-progress', handler);
+      return () => ipcRenderer.removeListener('skill-market:github-import-progress', handler);
+    },
   },
 
   indexing: {
@@ -868,6 +898,369 @@ contextBridge.exposeInMainWorld('electronAPI', {
     cancel: (token: string) => ipcRenderer.invoke('subscription:cancel', { token }),
     payments: (token: string) => ipcRenderer.invoke('subscription:payments', { token }),
     offlinePayment: (params: { token: string; amount: number; companyName: string; bankName?: string; bankAccount?: string; remark?: string; receiptUrl?: string }) => ipcRenderer.invoke('subscription:offline-payment', params),
+  },
+
+
+
+  // 应用控制 API
+  appControl: {
+    getInstalledApps: () => ipcRenderer.invoke('app-control:get-installed-apps'),
+    getWindows: () => ipcRenderer.invoke('app-control:get-windows'),
+    launchApp: (appName: string, args?: string[]) => ipcRenderer.invoke('app-control:launch-app', appName, args),
+    closeApp: (appName: string) => ipcRenderer.invoke('app-control:close-app', appName),
+    focusWindow: (title: string) => ipcRenderer.invoke('app-control:focus-window', title),
+  },
+
+  // 邮件服务 API
+  emailService: {
+    initSmtp: (config: any) => ipcRenderer.invoke('email:init-smtp', config),
+    getConfig: () => ipcRenderer.invoke('email:get-config'),
+    validateConfig: (config: any) => ipcRenderer.invoke('email:validate-config', config),
+    getPresetList: () => ipcRenderer.invoke('email:get-presets'),
+    sendMail: (mailConfig: any) => ipcRenderer.invoke('email:send', mailConfig),
+    sendWithPreset: (presetKey: string, replacements: Record<string, string>, mailConfig: any) =>
+      ipcRenderer.invoke('email:send-with-preset', presetKey, replacements, mailConfig),
+  },
+
+  // 桌面操控权限 API
+  desktopControl: {
+    hasPassword: () => ipcRenderer.invoke('desktop-control:has-password'),
+    setPassword: (password: string) => ipcRenderer.invoke('desktop-control:set-password', { password }),
+    verifyPassword: (password: string) => ipcRenderer.invoke('desktop-control:verify-password', { password }),
+    isEnabled: () => ipcRenderer.invoke('desktop-control:is-enabled'),
+    setEnabled: (enabled: boolean) => ipcRenderer.invoke('desktop-control:set-enabled', { enabled }),
+    // 鼠标操作
+    mouse: {
+      getPosition: () => ipcRenderer.invoke('desktop-control:mouse-position'),
+      move: (x: number, y: number) => ipcRenderer.invoke('desktop-control:mouse-move', { x, y }),
+      moveSmooth: (x: number, y: number, speed?: number) => ipcRenderer.invoke('desktop-control:mouse-move-smooth', { x, y, speed }),
+      click: (button?: string, double?: boolean) => ipcRenderer.invoke('desktop-control:mouse-click', { button, double }),
+      toggle: (down?: string, button?: string) => ipcRenderer.invoke('desktop-control:mouse-toggle', { down, button }),
+      drag: (x: number, y: number) => ipcRenderer.invoke('desktop-control:mouse-drag', { x, y }),
+      scroll: (x: number, y: number) => ipcRenderer.invoke('desktop-control:mouse-scroll', { x, y }),
+    },
+    // 键盘操作
+    keyboard: {
+      type: (text: string) => ipcRenderer.invoke('desktop-control:keyboard-type', { text }),
+      typeDelayed: (text: string, cpm: number) => ipcRenderer.invoke('desktop-control:keyboard-type-delayed', { text, cpm }),
+      tap: (key: string, modifiers?: string | string[]) => ipcRenderer.invoke('desktop-control:keyboard-tap', { key, modifiers }),
+      toggle: (key: string, down: string, modifiers?: string | string[]) => ipcRenderer.invoke('desktop-control:keyboard-toggle', { key, down, modifiers }),
+    },
+    // 屏幕操作
+    screen: {
+      getSize: () => ipcRenderer.invoke('desktop-control:screen-size'),
+      capture: (x?: number, y?: number, width?: number, height?: number, format?: 'png' | 'bmp') =>
+        ipcRenderer.invoke('desktop-control:screen-capture', { x, y, width, height, format }),
+      pixelColor: (x: number, y: number) => ipcRenderer.invoke('desktop-control:pixel-color', { x, y }),
+    },
+    // 延迟设置
+    setMouseDelay: (delay: number) => ipcRenderer.invoke('desktop-control:set-mouse-delay', { delay }),
+    setKeyboardDelay: (delay: number) => ipcRenderer.invoke('desktop-control:set-keyboard-delay', { delay }),
+  },
+
+  // 系统控制 API（硬件监控 + 音量/亮度）
+  systemControl: {
+    monitor: {
+      info: () => ipcRenderer.invoke('system:info'),
+      cpuLoad: () => ipcRenderer.invoke('system:cpu-load'),
+      memory: () => ipcRenderer.invoke('system:memory'),
+      battery: () => ipcRenderer.invoke('system:battery'),
+      temperature: () => ipcRenderer.invoke('system:temperature'),
+      disks: () => ipcRenderer.invoke('system:disks'),
+      processes: () => ipcRenderer.invoke('system:processes'),
+    },
+    volume: {
+      get: () => ipcRenderer.invoke('system:volume-get'),
+      set: (volume: number) => ipcRenderer.invoke('system:volume-set', { volume }),
+      mute: () => ipcRenderer.invoke('system:volume-mute'),
+    },
+    brightness: {
+      get: () => ipcRenderer.invoke('system:brightness-get'),
+      set: (brightness: number) => ipcRenderer.invoke('system:brightness-set', { brightness }),
+    },
+  },
+
+  // 设备权限管理 API（摄像头 / 麦克风）
+  permissions: {
+    camera: {
+      isEnabled: () => ipcRenderer.invoke('permission:camera:is-enabled'),
+      setEnabled: (enabled: boolean) => ipcRenderer.invoke('permission:camera:set-enabled', { enabled }),
+      getStatus: () => ipcRenderer.invoke('permission:camera:get-status'),
+
+      // 拍照：使用浏览器 getUserMedia + canvas 截图，返回 base64 JPEG
+      capturePhoto: async (): Promise<{ success: boolean; data?: string; error?: string }> => {
+        try {
+          // 1. 检查摄像头权限
+          const isEnabled = await ipcRenderer.invoke('permission:camera:is-enabled');
+          if (!isEnabled) {
+            return { success: false, error: '摄像头权限未开启，请在 设置→高级→摄像头权限 中开启' };
+          }
+
+          // 2. 获取摄像头流
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          });
+
+          // 3. 用 video 元素播放一帧
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          video.setAttribute('playsinline', '');
+          video.setAttribute('autoplay', '');
+
+          await new Promise<void>((resolve, reject) => {
+            video.onloadedmetadata = () => {
+              video.play().then(resolve).catch(reject);
+            };
+            video.onerror = () => reject(new Error('视频流加载失败'));
+            // 超时 5 秒
+            setTimeout(() => reject(new Error('摄像头启动超时')), 5000);
+          });
+
+          // 等待足够帧以确保画面稳定
+          await new Promise(r => setTimeout(r, 500));
+
+          // 4. 绘制到 canvas 并导出 base64
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth || 640;
+          canvas.height = video.videoHeight || 480;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            stream.getTracks().forEach(t => t.stop());
+            return { success: false, error: '无法创建 canvas 上下文' };
+          }
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+          // 5. 清理
+          stream.getTracks().forEach(t => t.stop());
+          video.remove();
+          canvas.remove();
+
+          return { success: true, data: base64 };
+        } catch (err: any) {
+          const msg = err?.message || String(err);
+          if (msg.includes('NotAllowed') || msg.includes('Permission')) {
+            return { success: false, error: '摄像头访问被拒绝，请检查系统权限设置' };
+          }
+          if (msg.includes('NotFound') || msg.includes('Devices')) {
+            return { success: false, error: '未检测到摄像头设备' };
+          }
+          return { success: false, error: msg || '拍照失败' };
+        }
+      },
+
+      // 录像：使用浏览器 MediaRecorder API，返回 base64 WebM，最长60秒
+      startRecording: async (): Promise<{ success: boolean; error?: string }> => {
+        try {
+          const isEnabled = await ipcRenderer.invoke('permission:camera:is-enabled');
+          if (!isEnabled) return { success: false, error: '摄像头权限未开启，请在 设置→高级→摄像头权限 中开启' };
+
+          // 清理上一次录像
+          if ((window as any).__camStream) {
+            (window as any).__camStream.getTracks().forEach((t: any) => t.stop());
+          }
+          if ((window as any).__camRecorder && (window as any).__camRecorder.state !== 'inactive') {
+            (window as any).__camRecorder.stop();
+          }
+          if ((window as any).__camTimeout) {
+            clearTimeout((window as any).__camTimeout);
+            (window as any).__camTimeout = null;
+          }
+          (window as any).__camChunks = [];
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+          });
+          (window as any).__camStream = stream;
+
+          const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus' });
+          (window as any).__camRecorder = recorder;
+
+          return new Promise((resolve) => {
+            recorder.ondataavailable = (e: BlobEvent) => {
+              if (e.data.size > 0) (window as any).__camChunks.push(e.data);
+            };
+            recorder.onerror = () => {
+              clearTimeout((window as any).__camTimeout);
+              stream.getTracks().forEach((t) => t.stop());
+              resolve({ success: false, error: '录像启动失败' });
+            };
+            recorder.onstart = () => {
+              // 60秒超时自动停止
+              (window as any).__camTimeout = setTimeout(() => {
+                if ((window as any).__camRecorder && (window as any).__camRecorder.state === 'recording') {
+                  (window as any).__camRecorder.stop();
+                }
+              }, 60000);
+              resolve({ success: true });
+            };
+            recorder.start(1000); // 每秒收集一个 chunk
+          });
+        } catch (err: any) {
+          if (err.name === 'NotAllowedError') return { success: false, error: '摄像头访问被拒绝，请检查系统权限设置' };
+          if (err.name === 'NotFoundError') return { success: false, error: '未检测到摄像头设备' };
+          return { success: false, error: err.message || '录像启动失败' };
+        }
+      },
+
+      // 停止录像并返回 base64
+      stopRecording: async (): Promise<{ success: boolean; data?: string; duration?: number; error?: string }> => {
+        try {
+          const recorder = (window as any).__camRecorder;
+          const stream = (window as any).__camStream;
+          if (!recorder) return { success: false, error: '没有正在进行的录像' };
+
+          if ((window as any).__camTimeout) {
+            clearTimeout((window as any).__camTimeout);
+            (window as any).__camTimeout = null;
+          }
+
+          return new Promise((resolve) => {
+            recorder.onstop = async () => {
+              stream.getTracks().forEach((t: any) => t.stop());
+              (window as any).__camStream = null;
+              (window as any).__camRecorder = null;
+
+              const chunks = (window as any).__camChunks || [];
+              if (chunks.length === 0) {
+                resolve({ success: false, error: '录像数据为空' });
+                return;
+              }
+              const blob = new Blob(chunks, { type: 'video/webm' });
+              (window as any).__camChunks = [];
+
+              const duration = chunks.length;
+              const base64 = await new Promise<string>((r) => {
+                const reader = new FileReader();
+                reader.onloadend = () => r((reader.result as string).split(',')[1]);
+                reader.readAsDataURL(blob);
+              });
+              resolve({ success: true, data: base64, duration });
+            };
+            recorder.stop();
+          });
+        } catch (err: any) {
+          return { success: false, error: err.message || '停止录像失败' };
+        }
+      },
+    },
+    microphone: {
+      isEnabled: () => ipcRenderer.invoke('permission:microphone:is-enabled'),
+      setEnabled: (enabled: boolean) => ipcRenderer.invoke('permission:microphone:set-enabled', { enabled }),
+      getStatus: () => ipcRenderer.invoke('permission:microphone:get-status'),
+
+      // 录音：使用浏览器 MediaRecorder API，返回 base64 WAV/WebM，最长60秒
+      startRecording: async (): Promise<{ success: boolean; error?: string }> => {
+        try {
+          const isEnabled = await ipcRenderer.invoke('permission:microphone:is-enabled');
+          if (!isEnabled) return { success: false, error: '麦克风权限未开启，请在 设置→高级→麦克风权限 中开启' };
+
+          // 清理上一次录音
+          if ((window as any).__micStream) {
+            (window as any).__micStream.getTracks().forEach((t: any) => t.stop());
+          }
+          if ((window as any).__micRecorder && (window as any).__micRecorder.state !== 'inactive') {
+            (window as any).__micRecorder.stop();
+          }
+          if ((window as any).__micTimeout) {
+            clearTimeout((window as any).__micTimeout);
+            (window as any).__micTimeout = null;
+          }
+          (window as any).__micChunks = [];
+
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          (window as any).__micStream = stream;
+
+          const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+          (window as any).__micRecorder = recorder;
+
+          return new Promise((resolve) => {
+            recorder.ondataavailable = (e: BlobEvent) => {
+              if (e.data.size > 0) (window as any).__micChunks.push(e.data);
+            };
+            recorder.onerror = () => {
+              clearTimeout((window as any).__micTimeout);
+              stream.getTracks().forEach((t) => t.stop());
+              resolve({ success: false, error: '录音启动失败' });
+            };
+            recorder.onstart = () => {
+              // 60秒超时自动停止录音
+              (window as any).__micTimeout = setTimeout(() => {
+                if ((window as any).__micRecorder && (window as any).__micRecorder.state === 'recording') {
+                  (window as any).__micRecorder.stop();
+                }
+              }, 60000);
+              resolve({ success: true });
+            };
+            recorder.start(1000); // 每秒收集一个 chunk
+          });
+        } catch (err: any) {
+          if (err.name === 'NotAllowedError') return { success: false, error: '麦克风访问被拒绝，请检查系统权限设置' };
+          if (err.name === 'NotFoundError') return { success: false, error: '未检测到麦克风设备' };
+          return { success: false, error: err.message || '录音启动失败' };
+        }
+      },
+
+      // 停止录音并返回 base64
+      stopRecording: async (): Promise<{ success: boolean; data?: string; duration?: number; error?: string }> => {
+        try {
+          const recorder = (window as any).__micRecorder;
+          const stream = (window as any).__micStream;
+          if (!recorder) return { success: false, error: '没有正在进行的录音' };
+
+          // 清除超时定时器
+          if ((window as any).__micTimeout) {
+            clearTimeout((window as any).__micTimeout);
+            (window as any).__micTimeout = null;
+          }
+
+          return new Promise((resolve) => {
+            recorder.onstop = async () => {
+              stream.getTracks().forEach((t: any) => t.stop());
+              (window as any).__micStream = null;
+              (window as any).__micRecorder = null;
+
+              const chunks = (window as any).__micChunks || [];
+              if (chunks.length === 0) {
+                resolve({ success: false, error: '录音数据为空' });
+                return;
+              }
+              const blob = new Blob(chunks, { type: 'audio/webm' });
+              (window as any).__micChunks = [];
+
+              // 计算时长（近似）
+              const duration = chunks.length; // 每秒一个chunk
+              const base64 = await new Promise<string>((r) => {
+                const reader = new FileReader();
+                reader.onloadend = () => r((reader.result as string).split(',')[1]);
+                reader.readAsDataURL(blob);
+              });
+              resolve({ success: true, data: base64, duration });
+            };
+            recorder.stop();
+          });
+        } catch (err: any) {
+          return { success: false, error: err.message || '停止录音失败' };
+        }
+      },
+    },
+  },
+
+  // 音频设备管理 API（扬声器/麦克风设备枚举）
+  audio: {
+    enumerateDevices: () => ipcRenderer.invoke('audio:enumerate-devices'),
+    getActiveDevice: () => ipcRenderer.invoke('audio:get-active-device'),
+    setOutputDevice: (deviceId: string) => ipcRenderer.invoke('audio:set-output-device', { deviceId }),
+    checkMicAvailable: () => ipcRenderer.invoke('audio:check-mic-available'),
+  },
+
+  // 系统电源控制 API（关机/重启/休眠/锁屏）
+  systemPower: {
+    shutdown: () => ipcRenderer.invoke('system-power:shutdown'),
+    restart: () => ipcRenderer.invoke('system-power:restart'),
+    sleep: () => ipcRenderer.invoke('system-power:sleep'),
+    lock: () => ipcRenderer.invoke('system-power:lock'),
   },
 
 });

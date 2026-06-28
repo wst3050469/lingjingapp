@@ -2,7 +2,7 @@
   "appId": "com.lingjing.ide",
   "productName": "灵境",
   "directories": {
-    "output": "release-v1500"
+    "output": "release"
   },
   "files": [
     "dist/**/*",
@@ -60,6 +60,12 @@
     "category": "Development",
     "executableName": "lingjing",
     "artifactName": "LingJing-${version}-linux-x86_64.${ext}"
+  },
+  "deb": {
+    "compression": "gz"
+  },
+  "asar": {
+    "smartUnpack": true
   },
   "publish": {
     "provider": "generic",

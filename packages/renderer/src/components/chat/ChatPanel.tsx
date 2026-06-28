@@ -90,10 +90,16 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
       finalPrompt = `[Code from ${fileName}${lineInfo}]\n\`\`\`${codeContext.language}\n${codeContext.code}\n\`\`\`\n\n${finalPrompt}`;
     }
 
-    if (attachedImages && attachedImages.length > 0) {
-      finalPrompt = `[${attachedImages.length} image(s) attached]\n\n${finalPrompt}`;
-    } else if (images.length > 0) {
-      finalPrompt = `[${images.length} image(s) attached]\n\n${finalPrompt}`;
+    // Separate image and non-image attachments
+    const imageAttachments = images.filter(a => (a.mediaType || '').startsWith('image/'));
+    const fileAttachments = images.filter(a => !(a.mediaType || '').startsWith('image/'));
+
+    // Build attachment prefix for prompt
+    const parts: string[] = [];
+    if (imageAttachments.length > 0) parts.push(`${imageAttachments.length} image(s) attached`);
+    if (fileAttachments.length > 0) parts.push(`${fileAttachments.length} file(s) attached: ${fileAttachments.map(f => f.name).join(', ')}`);
+    if (parts.length > 0) {
+      finalPrompt = `[${parts.join('; ')}]\n\n${finalPrompt}`;
     }
 
     const userMsg: ChatMessage = {
@@ -121,9 +127,10 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
         setConversationSummary(null);
       }
       const convId = useChatStore.getState().currentConversationId;
-      const imagePayload = images.length > 0
-        ? images.map(img => {
-            const m = img.dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+      // Only send actual image files as base64 payload; other files are described in text
+      const imagePayload = imageAttachments.length > 0
+        ? imageAttachments.map(img => {
+            const m = img.dataUrl.match(/^data:(.+);base64,(.+)$/);
             return m ? { data: m[2], mediaType: m[1] } : null;
           }).filter(Boolean) as Array<{ data: string; mediaType: string }>
         : undefined;

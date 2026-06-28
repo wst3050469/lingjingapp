@@ -18,6 +18,7 @@ const ASR_WS_URL = (() => {
 export function useVoiceInput(onTranscript: (text: string) => void) {
   const [isRecording, setIsRecording] = useState(false);
   const [engineType, setEngineType] = useState<'webspeech' | 'websocket' | 'none'>('none');
+  const [lastError, setLastError] = useState<string | null>(null);
 
   const recognitionRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -27,6 +28,9 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
   const isRecordingRef = useRef(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const connectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
     onTranscriptRef.current = onTranscript;
@@ -52,16 +56,39 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
       try { recognitionRef.current.stop(); } catch {}
       recognitionRef.current = null;
     }
+    // 清除连接超时
+    if (connectTimeoutRef.current) {
+      clearTimeout(connectTimeoutRef.current);
+      connectTimeoutRef.current = null;
+    }
+    // 安全关闭 WebSocket
     if (wsRef.current) {
       try {
         if (wsRef.current.readyState === WebSocket.OPEN) {
           wsRef.current.send('__END__');
         }
+        wsRef.current.onopen = null;
+        wsRef.current.onmessage = null;
+        wsRef.current.onerror = null;
+        wsRef.current.onclose = null;
+        if (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING) {
+          wsRef.current.close();
+        }
       } catch {}
-      // 不立即关闭，等 final 结果
+      wsRef.current = null;
     }
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       try { mediaRecorderRef.current.stop(); } catch {}
+    }
+    // 清理音频上下文
+    if (audioCtxRef.current) {
+      try { audioCtxRef.current.close(); } catch {}
+      audioCtxRef.current = null;
+    }
+    // 停止麦克风流
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
     }
     setIsRecording(false);
   }, []);
@@ -120,55 +147,119 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
 
   // ── WebSocket ASR 引擎（服务器 Whisper 降级） ──
   const startWebSocketASR = useCallback((_currentText?: string) => {
-    // 1. 先获取麦克风流
-    let stream: MediaStream | null = null;
-
     const doStart = async () => {
+      setLastError(null);
+
+      // 1. 获取麦克风流
+      let stream: MediaStream | null = null;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (err) {
-        alert('无法访问麦克风，请检查系统权限设置。');
+        streamRef.current = stream;
+      } catch (err: any) {
+        const msg = err?.name === 'NotAllowedError' || err?.message?.includes('Permission')
+          ? '麦克风权限被拒绝，请在系统设置中允许灵境访问麦克风'
+          : '无法访问麦克风，请检查系统权限设置';
+        setLastError(msg);
+        alert(msg);
         setIsRecording(false);
         return;
       }
 
-      // 2. 用 MediaRecorder 录制 PCM
-      // 浏览器不支持直接输出 PCM，用 AudioContext 重采样到 16kHz
-      const audioCtx = new AudioContext({ sampleRate: 16000 });
+      // 2. 创建 AudioContext 处理音频
+      let audioCtx: AudioContext;
+      try {
+        audioCtx = new AudioContext({ sampleRate: 16000 });
+        audioCtxRef.current = audioCtx;
+      } catch {
+        setLastError('浏览器不支持音频处理');
+        alert('浏览器不支持音频处理，请使用 Chrome 或 Edge');
+        stream.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+        setIsRecording(false);
+        return;
+      }
+
       const source = audioCtx.createMediaStreamSource(stream);
       const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-      let ws: WebSocket | null = null;
 
+      // 3. 连接 WebSocket（带超时）
+      let ws: WebSocket;
       try {
         ws = new WebSocket(ASR_WS_URL);
       } catch {
-        alert('无法连接到语音识别服务器，请检查网络连接。');
-        setIsRecording(false);
+        setLastError('无法连接语音识别服务器');
+        alert('无法连接到语音识别服务器，请检查网络连接。\n\n语音识别需要 Whisper 服务运行在 8900 端口。');
         audioCtx.close();
+        audioCtxRef.current = null;
+        stream.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+        setIsRecording(false);
         return;
       }
 
       ws.binaryType = 'arraybuffer';
       wsRef.current = ws;
+      let connectionOpened = false;
+      let cleaned = false;
 
-      // WebSocket 连接后开始处理音频
+      const cleanup = (reason: string) => {
+        if (cleaned) return;
+        cleaned = true;
+        if (connectTimeoutRef.current) {
+          clearTimeout(connectTimeoutRef.current);
+          connectTimeoutRef.current = null;
+        }
+        try {
+          ws.onopen = null;
+          ws.onmessage = null;
+          ws.onerror = null;
+          ws.onclose = null;
+          if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+            ws.close();
+          }
+        } catch {}
+        wsRef.current = null;
+        try { processor.disconnect(); } catch {}
+        try { source.disconnect(); } catch {}
+        try { audioCtx.close(); } catch {}
+        audioCtxRef.current = null;
+        stream?.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+        setIsRecording(false);
+        console.log('[VoiceInput] WebSocket ASR cleanup:', reason);
+      };
+
+      // 10 秒连接超时
+      connectTimeoutRef.current = setTimeout(() => {
+        if (!connectionOpened) {
+          setLastError('语音识别服务器连接超时（10秒）');
+          console.error('[VoiceInput] WebSocket 连接超时');
+          cleanup('timeout');
+        }
+      }, 10000);
+
       ws.onopen = () => {
+        connectionOpened = true;
+        if (connectTimeoutRef.current) {
+          clearTimeout(connectTimeoutRef.current);
+          connectTimeoutRef.current = null;
+        }
         console.log('[VoiceInput] WebSocket ASR 已连接');
 
         processor.onaudioprocess = (e) => {
-          if (ws?.readyState !== WebSocket.OPEN) return;
+          if (ws.readyState !== WebSocket.OPEN) return;
           const input = e.inputBuffer.getChannelData(0);
-          // Float32 → PCM16
           const pcm = new Int16Array(input.length);
           for (let i = 0; i < input.length; i++) {
             const s = Math.max(-1, Math.min(1, input[i]));
             pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
           }
-          ws.send(pcm.buffer);
+          try { ws.send(pcm.buffer); } catch {}
         };
 
         source.connect(processor);
         processor.connect(audioCtx.destination);
+        setEngineType('websocket');
         setIsRecording(true);
       };
 
@@ -176,7 +267,6 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
         try {
           const data = JSON.parse(event.data);
           if (data.type === 'interim' && data.text) {
-            // 增量文本，追加到已有文本后
             onTranscriptRef.current((baseTextRef.current || '') + data.text);
             baseTextRef.current = (baseTextRef.current || '') + data.text;
           } else if (data.type === 'final' && data.text) {
@@ -184,21 +274,20 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
             baseTextRef.current = data.text;
           } else if (data.type === 'error') {
             console.error('[VoiceInput] ASR error:', data.message);
+            setLastError(data.message || '语音识别出错');
           }
         } catch {}
       };
 
       ws.onerror = () => {
         console.error('[VoiceInput] WebSocket ASR 连接错误');
-        setIsRecording(false);
-        audioCtx.close();
+        setLastError('语音识别服务器连接失败，请确认 Whisper 服务已启动（端口 8900）');
+        cleanup('error');
       };
 
       ws.onclose = () => {
         console.log('[VoiceInput] WebSocket ASR 已断开');
-        setIsRecording(false);
-        audioCtx.close();
-        stream?.getTracks().forEach(t => t.stop());
+        cleanup('closed');
       };
     };
 
@@ -206,10 +295,23 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
   }, []);
 
   // ── 切换录音 ──
-  const toggleRecording = useCallback((currentText?: string) => {
+  const toggleRecording = useCallback(async (currentText?: string) => {
     if (isRecordingRef.current) {
       stopAll();
       return;
+    }
+
+    // 检查麦克风权限是否已开启
+    try {
+      if (window.electronAPI?.permissions?.microphone?.isEnabled) {
+        const micEnabled = await window.electronAPI.permissions.microphone.isEnabled();
+        if (!micEnabled) {
+          alert('麦克风权限未开启，请在 设置 → 高级 → 麦克风权限 中开启。');
+          return;
+        }
+      }
+    } catch {
+      // 如果 permissions API 不可用（如非 Electron 环境），继续执行
     }
 
     baseTextRef.current = currentText || '';
@@ -238,5 +340,5 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     };
   }, [stopAll]);
 
-  return { isRecording, toggleRecording, engineType };
+  return { isRecording, toggleRecording, engineType, lastError, clearError: () => setLastError(null) };
 }

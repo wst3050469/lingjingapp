@@ -62,6 +62,7 @@ declare interface ElectronAPI {
     onProgress: (callback: (info: any) => void) => () => void;
     onDownloaded: (callback: (info: any) => void) => () => void;
     onError: (callback: (error: any) => void) => () => void;
+    exportSkills: (targetDir: string) => Promise<{ success: boolean; exported?: number; error?: string }>;
   };
   window: {
     newWindow: () => Promise<void>;
@@ -294,6 +295,19 @@ declare interface ElectronAPI {
     delete: (path: string) => Promise<any>;
     read: (path: string) => Promise<any>;
     readAgent: (path: string) => Promise<any>;
+    leaderboard: () => Promise<Array<{ name: string; description: string; level: string; path: string; callCount: number; isGitHub: boolean }>>;
+    incrementUsage: (skillName: string) => Promise<{ success: boolean; count?: number; error?: string }>;
+    exportBuiltin: (targetDir: string) => Promise<{ success: boolean; exported?: number; targetDir?: string; error?: string }>;
+  };
+  skillMarket: {
+    getLeaderboard: (opts: { page?: number; limit?: number }) => Promise<any>;
+    search: (opts: { query?: string; page?: number; limit?: number }) => Promise<any>;
+    getInstalledSkillIds: () => Promise<any>;
+    install: (opts: { skillId: string; skill: any }) => Promise<any>;
+    installFromGithub: (opts: { url: string }) => Promise<any>;
+    checkUpdates: () => Promise<any>;
+    update: (opts: { skillPath: string }) => Promise<any>;
+    onGithubImportProgress: (callback: (data: { step: string; detail?: string; timestamp: number }) => void) => () => void;
   };
   integrations: {
     githubValidate: (token: string) => Promise<any>;
@@ -483,6 +497,117 @@ declare interface ElectronAPI {
     api: (opts: { endpoint: string; method?: string; body?: unknown; token?: string; baseUrl?: string }) => Promise<any>;
     setUserToken: (token: string) => Promise<any>;
   };
+
+  // 应用控制 - 跨平台应用管理
+  appControl: {
+    getInstalledApps: () => Promise<{ success: boolean; data: Array<{ name: string; path?: string; icon?: string; isRunning: boolean }>; error?: string }>;
+    getWindows: () => Promise<{ success: boolean; data: Array<{ title: string; processId?: number; isFocused: boolean }>; error?: string }>;
+    launchApp: (appName: string, args?: string[]) => Promise<{ success: boolean; error?: string }>;
+    closeApp: (appName: string) => Promise<{ success: boolean; error?: string }>;
+    focusWindow: (title: string) => Promise<{ success: boolean; error?: string }>;
+  };
+
+  // 邮件服务 - SMTP 收发邮件
+  emailService: {
+    initSmtp: (config: { host: string; port: number; secure: boolean; user: string; pass: string; fromName?: string }) => Promise<{ success: boolean; error?: string }>;
+    getConfig: () => Promise<{ success: boolean; data: { host: string; port: number; secure: boolean; user: string; pass: string; fromName?: string } | null; error?: string }>;
+    validateConfig: (config: { host: string; port: number; secure: boolean; user: string; pass: string }) => Promise<{ valid: boolean; error?: string }>;
+    getPresetList: () => Promise<{ success: boolean; data: Array<{ key: string; name: string; description: string }>; error?: string }>;
+    sendMail: (mailConfig: { to: string; subject: string; body: string; html?: string; cc?: string; bcc?: string; attachments?: Array<{ filename: string; path?: string; content?: string }> }) => Promise<{ success: boolean; error?: string }>;
+    sendWithPreset: (presetKey: string, replacements: Record<string, string>, mailConfig: { to: string; subject: string; body: string }) => Promise<{ success: boolean; error?: string }>;
+  };
+
+  // 桌面操控权限 - 安全密码管理 + 键盘/鼠标/屏幕操作
+  desktopControl: {
+    hasPassword: () => Promise<boolean>;
+    setPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+    verifyPassword: (password: string) => Promise<{ success: boolean; error?: string }>;
+    isEnabled: () => Promise<boolean>;
+    setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
+    // 鼠标操作
+    mouse: {
+      getPosition: () => Promise<{ success: boolean; data?: { x: number; y: number }; error?: string }>;
+      move: (x: number, y: number) => Promise<{ success: boolean; data?: { x: number; y: number }; error?: string }>;
+      moveSmooth: (x: number, y: number, speed?: number) => Promise<{ success: boolean; data?: { x: number; y: number }; error?: string }>;
+      click: (button?: string, double?: boolean) => Promise<{ success: boolean; data?: { button: string; double: boolean }; error?: string }>;
+      toggle: (down?: string, button?: string) => Promise<{ success: boolean; data?: { direction: string; button: string }; error?: string }>;
+      drag: (x: number, y: number) => Promise<{ success: boolean; data?: { x: number; y: number }; error?: string }>;
+      scroll: (x: number, y: number) => Promise<{ success: boolean; data?: { x: number; y: number }; error?: string }>;
+    };
+    // 键盘操作
+    keyboard: {
+      type: (text: string) => Promise<{ success: boolean; data?: { length: number }; error?: string }>;
+      typeDelayed: (text: string, cpm: number) => Promise<{ success: boolean; data?: { length: number; cpm: number }; error?: string }>;
+      tap: (key: string, modifiers?: string | string[]) => Promise<{ success: boolean; data?: { key: string; modifiers?: string | string[] }; error?: string }>;
+      toggle: (key: string, down: string, modifiers?: string | string[]) => Promise<{ success: boolean; data?: { key: string; direction: string; modifiers?: string | string[] }; error?: string }>;
+    };
+    // 屏幕操作
+    screen: {
+      getSize: () => Promise<{ success: boolean; data?: { width: number; height: number }; error?: string }>;
+      capture: (x?: number, y?: number, width?: number, height?: number, format?: 'png' | 'bmp') =>
+        Promise<{ success: boolean; data?: { width: number; height: number; bytesPerPixel: number; format?: string; base64: string }; error?: string }>;
+      pixelColor: (x: number, y: number) => Promise<{ success: boolean; data?: string; error?: string }>;
+    };
+    // 延迟设置
+    setMouseDelay: (delay: number) => Promise<{ success: boolean; data?: { delay: number }; error?: string }>;
+    setKeyboardDelay: (delay: number) => Promise<{ success: boolean; data?: { delay: number }; error?: string }>;
+  };
+
+  // 系统控制 - 硬件监控 + 音量/亮度
+  systemControl: {
+    monitor: {
+      info: () => Promise<{ success: boolean; data?: Record<string, any>; error?: string }>;
+      cpuLoad: () => Promise<{ success: boolean; data?: Record<string, any>; error?: string }>;
+      memory: () => Promise<{ success: boolean; data?: Record<string, any>; error?: string }>;
+      battery: () => Promise<{ success: boolean; data?: Record<string, any>; error?: string }>;
+      temperature: () => Promise<{ success: boolean; data?: Record<string, any>; error?: string }>;
+      disks: () => Promise<{ success: boolean; data?: any[]; error?: string }>;
+      processes: () => Promise<{ success: boolean; data?: any[]; error?: string }>;
+    };
+    volume: {
+      get: () => Promise<{ success: boolean; data?: { volume: number; muted: boolean; error?: string }; error?: string }>;
+      set: (volume: number) => Promise<{ success: boolean; data?: { volume: number; note?: string }; error?: string }>;
+      mute: () => Promise<{ success: boolean; data?: { muted: string; note?: string }; error?: string }>;
+    };
+    brightness: {
+      get: () => Promise<{ success: boolean; data?: { brightness: number; raw?: number; max?: number; error?: string }; error?: string }>;
+      set: (brightness: number) => Promise<{ success: boolean; data?: { brightness: number; error?: string }; error?: string }>;
+    };
+  };
+
+  // 设备权限管理（摄像头 / 麦克风）- 默认关闭
+  permissions: {
+    camera: {
+      isEnabled: () => Promise<boolean>;
+      setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
+      getStatus: () => Promise<{ status: string }>;
+      capturePhoto: () => Promise<{ success: boolean; data?: string; error?: string }>;
+      startRecording: () => Promise<{ success: boolean; error?: string }>;
+      stopRecording: () => Promise<{ success: boolean; data?: string; duration?: number; error?: string }>;
+    };
+    microphone: {
+      isEnabled: () => Promise<boolean>;
+      setEnabled: (enabled: boolean) => Promise<{ success: boolean }>;
+      getStatus: () => Promise<{ status: string }>;
+      startRecording: () => Promise<{ success: boolean; error?: string }>;
+      stopRecording: () => Promise<{ success: boolean; data?: string; duration?: number; error?: string }>;
+    };
+  };
+
+  audio: {
+    enumerateDevices: () => Promise<{ success: boolean; data: Array<{ id: string; name: string; type: 'input' | 'output' | 'both'; isActive: boolean; sampleRate?: number; channels?: number }> }>;
+    getActiveDevice: () => Promise<{ success: boolean; data: { output: { id: string; name: string; type: string; isActive: boolean } | null; input: { id: string; name: string; type: string; isActive: boolean } | null } }>;
+    setOutputDevice: (deviceId: string) => Promise<{ success: boolean; deviceId?: string; error?: string }>;
+    checkMicAvailable: () => Promise<{ success: boolean; available: boolean; device?: { id: string; name: string; type: string; isActive: boolean } | null }>;
+  };
+
+  systemPower: {
+    shutdown: () => Promise<{ success: boolean; error?: string }>;
+    restart: () => Promise<{ success: boolean; error?: string }>;
+    sleep: () => Promise<{ success: boolean; error?: string }>;
+    lock: () => Promise<{ success: boolean; error?: string }>;
+  };
+
 }
 
 declare interface Window {

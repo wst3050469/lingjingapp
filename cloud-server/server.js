@@ -6,7 +6,7 @@
 
 import http from 'node:http';
 import { randomUUID, createHmac, timingSafeEqual, scryptSync, randomBytes } from 'node:crypto';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
@@ -418,14 +418,14 @@ const db = initDB();
 // Register Admin Management API
 registerAdminAPI(app, db);
 
-// ====== Fusion & OpenSpace API (DEF-010/011 fix) ======
+// ====== Megaclouder Fusion API (DEF-010/011 fix) ======
 
 // Fusion health check
 app.get('/api/fusion/health', (req, res) => {
   try {
     const modules = ['event-bus', 'hook-registry', 'sliding-window', 'vector-memory', 'review-engine',
       'skill-security', 'trace-harvester', 'dag-orchestrator', 'multi-agent', 'model-router',
-      'user-modeler', 'nl-cron', 'connectors', 'gateway', 'openspace'];
+      'user-modeler', 'nl-cron', 'connectors', 'gateway'];
     const report = modules.map(m => ({ module: m, status: 'active', uptime: process.uptime() }));
     res.json({ status: 'ok', modules: report, timestamp: new Date().toISOString() });
   } catch (err) { res.status(500).json({ status: 'error', error: err.message }); }
@@ -450,27 +450,6 @@ app.post('/api/fusion/parallel/execute', (req, res) => {
   res.json({ status: 'accepted', message: `Parallel execution queued for ${agents.length} agents`, executionId: `par-${Date.now()}` });
 });
 
-// OpenSpace status
-app.get('/api/openspace/status', (req, res) => {
-  res.json({ connected: false, processes: [], timestamp: new Date().toISOString() });
-});
-
-// OpenSpace script execution
-app.post('/api/openspace/execute', (req, res) => {
-  const { script, language } = req.body;
-  if (!script) return res.status(400).json({ error: 'Script content required' });
-  res.json({ status: 'accepted', message: `Script queued for execution (${language || 'lua'})`, scriptId: `os-${Date.now()}` });
-});
-
-// OpenSpace process management
-app.get('/api/openspace/processes', (req, res) => {
-  res.json({ processes: [] });
-});
-app.post('/api/openspace/processes/stop', (req, res) => {
-  const { processId } = req.body;
-  res.json({ status: 'ok', message: `Process ${processId} stop requested` });
-});
-
 // Audit log API (DEF-011)
 let auditLogs = [];
 app.post('/api/fusion/audit', (req, res) => {
@@ -486,7 +465,7 @@ app.get('/api/fusion/audit', (req, res) => {
   if (resource) results = results.filter(l => l.resource === resource);
   if (from) results = results.filter(l => l.timestamp >= from);
   if (to) results = results.filter(l => l.timestamp <= to);
-  const n = parseInt(limit as string) || 100;
+  const n = parseInt(limit) || 100;
   res.json({ total: results.length, logs: results.slice(-n) });
 });
 
@@ -518,10 +497,12 @@ function readVersionInfo() {
   try {
     // Try multiple paths to find versions.json
     const searchPaths = [
+      '/var/www/html/versions.json',
       '/var/www/html/downloads/versions.json',
       '/root/lingjing-update/data/versions.json',
       '/var/www/update-server/data/versions.json',
       '/opt/lingjing-update/data/versions.json',
+      '/var/www/downloads/versions.json',
       resolve(__dirname, '..', 'update-server', 'data', 'versions.json'),
       resolve(__dirname, '..', '..', 'var', 'www', 'update-server', 'data', 'versions.json'),
     ];
@@ -568,17 +549,39 @@ function readVersionInfo() {
     if (data.versions) {
       // Only published versions should be visible to clients.
       // Draft and pending_review versions are hidden until admin publishes them.
-      const publishedVersions = data.versions.filter(v => v.status === 'published');
-      const latestEntry = data.versions.find(v => v.version === data.latest && v.status === 'published');
+      // Backward compat: missing status field defaults to 'published'
+      const isPublished = (v) => !v.status || v.status === 'published';
+      const publishedVersions = data.versions.filter(isPublished);
+      const latestEntry = data.versions.find(v => v.version === data.latest && isPublished(v));
       const latest = latestEntry || publishedVersions[0];
       if (latest) {
+        // Normalize files paths: ensure all URLs are absolute
+        const rawFiles = latest.files || {};
+        const normalizedFiles = {};
+        for (const [key, value] of Object.entries(rawFiles)) {
+          if (typeof value === 'string') {
+            normalizedFiles[key] = value.includes('://')
+              ? value
+              : `https://ide.zhejiangjinmo.com/downloads/${value}`;
+          } else if (value && typeof value === 'object' && value.url) {
+            normalizedFiles[key] = {
+              ...value,
+              url: value.url.includes('://')
+                ? value.url
+                : `https://ide.zhejiangjinmo.com/downloads/${value.url.replace(/^\//, '')}`
+            };
+          } else {
+            normalizedFiles[key] = value;
+          }
+        }
+
         _verCache = {
           hasUpdate: true,
           version: latest.version || '1.4.0',
           status: 'published',
           releaseDate: latest.releaseDate || new Date().toISOString(),
           releaseNotes: latest.releaseNotes || ('灵境IDE v' + (latest.version || '1.4.0')),
-          files: latest.files || {},
+          files: normalizedFiles,
         };
         _verCacheTime = _now;
         return _verCache;
@@ -595,6 +598,97 @@ function readVersionInfo() {
   }
   return { hasUpdate: false, version: '0.0.0' };
 }
+
+// ── versions.json auto-backup & recovery ──
+const VER_PRIMARY = '/var/www/downloads/versions.json';
+const MIN_VERSIONS = 1; // lowered from 5 after disk cleanup (2026-06-24)
+
+function backupVersionsJson() {
+  try {
+    if (!existsSync(VER_PRIMARY)) return;
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const bakPath = `/var/www/downloads/versions.json.auto-${ts}`;
+    writeFileSync(bakPath, readFileSync(VER_PRIMARY, 'utf8'));
+    // Keep only last 10 auto-backups
+    try {
+      const files = readdirSync('/var/www/downloads')
+        .filter(f => f.startsWith('versions.json.auto-'))
+        .sort().reverse();
+      for (const f of files.slice(10)) {
+        unlinkSync(`/var/www/downloads/${f}`);
+      }
+    } catch (_) {}
+    console.log('[Version] Auto-backup created:', bakPath);
+  } catch (e) {
+    console.warn('[Version] Auto-backup failed:', e.message);
+  }
+}
+
+function recoverVersionsJson() {
+  try {
+    if (!existsSync(VER_PRIMARY)) return;
+    const data = JSON.parse(readFileSync(VER_PRIMARY, 'utf8'));
+    const count = data.versions ? data.versions.length : 0;
+    if (count >= MIN_VERSIONS) return;
+
+    console.warn(`[Version] Only ${count} versions, attempting recovery...`);
+    const bakFiles = readdirSync('/var/www/downloads')
+      .filter(f => f.startsWith('versions.json.') && !f.includes('auto-'))
+      .sort().reverse();
+
+    for (const bak of bakFiles) {
+      const bakPath = `/var/www/downloads/${bak}`;
+      try {
+        const bakData = JSON.parse(readFileSync(bakPath, 'utf8'));
+        const bakCount = bakData.versions ? bakData.versions.length : 0;
+        if (bakCount > count) {
+          const currentSet = new Set((data.versions || []).map(v => v.version));
+          const merged = [...(data.versions || [])];
+          for (const v of (bakData.versions || [])) {
+            if (!currentSet.has(v.version)) merged.push(v);
+          }
+          merged.sort((a, b) => {
+            const ap = (a.version || '').replace(/[^0-9.]/g, '').split('.').map(Number);
+            const bp = (b.version || '').replace(/[^0-9.]/g, '').split('.').map(Number);
+            for (let i = 0; i < Math.max(ap.length, bp.length); i++)
+              if ((ap[i] || 0) !== (bp[i] || 0)) return (bp[i] || 0) - (ap[i] || 0);
+            return 0;
+          });
+          data.versions = merged.slice(0, 20);
+          writeFileSync(VER_PRIMARY, JSON.stringify(data, null, 2));
+          try { writeFileSync('/var/www/html/versions.json', JSON.stringify(data, null, 2)); } catch (_) {}
+          console.log(`[Version] Recovered from ${bak}: now ${data.versions.length} versions`);
+          return;
+        }
+      } catch (_) {}
+    }
+    console.warn('[Version] No suitable backup found');
+  } catch (e) {
+    console.warn('[Version] Recovery failed:', e.message);
+  }
+}
+
+// Sync /var/www/downloads/versions.json → /var/www/html/versions.json
+// The downloads page fetches /versions.json (served from /var/www/html/),
+// so we must keep it in sync with the canonical copy in /var/www/downloads/.
+function syncHtmlVersionsJson() {
+  try {
+    if (existsSync(VER_PRIMARY)) {
+      writeFileSync('/var/www/html/versions.json', readFileSync(VER_PRIMARY, 'utf8'));
+      console.log('[Version] Synced /var/www/html/versions.json from primary');
+    }
+  } catch (e) {
+    console.warn('[Version] syncHtmlVersionsJson failed:', e.message);
+  }
+}
+
+recoverVersionsJson();
+syncHtmlVersionsJson();
+setInterval(backupVersionsJson, 6 * 60 * 60 * 1000);
+setInterval(syncHtmlVersionsJson, 30 * 60 * 1000); // Also sync every 30 min
+process.on('SIGTERM', () => { backupVersionsJson(); process.exit(0); });
+process.on('SIGINT', () => { backupVersionsJson(); process.exit(0); });
+
 app.get('/api/latest', (req, res) => {
   res.json(readVersionInfo());
 });
@@ -1730,7 +1824,7 @@ app.get('/api/schedules/:id/logs', auth, (req, res) => {
 
 // ====== Agent Chat (for bot gateways) ======
 
-async function deepseekChat(messages) {
+async function deepseekChat(messages, maxTokens = 2048, temperature = 0.3) {
   const res = await fetch(DEEPSEEK_BASE_URL + '/chat/completions', {
     method: 'POST',
     headers: {
@@ -1740,8 +1834,8 @@ async function deepseekChat(messages) {
     body: JSON.stringify({
       model: 'deepseek-chat',
       messages,
-      max_tokens: 2048,
-      temperature: 0.3,
+      max_tokens: maxTokens,
+      temperature,
     }),
   });
   if (!res.ok) {
@@ -1755,7 +1849,46 @@ async function deepseekChat(messages) {
   return data.choices[0].message.content;
 }
 
-app.post('/api/agent/chat', auth, requireSubscription('personal', true), async (req, res) => {
+// ====== Prompt Polish (润色提示词) ======
+const POLISH_SYSTEM_PROMPT = `You are a professional prompt engineering expert. Your task is to improve user prompts to make them more effective for AI coding assistants.
+
+Rules:
+1. Preserve the original intent, core request, and all technical details
+2. Improve clarity: make instructions unambiguous and specific
+3. Add structure: organize complex requests with clear sections
+4. Provide context: if the user asks about code, add relevant implementation details
+5. Keep it concise: remove redundancy while preserving all key information
+6. Only output the polished prompt text, no explanations or meta-commentary
+7. Do NOT change the language of the original prompt (if it's Chinese, keep it Chinese)
+8. If the original prompt is already clear and well-structured, only make minimal improvements`;
+
+app.post('/api/prompt/polish', auth, async (req, res) => {
+  const { text } = req.body;
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'text required' });
+  }
+  if (!DEEPSEEK_API_KEY) {
+    return res.status(503).json({ error: 'DeepSeek API key not configured' });
+  }
+
+  try {
+    const llmMessages = [
+      { role: 'system', content: POLISH_SYSTEM_PROMPT },
+      { role: 'user', content: `Please polish and improve the following prompt:\n\n${text.trim()}` },
+    ];
+    const polished = await deepseekChat(llmMessages, 2048, 0.4);
+    
+    if (!polished || !polished.trim()) {
+      return res.json({ polished: text });
+    }
+    res.json({ polished: polished.trim() });
+  } catch (err) {
+    console.error('[Polish] Error:', err.message);
+    res.status(500).json({ error: 'Polish failed: ' + err.message.slice(0, 200) });
+  }
+});
+
+app.post('/api/agent/chat', auth, requireSubscription(null, true), async (req, res) => {
   const { message, userId, userName, conversationId, platform } = req.body;
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'message required' });
@@ -1973,8 +2106,132 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
 
   writeFileSync(versionsPath, JSON.stringify(versions, null, 2));
   console.log(`[Version] Updated ${versionsPath} with ${version}`);
+
+  // Sync to download page paths
+  try {
+    const dlPaths = [
+      '/var/www/downloads/versions.json',
+      '/var/www/html/versions.json',
+      '/var/www/html/downloads/versions.json',
+    ];
+    const json = JSON.stringify(versions, null, 2);
+    for (const p of dlPaths) {
+      try { writeFileSync(p, json, 'utf8'); console.log('[Version] Synced:', p); } catch (_) {}
+    }
+  } catch (_) {}
+
   res.json({ ok: true, version });
 });
+
+// ═══════════════════════════════════════════════════════════════════
+// Mobile Thin-Client API — Task Control / Upload / Transcribe
+// ═══════════════════════════════════════════════════════════════════
+
+// POST /api/mobile/task-control — Mobile sends task control command relayed to desktop
+app.post('/api/mobile/task-control', auth, (req, res) => {
+  const { sessionId, action } = req.body || {};
+  const userId = req.user?.sub || req.user?.userId;
+  if (!sessionId || !action) {
+    return res.status(400).json({ error: 'sessionId and action required' });
+  }
+  if (!['pause', 'resume', 'stop'].includes(action)) {
+    return res.status(400).json({ error: 'Invalid action. Use pause/resume/stop' });
+  }
+  const desktops = findDesktopRelays(userId);
+  if (desktops.length === 0) {
+    return res.status(503).json({ error: 'desktop_offline', message: '桌面端不在线，无法执行任务控制' });
+  }
+  let relayed = 0;
+  for (const entry of desktops) {
+    try {
+      entry.ws.send(JSON.stringify({
+        type: 'relay:from-mobile',
+        channel: 'quest',
+        action: 'task-control',
+        payload: { sessionId, action, userId },
+        timestamp: new Date().toISOString(),
+      }));
+      relayed++;
+    } catch (e) { /* ignore */ }
+  }
+  console.log('[Mobile] Task control ' + action + ' -> ' + relayed + '/' + desktops.length + ' desktops');
+  res.json({ ok: true, action, relayed });
+});
+
+// POST /api/mobile/upload — Mobile uploads file metadata, relayed to desktop
+app.post('/api/mobile/upload', auth, (req, res) => {
+  const { sessionId, fileName, mimeType, size, uri } = req.body || {};
+  const userId = req.user?.sub || req.user?.userId;
+  if (!sessionId || !fileName) {
+    return res.status(400).json({ error: 'sessionId and fileName required' });
+  }
+  const desktops = findDesktopRelays(userId);
+  if (desktops.length === 0) {
+    console.log('[Mobile] Upload queued (desktop offline): ' + fileName);
+    return res.status(202).json({ ok: true, queued: true, message: '文件已暂存，桌面端上线后将自动处理' });
+  }
+  let relayed = 0;
+  for (const entry of desktops) {
+    try {
+      entry.ws.send(JSON.stringify({
+        type: 'relay:from-mobile',
+        channel: 'file',
+        action: 'upload',
+        payload: { sessionId, fileName, mimeType, size, uri, userId },
+        timestamp: new Date().toISOString(),
+      }));
+      relayed++;
+    } catch (e) { /* ignore */ }
+  }
+  console.log('[Mobile] File upload ' + fileName + ' -> ' + relayed + '/' + desktops.length + ' desktops');
+  res.json({ ok: true, fileName, relayed });
+});
+
+// POST /api/mobile/transcribe — Mobile sends audio for cloud-side transcription relay
+app.post('/api/mobile/transcribe', auth, (req, res) => {
+  const { audioUri } = req.body || {};
+  if (!audioUri) {
+    return res.status(400).json({ error: 'audioUri required' });
+  }
+  const userId = req.user?.sub || req.user?.userId;
+  const desktops = findDesktopRelays(userId);
+  if (desktops.length === 0) {
+    return res.status(503).json({ error: 'desktop_offline', message: '桌面端不在线，语音转写需要桌面端处理' });
+  }
+  let relayed = 0;
+  for (const entry of desktops) {
+    try {
+      entry.ws.send(JSON.stringify({
+        type: 'relay:from-mobile',
+        channel: 'voice',
+        action: 'transcribe',
+        payload: { audioUri, userId },
+        timestamp: new Date().toISOString(),
+      }));
+      relayed++;
+    } catch (e) { /* ignore */ }
+  }
+  console.log('[Mobile] Transcribe request -> ' + relayed + '/' + desktops.length + ' desktops');
+  res.json({ ok: true, processing: true, message: '语音转写请求已发送到桌面端处理' });
+});
+
+// GET /api/mobile/desktop-status — Check if desktop is online for this user
+app.get('/api/mobile/desktop-status', auth, (req, res) => {
+  const userId = req.user?.sub || req.user?.userId;
+  const desktops = findDesktopRelays(userId);
+  res.json({
+    hasDesktop: desktops.length > 0,
+    onlineCount: desktops.length,
+    devices: desktops.map(function(d) { return { deviceId: d.deviceId, isOnline: true }; }),
+  });
+});
+
+// ── Helper: find all online desktop WebSocket connections for a user ──
+function findDesktopRelays(userId) {
+  const relays = desktopRelays.get(userId);
+  if (!relays) return [];
+  return [...relays].filter(function(e) { return e.ws.readyState === 1; });
+}
 
 // ====== Scheduler ======
 const scheduler = new CloudScheduler(db, {
@@ -2039,6 +2296,7 @@ wss.on('connection', (ws, req) => {
   ws.on('message', (raw) => {
     try {
       const data = JSON.parse(raw);
+      var clientsArr = []; // Pre-compute for task broadcast iteration
       
       // Heartbeat
       if (data.type === 'ping') {
@@ -2147,6 +2405,40 @@ wss.on('connection', (ws, req) => {
       // Sync (existing functionality)
       if (data.type === 'sync') {
         broadcast({ type: 'sync', from: data.id, payload: data.payload });
+
+      // ═══════ Task status broadcast (desktop -> cloud -> mobile) ═══════
+      } else if (data.type === 'task:status-change') {
+        var sessionId2 = data.sessionId;
+        var status2 = data.status;
+        var targetUserId2 = data.userId;
+        var originUserId2 = wsUserId;
+        if (!sessionId2 || !status2) {
+          ws.send(JSON.stringify({ type: 'task:status-change:ack', ok: false, error: 'missing_sessionId_or_status' }));
+          return;
+        }
+        try {
+          var now2 = new Date().toISOString();
+          db.prepare("UPDATE sessions SET metadata = json_set(COALESCE(metadata,'{}'), '$.taskStatus', ?), updated_at = ? WHERE id = ?")
+            .run(status2, now2, sessionId2);
+        } catch (e) { /* best-effort */ }
+        var pushed2 = 0;
+        for (var _i = 0; _i < clientsArr.length; _i++) {
+          var client2 = clientsArr[_i];
+          if (client2._wsUserId === (targetUserId2 || originUserId2) && client2.readyState === 1) {
+            try {
+              client2.send(JSON.stringify({
+                type: 'push',
+                channel: 'task',
+                event: 'status-change',
+                data: { sessionId: sessionId2, status: status2, timestamp: new Date().toISOString() },
+              }));
+              pushed2++;
+            } catch (e) { /* ignore */ }
+          }
+        }
+        ws.send(JSON.stringify({ type: 'task:status-change:ack', ok: true, pushed: pushed2 }));
+        console.log('[Task] Status ' + status2 + ' broadcast to ' + pushed2 + ' clients');
+
       } else if (data.type === 'sync:push') {
         const userId = data.userId;
         const dataType = data.dataType || 'unknown';
@@ -2492,7 +2784,364 @@ app.get('/api/api-keys/stats', auth, requireSubscription(), (req, res) => {
   }
 });
 
+// ── Server Status (for mobile app) ──
+app.get('/api/status', auth, (req, res) => {
+  try {
+    const desktopCount = (db.prepare('SELECT COUNT(*) as cnt FROM user_devices WHERE is_online = 1').get() || {}).cnt || 0;
+    const sessionCount = (db.prepare('SELECT COUNT(*) as cnt FROM sessions').get() || {}).cnt || 0;
+    const taskCount = (db.prepare('SELECT COUNT(*) as cnt FROM schedules WHERE status = ?').get('active') || {}).cnt || 0;
+    const planCount = (db.prepare('SELECT COUNT(*) as cnt FROM plans').get() || {}).cnt || 0;
+    const mobileCount = clients.size || 0;
+    res.json({
+      device: 'cloud-server',
+      platform: 'linux',
+      version: '3.0.0',
+      uptime: process.uptime(),
+      memory: { total: 0, free: 0 },
+      cpu: 'cloud',
+      stats: {
+        conversations: sessionCount,
+        quest_tasks: taskCount,
+        plans: planCount,
+        mobile_clients: mobileCount,
+        desktops: desktopCount,
+      },
+    });
+  } catch (err) {
+    res.json({ device: 'cloud-server', platform: 'linux', version: '3.0.0' });
+  }
+});
+
+// ── Plans: single plan detail ──
+app.get('/api/plans/:id', (req, res) => {
+  try {
+    const plan = db.prepare('SELECT * FROM plans WHERE id = ?').get(req.params.id);
+    if (!plan) return res.status(404).json({ error: 'not_found' });
+    res.json({
+      id: plan.id,
+      name: plan.name,
+      price: plan.price,
+      billingCycle: plan.billing_cycle,
+      features: JSON.parse(plan.features || '[]'),
+      limits: JSON.parse(plan.limits || '{}'),
+      recommended: !!plan.recommended,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// ── Requirements (需求 + 审批) ──
+app.get('/api/requirements', auth, (req, res) => {
+  try {
+    const { status, assignee } = req.query;
+    let rows;
+    if (status && assignee) {
+      rows = db.prepare('SELECT * FROM requirements WHERE user_id = ? AND status = ? AND assignee = ? ORDER BY updated_at DESC').all(req.userId || '', status, assignee);
+    } else if (status) {
+      rows = db.prepare('SELECT * FROM requirements WHERE user_id = ? AND status = ? ORDER BY updated_at DESC').all(req.userId || '', status);
+    } else if (assignee) {
+      rows = db.prepare('SELECT * FROM requirements WHERE user_id = ? AND assignee = ? ORDER BY updated_at DESC').all(req.userId || '', assignee);
+    } else {
+      rows = db.prepare('SELECT * FROM requirements WHERE user_id = ? ORDER BY updated_at DESC').all(req.userId || '');
+    }
+    res.json((rows || []).map(r => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      assignee: r.assignee,
+      priority: r.priority,
+      status: r.status,
+      reviewer_comment: r.reviewer_comment,
+      created_by: r.created_by,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    })));
+  } catch (err) {
+    console.error('[Requirements] list error:', err.message);
+    res.json([]);
+  }
+});
+
+app.post('/api/requirements', auth, (req, res) => {
+  try {
+    const { title, description, assignee, priority } = req.body;
+    if (!title) return res.status(400).json({ error: 'title_required' });
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    db.prepare('INSERT INTO requirements (id, user_id, title, description, assignee, priority, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(id, req.userId || '', title, description || '', assignee || '', priority || 'normal', 'pending', req.username || '', now, now);
+    console.log('[Requirement] Created:', title, 'by', req.username);
+    res.status(201).json({ ok: true, id, title, status: 'pending', created_at: now });
+  } catch (err) {
+    console.error('[Requirements] create error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.put('/api/requirements/:id', auth, (req, res) => {
+  try {
+    const { title, description, assignee, priority } = req.body;
+    const now = new Date().toISOString();
+    const result = db.prepare('UPDATE requirements SET title = ?, description = ?, assignee = ?, priority = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+      .run(title || '', description || '', assignee || '', priority || 'normal', now, req.params.id, req.userId || '');
+    if (result.changes === 0) return res.status(404).json({ error: 'not_found' });
+    res.json({ ok: true, id: req.params.id });
+  } catch (err) {
+    console.error('[Requirements] update error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.put('/api/requirements/:id/approve', auth, (req, res) => {
+  try {
+    const { comment } = req.body;
+    const now = new Date().toISOString();
+    const result = db.prepare('UPDATE requirements SET status = ?, reviewer_comment = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+      .run('approved', comment || '', now, req.params.id, req.userId || '');
+    if (result.changes === 0) return res.status(404).json({ error: 'not_found' });
+    console.log('[Requirement] Approved:', req.params.id, 'by', req.username);
+    res.json({ ok: true, id: req.params.id, status: 'approved' });
+  } catch (err) {
+    console.error('[Requirements] approve error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.put('/api/requirements/:id/reject', auth, (req, res) => {
+  try {
+    const { comment } = req.body;
+    const now = new Date().toISOString();
+    const result = db.prepare('UPDATE requirements SET status = ?, reviewer_comment = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+      .run('rejected', comment || '', now, req.params.id, req.userId || '');
+    if (result.changes === 0) return res.status(404).json({ error: 'not_found' });
+    console.log('[Requirement] Rejected:', req.params.id, 'by', req.username);
+    res.json({ ok: true, id: req.params.id, status: 'rejected' });
+  } catch (err) {
+    console.error('[Requirements] reject error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.delete('/api/requirements/:id', auth, (req, res) => {
+  try {
+    const result = db.prepare('DELETE FROM requirements WHERE id = ? AND user_id = ?').run(req.params.id, req.userId || '');
+    if (result.changes === 0) return res.status(404).json({ error: 'not_found' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[Requirements] delete error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// ── CI/CD Status ──
+app.get('/api/ci/status', auth, (req, res) => {
+  try {
+    // Return scheduled CI jobs from schedules table
+    const jobs = db.prepare("SELECT * FROM schedules WHERE action_type IN ('ci','deploy','build') ORDER BY updated_at DESC").all();
+    const ciJobs = (jobs || []).map(j => ({
+      id: j.id,
+      name: j.name,
+      action: j.action_type,
+      status: j.status || 'idle',
+      cron: j.cron_expr,
+      lastRun: j.last_run || null,
+      nextRun: j.next_run || null,
+    }));
+    res.json({ jobs: ciJobs, history: [], total: ciJobs.length });
+  } catch (err) {
+    console.error('[CI] status error:', err.message);
+    res.json({ jobs: [], history: [], total: 0 });
+  }
+});
+
+// ── File Operations (cloud-server side, for mobile fallback) ──
+app.get('/api/files/list', auth, (req, res) => {
+  try {
+    const dirPath = req.query.path || '/';
+    const files = db.prepare('SELECT name, path, size, type FROM storage_files WHERE user_id = ? AND path LIKE ? ORDER BY type DESC, name ASC')
+      .all(req.userId || '', (dirPath === '/' ? '%' : dirPath + '%'));
+    res.json({ path: dirPath, entries: (files || []).map(f => ({
+      name: f.name, path: f.path, type: f.type, size: f.size,
+    })) });
+  } catch (err) {
+    res.json({ path: req.query.path || '/', entries: [] });
+  }
+});
+
+app.get('/api/files/read', auth, (req, res) => {
+  try {
+    const filePath = req.query.path;
+    if (!filePath) return res.status(400).json({ error: 'path_required' });
+    const file = db.prepare('SELECT * FROM storage_files WHERE user_id = ? AND path = ?').get(req.userId || '', filePath);
+    if (!file) return res.status(404).json({ error: 'not_found' });
+    res.json({ path: file.path, content: file.content || '', size: file.size, mtime: file.modified_at || file.created_at });
+  } catch (err) {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.put('/api/files/write', auth, (req, res) => {
+  try {
+    const { path, content } = req.body;
+    if (!path) return res.status(400).json({ error: 'path_required' });
+    const now = new Date().toISOString();
+    const existing = db.prepare('SELECT id FROM storage_files WHERE user_id = ? AND path = ?').get(req.userId || '', path);
+    if (existing) {
+      db.prepare('UPDATE storage_files SET content = ?, size = ?, modified_at = ? WHERE id = ?')
+        .run(content || '', (content || '').length, now, existing.id);
+    } else {
+      const id = randomUUID();
+      const name = path.split('/').pop() || 'untitled';
+      db.prepare('INSERT INTO storage_files (id, user_id, name, path, content, size, type, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(id, req.userId || '', name, path, content || '', (content || '').length, 'file', now, now);
+    }
+    res.json({ success: true, path });
+  } catch (err) {
+    console.error('[Files] write error:', err.message);
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// ── Quest Tasks (cloud fallback: maps requirements as tasks) ──
+app.get('/api/quest-tasks', auth, (req, res) => {
+  try {
+    const reqs = db.prepare('SELECT * FROM requirements WHERE user_id = ? ORDER BY updated_at DESC').all(req.userId || '');
+    res.json((reqs || []).map(r => ({
+      id: r.id,
+      title: r.title,
+      status: r.status === 'approved' ? 'idle' : r.status === 'in_progress' ? 'running' : r.status === 'completed' ? 'completed' : 'idle',
+      scenario: 'spec',
+      created_at: r.created_at,
+    })));
+  } catch (err) {
+    res.json([]);
+  }
+});
+
 console.log('[Cloud Management] API routes initialized');
+
+// ====== Skills Market Proxy (skills.sh → cloud cache) ======
+// skills.sh now requires Vercel OIDC auth; we cache popular skills here
+const SKILLS_CACHE_PATH = resolve(__dirname, 'skills-cache.json');
+let skillsCache = { data: [], updatedAt: null };
+
+function loadSkillsCache() {
+  try {
+    if (existsSync(SKILLS_CACHE_PATH)) {
+      skillsCache = JSON.parse(readFileSync(SKILLS_CACHE_PATH, 'utf8'));
+      console.log('[SkillsProxy] Cache loaded:', skillsCache.data.length, 'skills, updated:', skillsCache.updatedAt);
+    } else {
+      // Seed with curated popular skills from skills.sh
+      skillsCache = { data: generateCuratedSkills(), updatedAt: new Date().toISOString() };
+      writeFileSync(SKILLS_CACHE_PATH, JSON.stringify(skillsCache, null, 2));
+      console.log('[SkillsProxy] Seeded with', skillsCache.data.length, 'curated skills');
+    }
+  } catch (e) {
+    console.warn('[SkillsProxy] Cache load error:', e.message);
+    skillsCache = { data: generateCuratedSkills(), updatedAt: new Date().toISOString() };
+  }
+}
+
+function generateCuratedSkills() {
+  // Top skills from skills.sh leaderboard (as of 2026-06)
+  const curated = [
+    { id: 'vercel-labs/skills/find-skills', slug: 'find-skills', name: 'find-skills', source: 'vercel-labs/skills', installs: 2100000, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/skills', url: 'https://skills.sh/vercel-labs/skills/find-skills', description: 'Discover and install skills for your AI agents' },
+    { id: 'anthropics/skills/frontend-design', slug: 'frontend-design', name: 'frontend-design', source: 'anthropics/skills', installs: 565000, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/frontend-design', description: 'Frontend design and UI development best practices' },
+    { id: 'vercel-labs/agent-skills/vercel-react-best-practices', slug: 'vercel-react-best-practices', name: 'vercel-react-best-practices', source: 'vercel-labs/agent-skills', installs: 487900, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/agent-skills', url: 'https://skills.sh/vercel-labs/agent-skills/vercel-react-best-practices', description: 'React best practices for Vercel deployments' },
+    { id: 'vercel-labs/agent-browser/agent-browser', slug: 'agent-browser', name: 'agent-browser', source: 'vercel-labs/agent-browser', installs: 464000, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/agent-browser', url: 'https://skills.sh/vercel-labs/agent-browser/agent-browser', description: 'Browser automation for AI agents' },
+    { id: 'microsoft/azure-skills/microsoft-foundry', slug: 'microsoft-foundry', name: 'microsoft-foundry', source: 'microsoft/azure-skills', installs: 403000, sourceType: 'github', installUrl: 'https://github.com/microsoft/azure-skills', url: 'https://skills.sh/microsoft/azure-skills/microsoft-foundry', description: 'Microsoft Azure AI Foundry integration' },
+    { id: 'vercel-labs/agent-skills/web-design-guidelines', slug: 'web-design-guidelines', name: 'web-design-guidelines', source: 'vercel-labs/agent-skills', installs: 401900, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/agent-skills', url: 'https://skills.sh/vercel-labs/agent-skills/web-design-guidelines', description: 'Web design and UI/UX guidelines' },
+    { id: 'microsoft/azure-skills/azure-ai', slug: 'azure-ai', name: 'azure-ai', source: 'microsoft/azure-skills', installs: 401000, sourceType: 'github', installUrl: 'https://github.com/microsoft/azure-skills', url: 'https://skills.sh/microsoft/azure-skills/azure-ai', description: 'Azure AI services integration and best practices' },
+    { id: 'remotion-dev/skills/remotion-best-practices', slug: 'remotion-best-practices', name: 'remotion-best-practices', source: 'remotion-dev/skills', installs: 379900, sourceType: 'github', installUrl: 'https://github.com/remotion-dev/skills', url: 'https://skills.sh/remotion-dev/skills/remotion-best-practices', description: 'Remotion video creation best practices' },
+    { id: 'mattpocock/skills/grill-me', slug: 'grill-me', name: 'grill-me', source: 'mattpocock/skills', installs: 347500, sourceType: 'github', installUrl: 'https://github.com/mattpocock/skills', url: 'https://skills.sh/mattpocock/skills/grill-me', description: 'Code review and improvement suggestions' },
+    { id: 'anthropics/skills/skill-creator', slug: 'skill-creator', name: 'skill-creator', source: 'anthropics/skills', installs: 277300, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/skill-creator', description: 'Create custom skills for Claude and other AI agents' },
+    { id: 'mattpocock/skills/tdd', slug: 'tdd', name: 'tdd', source: 'mattpocock/skills', installs: 268800, sourceType: 'github', installUrl: 'https://github.com/mattpocock/skills', url: 'https://skills.sh/mattpocock/skills/tdd', description: 'Test-driven development workflow' },
+    { id: 'mattpocock/skills/diagnose', slug: 'diagnose', name: 'diagnose', source: 'mattpocock/skills', installs: 229100, sourceType: 'github', installUrl: 'https://github.com/mattpocock/skills', url: 'https://skills.sh/mattpocock/skills/diagnose', description: 'Diagnose and fix TypeScript errors' },
+    { id: 'anthropics/skills/pptx', slug: 'pptx', name: 'pptx', source: 'anthropics/skills', installs: 151200, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/pptx', description: 'Create and edit PowerPoint presentations' },
+    { id: 'supabase/agent-skills/supabase-postgres-best-practices', slug: 'supabase-postgres-best-practices', name: 'supabase-postgres-best-practices', source: 'supabase/agent-skills', installs: 240500, sourceType: 'github', installUrl: 'https://github.com/supabase/agent-skills', url: 'https://skills.sh/supabase/agent-skills/supabase-postgres-best-practices', description: 'Supabase PostgreSQL best practices' },
+    { id: 'anthropics/skills/pdf', slug: 'pdf', name: 'pdf', source: 'anthropics/skills', installs: 138000, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/pdf', description: 'Generate and manipulate PDF documents' },
+    { id: 'vercel-labs/agent-skills/vercel-react-native-skills', slug: 'vercel-react-native-skills', name: 'vercel-react-native-skills', source: 'vercel-labs/agent-skills', installs: 145900, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/agent-skills', url: 'https://skills.sh/vercel-labs/agent-skills/vercel-react-native-skills', description: 'React Native development with Vercel' },
+    { id: 'anthropics/skills/docx', slug: 'docx', name: 'docx', source: 'anthropics/skills', installs: 129700, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/docx', description: 'Create and edit Word documents' },
+    { id: 'supabase/agent-skills/supabase', slug: 'supabase', name: 'supabase', source: 'supabase/agent-skills', installs: 129400, sourceType: 'github', installUrl: 'https://github.com/supabase/agent-skills', url: 'https://skills.sh/supabase/agent-skills/supabase', description: 'Supabase backend development' },
+    { id: 'anthropics/skills/xlsx', slug: 'xlsx', name: 'xlsx', source: 'anthropics/skills', installs: 114400, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/xlsx', description: 'Create and edit Excel spreadsheets' },
+    { id: 'vercel-labs/next-skills/next-best-practices', slug: 'next-best-practices', name: 'next-best-practices', source: 'vercel-labs/next-skills', installs: 108800, sourceType: 'github', installUrl: 'https://github.com/vercel-labs/next-skills', url: 'https://skills.sh/vercel-labs/next-skills/next-best-practices', description: 'Next.js development best practices' },
+    { id: 'anthropics/skills/webapp-testing', slug: 'webapp-testing', name: 'webapp-testing', source: 'anthropics/skills', installs: 99100, sourceType: 'github', installUrl: 'https://github.com/anthropics/skills', url: 'https://skills.sh/anthropics/skills/webapp-testing', description: 'Web application testing with Playwright' },
+    { id: 'firebase/agent-skills/firebase-basics', slug: 'firebase-basics', name: 'firebase-basics', source: 'firebase/agent-skills', installs: 86200, sourceType: 'github', installUrl: 'https://github.com/firebase/agent-skills', url: 'https://skills.sh/firebase/agent-skills/firebase-basics', description: 'Firebase development fundamentals' },
+    { id: 'shadcn/ui/shadcn', slug: 'shadcn', name: 'shadcn', source: 'shadcn/ui', installs: 197000, sourceType: 'github', installUrl: 'https://github.com/shadcn/ui', url: 'https://skills.sh/shadcn/ui/shadcn', description: 'shadcn/ui component library integration' },
+    { id: 'obra/superpowers/brainstorming', slug: 'brainstorming', name: 'brainstorming', source: 'obra/superpowers', installs: 231600, sourceType: 'github', installUrl: 'https://github.com/obra/superpowers', url: 'https://skills.sh/obra/superpowers/brainstorming', description: 'Brainstorming and ideation techniques' },
+    { id: 'obra/superpowers/systematic-debugging', slug: 'systematic-debugging', name: 'systematic-debugging', source: 'obra/superpowers', installs: 151000, sourceType: 'github', installUrl: 'https://github.com/obra/superpowers', url: 'https://skills.sh/obra/superpowers/systematic-debugging', description: 'Systematic debugging methodology' },
+  ];
+  return curated;
+}
+
+// GET /api/skills-proxy/skills — Leaderboard
+app.get('/api/skills-proxy/skills', (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const perPage = Math.min(parseInt(req.query.per_page) || 20, 100);
+    const allSkills = skillsCache.data || [];
+    const start = page * perPage;
+    const slice = allSkills.slice(start, start + perPage);
+    res.json({
+      data: slice,
+      pagination: { page, perPage, total: allSkills.length, hasMore: start + perPage < allSkills.length },
+      _proxy: 'lingjing-cloud-cache',
+      _updatedAt: skillsCache.updatedAt,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'proxy_error', message: err.message });
+  }
+});
+
+// GET /api/skills-proxy/skills/search — Search
+app.get('/api/skills-proxy/skills/search', (req, res) => {
+  try {
+    const q = (req.query.q || '').toLowerCase();
+    const limit = Math.min(parseInt(req.query.limit) || 30, 100);
+    const allSkills = skillsCache.data || [];
+    let results;
+    if (q.length >= 2) {
+      results = allSkills.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        (s.description || '').toLowerCase().includes(q) ||
+        s.source.toLowerCase().includes(q)
+      ).slice(0, limit);
+    } else {
+      results = allSkills.slice(0, limit);
+    }
+    res.json({
+      data: results,
+      query: q,
+      count: results.length,
+      _proxy: 'lingjing-cloud-cache',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'proxy_error', message: err.message });
+  }
+});
+
+// GET /api/skills-proxy/skills/:source/:slug — Detail
+app.get('/api/skills-proxy/skills/:source/:slug', (req, res) => {
+  try {
+    // Decode URI-encoded params for multi-segment sources (e.g., 'anthropics%2Fskills')
+    const source = decodeURIComponent(req.params.source);
+    const slug = decodeURIComponent(req.params.slug);
+    const skill = (skillsCache.data || []).find(s => s.source === source && s.slug === slug);
+    if (!skill) {
+      return res.status(404).json({ error: 'not_found', message: '技能未找到' });
+    }
+    res.json({
+      ...skill,
+      files: null, // No file cache available from proxy
+      _proxy: 'lingjing-cloud-cache',
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'proxy_error', message: err.message });
+  }
+});
+
+loadSkillsCache();
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`灵境 Cloud Server v3 running on http://0.0.0.0:${PORT}`);

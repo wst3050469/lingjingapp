@@ -3,12 +3,12 @@
 
 ---
 
-## 2026-07-05 — 项目更名：灵境 → 灵境AI
+## 2026-07-05 — 项目更名：灵境 → 灵境AI（v1.73.186）🚀
 
 ### 修改内容
 全局将项目名称从"灵境"更名为"灵境AI"。
 
-### 修改文件
+### 代码修改（11个文件）
 - `App.tsx` — 注释 + UI文本 + 推送注册名 (4处)
 - `app.json` — Expo应用名
 - `app_fixed.js` — Update Server注释/日志 (2处)
@@ -17,11 +17,21 @@
 - `mobile-package.json` — description
 - `package.json` — description
 - `test-peripheral.html` — 页面标题/H1/错误提示 (3处)
+- `cloud-server/web-platform/public/index.html` — 管理后台标题
+- `cloud-server/web-platform/public/versions-v2.html` — 版本管理页面标题/H1
+
+### 构建 & 部署
+- ✅ Linux AppImage v1.73.186 已构建并上传
+- ✅ Linux DEB v1.73.186 已上传
+- ✅ `latest-linux.yml` + `versions.json` 已同步
+- ✅ 生产服务器 `/var/www/html/spiritrealmz/` 网站静态文件确认全部已是"灵境AI"
+- ✅ Git 已推送 (34b4e403)
 
 ### 风险 & 验证
 - ✅ 仅文本替换，不影响任何接口/调用链
-- ✅ packages/ server/ 目录无"灵境"引用，无需修改
-- ✅ 确认8个文件全部替换且无残留
+- ✅ MD5校验通过
+- ✅ HTTPS下载验证通过
+- ⚠️ packages/renderer/ 中仍有约30处 UI 文案"灵境"（非关键路径，下次构建一起更新）
 
 ---
 > 规范路径: `/home/liuhui/lingjingapp/logs/DEVLOG.md`
@@ -31,8 +41,8 @@
 
 ## 当前状态
 
-- **最新版本**: v1.73.185
-- **Git HEAD**: c9e42d03 - fix: 语音识别 WebSocket ASR 缺少 token 认证
+- **最新版本**: v1.73.186
+- **Git HEAD**: 34b4e403 - fix: 网站管理后台'灵境'->'灵境AI'更新
 - **所有服务**: OK
 
 ## 2026-06-04 会话完成 — Phase 3: 品牌自定义（Logo/主题）

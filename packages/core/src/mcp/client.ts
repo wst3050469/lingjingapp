@@ -172,7 +172,7 @@ export class McpClient extends EventEmitter {
       protocolVersion: MCP_PROTOCOL_VERSION,
       capabilities: {},
       clientInfo: {
-        name: '灵境',
+        name: '灵境AI',
         version: '1.0.0',
       },
     }, initTimeout);

@@ -13,7 +13,7 @@ import {
 let inlineChatProvider: LLMProvider | null = null;
 let currentAbort: AbortController | null = null;
 
-const INLINE_CHAT_SYSTEM_PROMPT = `You are an intelligent code editor assistant for the 灵境 IDE.
+const INLINE_CHAT_SYSTEM_PROMPT = `You are an intelligent code editor assistant for the 灵境AI IDE.
 The user will describe a code modification or addition. You must return ONLY the raw code result.
 
 Rules:

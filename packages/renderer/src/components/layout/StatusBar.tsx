@@ -103,7 +103,7 @@ export function StatusBar() {
   return (
     <div className="h-6 bg-gradient-to-r from-[#1a1a2e] to-[#16213e] flex items-center px-3 text-cp-text text-[11px] gap-3 select-none shrink-0 border-t border-white/[0.04]">
       {/* App name */}
-      <span className="opacity-80">灵境</span>
+      <span className="opacity-80">灵境AI</span>
 
       {/* Git branch */}
       {gitStatus?.isRepo && gitStatus.branch && (

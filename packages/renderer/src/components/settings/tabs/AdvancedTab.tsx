@@ -922,7 +922,7 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
             <div className="min-w-0 flex-1">
               <p className="text-sm text-cp-text font-medium">摄像头</p>
               <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
-                允许灵境访问摄像头设备。关闭后所有摄像头相关功能将不可用。默认关闭。
+                允许灵境AI访问摄像头设备。关闭后所有摄像头相关功能将不可用。默认关闭。
               </p>
               {/* 测试拍照按钮 */}
               {cameraEnabled && (
@@ -968,7 +968,7 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
             <div className="min-w-0 flex-1">
               <p className="text-sm text-cp-text font-medium">麦克风</p>
               <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
-                允许灵境使用麦克风进行语音输入。关闭后语音输入功能将被禁用。默认关闭。
+                允许灵境AI使用麦克风进行语音输入。关闭后语音输入功能将被禁用。默认关闭。
               </p>
             </div>
             <Toggle checked={microphoneEnabled} onChange={handleMicrophoneToggle} />

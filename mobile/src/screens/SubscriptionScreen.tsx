@@ -1,4 +1,4 @@
-// 灵境IDE 移动端 - 订阅管理页
+// 灵境AIIDE 移动端 - 订阅管理页
 // 显示当前订阅信息、用量配额、套餐列表、购买入口
 import React, { useEffect, useState } from 'react';
 import {

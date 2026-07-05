@@ -1,5 +1,5 @@
 /**
- * 灵境 - WebSocket ASR 适配器
+ * 灵境AI - WebSocket ASR 适配器
  *
  * 通过 WebSocket 连接服务器 Whisper 流式端点实现语音识别。
  * 作为 WebSpeech API 不可用时的降级方案（Safari/Firefox/APK）。

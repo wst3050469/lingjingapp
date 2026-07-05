@@ -1,3 +1,3 @@
-// 灵境 Cloud - 云端会话同步 & 远程集成
+// 灵境AI Cloud - 云端会话同步 & 远程集成
 export { CloudSyncClient } from './sync-client.js';
 export { OfflineQueue, MergeStrategy } from './offline-queue.js';

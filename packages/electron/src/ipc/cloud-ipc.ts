@@ -1,4 +1,4 @@
-// 灵境 Cloud IPC - 云端会话同步 & 记忆同步
+// 灵境AI Cloud IPC - 云端会话同步 & 记忆同步
 // Bridges Electron IPC <-> CloudSyncClient
 
 import { ipcMain, BrowserWindow, app } from 'electron';

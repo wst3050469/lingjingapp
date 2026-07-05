@@ -307,13 +307,13 @@ function buildMenus(): MenuDef[] {
         { label: '报告问题', disabled: true },
         { label: '打开开发者工具', shortcut: 'F12', action: () => window.electronAPI?.window?.openDevTools?.() },
         { label: '', divider: true },
-        { label: '关于灵境', action: async () => {
+        { label: '关于灵境AI', action: async () => {
           try {
             const version = await window.electronAPI?.app?.getVersion?.();
             const platform = await window.electronAPI?.app?.platform?.();
-            alert(`灵境 (LingJing)\n版本: ${version || '未知'}\n平台: ${platform || '未知'}\n\nAI 编程助手`);
+            alert(`灵境AI (LingJing)\n版本: ${version || '未知'}\n平台: ${platform || '未知'}\n\nAI 编程助手`);
           } catch {
-            alert('灵境 (LingJing)\nAI 编程助手');
+            alert('灵境AI (LingJing)\nAI 编程助手');
           }
         }},
       ],

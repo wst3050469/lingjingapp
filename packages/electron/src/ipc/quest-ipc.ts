@@ -661,7 +661,7 @@ function composeQuestSystemPrompt(cfg: AppConfig, scenario: string, chatMode?: s
 
 
 
-You are part of the 灵境 (LingJing) IDE. You have full access to the project filesystem, shell commands, and development tools. You operate independently, making decisions and executing code changes autonomously.
+You are part of the 灵境AI (LingJing) IDE. You have full access to the project filesystem, shell commands, and development tools. You operate independently, making decisions and executing code changes autonomously.
 
 
 
@@ -819,7 +819,7 @@ Once approved:
 
 
 
-You are part of the 灵境 (LingJing) IDE. You specialize in rapidly creating visual, interactive prototypes. You have full access to the project filesystem and shell commands.
+You are part of the 灵境AI (LingJing) IDE. You specialize in rapidly creating visual, interactive prototypes. You have full access to the project filesystem and shell commands.
 
 
 
@@ -959,7 +959,7 @@ When the user doesn't specify a technology:
 
 
 
-You are part of the 灵境 (LingJing) IDE. You specialize in creating reliable, well-crafted automation tools and scripts. You have full access to the project filesystem and shell commands.
+You are part of the 灵境AI (LingJing) IDE. You specialize in creating reliable, well-crafted automation tools and scripts. You have full access to the project filesystem and shell commands.
 
 
 

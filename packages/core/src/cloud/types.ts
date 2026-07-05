@@ -1,4 +1,4 @@
-// 灵境 Cloud 类型定义
+// 灵境AI Cloud 类型定义
 // Cloud types for sync client
 
 export interface CloudServerConfig {

@@ -160,7 +160,7 @@ export class ErrorBoundary extends Component<Props, State> {
               界面渲染异常
             </h1>
             <p className="text-gray-400 text-sm mb-2">
-              灵境遇到渲染错误，请尝试恢复
+              灵境AI遇到渲染错误，请尝试恢复
             </p>
 
             {/* Retry indicator */}

@@ -1,4 +1,4 @@
-// 灵境 Cloud 远程代理客户端
+// 灵境AI Cloud 远程代理客户端
 // CloudAgent client for executing tasks on remote cloud environment
 
 export interface CloudAgentConfig {

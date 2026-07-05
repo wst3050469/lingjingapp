@@ -1,4 +1,4 @@
-// 灵境IDE 移动端 - 极简同步终端 (The Thin Client)
+// 灵境AIIDE 移动端 - 极简同步终端 (The Thin Client)
 import 'react-native-gesture-handler';
 import 'react-native-reanimated';
 import React, { useEffect, useState } from 'react';
@@ -44,7 +44,7 @@ export default function App() {
   const { connected, setConnection, setAuth, setUser } = useAppStore();
   const [initializing, setInitializing] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
-  const [loadingText, setLoadingText] = useState('正在连接灵境...');
+  const [loadingText, setLoadingText] = useState('正在连接灵境AI...');
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === 'dark';
 
@@ -55,7 +55,7 @@ export default function App() {
   async function initConnection() {
     const persisted = await loadPersistedAuth();
     if (persisted?.token) {
-      setLoadingText('正在连接灵境云...');
+      setLoadingText('正在连接灵境AI云...');
       api.configure({
         baseUrl: CLOUD_SERVER_URL,
         token: persisted.token,

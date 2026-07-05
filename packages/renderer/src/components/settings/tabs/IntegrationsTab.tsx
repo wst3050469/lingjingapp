@@ -666,7 +666,7 @@ export function IntegrationsTab({ config, saveKey }: IntegrationsTabProps) {
           </div>
         </Card>
 
-        {/* 灵境移动端 - 极简设计 */}
+        {/* 灵境AI移动端 - 极简设计 */}
         <Card className="mt-4">
           <div className="flex items-start gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -677,9 +677,9 @@ export function IntegrationsTab({ config, saveKey }: IntegrationsTabProps) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-cp-text font-medium">灵境移动端</p>
+                  <p className="text-sm text-cp-text font-medium">灵境AI移动端</p>
                   <p className="text-[11px] text-cp-text-dim/50 mt-0.5 leading-relaxed">
-                    开启后在手机上访问灵境，随时管理任务和对话
+                    开启后在手机上访问灵境AI，随时管理任务和对话
                   </p>
                 </div>
                 <div className="flex items-center gap-3 ml-4 shrink-0">

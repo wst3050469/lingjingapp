@@ -189,7 +189,7 @@ function AppContent() {
             <div className="absolute inset-0 w-16 h-16 border-[3px] border-transparent border-b-blue-400/50 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
           </div>
           <div className="flex flex-col items-center gap-1.5">
-            <span className="text-xl font-bold bg-gradient-to-r from-cp-accent to-blue-400 bg-clip-text text-transparent">灵境</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-cp-accent to-blue-400 bg-clip-text text-transparent">灵境AI</span>
             <span className="text-sm text-neutral-400">正在加载...</span>
           </div>
         </div>

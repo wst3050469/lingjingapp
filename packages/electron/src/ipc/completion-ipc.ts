@@ -12,7 +12,7 @@ import {
 let completionProvider: LLMProvider | null = null;
 let currentAbort: AbortController | null = null;
 
-const COMPLETION_SYSTEM_PROMPT = `You are an intelligent code completion engine for the 灵境 IDE.
+const COMPLETION_SYSTEM_PROMPT = `You are an intelligent code completion engine for the 灵境AI IDE.
 Predict the next code the developer will write at the cursor position.
 Return ONLY the completion text, no explanations, no markdown, no code fences.
 Consider the recent changes the developer has made for context.

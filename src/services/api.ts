@@ -1,4 +1,4 @@
-// 灵境IDE 移动端轻量版 - API Service Layer
+// 灵境AIIDE 移动端轻量版 - API Service Layer
 // v2: 精简为纯对话 + 认证，移除任务/计划/订阅/定时/webhook等
 import { Platform } from 'react-native';
 

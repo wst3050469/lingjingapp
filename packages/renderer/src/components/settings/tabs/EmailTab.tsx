@@ -31,7 +31,7 @@ const DEFAULT_SMTP_CONFIG: SmtpConfig = {
   secure: true,
   user: '',
   pass: '',
-  fromName: '灵境IDE',
+  fromName: '灵境AIIDE',
 };
 
 export function EmailTab() {
@@ -236,7 +236,7 @@ export function EmailTab() {
               type="text"
               value={smtpConfig.fromName}
               onChange={(e) => handleConfigChange('fromName', e.target.value)}
-              placeholder="灵境IDE"
+              placeholder="灵境AIIDE"
               className="w-full bg-cp-bg border border-cp-border/50 rounded-lg px-3 py-1.5 text-sm text-cp-text outline-none focus:border-cp-accent"
             />
           </div>

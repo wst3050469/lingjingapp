@@ -153,7 +153,7 @@ export default function SchedulesScreen() {
           <View style={styles.empty}>
             <Ionicons name="time-outline" size={48} color="#30363d" />
             <Text style={styles.emptyText}>暂无定时任务</Text>
-            <Text style={styles.emptyHint}>在桌面端灵境创建定时任务后自动同步</Text>
+            <Text style={styles.emptyHint}>在桌面端灵境AI创建定时任务后自动同步</Text>
           </View>
         }
         refreshControl={

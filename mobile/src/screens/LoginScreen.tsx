@@ -102,7 +102,7 @@ export default function LoginScreen({ onSuccess, onSwitchToPairing }: { onSucces
             <View style={styles.logoContainer}>
               <Ionicons name="code-slash" size={48} color="#58a6ff" />
             </View>
-            <Text style={styles.title}>灵境 IDE</Text>
+            <Text style={styles.title}>灵境AI IDE</Text>
             <Text style={styles.subtitle}>AI 编程助手</Text>
           </View>
 
@@ -202,7 +202,7 @@ export default function LoginScreen({ onSuccess, onSwitchToPairing }: { onSucces
           <View style={styles.infoCard}>
             <Ionicons name="cloud-outline" size={16} color="#58a6ff" />
             <Text style={styles.infoText}>
-              通过云账号登录后，可直接使用灵境云服务
+              通过云账号登录后，可直接使用灵境AI云服务
             </Text>
           </View>
 

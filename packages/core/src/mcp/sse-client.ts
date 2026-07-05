@@ -221,7 +221,7 @@ export class McpSseClient extends EventEmitter {
       protocolVersion: '2024-11-05',
       capabilities: {},
       clientInfo: {
-        name: '灵境',
+        name: '灵境AI',
         version: '1.0.0',
       },
     }, timeout) as any;

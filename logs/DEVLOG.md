@@ -3,12 +3,12 @@
 
 ---
 
-## 2026-07-05 — 项目更名：灵境 → 灵境AI（v1.73.186）🚀
+## 2026-07-05 — 项目更名：灵境 → 灵境AI（v1.73.186 → v1.73.187）🚀
 
 ### 修改内容
-全局将项目名称从"灵境"更名为"灵境AI"。
+全局将项目名称从"灵境"更名为"灵境AI"，分两轮完成。
 
-### 代码修改（11个文件）
+### 第一轮（v1.73.186 — 11个文件）
 - `App.tsx` — 注释 + UI文本 + 推送注册名 (4处)
 - `app.json` — Expo应用名
 - `app_fixed.js` — Update Server注释/日志 (2处)
@@ -20,18 +20,28 @@
 - `cloud-server/web-platform/public/index.html` — 管理后台标题
 - `cloud-server/web-platform/public/versions-v2.html` — 版本管理页面标题/H1
 
-### 构建 & 部署
-- ✅ Linux AppImage v1.73.186 已构建并上传
-- ✅ Linux DEB v1.73.186 已上传
+### 第二轮（v1.73.187 — 48个文件全量覆盖）
+- `packages/renderer` (15文件)：EditorPane、AuthScreen、设置页各Tab、StatusBar、TopBar、ErrorBoundary、useVoiceInput、App.tsx、index.html
+- `packages/core` (6文件)：cloud模块注释、MCP客户端名、fusion集成
+- `packages/electron` (8文件)：main.ts、IPC各模块（agent/completion/inline-chat/quest/cloud）、邮件模板、ASR适配器
+- `mobile` (8文件)：App.tsx、Login/Pairing/Schedule/ChatDetail/Subscription各屏、通知/常量服务
+- `src` (6文件)：移动端共享层
+- `scripts` (1文件)：verify-desktop-control.ts
+- 各层 `package.json` 版本号同步
+
+### 构建 & 部署（v1.73.187）
+- ✅ Linux AppImage (175MB) 已构建并上传 → MD5: f7c79dfa...
+- ✅ Linux DEB (172MB) 已构建并上传 → MD5: 043bec1c...
 - ✅ `latest-linux.yml` + `versions.json` 已同步
-- ✅ 生产服务器 `/var/www/html/spiritrealmz/` 网站静态文件确认全部已是"灵境AI"
-- ✅ Git 已推送 (34b4e403)
+- ✅ 生产服务器文件权限已修正 (admin:admin)
+- ✅ HTTPS下载验证通过 (200, 182893036 bytes)
+- ✅ Git 已推送 (7b099f37)
 
 ### 风险 & 验证
-- ✅ 仅文本替换，不影响任何接口/调用链
-- ✅ MD5校验通过
-- ✅ HTTPS下载验证通过
-- ⚠️ packages/renderer/ 中仍有约30处 UI 文案"灵境"（非关键路径，下次构建一起更新）
+- ✅ 全项目 `grep -r '灵境' | grep -v '灵境AI'` → 0残留
+- ✅ 无重复替换（`灵境AIAI` → 0处）
+- ✅ 系统提示词更名不影响AI行为逻辑
+- ✅ MD5校验全部通过
 
 ---
 > 规范路径: `/home/liuhui/lingjingapp/logs/DEVLOG.md`
@@ -41,8 +51,8 @@
 
 ## 当前状态
 
-- **最新版本**: v1.73.186
-- **Git HEAD**: 34b4e403 - fix: 网站管理后台'灵境'->'灵境AI'更新
+- **最新版本**: v1.73.187
+- **Git HEAD**: 7b099f37 - feat: 全量'灵境'→'灵境AI'替换 - v1.73.187
 - **所有服务**: OK
 
 ## 2026-06-04 会话完成 — Phase 3: 品牌自定义（Logo/主题）

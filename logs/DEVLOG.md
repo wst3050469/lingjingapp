@@ -1,14 +1,38 @@
-# 灵境 开发日志
+# 灵境AI 开发日志
 
-> 规范路径: `/home/liuhui/灵境/logs/DEVLOG.md`
+
+---
+
+## 2026-07-05 — 项目更名：灵境 → 灵境AI
+
+### 修改内容
+全局将项目名称从"灵境"更名为"灵境AI"。
+
+### 修改文件
+- `App.tsx` — 注释 + UI文本 + 推送注册名 (4处)
+- `app.json` — Expo应用名
+- `app_fixed.js` — Update Server注释/日志 (2处)
+- `downloads.js` — 注释 + macOS路径 (3处)
+- `electron-builder.json` — productName
+- `mobile-package.json` — description
+- `package.json` — description
+- `test-peripheral.html` — 页面标题/H1/错误提示 (3处)
+
+### 风险 & 验证
+- ✅ 仅文本替换，不影响任何接口/调用链
+- ✅ packages/ server/ 目录无"灵境"引用，无需修改
+- ✅ 确认8个文件全部替换且无残留
+
+---
+> 规范路径: `/home/liuhui/lingjingapp/logs/DEVLOG.md`
 > 同步来源: `开发日志.md` + `日志.md`
 
 ---
 
 ## 当前状态
 
-- **最新版本**: v1.73.115
-- **Git HEAD**: v1.73.115 - deploy EXE format + fix /api/latest versions.json source
+- **最新版本**: v1.73.185
+- **Git HEAD**: c9e42d03 - fix: 语音识别 WebSocket ASR 缺少 token 认证
 - **所有服务**: OK
 
 ## 2026-06-04 会话完成 — Phase 3: 品牌自定义（Logo/主题）
@@ -409,3 +433,160 @@ FONT_SCALE=2.0: 10→20, 11→22, 12→24, 13→26, 14→28, 15→30, 16→32, 1
 - ✅ 类型检查通过（无新增错误）
 - ✅ 向后兼容：旧书签无 serverUrl 时使用默认地址
 - ✅ 向后兼容：serverUrl 为空时行为与 Phase 1 完全相同
+
+---
+
+## 2026-07-05 — 下载页面扫码二维码 + SSL修复
+
+### 新增
+- 下载页面新增扫码下载二维码（指向 `https://www.spiritrealmz.com/#download`）
+- 使用 qrencode 生成 396×396 PNG 二维码放在 `/assets/qrcode-download.png`
+
+### 修改文件
+- `index.html` — 下载卡片新增 QR 码区域 + 版本号更新（v1.64.1）
+- `css/website.css` — 新增 `.download-qr` / `.qr-image` / `.qr-hint` 样式
+- 同步到 47.108.248.3 服务器
+
+### SSL 修复
+- 47.108.248.3：新增 spiritrealmz.com SSL 配置 + 从 43.103.5.36 复制证书
+- 47.108.248.3：同步全部静态文件（index.html, css, js, assets）
+- 两服务器 nginx 均已配置 spiritrealmz 站点
+
+### 风险 & 验证
+- ✅ 两服务器本地 curl 均返回 QR 码 HTML
+- ⚠️ 外网被阿里云 WAF（Beaver）拦截 → DNS 解析指向 47.108.248.3 且 WAF 策略未知
+- 待办：联系阿里云或修改 DNS 指向 43.103.5.36 直连
+
+---
+
+## 2026-07-05 — APK下载修复 + DNS迁移完成
+
+### 问题
+`oss.spiritrealmz.com` 是 CNAME 到 CDN (`queniuaa.com`)，CDN 代理到 OSS bucket，但 OSS 中没有 APK 文件 → 404
+
+### 修复
+1. **APK托管** — 复制 APK 到 `/var/www/html/spiritrealmz/apk/`，两服务器同步
+2. **Nginx** — `www.spiritrealmz.com` 新增 `/apk/` location，`oss.spiritrealmz.com` 修复 alias 路径
+3. **DNS迁移** — 所有 spiritrealmz.com 的 A 记录从 `47.108.248.3` 改为 `43.103.5.36`：
+   - `@` (裸域), `www`, `*` (泛域名), `admin`, `lj`, `wap`, `oss`
+   - `oss` 从 CNAME 改为 A 记录
+4. **下载链接** — index.html 中 APK 链接从 OSS URL 改为 `/apk/lingjing-v1.64.1.apk`
+5. **47.108.248.3** — 同步证书、静态文件、nginx配置作为备用
+
+### 验证
+- ✅ `www.spiritrealmz.com` HTTPS 200 (证书: Let's Encrypt E7)
+- ✅ `spiritrealmz.com` HTTPS 200 (裸域)
+- ✅ APK下载 200, content-length: 38518529 (36.7MB)
+- ✅ QR码扫码下载
+- ✅ 两服务器 (43.103.5.36 / 47.108.248.3) 均正常
+- ⚠️ 证书不含 spiritrealmz.com (裸域)，仅 www.spiritrealmz.com。已尝试 certbot expand 但被阿里云 WAF 拦截
+
+## 2026-07-05 — API 502修复 + 本地服务代理
+
+### 问题
+App 登录显示"网络连接失败" — API 代理到 `47.108.248.3` 但该服务器默认 server block 返回 444 → nginx 502
+
+### 修复
+- `lingjing-www` nginx: `/api/` 代理目标从 `https://47.108.248.3:443` 改为 `http://127.0.0.1:8900`
+- `lingjing-zjm` nginx: 同步修复
+- 移除 `proxy_ssl_verify off` / `proxy_ssl_server_name on` (本地不需要)
+
+### 验证
+- ✅ API `/api/v1/auth/login` 正常响应
+- ✅ `/health` → `{"status":"healthy","service":"灵境企业管理系统"}`
+- ✅ 网站首页 + APK 下载正常
+
+---
+
+## 2026-07-05 — 聊天无响应修复 + 数据库表补齐
+
+### 问题
+App 发送消息后无响应（不思考、不回复），根因是两个数据库缺失：
+1. `invite_codes` 表不存在 → `get_current_user` 查询报 `UndefinedTableError` → 500
+2. `tenants.owner_name` 列不存在 → 认证查询报 `UndefinedColumnError` → 500
+
+### 修复
+1. **PostgreSQL** — 创建 `invite_codes` 表（code/nickname/status/token/activated_at）
+2. **PostgreSQL** — 添加 `tenants.owner_name VARCHAR(200)` 列
+3. **db.py** — 新增 `invite_codes` 建表 + 索引（幂等）
+4. **db.py** — `tenants` 建表增加 `owner_name` + `industry` 列
+
+### 验证
+- ✅ SSE 流式聊天正常响应 ("来了。我是灵境AI，一个擅长看透人心...")
+- ✅ 通过 nginx 代理也正常（`/api/v1/chat/send` → 200 SSE）
+- ✅ 网站首页、APK下载、API登录 全部正常
+
+---
+
+## 2026-07-05 — Electron v39.8.10 安装
+
+### 内容
+- 修复 `packages/electron/package.json` 合并冲突，更新 Electron devDependency `^39.0.0` → `39.8.10`
+- 设置 chrome-sandbox SUID 权限 (root:root 4755)
+- 验证 `npx electron --version` → `v39.8.10`
+
+### 文件
+- `packages/electron/package.json` — 合并冲突解决 + electron 版本锁定
+
+### 验证
+- ✅ Electron v39.8.10 二进制可用
+- ✅ npx electron 正常运行
+- ✅ pnpm workspace 依赖完整
+
+## 2026-07-05 — 语音识别修复（WebSocket ASR 缺少 Token 认证）✅ 🚀
+
+### 问题诊断
+"按住说话识别不了"——语音输入功能完全失效。
+
+根因: `useVoiceInput.ts` 的 WebSocket ASR 连接 URL 未携带 `?token=` 参数。
+后端 `voice_asr.py` 检测到无 token 直接返回 `{"type":"error","code":"no_token"}` 并关闭连接，
+导致整个降级链（Web Speech → WebSocket → None）最终完全无响应。
+
+### 修复内容
+1. **`useVoiceInput.ts`** — 增加 `token` 参数，动态拼接 `?token=xxx` 到 ASR WebSocket URL
+   - 无 token 时提前拦截，弹出"请先登录"提示
+   - 后端返回 `no_token`/`invalid_token` 错误时提示重新登录
+   - token 通过 `tokenRef` 保持响应式更新
+2. **`ChatPanel.tsx`** — 从 `useAuthStore` 解构 `token`，传入 `useVoiceInput`
+3. **`ChatSidebar.tsx`** — 同上
+4. **`QuestConversation.tsx`** — 新增 `useAuthStore` 导入，传入 token
+
+### 修改文件
+- `packages/renderer/src/hooks/useVoiceInput.ts` — +53/-26 行
+- `packages/renderer/src/components/chat/ChatPanel.tsx` — 2处修改
+- `packages/renderer/src/components/sidebar/ChatSidebar.tsx` — 2处修改
+- `packages/renderer/src/components/quest/QuestConversation.tsx` — 3处修改
+
+### 版本
+1.73.184 → **1.73.185**
+
+### 部署
+- ✅ Git 推送到 prod/main (c9e42d03)
+- ✅ Linux AppImage v1.73.185 (175MB) 已上传
+- ✅ Linux DEB v1.73.185 (173MB) 已上传
+- ✅ latest-linux.yml + versions.json 已更新
+- ✅ MD5 校验通过
+- ✅ HTTPS 下载验证通过 (200, content-length: 182893338)
+
+### 风险 & 测试
+- ✅ 无新增 TypeScript 错误
+- ✅ 向后兼容: token 为可选参数，Web Speech 引擎不受影响
+- ⚠️ 需实测: 用户登录后点击语音按钮，确认 WebSocket 连接成功并返回转写结果
+
+---
+
+### 问题
+语音识别报错 `Repo id must be in the form 'repo_name' or 'namespace/repo_name'`
+- 根因: whisper 模型文件是 broken symlinks（指向 huggingface blob 的相对路径不存在）
+- 次要: `invite_codes` 表 owner 是 postgres 而非 lingjing → 启动失败
+
+### 修复
+1. **模型文件** — 从 HuggingFace cache 复制真实文件（非 symlink）到 `/home/lingjing-server/.cache/faster-whisper/tiny/`
+   - model.bin (72MB), config.json, tokenizer.json, vocabulary.txt
+2. **DB权限** — `invite_codes` 表/序列/索引 owner 改为 lingjing
+3. 服务重启后 whisper 模型加载成功 (0.5s)
+
+### 验证
+- ✅ faster-whisper 模型加载完成 (0.5s)
+- ✅ 模型就绪，使用本地缓存
+- ✅ nginx + lingjing + postgresql 全部 active

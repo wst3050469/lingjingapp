@@ -201,7 +201,7 @@ function buildApplicationMenu(): Menu {
     label: '帮助',
     submenu: [
       {
-        label: '关于灵境',
+        label: '关于灵境AI',
         click: () => mainWindow?.webContents.send('menu:about'),
       },
     ],
@@ -312,7 +312,7 @@ function createWindow(): void {
     height: 900,
     minWidth: 800,
     minHeight: 600,
-    title: '灵境',
+    title: '灵境AI',
     backgroundColor: '#1e1e1e',
     show: false,
     autoHideMenuBar: true,
@@ -604,7 +604,7 @@ function registerAppIpc(): void {
       height: 900,
       minWidth: 800,
       minHeight: 600,
-      title: '灵境',
+      title: '灵境AI',
       backgroundColor: '#1e1e1e',
       autoHideMenuBar: true,
       webPreferences: {

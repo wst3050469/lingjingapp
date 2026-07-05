@@ -130,9 +130,9 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
         {/* Header */}
         <View style={styles.header}>
           <Ionicons name="link" size={48} color="#58a6ff" />
-          <Text style={styles.title}>连接灵境桌面端</Text>
+          <Text style={styles.title}>连接灵境AI桌面端</Text>
           <Text style={styles.subtitle}>
-            在桌面端「灵境」→ 设置 → 移动端 获取配对 Token
+            在桌面端「灵境AI」→ 设置 → 移动端 获取配对 Token
           </Text>
         </View>
 
@@ -195,7 +195,7 @@ export default function PairingScreen({ onSuccess, onSwitchToLogin }: { onSucces
             ☁️ FRP 中转：通过 lingjing.zhejiangjinmo.com 远程连接（需桌面端开启FRP）
           </Text>
           <Text style={styles.infoHint}>
-            提示：桌面设置→移动端→开启「灵境移动端」开关即可
+            提示：桌面设置→移动端→开启「灵境AI移动端」开关即可
           </Text>
         </View>
 

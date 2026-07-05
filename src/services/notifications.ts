@@ -1,4 +1,4 @@
-// 灵境IDE 移动端 - Push Notifications 服务 (Expo)
+// 灵境AIIDE 移动端 - Push Notifications 服务 (Expo)
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
@@ -48,11 +48,11 @@ export async function refreshPushToken(): Promise<string | null> {
     // Android: create notification channel
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('lingjing-default', {
-        name: '灵境通知',
+        name: '灵境AI通知',
         importance: Notifications.AndroidImportance.HIGH,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#58a6ff',
-        description: '灵境IDE 消息通知',
+        description: '灵境AIIDE 消息通知',
       });
     }
 

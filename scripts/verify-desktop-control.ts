@@ -1,5 +1,5 @@
 /**
- * 灵境外设控制 — 构建时接口完整性验证脚本
+ * 灵境AI外设控制 — 构建时接口完整性验证脚本
  *
  * 用途：验证打包后的 main.js 中所有 IPC handler 已正确注册
  * 运行：cd packages/electron && npx tsx ../../scripts/verify-desktop-control.ts
@@ -168,7 +168,7 @@ function mkSection(title: string, items: Item[]): Section {
 // ═══════════════════════════════════════════════
 
 async function main() {
-  console.log('🔍 灵境外设控制 — 接口完整性验证');
+  console.log('🔍 灵境AI外设控制 — 接口完整性验证');
   console.log('═'.repeat(60));
 
   const mainJs = join(ROOT, 'packages', 'electron', 'dist', 'main.js');
@@ -220,7 +220,7 @@ async function main() {
   if (!allPassed) process.exit(1);
 
   // ── 打印接口全貌 ──
-  console.log('📋 灵境 v1.73.162 外设控制接口全貌');
+  console.log('📋 灵境AI v1.73.162 外设控制接口全貌');
   console.log('─'.repeat(60));
   console.log(`\n桌面控制: ${DESKTOP_IPC.length} 个 handler ✅`);
   console.log(`权限管理: ${PERM_IPC.length} 个 handler ✅`);

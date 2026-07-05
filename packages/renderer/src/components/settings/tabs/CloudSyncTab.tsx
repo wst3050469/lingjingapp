@@ -479,7 +479,7 @@ export function CloudSyncTab() {
       {/* Header */}
       <div>
         <p className="text-[11px] text-cp-text-dim/50 leading-relaxed">
-          灵境云同步可跨设备同步会话和记忆。配置云端服务器地址和 API Key 后，你的对话和偏好将在所有灵境实例间自动同步。
+          灵境AI云同步可跨设备同步会话和记忆。配置云端服务器地址和 API Key 后，你的对话和偏好将在所有灵境AI实例间自动同步。
         </p>
       </div>
 

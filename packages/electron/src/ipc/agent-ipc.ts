@@ -325,7 +325,7 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
 
   // Helper: send confirm request to renderer
   function sendConfirmRequest(req: ConfirmRequestData): void {
-    sendNotification('灵境', '需要您的确认: ' + req.toolName, 'conversation');
+    sendNotification('灵境AI', '需要您的确认: ' + req.toolName, 'conversation');
     if (!mainWindow.isDestroyed()) {
       mainWindow.webContents.send('agent:confirm-request', req);
     }
@@ -380,7 +380,7 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
     // Shadow the outer helpers to route confirm/todo/snapshot events
     // to the SENDER window instead of the first mainWindow.
     const sendConfirmToSender = (req: ConfirmRequestData): void => {
-      sendNotification('灵境', '需要您的确认: ' + req.toolName, 'conversation');
+      sendNotification('灵境AI', '需要您的确认: ' + req.toolName, 'conversation');
       if (!senderWindow.isDestroyed()) {
         senderWindow.webContents.send('agent:confirm-request', req);
       }
@@ -618,11 +618,11 @@ Only save genuinely useful, non-trivial information. Do NOT save obvious or temp
           senderWindow.webContents.send('agent:event', serializeEvent(event));
         }
         if (event.type === 'done') {
-          sendNotification('灵境', '会话已完成回复', 'conversation');
+          sendNotification('灵境AI', '会话已完成回复', 'conversation');
         }
       },
       askUser: (question: string) => {
-        sendNotification('灵境', '需要您的操作: ' + question.slice(0, 80), 'conversation');
+        sendNotification('灵境AI', '需要您的操作: ' + question.slice(0, 80), 'conversation');
         return new Promise<string>((resolve, reject) => {
           const requestId = `ask-${++askUserCounter}`;
           const timeout = setTimeout(() => {
@@ -753,7 +753,7 @@ Only save genuinely useful, non-trivial information. Do NOT save obvious or temp
   });
 }
 
-const ASK_MODE_PROMPT = `You are an intelligent coding assistant called 灵境 (LingJing). You help developers by answering questions, explaining code, reviewing and optimizing code, generating code suggestions, fixing problems, and troubleshooting compile errors.
+const ASK_MODE_PROMPT = `You are an intelligent coding assistant called 灵境AI (LingJing). You help developers by answering questions, explaining code, reviewing and optimizing code, generating code suggestions, fixing problems, and troubleshooting compile errors.
 
 Key guidelines:
 - Provide clear, concise, and accurate answers

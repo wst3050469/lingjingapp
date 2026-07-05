@@ -158,7 +158,7 @@ export function useVoiceInput(onTranscript: (text: string) => void, token?: stri
     recognition.onerror = (event: any) => {
       const errCode = event?.error || 'unknown';
       if (errCode === 'not-allowed') {
-        alert('语音输入被拒绝：请确保已授予灵境应用麦克风权限。');
+        alert('语音输入被拒绝：请确保已授予灵境AI应用麦克风权限。');
       } else if (errCode === 'no-speech') {
         console.log('[VoiceInput] No speech detected');
       } else if (errCode !== 'aborted') {
@@ -184,7 +184,7 @@ export function useVoiceInput(onTranscript: (text: string) => void, token?: stri
       // 检查 token（WebSocket ASR 需要认证）
       const currentToken = tokenRef.current;
       if (!currentToken) {
-        const msg = '语音识别需要登录认证，请先登录灵境账号。';
+        const msg = '语音识别需要登录认证，请先登录灵境AI账号。';
         setLastError(msg);
         alert(msg);
         setIsRecording(false);
@@ -198,7 +198,7 @@ export function useVoiceInput(onTranscript: (text: string) => void, token?: stri
         streamRef.current = stream;
       } catch (err: any) {
         const msg = err?.name === 'NotAllowedError' || err?.message?.includes('Permission')
-          ? '麦克风权限被拒绝，请在系统设置中允许灵境访问麦克风'
+          ? '麦克风权限被拒绝，请在系统设置中允许灵境AI访问麦克风'
           : '无法访问麦克风，请检查系统权限设置';
         setLastError(msg);
         alert(msg);
@@ -321,7 +321,7 @@ export function useVoiceInput(onTranscript: (text: string) => void, token?: stri
             setLastError(errMsg);
             // Token 错误 → 提示用户重新登录
             if (data.code === 'no_token' || data.code === 'invalid_token') {
-              alert(`语音识别认证失败：${errMsg}\n\n请退出后重新登录灵境账号。`);
+              alert(`语音识别认证失败：${errMsg}\n\n请退出后重新登录灵境AI账号。`);
             }
             cleanup('asr_error');
           }

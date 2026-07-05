@@ -1,4 +1,4 @@
-// Cloud sync client v2 - 灵境云端同步客户端
+// Cloud sync client v2 - 灵境AI云端同步客户端
 // Uses HTTP REST API + WebSocket + JWT auth for real-time cloud integration
 
 import { OfflineQueue } from './offline-queue.js';

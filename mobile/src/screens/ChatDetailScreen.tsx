@@ -214,10 +214,10 @@ export default function ChatDetailScreen({ route }: any) {
         try {
           const perm = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-            { title: '录音权限', message: '灵境需要使用麦克风进行语音输入', buttonPositive: '允许', buttonNegative: '拒绝' }
+            { title: '录音权限', message: '灵境AI需要使用麦克风进行语音输入', buttonPositive: '允许', buttonNegative: '拒绝' }
           );
           if (perm !== PermissionsAndroid.RESULTS.GRANTED) {
-            Alert.alert('权限被拒绝', '请在系统设置中允许灵境使用麦克风');
+            Alert.alert('权限被拒绝', '请在系统设置中允许灵境AI使用麦克风');
             return;
           }
         } catch (e: any) {

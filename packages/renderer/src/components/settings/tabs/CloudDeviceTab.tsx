@@ -41,7 +41,7 @@ export function CloudDeviceTab() {
             <span className="text-xl">☁️</span>
           </div>
           <div>
-            <h3 className="text-sm text-cp-text font-medium">灵境云管理后台</h3>
+            <h3 className="text-sm text-cp-text font-medium">灵境AI云管理后台</h3>
             <p className="text-[10px] text-cp-text-dim/40">https://ide.zhejiangjinmo.com/admin</p>
           </div>
         </div>

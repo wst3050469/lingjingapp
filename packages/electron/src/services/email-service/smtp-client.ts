@@ -42,12 +42,12 @@ const PRESET_TEMPLATES: PresetTemplate[] = [
     key: 'preset_first_contact',
     name: '首发联系',
     description: '首次联系目标用户/项目方',
-    subjectTemplate: '来自灵境IDE：{{projectName}} 项目协作邀请',
+    subjectTemplate: '来自灵境AIIDE：{{projectName}} 项目协作邀请',
     bodyTemplate: `您好 {{recipientName}}，
 
-我是灵境IDE的用户，正在使用 AI 驱动的开发平台进行 {{projectName}} 项目开发。
+我是灵境AIIDE的用户，正在使用 AI 驱动的开发平台进行 {{projectName}} 项目开发。
 
-通过灵境IDE的智能编程助手，我们的开发效率得到了显著提升。希望能与您分享这一工具的使用体验，并探讨潜在的合作机会。
+通过灵境AIIDE的智能编程助手，我们的开发效率得到了显著提升。希望能与您分享这一工具的使用体验，并探讨潜在的合作机会。
 
 项目简介：{{projectDescription}}
 
@@ -69,7 +69,7 @@ const PRESET_TEMPLATES: PresetTemplate[] = [
 项目地址：{{projectUrl}}
 协作方式：{{collaborationMode}}
 
-我们使用灵境IDE作为主要的开发环境，它提供了强大的 AI 辅助编程能力。如果您感兴趣，可以在 https://lingjing.ai 了解更多。
+我们使用灵境AIIDE作为主要的开发环境，它提供了强大的 AI 辅助编程能力。如果您感兴趣，可以在 https://lingjing.ai 了解更多。
 
 期待与您一起协作！
 

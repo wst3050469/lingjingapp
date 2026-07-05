@@ -144,7 +144,7 @@ export function patchOpenSpaceIntegration(): OpenSpacePatchResult {
 // ─── Lua 脚本示例 ──────────────────────────────────────────────
 
 export const LUA_FRAME_EXPORT = `-- OpenSpace 帧导出脚本
--- 在 OpenSpace 中执行，将渲染帧推送到灵境
+-- 在 OpenSpace 中执行，将渲染帧推送到灵境AI
 
 local frameCount = 0
 local exportInterval = 1  -- 每N帧导出一次
@@ -158,7 +158,7 @@ function onFrameCallback()
     format = "png"
   })
 
-  -- 通过 WebSocket 推送到灵境
+  -- 通过 WebSocket 推送到灵境AI
   openspace.sendMessage("ws://localhost:4681", {
     type = "frame",
     data = screenshot,

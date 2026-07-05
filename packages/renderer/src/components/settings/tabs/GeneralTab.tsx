@@ -224,7 +224,7 @@ export function GeneralTab({ config, saveKey, user, logout, workspace, handleSel
             <div>
               <p className="text-sm text-cp-text font-medium">本地模式</p>
               <p className="text-[11px] text-cp-text-dim/50 mt-1 leading-relaxed">
-                灵境运行在本地模式下。你的代码和对话数据仅存储在本地设备上，不会上传到任何外部服务器。
+                灵境AI运行在本地模式下。你的代码和对话数据仅存储在本地设备上，不会上传到任何外部服务器。
                 AI 请求直接发送到你配置的模型提供商。
               </p>
             </div>

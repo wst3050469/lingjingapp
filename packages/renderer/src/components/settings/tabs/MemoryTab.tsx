@@ -183,7 +183,7 @@ export function MemoryTab({ config, saveKey }: MemoryTabProps) {
       {/* Header description */}
       <div>
         <p className="text-[11px] text-cp-text-dim/50 leading-relaxed">
-          灵境会在对话过程中学习并记住你的偏好、项目细节和工作方式。记忆分为<span className="text-cp-text-dim/70">全局记忆</span>(跨项目生效)和<span className="text-cp-text-dim/70">项目记忆</span>(仅特定项目生效)。你可以在此查看、搜索和管理所有记忆。
+          灵境AI会在对话过程中学习并记住你的偏好、项目细节和工作方式。记忆分为<span className="text-cp-text-dim/70">全局记忆</span>(跨项目生效)和<span className="text-cp-text-dim/70">项目记忆</span>(仅特定项目生效)。你可以在此查看、搜索和管理所有记忆。
         </p>
       </div>
 
@@ -426,7 +426,7 @@ export function MemoryTab({ config, saveKey }: MemoryTabProps) {
             {searchQuery ? '没有找到匹配的记忆' : '暂无记忆'}
           </p>
           <p className="text-[11px] text-cp-text-dim/30">
-            {searchQuery ? '尝试调整搜索关键词或筛选条件' : '在对话中使用 "记住..." 来让灵境学习你的偏好'}
+            {searchQuery ? '尝试调整搜索关键词或筛选条件' : '在对话中使用 "记住..." 来让灵境AI学习你的偏好'}
           </p>
         </div>
       ) : (
@@ -521,8 +521,8 @@ export function MemoryTab({ config, saveKey }: MemoryTabProps) {
         <p className="text-xs text-cp-text-dim/50 font-medium mb-3">记忆说明</p>
         <div className="space-y-2">
           {[
-            { icon: SOURCE_LABELS.active.icon, title: '主动记忆', desc: '在对话中使用 "记住这个偏好" 等语句，灵境会主动保存为长期记忆' },
-            { icon: SOURCE_LABELS.automatic.icon, title: '自动记忆', desc: '灵境从对话上下文中自动学习你的编码偏好、项目规范和常见模式' },
+            { icon: SOURCE_LABELS.active.icon, title: '主动记忆', desc: '在对话中使用 "记住这个偏好" 等语句，灵境AI会主动保存为长期记忆' },
+            { icon: SOURCE_LABELS.automatic.icon, title: '自动记忆', desc: '灵境AI从对话上下文中自动学习你的编码偏好、项目规范和常见模式' },
             { icon: 'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418', title: '全局 vs 项目', desc: '全局记忆跨所有项目生效，项目记忆仅对特定工作区有效' },
           ].map(({ icon, title, desc }) => (
             <div key={title} className="flex items-start gap-2">

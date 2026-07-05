@@ -51,7 +51,7 @@ export function AuthScreen() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-cp-text">灵境</h1>
+            <h1 className="text-3xl font-bold text-cp-text">灵境AI</h1>
             <p className="text-neutral-400 text-sm mt-2">AI 编程助手</p>
           </div>
 

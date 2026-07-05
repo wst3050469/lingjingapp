@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useChatStore, type ChatMode } from '../../stores/chat-store';
+import { useAuthStore } from '../../stores/auth-store';
 import { useQuestStore, generateQuestMessageId, type QuestMessage } from '../../stores/quest-store';
 import { useModelStore } from '../../stores/model-store';
 import { useTodoStore } from '../../stores/todo-store';
@@ -79,8 +80,9 @@ export function QuestConversation() {
   // Get active task info
   const activeTask = useQuestStore((s) => s.tasks.find((t) => t.id === s.activeTaskId));
 
-  // 语音输入处理
-  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setText(newText), []));
+  // 语音输入处理（需要 token 认证）
+  const { token } = useAuthStore();
+  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setText(newText), []), token);
 
   // On mount: if active task is paused (e.g. returning from editor), auto-resume it.
   // If isStreaming is stale, clear it.

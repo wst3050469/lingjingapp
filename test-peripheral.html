@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>灵境外设控制 — 运行时验证面板</title>
+<title>灵境AI外设控制 — 运行时验证面板</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #c9d1d9; padding: 20px; }
@@ -32,7 +32,7 @@ button:disabled { opacity: .4; cursor: not-allowed; }
 </head>
 <body>
 
-<h1>🔬 灵境外设控制 <span>运行时验证面板 v1.73.166</span></h1>
+<h1>🔬 灵境AI外设控制 <span>运行时验证面板 v1.73.166</span></h1>
 <div class="status-bar">
   <span>Desktop Control: <span id="dc-status" class="badge no">⏳</span></span>
   <span>Camera: <span id="cam-status" class="badge no">⏳</span></span>
@@ -274,7 +274,7 @@ async function testNoFakeHandlers() {
 // 自动加载状态
 window.addEventListener('DOMContentLoaded', () => {
   if (!api) {
-    log('FAIL', '❌ electronAPI 不可用 — 请在灵境 Electron 应用中打开此页面');
+    log('FAIL', '❌ electronAPI 不可用 — 请在灵境AI Electron 应用中打开此页面');
     document.getElementById('dc-status').textContent = 'N/A';
     return;
   }

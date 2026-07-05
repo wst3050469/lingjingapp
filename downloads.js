@@ -1,5 +1,5 @@
 /**
- * 灵境 LingJing - 下载中心页面脚本
+ * 灵境AI LingJing - 下载中心页面脚本
  * 从 versions.json 动态加载版本信息和下载链接
  * 独立为外部JS文件以遵循CSP策略 (script-src 'self')
  */
@@ -116,7 +116,7 @@
       html += '<div class=sec><div class=sec-title>' + s.title + '</div>';
       s.items.forEach(function(f) {
         if (f.isNotice) {
-          html += '<div class=mac-notice><strong>⚠️ macOS 用户请注意</strong><br>由于应用未经过 Apple 公证，首次打开时可能提示"已损坏"。<br>解决方法：打开<b>终端</b>，执行以下命令后即可正常使用：<br><code>sudo xattr -rd com.apple.quarantine /Applications/灵境.app</code></div>';
+          html += '<div class=mac-notice><strong>⚠️ macOS 用户请注意</strong><br>由于应用未经过 Apple 公证，首次打开时可能提示"已损坏"。<br>解决方法：打开<b>终端</b>，执行以下命令后即可正常使用：<br><code>sudo xattr -rd com.apple.quarantine /Applications/灵境AI.app</code></div>';
           return;
         }
         var sizeStr = f.size > 0 ? '(' + (f.size / 1024 / 1024).toFixed(0) + ' MB)' : '';
@@ -141,7 +141,7 @@
       '<div class=li><div><div class=ft>LingJing-1.73.148-linux-x86_64.deb</div><div class=fs>Debian/Ubuntu 安装包 (222 MB)</div></div><a href=/downloads/LingJing-1.73.148-linux-x86_64.deb class=btn>⬇ 下载</a></div>',
       '</div>',
       '<div class=sec><div class=sec-title>🍎 macOS</div>',
-      '<div class=mac-notice><strong>⚠️ macOS 用户请注意</strong><br>由于应用未经过 Apple 公证，首次打开时可能提示"已损坏"。<br>解决方法：打开<b>终端</b>，执行以下命令后即可正常使用：<br><code>sudo xattr -rd com.apple.quarantine /Applications/灵境.app</code></div>',
+      '<div class=mac-notice><strong>⚠️ macOS 用户请注意</strong><br>由于应用未经过 Apple 公证，首次打开时可能提示"已损坏"。<br>解决方法：打开<b>终端</b>，执行以下命令后即可正常使用：<br><code>sudo xattr -rd com.apple.quarantine /Applications/灵境AI.app</code></div>',
       '</div>',
       '<div class=sec><div class=sec-title>📱 移动端 (Android)</div>',
       '<div class=li><div><div class=ft>LingJing-Mobile-1.73.148.apk</div><div class=fs>Android 应用 (36 MB)</div></div><a href=/downloads/LingJing-Mobile-1.73.148.apk class=btn>⬇ 下载</a></div>',

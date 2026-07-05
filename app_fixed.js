@@ -1,5 +1,5 @@
 /**
- * 灵境 Update Server
+ * 灵境AI Update Server
  * 为 electron-updater 提供版本更新服务
  * 运行在 :3001 端口
  */
@@ -105,6 +105,6 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`灵境 Update Server running on http://0.0.0.0:${PORT}`);
+  console.log(`灵境AI Update Server running on http://0.0.0.0:${PORT}`);
   console.log(`Data directory: ${DATA_DIR}`);
 });

@@ -24,7 +24,7 @@ export function ChatSidebar() {
     deleteConversation, renameConversation,
     chatMode, lastUsage, recommendations, codeContext,
     cumulativeTokens, maxContextTokens, isCompacting, compactChat } = useChatStore();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const { setShowSettingsModal } = useUIStore();
   const { isReviewActive } = useDiffReviewStore();
 
@@ -37,7 +37,7 @@ export function ChatSidebar() {
 
   // Shared hooks for attachments & input enhancements
   const { images, addImages, addImageFromFile, removeImage, fileInputRef, triggerFileInput, clearImages } = useImageAttachments();
-  const { isRecording, toggleRecording } = useVoiceInput(useCallback((text: string) => setInputText(text), []));
+  const { isRecording, toggleRecording } = useVoiceInput(useCallback((text: string) => setInputText(text), []), token);
   const { isPolishing, polish } = usePromptPolish();
 
   // Ensure conversation ID exists

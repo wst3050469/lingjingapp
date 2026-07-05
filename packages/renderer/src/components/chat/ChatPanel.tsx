@@ -37,7 +37,7 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
     createNewConversation, addMessage, setStreaming, resetStreamText,
     setLastUsage, setCodeContext, setAskUserRequest, setConversationSummary,
   } = useChatStore();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const { isReviewActive } = useDiffReviewStore();
   const { request: confirmRequest } = useConfirmationStore();
   const { phase: expertPhase, addIntervention } = useExpertsStore();
@@ -48,7 +48,7 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
 
   const { images, addImages, addImageFromFile, removeImage, fileInputRef, clearImages } = useImageAttachments();
   const { isPolishing, polish } = usePromptPolish();
-  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setInputText(newText), []));
+  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setInputText(newText), []), token);
 
   const handlePolish = useCallback(async () => {
     console.log('[ChatPanel] handlePolish called, inputText:', inputText?.substring(0, 50));

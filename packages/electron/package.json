@@ -1,12 +1,7 @@
 {
   "name": "lingjing-ide",
-<<<<<<< HEAD
-  "version": "1.73.184",
-  "description": "\u7075\u5883 IDE - AI \u9a71\u52a8\u7684\u667a\u80fd\u5f00\u53d1\u5e73\u53f0",
-=======
-  "version": "1.73.183",
-  "description": "灵境 IDE - AI 驱动的智能开发平台",
->>>>>>> fb56bb8d8db41d3f64fa88cc6a881b164347676a
+  "version": "1.73.185",
+  "description": "灵境AI IDE - AI 驱动的智能开发平台",
   "homepage": "https://lingjing.ai",
   "author": {
     "name": "LingJing AI",
@@ -49,7 +44,7 @@
     "systeminformation": "5.23.0"
   },
   "devDependencies": {
-    "electron": "^39.0.0",
+    "electron": "39.8.10",
     "electron-builder": "^25.0.0",
     "esbuild": "^0.25.0",
     "typescript": "^5.6.0"

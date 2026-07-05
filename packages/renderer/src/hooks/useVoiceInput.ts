@@ -7,15 +7,22 @@ import { useState, useRef, useCallback, useEffect } from 'react';
  *   1. Web Speech API (最快, Chrome/Edge/Electron)
  *   2. WebSocket ASR (服务器 Whisper, 所有平台含APK)
  *   3. 降级失败时显示错误提示
+ *
+ * @param onTranscript - 转写结果回调
+ * @param token - 用户认证 token（WebSocket ASR 必需）
  */
 
-// 服务器 ASR WebSocket 端点
-const ASR_WS_URL = (() => {
+/** 构建 ASR WebSocket URL（含 token 认证） */
+function buildAsrWsUrl(token?: string): string {
   const host = (typeof window !== 'undefined' && window.location?.hostname) || '127.0.0.1';
-  return `ws://${host}:8900/api/v1/asr/stream`;
-})();
+  const base = `ws://${host}:8900/api/v1/asr/stream`;
+  if (token) {
+    return `${base}?token=${encodeURIComponent(token)}`;
+  }
+  return base;
+}
 
-export function useVoiceInput(onTranscript: (text: string) => void) {
+export function useVoiceInput(onTranscript: (text: string) => void, token?: string) {
   const [isRecording, setIsRecording] = useState(false);
   const [engineType, setEngineType] = useState<'webspeech' | 'websocket' | 'none'>('none');
   const [lastError, setLastError] = useState<string | null>(null);
@@ -31,6 +38,7 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
   const connectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const tokenRef = useRef(token);
 
   useEffect(() => {
     onTranscriptRef.current = onTranscript;
@@ -39,6 +47,10 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
   useEffect(() => {
     isRecordingRef.current = isRecording;
   }, [isRecording]);
+
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
 
   // ── 引擎检测 ──
   const detectEngine = useCallback((): 'webspeech' | 'websocket' => {
@@ -150,6 +162,16 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
     const doStart = async () => {
       setLastError(null);
 
+      // 检查 token（WebSocket ASR 需要认证）
+      const currentToken = tokenRef.current;
+      if (!currentToken) {
+        const msg = '语音识别需要登录认证，请先登录灵境账号。';
+        setLastError(msg);
+        alert(msg);
+        setIsRecording(false);
+        return;
+      }
+
       // 1. 获取麦克风流
       let stream: MediaStream | null = null;
       try {
@@ -182,10 +204,12 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
       const source = audioCtx.createMediaStreamSource(stream);
       const processor = audioCtx.createScriptProcessor(4096, 1, 1);
 
-      // 3. 连接 WebSocket（带超时）
+      // 3. 连接 WebSocket（带 token + 超时）
+      const wsUrl = buildAsrWsUrl(currentToken);
+      console.log('[VoiceInput] 连接 ASR WebSocket...');
       let ws: WebSocket;
       try {
-        ws = new WebSocket(ASR_WS_URL);
+        ws = new WebSocket(wsUrl);
       } catch {
         setLastError('无法连接语音识别服务器');
         alert('无法连接到语音识别服务器，请检查网络连接。\n\n语音识别需要 Whisper 服务运行在 8900 端口。');
@@ -273,8 +297,14 @@ export function useVoiceInput(onTranscript: (text: string) => void) {
             onTranscriptRef.current(data.text);
             baseTextRef.current = data.text;
           } else if (data.type === 'error') {
-            console.error('[VoiceInput] ASR error:', data.message);
-            setLastError(data.message || '语音识别出错');
+            const errMsg = data.message || '语音识别出错';
+            console.error('[VoiceInput] ASR error:', errMsg);
+            setLastError(errMsg);
+            // Token 错误 → 提示用户重新登录
+            if (data.code === 'no_token' || data.code === 'invalid_token') {
+              alert(`语音识别认证失败：${errMsg}\n\n请退出后重新登录灵境账号。`);
+            }
+            cleanup('asr_error');
           }
         } catch {}
       };

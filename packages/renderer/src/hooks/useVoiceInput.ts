@@ -12,10 +12,29 @@ import { useState, useRef, useCallback, useEffect } from 'react';
  * @param token - 用户认证 token（WebSocket ASR 必需）
  */
 
-/** 构建 ASR WebSocket URL（含 token 认证） */
+/** 构建 ASR WebSocket URL（含 token 认证）
+ *
+ * 三种环境自适应:
+ *   1. 本地开发 (localhost/127.0.0.1/192.168.x) → ws://127.0.0.1:8900 直连 Whisper
+ *   2. Web 生产环境 → wss://当前域名/api/v1/asr/stream (经 nginx WSS 代理)
+ *   3. Electron (file:// 协议) → wss://www.spiritrealmz.com/api/v1/asr/stream (生产服务器)
+ */
 function buildAsrWsUrl(token?: string): string {
-  const host = (typeof window !== 'undefined' && window.location?.hostname) || '127.0.0.1';
-  const base = `ws://${host}:8900/api/v1/asr/stream`;
+  const host = (typeof window !== 'undefined' && window.location?.hostname) || '';
+  const isLocal = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.');
+
+  let base: string;
+  if (isLocal) {
+    // 本地开发：直连本地 Whisper 8900 端口
+    base = 'ws://127.0.0.1:8900/api/v1/asr/stream';
+  } else if (host) {
+    // Web 生产：经 nginx WSS 代理
+    base = `wss://${host}/api/v1/asr/stream`;
+  } else {
+    // Electron (file://)：连接生产服务器
+    base = 'wss://www.spiritrealmz.com/api/v1/asr/stream';
+  }
+
   if (token) {
     return `${base}?token=${encodeURIComponent(token)}`;
   }

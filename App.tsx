@@ -1,4 +1,4 @@
-// 灵境IDE 移动端轻量版 - 纯对话·实时同步
+// 灵境AI 移动端轻量版 - 纯对话·实时同步
 // v2: 精简为 Login → ChatList → ChatDetail 纯Stack导航
 //     复杂设置/配对/任务/计划/文件/定时 保留在PC端
 import React, { useEffect, useState } from 'react';
@@ -24,7 +24,7 @@ export default function App() {
   const { setConnection, setAuth, setUser, logout, user } = useAppStore();
   const [initializing, setInitializing] = useState(true);
   const [showLogin, setShowLogin] = useState(false);
-  const [loadingText, setLoadingText] = useState('正在连接灵境...');
+  const [loadingText, setLoadingText] = useState('正在连接灵境AI...');
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -67,7 +67,7 @@ export default function App() {
           api.connectWs();
           setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
           setInitializing(false);
-          Notifications.registerPushToken(persisted.token, '灵境 Mobile').catch(() => {});
+          Notifications.registerPushToken(persisted.token, '灵境AI Mobile').catch(() => {});
           return;
         }
       } catch { /* token 过期 → 进入登录页 */ }
@@ -91,7 +91,7 @@ export default function App() {
     });
     api.connectWs();
     setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
-    Notifications.registerPushToken(token, '灵境 Mobile').catch(() => {});
+    Notifications.registerPushToken(token, '灵境AI Mobile').catch(() => {});
   }
 
   function handleLogout() {

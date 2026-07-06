@@ -19,11 +19,20 @@
 - Nginx Web/Cloud/API: ✅ 全部200
 - PostgreSQL: ✅ active
 
+### ASR WebSocket 通道验证
+- WebSocket 升级成功 (101 Switching Protocols)
+- 后端返回 `{"type":"error","code":"no_token"}` — token 认证逻辑正常
+- Nginx → Uvicorn → voice_asr.py 全链路畅通
+- ⚠️ 完全实测仍需客户端 Token + 麦克风
+
+### 代码质量
+- TypeScript 全部 4 包 (root/mobile/electron/renderer): 0 errors
+
 ### 当前状态
 - **最新版本**: v1.73.188
-- **Git HEAD**: 待提交
+- **Git HEAD**: f8549d41
 - **所有服务**: 🟢 OK
-- **唯一剩余**: ASR WebSocket 实测（需客户端 Token + 麦克风）
+- **唯一剩余**: ASR WebSocket 完整实测（需客户端 Token + 麦克风）
 
 ---
 

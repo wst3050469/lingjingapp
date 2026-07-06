@@ -56,7 +56,7 @@ class ApiService {
  const timeoutId = setTimeout(() => controller.abort(), 15000);
  try {
  const res = await fetch(url, { ...options, headers: { ...this.headers, ...options?.headers }, signal: controller.signal });
- const data: any = await res.json().catch(() => ({}));
+ const data: any = await res.json().catch((e) => { console.warn('[API] JSON parse error:', e.message || e); return {}; });
  if (!res.ok) {
    const err: any = new Error(data.error || 'HTTP ' + res.status);
    err.status = res.status;

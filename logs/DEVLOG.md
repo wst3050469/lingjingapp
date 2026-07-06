@@ -3,6 +3,47 @@
 
 ---
 
+## 2026-07-06 (深夜) — APK 签名 v2+v3 + 注册修复 + 发布收尾 ✅
+
+### APK 签名升级 (v1-only → v2+v3)
+**问题**: 用户安装 APK 报"安装包解析失败"。  
+**根因**: jarsigner v1 签名在现代 Android (11+) 上被拒绝。  
+**修复**:
+```bash
+zipalign -p 4 app-release.apk app-aligned.apk
+apksigner sign --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true
+```
+| 验证结果 | v1 | v2 | v3 |
+|----------|----|----|-----|
+| apksigner verify | - | ✅ | ✅ |
+
+兼容 Android 7.0+ 至 15。keystore: `android/app/lingjing-release.keystore`。
+
+### 线上问题修复
+| # | 问题 | 修复 |
+|---|------|------|
+| 1 | 用户注册 500 (users_id_seq) | `setval('users_id_seq', max(id))` |
+| 2 | "灵境AIAI" 文本重复 | 5处→"灵境AI" |
+| 3 | 下载链接 404 (文件名不匹配) | symlink lingjing→lingjing-mobile |
+
+### 历史待办清零
+| 待办 | 结论 |
+|------|------|
+| WAF/DNS | ✅ 已直连 43.103.5.36 |
+| SSL 裸域 | ✅ SAN 含双域名 |
+| 支付回调URL | ✅ 代码已更新 spiritrealmz.com |
+| OpenSpace | ✅ .js + .d.ts 完整编译 |
+| Cloud 模块 | ✅ 从 git 恢复 1672 行 |
+| ASR WebSocket | ⚠️ 唯一剩余: 需客户端 Token 实测 |
+
+### 最终 APK 信息
+- **URL**: `https://www.spiritrealmz.com/apk/lingjing-v1.73.188.apk`
+- **大小**: 88,678,702 bytes (~85MB)
+- **MD5**: `fca0d184f68d9a2fd4fe276ab0f5fb3b`
+- **签名**: v1 + v2 + v3 (RSA 2048-bit, CN=灵境AI)
+
+---
+
 ## 2026-07-06 (下午) — Cloud Server 模块恢复 + 最终收尾 ✅
 
 ### Cloud Server 完整模块恢复

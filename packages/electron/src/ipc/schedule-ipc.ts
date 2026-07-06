@@ -5,7 +5,7 @@
 
 import { ipcMain, BrowserWindow } from 'electron';
 
-const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://ide.zhejiangjinmo.com';
+const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://www.spiritrealmz.com';
 const API_KEY = process.env.LINGJING_API_KEY || process.env.LINGJING_CLOUD_API_KEY || process.env.API_KEY || '';
 
 async function callCloud(path: string, method = 'GET', body?: any, timeoutMs = 10000) {

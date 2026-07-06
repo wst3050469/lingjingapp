@@ -299,7 +299,7 @@ export function initUpdateIPC(win: BrowserWindow): void {
     // electron-updater so quitAndInstall() knows where the file is.
     //
     // electron-updater reads latest.yml from feedURL:
-    //   https://ide.zhejiangjinmo.com/downloads/latest.yml
+    //   https://www.spiritrealmz.com/downloads/latest.yml
     // which references LingJing-Setup-${version}-win-x64.exe
 
     const au = await getAutoUpdater();
@@ -368,7 +368,7 @@ export function initUpdateIPC(win: BrowserWindow): void {
 
     const au = await getAutoUpdater();
     au.allowPrerelease = channel !== 'stable';
-    const baseUrl = 'https://ide.zhejiangjinmo.com/downloads/';
+    const baseUrl = 'https://www.spiritrealmz.com/downloads/';
     au.setFeedURL({
       provider: 'generic',
       url: channel === 'stable' ? baseUrl : `${baseUrl}/${channel}`,
@@ -432,7 +432,7 @@ export function initUpdateIPC(win: BrowserWindow): void {
     // because the baked publish.channel from electron-builder.json would append
     // "/latest" to the URL causing a 404 on /latest/latest.yml
     const channel = updateState.updateChannel;
-    const baseUrl = 'https://ide.zhejiangjinmo.com/downloads/';
+    const baseUrl = 'https://www.spiritrealmz.com/downloads/';
     const encodedBaseUrl = UpdateUrlEncoder.encodeUrl(baseUrl);
     autoUpdater.setFeedURL({
       provider: 'generic',
@@ -469,7 +469,7 @@ export function initUpdateIPC(win: BrowserWindow): void {
       try {
         const statusCheckController = new AbortController();
         const statusTimer = setTimeout(() => statusCheckController.abort(), 3000);
-        const statusRes = await fetch('https://ide.zhejiangjinmo.com/api/latest', {
+        const statusRes = await fetch('https://www.spiritrealmz.com/api/latest', {
           signal: statusCheckController.signal,
         });
         clearTimeout(statusTimer);
@@ -587,7 +587,7 @@ async function isForceUpgrade(newVersion: string): Promise<boolean> {
     // Fetch min-version.txt from update server to check force upgrade
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch('https://ide.zhejiangjinmo.com/min-version.txt', { signal: controller.signal });
+    const res = await fetch('https://www.spiritrealmz.com/min-version.txt', { signal: controller.signal });
     clearTimeout(timer);
     if (res.ok) {
       const minVersion = (await res.text()).trim();
@@ -638,7 +638,7 @@ function startAutoCheck(win: BrowserWindow, autoUpdater: any): void {
       const timeoutId = setTimeout(() => abortController?.abort(), 5000);
       try {
         const rolloutRes = await fetch(
-          `https://ide.zhejiangjinmo.com/api/rollout/check?device=${encodeURIComponent(deviceId)}`,
+          `https://www.spiritrealmz.com/api/rollout/check?device=${encodeURIComponent(deviceId)}`,
           { signal: abortController?.signal }
         );
         clearTimeout(timeoutId);
@@ -661,7 +661,7 @@ function startAutoCheck(win: BrowserWindow, autoUpdater: any): void {
     try {
       const startupController = new AbortController();
       const startupTimer = setTimeout(() => startupController.abort(), 5000);
-      const minVersionRes = await fetch('https://ide.zhejiangjinmo.com/min-version.txt', { signal: startupController.signal });
+      const minVersionRes = await fetch('https://www.spiritrealmz.com/min-version.txt', { signal: startupController.signal });
       clearTimeout(startupTimer);
       if (minVersionRes.ok) {
         const minVersion = (await minVersionRes.text()).trim();
@@ -716,7 +716,7 @@ async function httpCheckVersion(): Promise<{
     console.log('[update] HTTP fallback: fetching /api/latest');
     const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
     const timeoutId = setTimeout(() => abortController?.abort(), 10000);
-    const res = await fetch('https://ide.zhejiangjinmo.com/api/latest', {
+    const res = await fetch('https://www.spiritrealmz.com/api/latest', {
       signal: abortController?.signal,
     });
     clearTimeout(timeoutId);
@@ -753,7 +753,7 @@ async function httpCheckVersion(): Promise<{
         // The actual download MUST go through electron-updater (au.downloadUpdate())
         // so that quitAndInstall() knows where the downloaded file lives.
         // Electron-updater reads latest.yml from its feedURL:
-        //   https://ide.zhejiangjinmo.com/downloads/latest.yml
+        //   https://www.spiritrealmz.com/downloads/latest.yml
         // which points to LingJing-Setup-${version}-win-x64.exe
 
         if (mainWindow) {

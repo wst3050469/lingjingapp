@@ -117,7 +117,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
     // Use Node http for healthCheck (fetch may fail in ASAR environment)
     let healthy = false;
     try {
-      const clientUrl = (cloudClient as any).url || 'https://ide.zhejiangjinmo.com';
+      const clientUrl = (cloudClient as any).url || 'https://www.spiritrealmz.com';
       const healthUrl = new URL('/api/health', clientUrl);
       healthy = await new Promise<boolean>((resolve) => {
         const lib = healthUrl.protocol === 'https:' ? https : http;
@@ -180,7 +180,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
     token?: string;
     baseUrl?: string;
   }) => {
-    const baseUrl = opts.baseUrl || 'https://ide.zhejiangjinmo.com';
+    const baseUrl = opts.baseUrl || 'https://www.spiritrealmz.com';
     const url = new URL(`${baseUrl}/api${opts.endpoint}`);
     const method = opts.method || 'GET';
     const headers: Record<string, string> = {
@@ -396,7 +396,7 @@ export async function autoConnectCloud(): Promise<void> {
       // Check health to confirm connectivity (use Node http for ASAR compatibility)
       let healthy = false;
       try {
-        const clientUrl = (cloudClient as any).url || 'https://ide.zhejiangjinmo.com';
+        const clientUrl = (cloudClient as any).url || 'https://www.spiritrealmz.com';
         const healthUrl = new URL('/api/health', clientUrl);
         healthy = await new Promise<boolean>((resolve) => {
           const lib = healthUrl.protocol === 'https:' ? https : http;

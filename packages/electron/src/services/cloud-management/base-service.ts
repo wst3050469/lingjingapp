@@ -81,5 +81,5 @@ export class CloudManagementBaseService {
 }
 
 export const defaultCloudManagementService = new CloudManagementBaseService({
-  baseUrl: 'https://ide.zhejiangjinmo.com/api'
+  baseUrl: 'https://www.spiritrealmz.com/api'
 });

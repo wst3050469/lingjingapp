@@ -91,5 +91,5 @@ export class StorageService extends CloudManagementBaseService {
 }
 
 export const storageService = new StorageService({
-  baseUrl: 'https://ide.zhejiangjinmo.com/api'
+  baseUrl: 'https://www.spiritrealmz.com/api'
 });

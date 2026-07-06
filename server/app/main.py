@@ -209,7 +209,7 @@ APP_VERSION = _read_version()
 CORS_ORIGINS = [
     o.strip() for o in os.environ.get(
         "CORS_ORIGINS",
-        "https://ide.zhejiangjinmo.com,https://lingjing.zhejiangjinmo.com,https://wap.zhejiangjinmo.com"
+        "https://www.spiritrealmz.com,https://lingjing.zhejiangjinmo.com,https://wap.zhejiangjinmo.com"
     ).split(",") if o.strip()
 ]
 

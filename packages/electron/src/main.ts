@@ -696,7 +696,7 @@ async function bootstrap(): Promise<void> {
     const responseHeaders = {
       ...details.responseHeaders,
       'Content-Security-Policy': [
-        "default-src 'self'; img-src 'self' data: blob: https:; script-src 'self' blob: 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https://ide.zhejiangjinmo.com http://localhost:* ws://localhost:* wss://ide.zhejiangjinmo.com; worker-src 'self' blob:; frame-src 'self' http://localhost:*;",
+        "default-src 'self'; img-src 'self' data: blob: https:; script-src 'self' blob: 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self' https://www.spiritrealmz.com http://localhost:* ws://localhost:* wss://www.spiritrealmz.com; worker-src 'self' blob:; frame-src 'self' http://localhost:*;",
       ],
     };
     callback({ responseHeaders });
@@ -789,7 +789,7 @@ async function bootstrap(): Promise<void> {
       ipcMain.handle('update:check', async () => {
         console.log('[update] Using emergency fallback handler');
         try {
-          const res = await fetch('https://ide.zhejiangjinmo.com/api/latest', { signal: AbortSignal.timeout(5000) });
+          const res = await fetch('https://www.spiritrealmz.com/api/latest', { signal: AbortSignal.timeout(5000) });
           if (res.ok) {
             const data = await res.json();
             const current = app.getVersion();
@@ -1127,7 +1127,7 @@ async function bootstrap(): Promise<void> {
 
     // Device auto-registration via /api/auth/register (API key from environment)
     const deviceApiKey = process.env.LINGJING_CLOUD_API_KEY || process.env.API_KEY || '';
-    fetch('https://ide.zhejiangjinmo.com/api/auth/register', {
+    fetch('https://www.spiritrealmz.com/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

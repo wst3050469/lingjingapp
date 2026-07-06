@@ -17,7 +17,7 @@ function isNewer(a: string, b: string): boolean {
   return false;
 }
 
-const LATEST_URL = 'https://ide.zhejiangjinmo.com/downloads/version.json';
+const LATEST_URL = 'https://www.spiritrealmz.com/downloads/version.json';
 
 export default function UpdateChecker() {
   const checkedRef = useRef(false);

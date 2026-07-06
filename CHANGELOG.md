@@ -1,5 +1,36 @@
 # CHANGELOG
 
+## v1.73.188 (2026-07-06)
+
+### Fixed
+- **TypeScript 编译**: 81→0 errors (Electron 52→0, Renderer 29→0, Mobile 0)
+- **域名全面清理**: `ide.zhejiangjinmo.com` → `www.spiritrealmz.com` (25文件, 54处→0)
+- **Lucide 图标类型冲突**: `@types/react` 统一锁定 18.3.28 (pnpm.overrides)
+- **Electron IPC**: 6个模块缺失 `@codepilot/core` 导出，补充类型桩
+- **Voice 模块**: 完整类型声明 (ASREngineType 含 websocket)
+- **TriggerManager**: 8个缺失方法声明
+- **WebSocket 重连**: 固定5s → 指数退避 1s~60s
+- **Null 类型**: ChatPanel/ChatSidebar/QuestConversation 的 null vs undefined
+- **APP 版本检测**: `checkForUpdates()` URL 修正 + versions.json 更新至 v1.73.188
+- **electron-builder**: 发布 URL 改为 spiritrealmz.com
+
+### Added
+- **Cloud Server 部署到HK**: Node.js v20 + systemd + nginx /cloud/ 反向代理
+- **Expo Web 面板**: `spiritrealmz.com/app/` 浏览器可直接访问灵境AI
+- **APK v1.73.188**: 84MB, CDN 在线, MD5 验证通过
+
+### Changed
+- **磁盘清理**: 释放 322MB 旧 Electron 构建产物
+- **网站结构**: 首页恢复落地页, Expo Web → /app/, Cloud API → /cloud/
+- **MCP 包**: packages/electron/mcp-packages/ 纳入 git 追踪
+- **.gitignore**: 新增 release/ admin/ uvicorn.log
+
+### Security
+- 确认: WAF已绕过(DNS直连), SSL双域名有效至2026-10-03
+- 支付回调URL: 全部使用 spiritrealmz.com
+
+---
+
 ## v1.73.132 (2026-06-20)
 
 ### Changed

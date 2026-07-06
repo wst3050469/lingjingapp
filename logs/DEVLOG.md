@@ -113,12 +113,35 @@ APP 无法检测到新版本升级提示。根因：版本检测 URL 使用 `ide
 
 ---
 
+## 2026-07-06 — APK v1.73.188 构建 & 部署 ✅ 🚀
+
+### 内容
+- **APK 构建成功** — `release/lingjing-mobile-v1.73.188.apk` (84MB)
+  - MD5: `b722545d1982b752f8592809cd0efb81`
+  - 修复缺失: AndroidManifest.xml + settings.gradle + gradle-wrapper.properties
+- **配置修复**:
+  - `mobile/app.json`: 灵境IDE→灵境AI, v1.73.183→v1.73.188, vc:183→188
+  - `android/local.properties`: SDK路径 /home/liuhui→/opt/android-sdk
+  - `electron-builder.json`: publish URL → spiritrealmz.com
+- **version.json 更新** — apkUrl指向新APK, fileSize/MD5同步
+- **APK 部署** — 通过HK后台git clone部署到 `/var/www/html/spiritrealmz/apk/`
+
+### 版本
+- mobile/app.json: 1.73.188 (versionCode: 188)
+- APK下载: `https://www.spiritrealmz.com/apk/lingjing-mobile-v1.73.188.apk`
+
+### Git
+`a5fb3f5c` — feat: 灵境AI APK v1.73.188 构建成功
+
+---
+
 ## 当前状态
 
 - **最新版本**: v1.73.188
-- **Git HEAD**: 617b82d8 - fix: WebSocket重连指数退避 + 移动端JSON解析日志
+- **Git HEAD**: a5fb3f5c
 - **TypeScript 编译**: 🟢 0 errors (全部4包)
-- **HK 服务器**: 🟢 lingjing.service running
+- **APK**: ✅ 构建完成 (84MB), 🔄 HK部署中
+- **HK 服务器**: 🟢 运行正常
 - **所有服务**: OK
 
 ### 修改内容

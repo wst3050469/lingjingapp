@@ -180,7 +180,7 @@ async def upload_via_backend(
     except HTTPException:
         # 清理已写入的部分
         try: os.remove(local_path)
-        except: pass
+        except OSError: pass
         raise
     
     # ── 写入 DB ──

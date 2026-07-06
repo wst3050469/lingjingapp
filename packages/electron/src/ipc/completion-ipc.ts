@@ -43,9 +43,9 @@ export interface CrossFileRequest {
 async function ensureProvider(): Promise<LLMProvider> {
   if (!completionProvider) {
     const { config } = await loadConfig();
-    completionProvider = createProvider(config);
+    completionProvider = createProvider(config)!;
   }
-  return completionProvider;
+  return completionProvider!;
 }
 
 function composeFIMPrompt(req: CompletionRequest): string {

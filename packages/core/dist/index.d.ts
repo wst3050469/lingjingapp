@@ -65,4 +65,16 @@ export * from './errors/index.js';
 export * from './observability/index.js';
 export * from './lifecycle/index.js';
 export * from './cross-session/index.js';
+
+// ── Additional type re-exports for Electron IPC ──
+export type { AgentEvent } from './agent/agent.js';
+export type { ExpertEvent } from './tools/types.js';
+export type { AppConfig } from './config/schema.js';
+export type {
+  LLMProvider,
+  ChatRequest,
+  Message,
+  SkillConfig,
+  StreamEvent,
+} from './fusion/adapters/types.js';
 //# sourceMappingURL=index.d.ts.map

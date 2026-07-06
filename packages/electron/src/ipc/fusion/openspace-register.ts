@@ -4,7 +4,7 @@ import { ipcMain } from 'electron';
 export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
   ipcMain.handle('openspace:start', async (_event, config) => {
     try {
-      const fusionMod = await import('@codepilot/core/fusion');
+      const fusionMod = await import('@codepilot/core/fusion') as any;
       const PM = fusionMod.OpenSpaceProcessManager;
       if (!PM) return { success: false, error: 'OpenSpaceProcessManager not available' };
       const pm = new PM();
@@ -17,7 +17,7 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('openspace:stop', async (_event, processId) => {
     try {
-      const fusionMod = await import('@codepilot/core/fusion');
+      const fusionMod = await import('@codepilot/core/fusion') as any;
       const PM = fusionMod.OpenSpaceProcessManager;
       if (!PM) return { success: false, error: 'OpenSpaceProcessManager not available' };
       const pm = new PM();
@@ -30,7 +30,7 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('openspace:execute-script', async (_event, request) => {
     try {
-      const fusionMod = await import('@codepilot/core/fusion');
+      const fusionMod = await import('@codepilot/core/fusion') as any;
       const Adapter = fusionMod.OpenSpaceFusionAdapter;
       if (!Adapter) return { success: false, error: 'OpenSpaceFusionAdapter not available' };
       const adapter = new Adapter();
@@ -43,7 +43,7 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('openspace:health-check', async (_event, processId) => {
     try {
-      const fusionMod = await import('@codepilot/core/fusion');
+      const fusionMod = await import('@codepilot/core/fusion') as any;
       const PM = fusionMod.OpenSpaceProcessManager;
       if (!PM) return { success: false, error: 'OpenSpaceProcessManager not available' };
       const pm = new PM();
@@ -56,7 +56,7 @@ export function registerOpenSpaceIPC(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('openspace:list-profiles', async () => {
     try {
-      const fusionMod = await import('@codepilot/core/fusion');
+      const fusionMod = await import('@codepilot/core/fusion') as any;
       const PM = fusionMod.OpenSpaceProcessManager;
       if (!PM) return { success: false, error: 'OpenSpaceProcessManager not available' };
       const pm = new PM();

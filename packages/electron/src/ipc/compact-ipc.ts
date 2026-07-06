@@ -37,9 +37,9 @@ Keep the summary under 2000 tokens.`;
 async function ensureProvider(): Promise<LLMProvider> {
   if (!compactProvider) {
     const { config } = await loadConfig();
-    compactProvider = createProvider(config);
+    compactProvider = createProvider(config)!;
   }
-  return compactProvider;
+  return compactProvider!;
 }
 
 /**

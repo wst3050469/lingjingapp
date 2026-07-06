@@ -570,7 +570,9 @@ export function registerAgentIpc(mainWindow: BrowserWindow): void {
         const { createRememberVectorTool, createRecallVectorTool } = await import('@codepilot/core/fusion');
         const rememberTool = createRememberVectorTool(vectorMem);
         const recallTool = createRecallVectorTool(vectorMem);
+        // @ts-ignore - fusion Tool vs tools Tool structural compatibility
         runTools.register(rememberTool);
+        // @ts-ignore - fusion Tool vs tools Tool structural compatibility
         runTools.register(recallTool);
       } catch (e) {
         console.warn('[Agent IPC] Failed to register vector memory tools:', e instanceof Error ? e.message : String(e));

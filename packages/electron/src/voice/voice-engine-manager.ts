@@ -76,6 +76,7 @@ export class VoiceEngineManager {
       nativeTTS: await checkTTS('native'),
       cloudASR: await checkASR('cloud'),
       cloudTTS: await checkTTS('cloud'),
+      websocketASR: await checkASR('websocket'),
     };
   }
 

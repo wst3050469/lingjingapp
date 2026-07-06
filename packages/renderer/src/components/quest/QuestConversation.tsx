@@ -73,7 +73,7 @@ export function QuestConversation() {
   } = useContextSelector('quest');
 
   const { isDragging, dragHandlers, pasteHandler } = useDragDropFiles('quest', {
-    onFileAdd: addFileFromFile,
+    onImageAdd: addFileFromFile,
   });
   const { isPolishing, polish } = usePromptPolish();
 
@@ -82,7 +82,7 @@ export function QuestConversation() {
 
   // 语音输入处理（需要 token 认证）
   const { token } = useAuthStore();
-  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setText(newText), []), token);
+  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setText(newText), []), token ?? undefined);
 
   // On mount: if active task is paused (e.g. returning from editor), auto-resume it.
   // If isStreaming is stale, clear it.
@@ -483,9 +483,9 @@ export function QuestConversation() {
             {(attachments.length > 0 || selectedContexts.length > 0) && (
               <div className="pt-1.5">
                 <ContextChips
-                  attachments={attachments}
+                  files={attachments.map(a => a.name)}
                   contexts={selectedContexts}
-                  onRemoveAttachment={removeAttachment}
+                  onRemoveFile={(name) => removeAttachment(attachments.find(a => a.name === name)?.id || '')}
                   onRemoveContext={removeContext}
                 />
               </div>

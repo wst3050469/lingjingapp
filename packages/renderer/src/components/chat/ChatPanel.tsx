@@ -48,7 +48,7 @@ export function ChatPanel({ compact = false }: ChatPanelProps) {
 
   const { images, addImages, addImageFromFile, removeImage, fileInputRef, clearImages } = useImageAttachments();
   const { isPolishing, polish } = usePromptPolish();
-  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setInputText(newText), []), token);
+  const { isRecording, toggleRecording } = useVoiceInput(useCallback((newText: string) => setInputText(newText), []), token ?? undefined);
 
   const handlePolish = useCallback(async () => {
     console.log('[ChatPanel] handlePolish called, inputText:', inputText?.substring(0, 50));

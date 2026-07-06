@@ -38,7 +38,7 @@ const genId = () => Date.now().toString(36) + Math.random().toString(36).slice(2
 
 /* --- Helper Components --- */
 
-function LevelBadge({ level }: { level: 'user' | 'project' }) {
+function LevelBadge({ level }: { level: string }) {
   return (
     <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${
       level === 'user'

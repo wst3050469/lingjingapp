@@ -285,7 +285,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
   });
 
   ipcMain.handle('cloud:memories:upsert', async (_event, memory: {
-    id?: string; title: string; content: string; category?: string; scope?: string;
+    id?: string; title: string; content: string; category?: string; scope?: 'global' | 'project';
   }) => {
     if (!cloudClient) throw new Error('Cloud not connected');
     return cloudClient.upsertMemory(memory);
@@ -318,7 +318,7 @@ export function registerCloudIpc(win: BrowserWindow): void {
   });
 
   ipcMain.handle('cloud:push-memory', async (_event, memory: {
-    title: string; content: string; category?: string; scope?: string;
+    title: string; content: string; category?: string; scope?: 'global' | 'project';
   }) => {
     await pushMemoryToCloud(memory);
     return { ok: true };
@@ -489,7 +489,7 @@ export async function autoConnectCloud(): Promise<void> {
 
 /** Push a memory to cloud when created locally */
 export async function pushMemoryToCloud(memory: {
-  title: string; content: string; category?: string; scope?: string;
+  title: string; content: string; category?: string; scope?: 'global' | 'project';
 }): Promise<void> {
   if (!cloudClient) {
     console.log('[Cloud] Skipped memory push (not connected)');

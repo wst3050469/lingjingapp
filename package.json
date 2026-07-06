@@ -40,9 +40,14 @@
     "zustand": "^5.0.13"
   },
   "devDependencies": {
-    "@types/react": "~19.2.15",
+    "@types/react": "^18.3.28",
     "@types/uuid": "^10.0.0",
     "typescript": "~5.9.3"
   },
-  "private": true
+  "private": true,
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^18.3.28"
+    }
+  }
 }

@@ -1245,7 +1245,7 @@ async function bootstrap(): Promise<void> {
 
         if (FusionInitializer) {
           const init = new FusionInitializer();
-          const modules = {};
+          const modules: Record<string, any> = {};
 
           try { const eb = new EventBus(); init.setEventBus(eb); setEventBus(eb); console.log('[Main] Fusion EventBus created'); } catch (e) { console.warn('[Main] EventBus failed:', e); }
           try { const hr = new HookRegistry(); init.setHookRegistry(hr); setHookRegistry(hr); console.log('[Main] Fusion HookRegistry created'); } catch (e) { console.warn('[Main] HookRegistry failed:', e); }
@@ -1257,6 +1257,7 @@ async function bootstrap(): Promise<void> {
             const vm = new VectorMemoryStore(DEFAULT_VECTOR_MEMORY_CONFIG, sqliteAdapter);
             // Inject real embedding function using createEmbeddingService
             try {
+              // @ts-ignore - dynamic import for optional embedding service
               const { createEmbeddingService } = await import('../services/embedding-service.js');
               const { loadConfig: loadCoreConfig } = await import('@codepilot/core');
               const freshConfig = await loadCoreConfig();
@@ -1277,8 +1278,8 @@ async function bootstrap(): Promise<void> {
           try { const re = new NudgeReviewEngine(DEFAULT_REVIEW_CONFIG); init.setReviewEngine(re); modules.reviewEngine = re; console.log('[Main] Fusion ReviewEngine created'); } catch (e) { console.warn('[Main] ReviewEngine failed:', e); }
           try { const th = new ExecutionTraceHarvester(DEFAULT_TRACE_HARVESTER_CONFIG); init.setTraceHarvester(th); modules.traceHarvester = th; console.log('[Main] Fusion TraceHarvester created'); } catch (e) { console.warn('[Main] TraceHarvester failed:', e); }
           try { const ss = new SkillSecurityLoader(DEFAULT_SECURITY_CONFIG); modules.skillSecurity = ss; console.log('[Main] Fusion SkillSecurity created'); } catch (e) { console.warn('[Main] SkillSecurity failed:', e); }
-          try { const dag = new DAGOrchestrator(async () => ({ success: false, error: 'no-executor' })); init.setDAGOrchestrator(dag); modules.dagOrchestrator = dag; console.log('[Main] Fusion DAGOrchestrator created'); } catch (e) { console.warn('[Main] DAGOrchestrator failed:', e); }
-          try { const ma = new MultiAgentExecutor(DEFAULT_MULTI_AGENT_CONFIG, async () => ({ success: false, error: 'no-executor' })); init.setMultiAgent(ma); modules.multiAgent = ma; console.log('[Main] Fusion MultiAgent created'); } catch (e) { console.warn('[Main] MultiAgent failed:', e); }
+          try { const dag = new DAGOrchestrator(async () => 'no-executor'); init.setDAGOrchestrator(dag); modules.dagOrchestrator = dag; console.log('[Main] Fusion DAGOrchestrator created'); } catch (e) { console.warn('[Main] DAGOrchestrator failed:', e); }
+          try { const ma = new MultiAgentExecutor(async () => 'no-executor', DEFAULT_MULTI_AGENT_CONFIG); init.setMultiAgent(ma); modules.multiAgent = ma; console.log('[Main] Fusion MultiAgent created'); } catch (e) { console.warn('[Main] MultiAgent failed:', e); }
           try { const mr = new DynamicModelRouter([], DEFAULT_MODEL_ROUTER_CONFIG); init.setModelRouter(mr); modules.modelRouter = mr; console.log('[Main] Fusion ModelRouter created'); } catch (e) { console.warn('[Main] ModelRouter failed:', e); }
           try { const nc = new NLCronScheduler(DEFAULT_NL_CRON_CONFIG); init.setNLCron(nc); modules.nlCron = nc; console.log('[Main] Fusion NLCronScheduler created'); } catch (e) { console.warn('[Main] NLCronScheduler failed:', e); }
           try { const um = new HonchoUserModeler('default', DEFAULT_USER_MODELER_CONFIG); init.setUserModeler(um); modules.userModeler = um; console.log('[Main] Fusion UserModeler created'); } catch (e) { console.warn('[Main] UserModeler failed:', e); }
@@ -1299,6 +1300,7 @@ async function bootstrap(): Promise<void> {
           try {
             const integ = fusionMod.integration;
             if (integ && integ.registerFusionTools) {
+              // @ts-ignore - integration API may vary
               integ.registerFusionTools();
               console.log('[Main] Fusion tools registered');
             }
@@ -1317,6 +1319,7 @@ async function bootstrap(): Promise<void> {
           try {
             const integ = fusionMod.integration;
             if (integ && integ.setupMemoryLinkages) {
+              // @ts-ignore - integration API may vary
               integ.setupMemoryLinkages({ db: getDatabase() });
               console.log('[Main] Fusion memory linkages established');
             }

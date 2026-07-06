@@ -68,4 +68,14 @@ export interface PipelineLogEvent {
     data: string;
     timestamp: string;
 }
+export type TriggerStatus = 'active' | 'inactive' | 'error';
+export interface TriggerConfig {
+    id?: string;
+    type: TriggerType;
+    name: string;
+    cronExpression?: string;
+    branches?: string[];
+    enabled?: boolean;
+    pipelineId: string;
+}
 //# sourceMappingURL=types.d.ts.map

@@ -3,6 +3,30 @@
 
 ---
 
+## 2026-07-06 (深夜续) — 收尾：app.json移动端配置合并 + package.json规范化 ✅
+
+### 内容
+- **app.json 增强**: 从 `app.json.mobile` 合并移动端配置
+  - 新增 `android.permissions`: RECORD_AUDIO + INTERNET（语音输入必需）
+  - 新增 `android.versionCode: 188`
+  - 新增 `expo-av` 插件 + 麦克风权限提示
+- **package.json 规范化**: name `lingjing-ide` → `lingjing-mobile`，description → 移动端应用
+- **清理**: 删除 `app.json.bak` / `app.json.mobile` 备份文件
+
+### 服务验证
+- HK API (8900): ✅ 200
+- HK Cloud (8000): ✅ 200
+- Nginx Web/Cloud/API: ✅ 全部200
+- PostgreSQL: ✅ active
+
+### 当前状态
+- **最新版本**: v1.73.188
+- **Git HEAD**: 待提交
+- **所有服务**: 🟢 OK
+- **唯一剩余**: ASR WebSocket 实测（需客户端 Token + 麦克风）
+
+---
+
 ## 2026-07-06 (晚间续) — Web应用重新构建部署 + APK回滚 ✅
 
 ### Web应用部署

@@ -18,10 +18,21 @@
       "adaptiveIcon": {
         "backgroundColor": "#0d1117"
       },
-      "package": "com.zhejiangjinmo.lingjing.mobile"
+      "package": "com.zhejiangjinmo.lingjing.mobile",
+      "permissions": [
+        "RECORD_AUDIO",
+        "INTERNET"
+      ],
+      "versionCode": 188
     },
     "plugins": [
-      "expo-updates"
+      "expo-updates",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "允许灵境使用麦克风进行语音输入"
+        }
+      ]
     ],
     "updates": {
       "enabled": true,

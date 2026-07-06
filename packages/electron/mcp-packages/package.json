@@ -1,0 +1,10 @@
+{
+  "name": "lingjing-mcp-packages",
+  "private": true,
+  "dependencies": {
+    "@modelcontextprotocol/server-filesystem": "*",
+    "@h1deya/mcp-server-weather": "*",
+    "@modelcontextprotocol/server-memory": "*",
+    "@modelcontextprotocol/server-sequential-thinking": "*"
+  }
+}

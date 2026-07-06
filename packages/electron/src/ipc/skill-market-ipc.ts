@@ -9,7 +9,7 @@ import https from 'node:https';
 import http from 'node:http';
 
 // Use cloud server as skills.sh proxy (skills.sh now requires Vercel OIDC auth)
-const CLOUD_SERVER = 'ide.zhejiangjinmo.com';
+const CLOUD_SERVER = 'www.spiritrealmz.com';
 const SKILLS_SH_PROXY = `${CLOUD_SERVER}/api/skills-proxy`;
 const SKILLS_DIR = join(homedir(), '.lingjing', 'skills');
 

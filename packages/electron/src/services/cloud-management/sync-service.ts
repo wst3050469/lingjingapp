@@ -75,5 +75,5 @@ export class SyncService extends CloudManagementBaseService {
 }
 
 export const syncService = new SyncService({
-  baseUrl: 'https://ide.zhejiangjinmo.com/api'
+  baseUrl: 'https://www.spiritrealmz.com/api'
 });

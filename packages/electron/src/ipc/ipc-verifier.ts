@@ -152,7 +152,7 @@ function generateFeatureDescriptions(missing: string[]): string[] {
   });
 
   descriptions.push('');
-  descriptions.push(`  💡 Solution: Download the latest version from https://ide.zhejiangjinmo.com/`);
+  descriptions.push(`  💡 Solution: Download the latest version from https://www.spiritrealmz.com/`);
 
   return descriptions;
 }

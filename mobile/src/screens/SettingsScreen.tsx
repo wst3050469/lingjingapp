@@ -89,8 +89,8 @@ export default function SettingsScreen() {
           setUser({ id: cloudUser.id, username: cloudUser.username, email: cloudUser.email });
           setCloudPassword('');
           // Switch to cloud account mode (URL must match App.tsx CLOUD_SERVER_URL)
-          const cloudUrl = 'https://ide.zhejiangjinmo.com';
-          api.configure({ baseUrl: cloudUrl, token: api.jwtToken || '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
+          const cloudUrl = 'https://www.spiritrealmz.com';
+          api.configure({ baseUrl: cloudUrl, token: api.jwtToken || '', wsUrl: 'wss://www.spiritrealmz.com/ws' });
           api.connectWs();
           setConnection(true, 'cloud_account', cloudUrl);
         }

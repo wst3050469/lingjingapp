@@ -29,7 +29,7 @@ export class VersionService {
 
   constructor(
     currentVersion: string,
-    versionServerUrl: string = 'https://ide.zhejiangjinmo.com',
+    versionServerUrl: string = 'https://www.spiritrealmz.com',
     timeout: number = 5000
   ) {
     this.currentVersion = currentVersion;

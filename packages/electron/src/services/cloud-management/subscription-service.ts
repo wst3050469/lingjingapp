@@ -83,5 +83,5 @@ export class SubscriptionService extends CloudManagementBaseService {
 }
 
 export const subscriptionService = new SubscriptionService({
-  baseUrl: 'https://ide.zhejiangjinmo.com/api'
+  baseUrl: 'https://www.spiritrealmz.com/api'
 });

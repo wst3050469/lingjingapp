@@ -72,5 +72,5 @@ export class UserService extends CloudManagementBaseService {
 }
 
 export const userService = new UserService({
-  baseUrl: 'https://ide.zhejiangjinmo.com/api'
+  baseUrl: 'https://www.spiritrealmz.com/api'
 });

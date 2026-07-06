@@ -181,7 +181,7 @@ export class HttpClient {
 }
 
 export const cloudSyncClient = new HttpClient({
-  baseURL: 'https://ide.zhejiangjinmo.com',
+  baseURL: 'https://www.spiritrealmz.com',
   timeout: 30000,
   retry: {
     maxRetries: 3,

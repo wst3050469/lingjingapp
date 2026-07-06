@@ -532,7 +532,7 @@ function readVersionInfo() {
       const files = {};
       for (const [platform, info] of Object.entries(data.platforms)) {
         if (info.url) {
-          files[platform] = 'https://ide.zhejiangjinmo.com/downloads/' + info.url;
+          files[platform] = 'https://www.spiritrealmz.com/downloads/' + info.url;
         }
       }
       return {
@@ -562,13 +562,13 @@ function readVersionInfo() {
           if (typeof value === 'string') {
             normalizedFiles[key] = value.includes('://')
               ? value
-              : `https://ide.zhejiangjinmo.com/downloads/${value}`;
+              : `https://www.spiritrealmz.com/downloads/${value}`;
           } else if (value && typeof value === 'object' && value.url) {
             normalizedFiles[key] = {
               ...value,
               url: value.url.includes('://')
                 ? value.url
-                : `https://ide.zhejiangjinmo.com/downloads/${value.url.replace(/^\//, '')}`
+                : `https://www.spiritrealmz.com/downloads/${value.url.replace(/^\//, '')}`
             };
           } else {
             normalizedFiles[key] = value;
@@ -1238,7 +1238,7 @@ app.post('/api/payments/create', auth, async (req, res) => {
     const result = await createPayment(channel, {
       amount,
       subject: subject || '灵境订阅支付',
-      notifyUrl: 'https://ide.zhejiangjinmo.com/api/payments/notify/' + channel,
+      notifyUrl: 'https://www.spiritrealmz.com/api/payments/notify/' + channel,
     });
     // Store payment record in DB
     const paymentId = randomUUID();
@@ -2092,7 +2092,7 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
     releaseDate: new Date().toISOString(),
     releaseNotes: releaseNotes || `Auto-deployed ${version}`,
     files: {
-      apk: `https://ide.zhejiangjinmo.com/downloads/LingJing-Mobile-${version.replace('v', '').replace('-mobile', '')}.apk`,
+      apk: `https://www.spiritrealmz.com/downloads/LingJing-Mobile-${version.replace('v', '').replace('-mobile', '')}.apk`,
       platform: 'android',
     },
     size: size || 0,

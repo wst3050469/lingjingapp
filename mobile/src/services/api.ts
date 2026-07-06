@@ -25,7 +25,7 @@ type WsCallback = (data: WsResponse) => void;
 
 
 class ApiService {
- private config: ApiConfig = { baseUrl: 'https://ide.zhejiangjinmo.com', token: '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws', apiKey: 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8' };
+ private config: ApiConfig = { baseUrl: 'https://www.spiritrealmz.com', token: '', wsUrl: 'wss://www.spiritrealmz.com/ws', apiKey: 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8' };
  private ws: WebSocket|null = null;
  private wsCallbacks: Map<string, Function> = new Map();
  private wsSubscriptions: Set<string> = new Set();
@@ -50,7 +50,7 @@ class ApiService {
  return h;
  }
  private async request<T>(path: string, options?: RequestInit): Promise<T> {
- const baseUrl = this.config.baseUrl || 'https://ide.zhejiangjinmo.com';
+ const baseUrl = this.config.baseUrl || 'https://www.spiritrealmz.com';
  const url = baseUrl + '/api' + path;
  const controller = new AbortController();
  const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -338,7 +338,7 @@ class ApiService {
 
   async checkForUpdates(currentVersion: string): Promise<UpdateInfo | null> {
     try {
-      const res = await fetch('https://ide.zhejiangjinmo.com/downloads/version.json');
+      const res = await fetch('https://www.spiritrealmz.com/downloads/version.json');
       if (!res.ok) return null;
       const data: any = await res.json();
       // version.json format: { version, versionCode, apkUrl, fileSize, md5, releaseNotes, ... }

@@ -92,5 +92,5 @@ export class ApiKeyService extends CloudManagementBaseService {
 }
 
 export const apiKeyService = new ApiKeyService({
-  baseUrl: 'https://ide.zhejiangjinmo.com/api'
+  baseUrl: 'https://www.spiritrealmz.com/api'
 });

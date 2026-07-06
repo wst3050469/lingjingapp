@@ -89,7 +89,7 @@ function getEnvArray(key: string, defaultValue: string[]): string[] {
 export function loadConfig(): AppConfig {
   return {
     cloudSync: {
-      serverUrl: getEnv('CLOUD_SYNC_SERVER_URL', 'https://ide.zhejiangjinmo.com'),
+      serverUrl: getEnv('CLOUD_SYNC_SERVER_URL', 'https://www.spiritrealmz.com'),
       apiKey: getEnv('CLOUD_SYNC_API_KEY', process.env.LINGJING_CLOUD_API_KEY || ''),
       jwtSecret: getEnv('CLOUD_SYNC_JWT_SECRET', 'a1e9886e99cdd5fa3bb0f090919cd57b4b2b22a5a5214800'),
       syncInterval: getEnvNumber('CLOUD_SYNC_INTERVAL', 300000),

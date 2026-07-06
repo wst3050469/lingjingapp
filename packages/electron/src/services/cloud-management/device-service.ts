@@ -51,5 +51,5 @@ export class DeviceService extends CloudManagementBaseService {
 }
 
 export const deviceService = new DeviceService({
-  baseUrl: 'https://ide.zhejiangjinmo.com/api'
+  baseUrl: 'https://www.spiritrealmz.com/api'
 });

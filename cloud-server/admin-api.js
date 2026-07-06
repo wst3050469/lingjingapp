@@ -841,7 +841,7 @@ export function registerAdminAPI(app, db) {
         version: v.version || '0.0.0',
         releaseDate: v.releaseDate || v.date || null,
         changelog: v.releaseNotes || v.description || v.changelog || '',
-        downloadUrl: v.files ? (typeof v.files['win-x64'] === 'string' ? 'https://ide.zhejiangjinmo.com/downloads/' + v.files['win-x64'] : (v.files['win-x64'] && v.files['win-x64'].url ? v.files['win-x64'].url : '')) : (v.downloadUrl || ''),
+        downloadUrl: v.files ? (typeof v.files['win-x64'] === 'string' ? 'https://www.spiritrealmz.com/downloads/' + v.files['win-x64'] : (v.files['win-x64'] && v.files['win-x64'].url ? v.files['win-x64'].url : '')) : (v.downloadUrl || ''),
         active: v.status === 'published' || v.status !== 'draft',
         status: v.status || 'published',
       }));
@@ -1289,13 +1289,13 @@ export function registerAdminAPI(app, db) {
         alipay: {
           enabled: config.alipay?.enabled || false,
           appId: config.alipay?.appId || '',
-          notifyUrl: config.alipay?.notifyUrl || 'https://ide.zhejiangjinmo.com/api/payments/notify/alipay',
+          notifyUrl: config.alipay?.notifyUrl || 'https://www.spiritrealmz.com/api/payments/notify/alipay',
         },
         wechat: {
           enabled: config.wechat?.enabled || false,
           appId: config.wechat?.appId || '',
           mchId: config.wechat?.mchId || '',
-          notifyUrl: config.wechat?.notifyUrl || 'https://ide.zhejiangjinmo.com/api/payments/notify/wechat',
+          notifyUrl: config.wechat?.notifyUrl || 'https://www.spiritrealmz.com/api/payments/notify/wechat',
         },
         bankTransfer: {
           bankName: config.bankTransfer?.bankName || '',

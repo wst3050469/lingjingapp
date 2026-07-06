@@ -112,6 +112,4 @@ packages/electron/scripts/patch-fusion-race.js
 release/
 server/uvicorn.log
 
-# 管理面板（已部署到Web）
-admin/
 logs/lingjing-app.log

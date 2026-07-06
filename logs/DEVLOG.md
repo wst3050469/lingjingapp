@@ -22,6 +22,17 @@
 ### 技术笔记
 后续大文件部署建议：**后台SCP**（`nohup scp ... &`）+ 轮询MD5验证，比rsync分块/git中转更可靠。
 
+### Expo Web面板部署
+- 将 `admin/` Expo Web构建部署到 `https://www.spiritrealmz.com/`
+- 原落地页备份为 `index-landing.html`
+- 清理嵌套 `_expo/_expo/` 旧构建产物
+- 6.9MB Expo Web应用已上线，浏览器可直接访问灵境AI
+
+### 服务器代码分析
+- HK `/home/lingjing-server/` 有4个生产特有文件（quota/attendance/user_settings），与git追踪版本存在MD5差异
+- CORS配置：HK使用 `["*"]`（更宽松），本地使用环境变量 `CORS_ORIGINS`
+- **决策：不强制同步server代码**，避免覆盖生产环境配置
+
 ---
 
 ## 2026-07-06 — APP版本检测修复 + 域名全面清理 ✅ 🚀

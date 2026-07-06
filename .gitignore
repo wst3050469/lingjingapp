@@ -107,3 +107,10 @@ packages/electron/_linux_build/
 packages/electron/lingjing-linux-build.zip  
 packages/electron/scripts/patch-fusion-race.js 
 "release/"  
+
+# 构建产物
+release/
+server/uvicorn.log
+
+# 管理面板（已部署到Web）
+admin/

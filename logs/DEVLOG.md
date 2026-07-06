@@ -3,6 +3,19 @@
 
 ---
 
+## 2026-07-06 (深夜) — Expo Web 重新构建 + CHANGELOG 更新 ✅
+
+### Expo Web 重新构建
+- `npx expo export --platform web` → 5.3MB (新JS: `AppEntry-22c5b5d2...js`, 1.3MB)
+- 部署到 `https://www.spiritrealmz.com/app/` 替换旧构建
+- `admin/` 目录同步更新
+- `app.json` 版本号 1.73.151 → 1.73.188, runtimeVersion 同步
+
+### CHANGELOG
+- 新增 v1.73.188 完整记录（TS修复/域名清理/Cloud部署/APK/WebSocket等）
+
+---
+
 ## 2026-07-06 (深夜) — Cloud Server 部署到HK ✅ 🚀
 
 ### 背景

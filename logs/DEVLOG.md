@@ -58,10 +58,29 @@
 
 ---
 
+## 2026-07-06 — WebSocket 重连优化 + 移动端日志修复 ✅
+
+### 修改内容
+1. **CloudSyncClient 指数退避** — 重连延迟从固定5秒改为指数递增（1s→2s→4s→...→60s max）
+   - 添加 `_reconnectAttempts` 计数器，成功连接后重置
+   - 添加 `MAX_RECONNECT_DELAY = 60000` 上限
+   - 源码 + dist 同步修复
+2. **移动端 JSON 解析日志** — `res.json().catch(() => ({}))` 添加 `console.warn` 输出解析错误
+
+### 修改文件
+- `packages/core/src/cloud/sync-client.ts` — +8/-1
+- `packages/core/dist/cloud/sync-client.js` — +8/-1
+- `mobile/src/services/api.ts` — +2/-1
+
+### Git
+`617b82d8` — fix: WebSocket重连指数退避 + 移动端JSON解析日志
+
+---
+
 ## 当前状态
 
 - **最新版本**: v1.73.188
-- **Git HEAD**: 8ace2dfe - fix: 全面TypeScript编译修复 — 81→0 errors (v1.73.188)
+- **Git HEAD**: 617b82d8 - fix: WebSocket重连指数退避 + 移动端JSON解析日志
 - **TypeScript 编译**: 🟢 0 errors (全部4包)
 - **HK 服务器**: 🟢 lingjing.service running
 - **所有服务**: OK

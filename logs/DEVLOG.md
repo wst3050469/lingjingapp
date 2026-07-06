@@ -29,6 +29,32 @@
 | versionName | 1.73.188 |
 | minSdkVersion | 24 (Android 7.0+) |
 
+### Nginx 大文件传输优化
+- 添加 `aio threads`、`directio 4m`、`output_buffers 2 4m`、`sendfile_max_chunk 2m`
+- 内网测速 33MB/s，外网受 ECS 实例 2Mbps 出口带宽限制（82MB APK 约需5分钟）
+
+### Git 操作
+- 提交 `8885b75c`：清理旧 APK 跟踪 + DEVLOG 更新
+- 已推送至 `ssh://120.55.5.220/root/lingjing-git` (main)
+
+### APK 压缩版加速下载
+- ECS 出口带宽仅 2Mbps，原始 83MB 下载需约 5.5 分钟
+- 用 xz/gzip 将 APK 重新压缩，大幅减小体积：
+
+| 格式 | 大小 | 下载时间 | 解压命令 |
+|------|------|----------|----------|
+| 原始 .apk | 83 MB | ~5.5 分钟 | 直接安装 |
+| .apk.xz | 29 MB | ~1.9 分钟 | `xz -d file.apk.xz` |
+| .apk.gz | 38 MB | ~2.5 分钟 | `gunzip file.apk.gz` |
+
+- 下载链接：
+  - `https://www.spiritrealmz.com/apk/latest.apk` (原始)
+  - `https://www.spiritrealmz.com/apk/latest.apk.xz` (推荐，最快)
+  - `https://www.spiritrealmz.com/apk/latest.apk.gz`
+
+### 已知问题
+- 服务器 ECS 出口带宽仅 2Mbps。长期方案：升级 ECS 带宽 / OSS 托管 / CDN 加速
+
 ---
 
 ## 2026-07-06 (深夜) — APK 签名 v2+v3 + 注册修复 + 发布收尾 ✅

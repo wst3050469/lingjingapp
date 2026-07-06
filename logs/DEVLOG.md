@@ -3,6 +3,27 @@
 
 ---
 
+## 2026-07-06 (下午) — APK v1.73.188 生产部署成功 ✅ 🚀
+
+### 部署结果
+| 项目 | 状态 |
+|------|------|
+| APK CDN | ✅ `https://www.spiritrealmz.com/apk/lingjing-mobile-v1.73.188.apk` (85MB) |
+| MD5 | ✅ `b722545d1982b752f8592809cd0efb81` (本地=远程) |
+| Version API | ✅ `https://www.spiritrealmz.com/downloads/version.json` (200) |
+| TS编译 | ✅ 0 errors (electron/renderer/root/mobile 全部通过) |
+| HK服务 | ✅ lingjing+postgresql+nginx 全部active |
+
+### 关键修复
+- 后台 `nohup scp` 成功绕过长连接超时 → APK 完整传输到 HK
+- `/downloads/version.json` nginx alias 正常工作，APP 版本检测可用
+- 灵境IDE残留文件已从 HK `/var/www/html/` 清除
+
+### 技术笔记
+后续大文件部署建议：**后台SCP**（`nohup scp ... &`）+ 轮询MD5验证，比rsync分块/git中转更可靠。
+
+---
+
 ## 2026-07-06 — APP版本检测修复 + 域名全面清理 ✅ 🚀
 
 ### 问题

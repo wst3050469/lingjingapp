@@ -3,6 +3,42 @@
 
 ---
 
+## 2026-07-06 — APP版本检测修复 + 域名全面清理 ✅ 🚀
+
+### 问题
+APP 无法检测到新版本升级提示。根因：版本检测 URL 使用 `ide.zhejiangjinmo.com`（另一独立项目域名），且 versions.json 版本号停留在 v1.64.9。
+
+### 修复内容
+
+#### 代码层面（25个文件）
+- **域名全局替换** — `ide.zhejiangjinmo.com` → `www.spiritrealmz.com` (54处→0)
+  - `mobile/src/` (5文件): API baseUrl + version.json URL + WebSocket URL + LoginScreen + SettingsScreen
+  - `packages/electron/src/` (17文件): update-ipc(9处) + cloud-ipc(3处) + 8个cloud-management服务 + main.ts + schedule/skill-market/ipc-verifier + config/http-client/version-service
+  - `cloud-server/` (2文件): admin-api + server.js
+  - `server/app/main.py`: CORS origins
+- **update-server/data/versions.json** — latest 1.64.9 → 1.73.188，新增 v1.73.188 版本条目，域名修正
+
+#### 服务器层面
+- 🔴 **删除灵境IDE残留文件**: 3个AppImage + 2个deb + 2个exe + 1个blockmap + latest-linux.yml
+- 🔴 **删除旧APK目录**: /var/www/html/apk/ (已迁移到spiritrealmz/apk/)
+- 🔴 **同步版本文件**: versions.json (管理后台) + version.json (APP检测) 双格式部署到 spiritrealmz/downloads/
+
+### 验证
+- ✅ version.json API: `https://www.spiritrealmz.com/downloads/version.json` → 200, v1.73.188
+- ✅ APK下载: `https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk` → 200
+- ✅ TypeScript: 0 errors (全部4包)
+- ✅ HK服务: lingjing/nginx/postgresql all active
+- ✅ 代码中 ide.zhejiangjinmo.com 残留: 0处
+
+### 风险
+- ⚠️ APK文件名为lingjing-v1.64.1.apk但version.json声明v1.73.188，需构建新APK后更新
+- ⚠️ cloud-server 中的支付宝/微信支付回调URL改为spiritrealmz.com，需确认支付网关配置
+
+### 版本 & Git
+- v1.73.188: `aa84c9a6` — 域名修复(25 files, +74/-55)
+
+---
+
 ## 2026-07-06 — 全面代码审查 & TypeScript 编译修复 ✅ 🔧
 
 ### 审查结果

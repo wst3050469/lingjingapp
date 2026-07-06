@@ -3,6 +3,28 @@
 
 ---
 
+## 2026-07-06 (傍晚) — 遗留待办项清理 ✅
+
+### 已确认解决
+| 待办项 | 状态 |
+|--------|------|
+| WAF拦截外网访问 | ✅ DNS直连43.103.5.36，无WAF |
+| SSL裸域证书 | ✅ SAN含spiritrealmz.com+www，有效期至2026-10-03 |
+| 支付回调URL | ✅ 已使用spiritrealmz.com |
+| OpenSpace编译 | ✅ 完整.js+.d.ts已编译，非类型桩 |
+| APK文件名 | ✅ v1.73.188已部署 |
+
+### API路由验证
+- `/api/v1/health` → 200 ✅
+- `/api/v1/auth/login` → 405 (GET正常拒绝)
+- `/api/v1/chat/sessions` → 401 (需认证，正常)
+- ASR WebSocket: `/api/v1/asr/stream` (路径确认)
+
+### 剩余可测项
+- ASR语音WebSocket实测（需客户端Token连接）
+
+---
+
 ## 2026-07-06 (下午) — APK v1.73.188 生产部署成功 ✅ 🚀
 
 ### 部署结果

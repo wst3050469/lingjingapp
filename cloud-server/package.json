@@ -1,0 +1,9 @@
+{
+  "name": "cloud-server",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.0",
+    "ws": "^8.16.0",
+    "better-sqlite3": "^11.0.0"
+  }
+}

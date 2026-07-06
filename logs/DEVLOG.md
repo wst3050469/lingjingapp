@@ -3,6 +3,32 @@
 
 ---
 
+## 2026-07-06 (深夜) — Cloud Server 部署到HK ✅ 🚀
+
+### 背景
+cloud-server（Node.js管理后台 + Webhook + Slack/Discord/CI集成）原部署在 `120.55.5.220` (git服务器)，SSH受限无法重启。域名修复(ide→spiritrealmz)已提交但未生效。
+
+### 部署内容
+| 项目 | 详情 |
+|------|------|
+| HK环境 | Node.js v20.20.2 安装 |
+| 依赖 | express + ws + better-sqlite3 |
+| 缺失模块 | scheduler/slack-bot/ci-integration/log-stream/bots → stub实现 |
+| 服务 | systemd `lingjing-cloud.service` (port 8000) |
+| Nginx | `/cloud/` → `127.0.0.1:8000` |
+| 认证 | admin/admin123 (JWT Bearer) |
+
+### 验证
+- `https://www.spiritrealmz.com/cloud/api/health` → 200 ✅
+- `POST /cloud/api/admin/login` → JWT token ✅
+- `GET /cloud/api/admin/stats` → 统计数据 ✅
+
+### 技术笔记
+- 原生产服务器缺失文件(slack-bot/ci-integration/scheduler/bots)因不在git中，使用stub替代
+- 如需完整功能，需从 `120.55.5.220` 恢复缺失模块
+
+---
+
 ## 2026-07-06 (傍晚) — 遗留待办项清理 ✅
 
 ### 已确认解决

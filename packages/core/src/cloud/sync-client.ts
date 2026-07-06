@@ -38,6 +38,9 @@ export class CloudSyncClient {
   deviceName: string;
   ws: WebSocket | null = null;
   wsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Exponential backoff: tracks consecutive reconnect attempts */
+  private _reconnectAttempts = 0;
+  private static readonly MAX_RECONNECT_DELAY = 60000; // 1 minute max
   /** Heartbeat timer: sends ping every 30s to keep WebSocket alive */
   _heartbeatTimer: ReturnType<typeof setInterval> | null = null;
   syncTimer: ReturnType<typeof setInterval> | null = null;
@@ -273,6 +276,7 @@ export class CloudSyncClient {
     this.ws = new WS(wsUrl) as WebSocket;
     this.ws.onopen = () => {
       console.info('[CloudSync] WebSocket connected');
+	      this._reconnectAttempts = 0; // reset backoff on successful connection
       this._startHeartbeat();
       this.emit('connected', { url: this.url, deviceId: this.deviceId });
     };
@@ -300,10 +304,14 @@ export class CloudSyncClient {
 
   scheduleReconnect(): void {
     if (this.wsReconnectTimer) return;
+    this._reconnectAttempts++;
+    // Exponential backoff: 1s, 2s, 4s, 8s, 16s, 32s, 60s (max)
+    const delay = Math.min(1000 * Math.pow(2, this._reconnectAttempts - 1), CloudSyncClient.MAX_RECONNECT_DELAY);
+    console.info(`[CloudSync] Scheduling reconnect in ${delay}ms (attempt ${this._reconnectAttempts})`);
     this.wsReconnectTimer = setTimeout(() => {
       this.wsReconnectTimer = null;
       this.connectWebSocket();
-    }, 5000);
+    }, delay);
   }
 
   disconnectWebSocket(): void {

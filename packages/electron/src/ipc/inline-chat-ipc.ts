@@ -38,9 +38,9 @@ export interface InlineChatRequest {
 async function ensureProvider(): Promise<LLMProvider> {
   if (!inlineChatProvider) {
     const { config } = await loadConfig();
-    inlineChatProvider = createProvider(config);
+    inlineChatProvider = createProvider(config)!;
   }
-  return inlineChatProvider;
+  return inlineChatProvider!;
 }
 
 function composeModifyPrompt(req: InlineChatRequest): string {

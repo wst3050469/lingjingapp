@@ -37,7 +37,7 @@ export function ChatSidebar() {
 
   // Shared hooks for attachments & input enhancements
   const { images, addImages, addImageFromFile, removeImage, fileInputRef, triggerFileInput, clearImages } = useImageAttachments();
-  const { isRecording, toggleRecording } = useVoiceInput(useCallback((text: string) => setInputText(text), []), token);
+  const { isRecording, toggleRecording } = useVoiceInput(useCallback((text: string) => setInputText(text), []), token ?? undefined);
   const { isPolishing, polish } = usePromptPolish();
 
   // Ensure conversation ID exists

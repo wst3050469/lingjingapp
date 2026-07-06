@@ -547,7 +547,7 @@ export function AdvancedTab({ config, saveKey, saving, showStatus, onConfigReset
         window.electronAPI.systemControl.monitor.memory(),
       ]);
       const cpu = cpuRes.success ? cpuRes.data?.currentLoad || 0 : 0;
-      const mem = memRes.success ? memRes.data : { used: 0, total: 1 };
+      const mem = (memRes.success && memRes.data) ? memRes.data : { used: 0, total: 1 };
       setHwMonitor({
         cpu,
         memUsed: mem.used || 0,

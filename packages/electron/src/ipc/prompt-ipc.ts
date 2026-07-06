@@ -27,9 +27,9 @@ Rules:
 async function ensureProvider(): Promise<LLMProvider> {
   if (!polishProvider) {
     const { config } = await loadConfig();
-    polishProvider = createProvider(config);
+    polishProvider = createProvider(config)!;
   }
-  return polishProvider;
+  return polishProvider!;
 }
 
 export function registerPromptIpc(): void {

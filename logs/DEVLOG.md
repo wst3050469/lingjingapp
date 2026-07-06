@@ -3,6 +3,34 @@
 
 ---
 
+## 2026-07-06 (晚间) — APK 重新签名上传 + 服务端清理 ✅
+
+### APK 重新处理
+- 上次签名的 `app-release-signed.apk` 丢失（仅 v2+v3，无 v1）
+- 重新 zipalign + apksigner 签名 `app-release.apk` → v2+v3
+- minSdkVersion=24 (Android 7.0+), v2+v3 签名已完全覆盖
+
+### SFTP 上传
+- 使用 Python paramiko SFTP 上传 82.6 MB → `lingjing-1.73.188.apk`
+- 更新 symlink `latest.apk` → 新文件
+- **下载**: `https://www.spiritrealmz.com/apk/latest.apk` (200 OK, 86,604,110 bytes)
+
+### 服务端清理
+- 删除旧文件: `lingjing-mobile-v1.73.188.apk` (88MB 未签名版)
+- 修正 symlink: `lingjing-v1.73.188.apk` → `lingjing-1.73.188.apk`
+
+### 当前 APK 状态
+| 属性 | 值 |
+|------|-----|
+| URL | `https://www.spiritrealmz.com/apk/latest.apk` |
+| 大小 | 86,604,110 bytes (~82.6 MB) |
+| 签名 | v2 + v3 (apksigner, keystore: lingjing-release.keystore) |
+| versionCode | 188 |
+| versionName | 1.73.188 |
+| minSdkVersion | 24 (Android 7.0+) |
+
+---
+
 ## 2026-07-06 (深夜) — APK 签名 v2+v3 + 注册修复 + 发布收尾 ✅
 
 ### APK 签名升级 (v1-only → v2+v3)
@@ -36,11 +64,10 @@ apksigner sign --v1-signing-enabled true --v2-signing-enabled true --v3-signing-
 | Cloud 模块 | ✅ 从 git 恢复 1672 行 |
 | ASR WebSocket | ⚠️ 唯一剩余: 需客户端 Token 实测 |
 
-### 最终 APK 信息
-- **URL**: `https://www.spiritrealmz.com/apk/lingjing-v1.73.188.apk`
-- **大小**: 88,678,702 bytes (~85MB)
-- **MD5**: `fca0d184f68d9a2fd4fe276ab0f5fb3b`
-- **签名**: v1 + v2 + v3 (RSA 2048-bit, CN=灵境AI)
+### 当时 APK 信息（已被后续更新覆盖）
+- **URL**: `https://www.spiritrealmz.com/apk/lingjing-v1.73.188.apk`（已更新为 re-signed 版本）
+- **大小**: 88,678,702 bytes → 已替换为 86,604,110 bytes 的 v2+v3 签名版
+- **签名**: v2+v3 (apksigner)
 
 ---
 

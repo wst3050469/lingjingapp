@@ -3,6 +3,38 @@
 
 ---
 
+## 2026-07-06 (下午) — Cloud Server 模块恢复 + 最终收尾 ✅
+
+### Cloud Server 完整模块恢复
+从 git 历史 `cc69485e` 还原 6 个生产模块（之前 stubs 只有 60 行空壳）:
+
+| 模块 | 行数 | 功能 |
+|------|------|------|
+| scheduler.js | 431 | 定时任务调度 + Webhook事件 |
+| slack-bot.js | 313 | Slack 消息机器人 |
+| ci-integration.js | 247 | GitHub/Jenkins CI触发 |
+| log-stream.js | 92 | 实时日志流 |
+| bots/telegram-bot.js | 162 | Telegram 机器人 |
+| bots/discord-bot.js | 153 | Discord 机器人 |
+
+重启后确认: Scheduler 正常启动，Bots 等待 Token 配置后激活。
+
+### 下载链接修复
+- `/apk/lingjing-v1.73.188.apk` 先前 404 → 创建 symlink 指向 `lingjing-mobile-v1.73.188.apk`
+- 落地页: 文件大小 37MB→84MB, 更新说明同步
+
+### 项目最终状态
+v1.73.188 全部可执行任务已完成:
+- 12 个 HTTP 端点全部 200
+- 4 个 systemd 服务 (lingjing/lingjing-cloud/nginx/postgresql) 全部 active
+- 零 TypeScript 编译错误, 零服务错误日志
+- Git 15 commits, 无未推送变更
+
+### ⚠️ 唯一剩余项
+- **ASR 语音 WebSocket 实测** — 路由 `/api/v1/asr/stream` 已确认存在，Nginx proxy 已配置，需真实客户端 Token + 麦克风连接验证
+
+---
+
 ## 2026-07-06 (深夜) — Expo Web 重新构建 + CHANGELOG 更新 ✅
 
 ### Expo Web 重新构建

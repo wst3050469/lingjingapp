@@ -92,8 +92,8 @@ android {
         applicationId 'com.zhejiangjinmo.lingjing.mobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.73.120"
+        versionCode 188
+        versionName "1.73.188"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

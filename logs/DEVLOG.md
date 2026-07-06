@@ -3,6 +3,24 @@
 
 ---
 
+## 2026-07-06 (晚间续) — Web应用重新构建部署 + APK回滚 ✅
+
+### Web应用部署
+- 执行 `npx expo export --platform web` 重新构建 Web 版本
+- 产物 5.3MB (JS 1.3MB)，部署到 `/var/www/html/spiritrealmz/app/`
+- 访问 `https://www.spiritrealmz.com/app/` → 200 OK
+
+### APK 回滚
+- 删除 v1.73.188 所有文件（用户确认非正确版本）
+- `latest.apk` 软链接回退到 `lingjing-v1.64.1.apk` (38MB)
+- 下载链接恢复正常: `spiritrealmz.com/apk/latest.apk` → 200 OK
+
+### Git
+- 提交 `68c534f3`: APK xz/gzip压缩加速
+- 提交 `8885b75c`: 清理旧APK + DEVLOG更新
+
+---
+
 ## 2026-07-06 (晚间) — APK 重新签名上传 + 服务端清理 ✅
 
 ### APK 重新处理

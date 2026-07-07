@@ -3,6 +3,37 @@
 
 ---
 
+## 2026-07-07 (上午) — APK 录音权限修复 + rsync 快速部署 ✅
+
+### 权限问题定位与修复
+- 根 `app.json` 缺 `expo-av` 插件 → 从 `mobile/app.json` 同步配置
+- 根 `node_modules` 无 `expo-av` → 软链接 `mobile/node_modules/expo-av`
+- AndroidManifest 已手工添加 `RECORD_AUDIO`
+- aapt dump permissions 确认权限完整：
+  - ✅ `INTERNET`
+  - ✅ `RECORD_AUDIO`
+  - ✅ `SYSTEM_ALERT_WINDOW`
+  - ✅ `POST_NOTIFICATIONS`
+
+### APK 信息
+| 属性 | 值 |
+|------|-----|
+| MD5 | `119a0f1de643e9b3f25378a9744e1c83` |
+| 大小 | 82.6 MB |
+| 签名 | v2 + v3 (lingjing-release.keystore) |
+| versionCode | 188 |
+| versionName | 1.73.188 |
+
+### 部署方式改进
+- SFTP (paramiko) 速度太慢 → 改用 **rsync** 秒传
+- 命令: `rsync -av --progress -e "sshpass ..." file root@server:/path`
+
+### 下载链接
+- 原始: `https://www.spiritrealmz.com/apk/latest.apk` (83MB)
+- 压缩: `https://www.spiritrealmz.com/apk/latest.apk.xz` (29MB)
+
+---
+
 ## 2026-07-07 — 正确APK重新构建部署 ✅
 
 ### 问题定位

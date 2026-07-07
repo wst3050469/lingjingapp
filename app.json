@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
     "splash": {
       "backgroundColor": "#0d1117"
     },
@@ -26,15 +25,13 @@
       "versionCode": 188
     },
     "plugins": [
-      "expo-updates"
+      [
+        "expo-av",
+        {
+          "microphonePermission": "允许灵境使用麦克风进行语音输入"
+        }
+      ]
     ],
-    "updates": {
-      "enabled": true,
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 3000,
-      "url": "https://u.expo.dev/2c8f346b-10e0-4b26-b893-124eb212602f"
-    },
-    "runtimeVersion": "1.73.188",
     "extra": {
       "eas": {
         "projectId": "2c8f346b-10e0-4b26-b893-124eb212602f"

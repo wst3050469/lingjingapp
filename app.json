@@ -26,13 +26,7 @@
       "versionCode": 188
     },
     "plugins": [
-      "expo-updates",
-      [
-        "expo-av",
-        {
-          "microphonePermission": "允许灵境使用麦克风进行语音输入"
-        }
-      ]
+      "expo-updates"
     ],
     "updates": {
       "enabled": true,

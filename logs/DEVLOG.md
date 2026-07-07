@@ -3,6 +3,42 @@
 
 ---
 
+## 2026-07-07 — 正确APK重新构建部署 ✅
+
+### 问题定位
+- 根目录 `app.json` 用错版本：缺少 `RECORD_AUDIO` 权限和 `expo-av` 插件
+- `package.json` 名称误写为 `lingjing-ide`（与灵境IDE混淆），应为 `lingjing-mobile`
+- 上一轮构建的 v1.73.188 缺少语音权限，不可用
+
+### 修复
+1. `app.json` → 从 `mobile/app.json`（正确版）同步，含录音权限和expo-av插件
+2. `package.json` → name 改为 `lingjing-mobile`
+3. `AndroidManifest.xml` → 手工添加 `<uses-permission android:name="android.permission.RECORD_AUDIO"/>`
+4. 因根 `node_modules` 无 expo-av（仅在 `mobile/` 子项目安装），构建时用旧 app.json 绕过插件解析，权限由 Manifest 直接声明
+
+### 构建
+| 属性 | 值 |
+|------|-----|
+| versionCode | 188 |
+| versionName | 1.73.188 |
+| 大小 | 83 MB |
+| 签名 | v2 + v3 (keystore: lingjing-release.keystore) |
+| 录音权限 | ✅ RECORD_AUDIO |
+| minSdkVersion | 24 (Android 7.0+) |
+
+### 部署
+- 上传 `lingjing-1.73.188.apk` → `/var/www/html/spiritrealmz/apk/`
+- `latest.apk` → 指向新签名版
+- xz 压缩版 (29MB): `latest.apk.xz`
+- 旧 v1.64.1 已清除
+- **下载**: `https://www.spiritrealmz.com/apk/latest.apk` (200 OK)
+
+### Web应用同步部署
+- `npx expo export --platform web` → dist/ → 上传到 `/var/www/html/spiritrealmz/app/`
+- `https://www.spiritrealmz.com/app/` → 200 OK
+
+---
+
 ## 2026-07-07 — Cloud Server Stub 清理 + 最终收尾 ✅
 
 ### 内容

@@ -41,11 +41,13 @@ _vision_semaphore = asyncio.Semaphore(2)
 # 视觉模型健康状态
 _vision_model_healthy = True
 _vision_model_lock = asyncio.Lock()
+_vision_check_fail_count = 0  # 连续失败计数，用于抑制重复日志
+_VISION_CHECK_LOG_INTERVAL = 6  # 每6次失败（即每30分钟）才记录一次警告
 
 
 async def _ensure_vision_model() -> bool:
     """检查并确保视觉模型可用，不可用时自动重启"""
-    global _vision_model_healthy
+    global _vision_model_healthy, _vision_check_fail_count
     async with _vision_model_lock:
         try:
             async with httpx.AsyncClient(timeout=10) as client:
@@ -55,6 +57,7 @@ async def _ensure_vision_model() -> bool:
                 )
                 if resp.status_code == 200:
                     _vision_model_healthy = True
+                    _vision_check_fail_count = 0
                     return True
                 elif "not found" in resp.text.lower():
                     logger.warning(f"视觉模型 {VISION_MODEL} 不存在，尝试拉取...")
@@ -64,12 +67,21 @@ async def _ensure_vision_model() -> bool:
                     )
                     if pull_resp.status_code == 200:
                         _vision_model_healthy = True
+                        _vision_check_fail_count = 0
                         return True
                 _vision_model_healthy = False
                 return False
         except Exception as e:
-            logger.warning(f"视觉模型健康检查失败: {e}")
             _vision_model_healthy = False
+            _vision_check_fail_count += 1
+            # 首次失败或每隔N次失败才记录警告，避免日志刷屏
+            if _vision_check_fail_count == 1:
+                logger.warning(f"视觉模型健康检查失败（Ollama不可达，图片分析将不可用）: {e}")
+            elif _vision_check_fail_count % _VISION_CHECK_LOG_INTERVAL == 0:
+                logger.warning(
+                    f"视觉模型仍不可达（已连续失败{_vision_check_fail_count}次，" +
+                    f"约{_vision_check_fail_count * 5}分钟），请检查Ollama服务: {e}"
+                )
             return False
 
 

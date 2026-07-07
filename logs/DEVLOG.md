@@ -13,6 +13,19 @@
   - `slack-bot.js`: 14行 stub → 313行完整版
 - **Git 工作区**: 已清理干净，无未提交变更
 
+### 视觉模型健康检查日志刷屏修复
+- **问题**: HK 服务器未安装 Ollama，`_ensure_vision_model()` 每5分钟记录 WARNING "All connection attempts failed"，日志持续刷屏
+- **根因**: `OLLAMA_PRIMARY=http://127.0.0.1:11434` 但服务器上无 Ollama 服务
+- **修复** (`server/app/services/file_service.py`):
+  - 新增 `_vision_check_fail_count` 连续失败计数器
+  - 首次失败记录警告（含"图片分析将不可用"提示）
+  - 之后每6次失败（即每30分钟）才记录一次状态更新
+  - 恢复成功时自动清零计数器
+- **后续**: 待 SSH 恢复后，需在服务器上安装 Ollama + 拉取 `moondream:latest` 视觉模型，或调整 `.env` 中 `OLLAMA_PRIMARY` 指向远程实例
+
+### 待部署
+- ⚠️ SSH 端口暂时受限（疑似 fail2ban 触发），代码已在 Git，需 SSH 恢复后 `git pull` + `systemctl restart lingjing`
+
 ### 服务验证
 - HK API (8900): ✅ 200
 - HK Cloud (8000): ✅ 200
@@ -22,12 +35,14 @@
 
 ### 代码质量
 - TypeScript 全部 4 包 (root/mobile/electron/renderer): 0 errors
+- Python 语法: ✅ 正确
 
 ### 当前状态
 - **最新版本**: v1.73.188
-- **Git HEAD**: 485f3985
+- **Git HEAD**: 646f1d38 → 待提交
 - **所有服务**: 🟢 全部在线
-- **所有代码**: 🟢 干净无未提交变更
+- **所有代码**: 🟢 干净
+- **SSH**: 🔴 暂时受限（Web服务正常）
 - **唯一剩余**: ASR WebSocket 完整实测（需客户端 Token + 麦克风）
 
 ---

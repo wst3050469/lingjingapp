@@ -55,9 +55,9 @@ export default function App() {
     if (persisted?.token) {
       setLoadingText('正在验证云账号...');
       api.configure({
-        baseUrl: 'https://ide.zhejiangjinmo.com',
+        baseUrl: 'https://www.spiritrealmz.com',
         token: persisted.token,
-        wsUrl: 'wss://ide.zhejiangjinmo.com/ws',
+        wsUrl: 'wss://www.spiritrealmz.com/api/v1/ws',
       });
       try {
         const me = await api.verifyToken();
@@ -65,7 +65,7 @@ export default function App() {
           setAuth(me.user?.id || persisted.token.slice(0, 8), persisted.token);
           if (persisted.user) setUser(persisted.user);
           api.connectWs();
-          setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
+          setConnection(true, 'cloud_account', 'https://www.spiritrealmz.com');
           setInitializing(false);
           Notifications.registerPushToken(persisted.token, '灵境AI Mobile').catch(() => {});
           return;
@@ -85,12 +85,12 @@ export default function App() {
     setShowLogin(false);
     const token = useAppStore.getState().token;
     api.configure({
-      baseUrl: 'https://ide.zhejiangjinmo.com',
+      baseUrl: 'https://www.spiritrealmz.com',
       token,
-      wsUrl: 'wss://ide.zhejiangjinmo.com/ws',
+      wsUrl: 'wss://www.spiritrealmz.com/api/v1/ws',
     });
     api.connectWs();
-    setConnection(true, 'cloud_account', 'https://ide.zhejiangjinmo.com');
+    setConnection(true, 'cloud_account', 'https://www.spiritrealmz.com');
     Notifications.registerPushToken(token, '灵境AI Mobile').catch(() => {});
   }
 

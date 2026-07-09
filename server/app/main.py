@@ -198,6 +198,8 @@ def _read_version() -> str:
     try:
         import json
         root_pkg = Path(__file__).resolve().parent.parent.parent / "package.json"
+        if not root_pkg.exists():
+            root_pkg = Path(__file__).resolve().parent.parent / "package.json"
         if root_pkg.exists():
             return json.loads(root_pkg.read_text(encoding="utf-8")).get("version", "0.0.0")
     except Exception:

@@ -2124,6 +2124,62 @@ app.post('/api/notifications/version-update', auth, (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
+// Deploy endpoints — trigger git pull + restart + APK upload
+// ═══════════════════════════════════════════════════════════════════
+
+// POST /api/admin/deploy — trigger git pull and pm2 restart
+app.post('/api/admin/deploy', auth, (req, res) => {
+  const { execSync } = require('node:child_process');
+  try {
+    const pullResult = execSync('cd /root/lingjingapp && git pull origin main 2>&1', { timeout: 30000, encoding: 'utf8' });
+    console.log('[Deploy] git pull result:', pullResult.substring(0, 200));
+    
+    // Restart PM2 processes
+    const restartResult = execSync('pm2 restart all 2>&1', { timeout: 15000, encoding: 'utf8' });
+    console.log('[Deploy] pm2 restart result:', restartResult.substring(0, 200));
+    
+    res.json({ ok: true, pull: pullResult.substring(0, 500), restart: restartResult.substring(0, 500) });
+  } catch (e) {
+    console.error('[Deploy] error:', e.message);
+    res.status(500).json({ ok: false, error: e.message, stderr: e.stderr?.substring(0, 500) || '' });
+  }
+});
+
+// POST /api/admin/upload-apk — upload APK file to /var/www/html/apk/
+app.post('/api/admin/upload-apk', auth, (req, res) => {
+  const { writeFileSync, mkdirSync, existsSync } = require('node:fs');
+  const { join } = require('node:path');
+  
+  // Accept base64-encoded APK in JSON body (max ~110MB base64 = ~83MB binary)
+  const { filename, data } = req.body;
+  if (!filename || !data) {
+    return res.status(400).json({ error: 'filename and data (base64) required' });
+  }
+  
+  try {
+    const apkDir = '/var/www/html/apk';
+    if (!existsSync(apkDir)) mkdirSync(apkDir, { recursive: true });
+    
+    const buffer = Buffer.from(data, 'base64');
+    const filePath = join(apkDir, filename);
+    writeFileSync(filePath, buffer);
+    
+    // Also copy as latest.apk
+    const latestPath = join(apkDir, 'latest.apk');
+    writeFileSync(latestPath, buffer);
+    
+    const sizeMB = (buffer.length / (1024 * 1024)).toFixed(1);
+    console.log(`[Deploy] APK uploaded: ${filename} (${sizeMB}MB) -> ${filePath}`);
+    console.log(`[Deploy] Latest APK symlink: ${latestPath}`);
+    
+    res.json({ ok: true, path: filePath, size: buffer.length, sizeMB: parseFloat(sizeMB) });
+  } catch (e) {
+    console.error('[Deploy] APK upload error:', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════
 // Mobile Thin-Client API — Task Control / Upload / Transcribe
 // ═══════════════════════════════════════════════════════════════════
 

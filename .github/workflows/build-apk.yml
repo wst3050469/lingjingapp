@@ -153,20 +153,33 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           echo "Deploying $APK_FILE as v$VERSION"
           
-          # Try SSH deploy first
-          if timeout 5 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=3 root@43.103.5.36 "echo ok" 2>/dev/null; then
-            echo "SSH available, deploying directly..."
-            scp -o StrictHostKeyChecking=no "$APK_FILE" root@43.103.5.36:/var/www/html/apk/latest.apk
-            scp -o StrictHostKeyChecking=no "$APK_FILE" "root@43.103.5.36:/var/www/html/apk/LingJing-Mobile-${VERSION#v}.apk"
-            ssh -o StrictHostKeyChecking=no root@43.103.5.36 "cd /root/lingjingapp && git pull origin main && pm2 restart all"
+          NEW_NAME="lingjing-v${VERSION}.apk"
+          echo "Deploying as: $NEW_NAME"
+          
+          # Try SSH deploy first (prefer port 18900, fallback to 22)
+          SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5"
+          SSH_DEPLOY=false
+          
+          if timeout 8 ssh $SSH_OPTS -p 18900 root@43.103.5.36 "echo ok" 2>/dev/null; then
+            echo "SSH available on port 18900, deploying directly..."
+            scp $SSH_OPTS -P 18900 "$APK_FILE" root@43.103.5.36:/var/www/html/spiritrealmz/apk/$NEW_NAME
+            ssh $SSH_OPTS -p 18900 root@43.103.5.36 "ln -sf /var/www/html/spiritrealmz/apk/$NEW_NAME /var/www/html/spiritrealmz/apk/latest.apk && xz -c /var/www/html/spiritrealmz/apk/$NEW_NAME > /var/www/html/spiritrealmz/apk/latest.apk.xz 2>/dev/null; curl -s -X POST http://127.0.0.1:8000/api/notifications/version-update -H 'Content-Type: application/json' -H 'x-api-key: lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6' -d '{\"version\":\"$VERSION\",\"size\":$(stat -c%s "$APK_FILE\")}'"
+            SSH_DEPLOY=true
+          elif timeout 8 ssh $SSH_OPTS root@43.103.5.36 "echo ok" 2>/dev/null; then
+            echo "SSH available on port 22, deploying directly..."
+            scp $SSH_OPTS "$APK_FILE" root@43.103.5.36:/var/www/html/spiritrealmz/apk/$NEW_NAME
+            ssh $SSH_OPTS root@43.103.5.36 "ln -sf /var/www/html/spiritrealmz/apk/$NEW_NAME /var/www/html/spiritrealmz/apk/latest.apk && xz -c /var/www/html/spiritrealmz/apk/$NEW_NAME > /var/www/html/spiritrealmz/apk/latest.apk.xz 2>/dev/null; curl -s -X POST http://127.0.0.1:8000/api/notifications/version-update -H 'Content-Type: application/json' -H 'x-api-key: lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6' -d '{\"version\":\"$VERSION\",\"size\":$(stat -c%s "$APK_FILE\")}'"
+            SSH_DEPLOY=true
+          fi
+          
+          if [ "$SSH_DEPLOY" = true ]; then
             echo "✅ Deployed via SSH"
           else
-            echo "SSH unavailable, updating versions.json to point to GitHub Releases"
-            # Update server's versions.json via API
-            curl -s -X POST "https://ide.zhejiangjinmo.com/api/notifications/version-update" \
+            echo "SSH unavailable, updating versions.json via API"
+            curl -sk -X POST "https://43.103.5.36/cloud/api/notifications/version-update" \
               -H "Content-Type: application/json" \
-              -H "x-api-key: lingjing-cloud-key-dev-only" \
-              -d "{\"version\":\"v$VERSION\",\"size\":$(stat -c%s "$APK_FILE"),\"releaseNotes\":\"灵境AI v$VERSION: CI自动构建\"}"
+              -H "x-api-key: lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6" \
+              -d "{\"version\":\"$VERSION\",\"size\":$(stat -c%s "$APK_FILE\")}"
             echo "✅ versions.json updated"
           fi
 
@@ -176,10 +189,12 @@ jobs:
           APK_FILE=$(find mobile/android -name "*-release.apk" | head -1)
           if [ -z "$APK_FILE" ]; then echo "No APK"; exit 0; fi
           VERSION=$(node -p "require('./mobile/package.json').version")
-          echo "Creating GitHub Release v$VERSION"
-          gh release create "v$VERSION" "$APK_FILE" \
+          NEW_NAME="lingjing-v${VERSION}.apk"
+          cp "$APK_FILE" "/tmp/$NEW_NAME"
+          echo "Creating GitHub Release v$VERSION with $NEW_NAME"
+          gh release create "v$VERSION" "/tmp/$NEW_NAME" \
             --title "灵境AI v$VERSION - CI自动构建" \
-            --notes "🤖 GitHub Actions 自动构建\n📦 $(ls -lh "$APK_FILE" | awk '{print $5}')\n🔐 已签名" \
+            --notes "🤖 GitHub Actions 自动构建\n📦 $(ls -lh "/tmp/$NEW_NAME" | awk '{print $5}')\n🔐 已签名" \
             --repo wst3050469/lingjingapp || echo "Release may already exist"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

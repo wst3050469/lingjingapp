@@ -2145,9 +2145,9 @@ app.post('/api/admin/deploy', auth, (req, res) => {
   }
 });
 
-// POST /api/admin/upload-apk — upload APK file to /var/www/html/apk/
+// POST /api/admin/upload-apk — upload APK file to /var/www/html/spiritrealmz/apk/
 app.post('/api/admin/upload-apk', auth, (req, res) => {
-  const { writeFileSync, mkdirSync, existsSync } = require('node:fs');
+  const { writeFileSync, mkdirSync, existsSync, symlinkSync, unlinkSync } = require('node:fs');
   const { join } = require('node:path');
   
   // Accept base64-encoded APK in JSON body (max ~110MB base64 = ~83MB binary)
@@ -2157,16 +2157,23 @@ app.post('/api/admin/upload-apk', auth, (req, res) => {
   }
   
   try {
-    const apkDir = '/var/www/html/apk';
+    const apkDir = '/var/www/html/spiritrealmz/apk';
     if (!existsSync(apkDir)) mkdirSync(apkDir, { recursive: true });
     
     const buffer = Buffer.from(data, 'base64');
     const filePath = join(apkDir, filename);
     writeFileSync(filePath, buffer);
     
-    // Also copy as latest.apk
+    // Update latest.apk symlink (not copy, to save disk space)
     const latestPath = join(apkDir, 'latest.apk');
-    writeFileSync(latestPath, buffer);
+    try { unlinkSync(latestPath); } catch (_) { /* ignore */ }
+    symlinkSync(filePath, latestPath);
+    
+    // Also create XZ compressed version
+    const { execSync } = require('node:child_process');
+    try {
+      execSync(`xz -c "${filePath}" > "${apkDir}/latest.apk.xz"`, { timeout: 120000 });
+    } catch (_) { /* XZ compression optional */ }
     
     const sizeMB = (buffer.length / (1024 * 1024)).toFixed(1);
     console.log(`[Deploy] APK uploaded: ${filename} (${sizeMB}MB) -> ${filePath}`);

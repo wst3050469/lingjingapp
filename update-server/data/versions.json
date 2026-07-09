@@ -1,5 +1,5 @@
 {
-  "latest": "1.73.188",
+  "latest": "1.64.1",
   "versions": [
     {
       "version": "1.73.188",
@@ -30,8 +30,8 @@
           "notes": "语音对话延迟优化hotfix"
         },
         "mobile": {
-          "url": "https://www.spiritrealmz.com/api/v1/app/download/v1.64.1",
-          "size": 82567535
+          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
+          "size": 38518529
         }
       },
       "releaseNotes": "v1.64.9 - 语音对话延迟优化全链路部署",
@@ -85,8 +85,8 @@
           "size": 158000000
         },
         "mobile": {
-          "url": "https://www.spiritrealmz.com/api/v1/app/download/v1.64.1",
-          "size": 39044682
+          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
+          "size": 38518529
         }
       },
       "releaseNotes": "v1.64.2 - Fix 4 issues",
@@ -123,8 +123,8 @@
           "size": 110990662
         },
         "mobile": {
-          "url": "https://www.spiritrealmz.com/api/v1/app/download/v1.64.1",
-          "size": 39044682
+          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
+          "size": 38518529
         }
       },
       "releaseNotes": "v1.64.1 - Fix Cannot read properties of undefined (reading 'ipcRenderer')",
@@ -158,8 +158,8 @@
           "size": 110968034
         },
         "mobile": {
-          "url": "https://www.spiritrealmz.com/api/v1/app/download/v1.64.1",
-          "size": 39044682
+          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
+          "size": 38518529
         }
       },
       "releaseNotes": "v1.64.0 - Fix file auto-processing not working (3 root causes)",
@@ -191,8 +191,8 @@
           "size": 183533943
         },
         "mobile": {
-          "url": "https://www.spiritrealmz.com/api/v1/app/download/v1.64.1",
-          "size": 39044682
+          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
+          "size": 38518529
         }
       },
       "releaseNotes": "v1.63.0",
@@ -255,8 +255,8 @@
           "size": 212000000
         },
         "mobile": {
-          "url": "https://www.spiritrealmz.com/api/v1/app/download/v1.64.1",
-          "size": 39044682
+          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
+          "size": 38518529
         }
       },
       "releaseNotes": "v1.62.0",
@@ -282,8 +282,8 @@
           "size": 183533011
         },
         "mobile": {
-          "url": "https://www.spiritrealmz.com/api/v1/app/download/v1.64.1",
-          "size": 39044682
+          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
+          "size": 38518529
         }
       },
       "releaseNotes": "v1.61.1: fix blank page"
@@ -306,8 +306,8 @@
           "size": 141680103
         },
         "mobile": {
-          "url": "https://www.spiritrealmz.com/api/v1/app/download/v1.64.1",
-          "size": 39044682
+          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
+          "size": 38518529
         }
       }
     }

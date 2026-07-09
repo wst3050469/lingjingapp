@@ -102,42 +102,15 @@ jobs:
           
           echo "keystore.properties created"
 
-      - name: Patch build.gradle for release signing
+      - name: Configure release signing
         run: |
           BUILD_GRADLE="android/app/build.gradle"
-          if [ -f "$BUILD_GRADLE" ]; then
-            # Add keystore properties loading and release signing config
-            # Insert after android { block
-            cat >> "$BUILD_GRADLE" << 'PATCH'
-            
-// [CI] Load keystore for release signing
-def keystorePropertiesFile = rootProject.file("app/keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-
-android {
-    signingConfigs {
-        release {
-            if (keystorePropertiesFile.exists()) {
-                storeFile file(keystoreProperties['storeFile'])
-                storePassword keystoreProperties['storePassword']
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-            }
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-    }
-}
-PATCH
-            echo "build.gradle patched with release signing config"
+          KEYSTORE_PROPS="android/app/keystore.properties"
+          if [ -f "$BUILD_GRADLE" ] && [ -f "$KEYSTORE_PROPS" ]; then
+            echo "Keystore properties and build.gradle ready for signing"
+            ls -lh "$KEYSTORE_PROPS" "$BUILD_GRADLE"
           else
-            echo "WARNING: build.gradle not found at $BUILD_GRADLE"
+            echo "WARNING: Missing build.gradle or keystore.properties"
           fi
 
       - name: Build APK

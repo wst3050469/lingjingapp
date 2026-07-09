@@ -1,0 +1,77 @@
+<template>
+  <div class="dashboard-page">
+    <h2 class="page-title">平台概览</h2>
+    <div class="stats-grid">
+      <a-card class="stat-card" :loading="loading">
+        <stat-card title="注册用户" :value="stats?.total_users ?? 0" icon="team" color="#1890ff" />
+      </a-card>
+      <a-card class="stat-card" :loading="loading">
+        <stat-card title="活跃用户" :value="stats?.active_users ?? 0" icon="user" color="#52c41a" />
+      </a-card>
+      <a-card class="stat-card" :loading="loading">
+        <stat-card title="企业租户" :value="stats?.total_tenants ?? 0" icon="building" color="#722ed1" />
+      </a-card>
+      <a-card class="stat-card" :loading="loading">
+        <stat-card title="活跃租户" :value="stats?.active_tenants ?? 0" icon="check-circle" color="#13c2c2" />
+      </a-card>
+      <a-card class="stat-card" :loading="loading">
+        <stat-card title="合同总数" :value="stats?.total_contracts ?? 0" icon="file-text" color="#fa8c16" />
+      </a-card>
+      <a-card class="stat-card" :loading="loading">
+        <stat-card title="供应商" :value="stats?.total_suppliers ?? 0" icon="shop" color="#eb2f96" />
+      </a-card>
+      <a-card class="stat-card" :loading="loading">
+        <stat-card title="客户" :value="stats?.total_customers ?? 0" icon="contacts" color="#2f54eb" />
+      </a-card>
+      <a-card class="stat-card" :loading="loading">
+        <stat-card title="待审批" :value="stats?.pending_approvals ?? 0" icon="clock-circle" color="#fa541c" />
+      </a-card>
+    </div>
+
+    <a-card title="最近操作" class="activity-card" :loading="loading">
+      <a-table :dataSource="activities" :columns="columns" :pagination="{ pageSize: 10 }" size="small" rowKey="id">
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'time'">{{ formatTime(record.created_at) }}</template>
+        </template>
+      </a-table>
+    </a-card>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import { useDashboardStore } from '@/stores/dashboard';
+import StatCard from '@/components/common/StatCard.vue';
+
+const dash = useDashboardStore();
+const loading = ref(true);
+
+onMounted(async () => {
+  await dash.loadStats();
+  loading.value = false;
+});
+
+const stats = computed(() => dash.stats);
+const activities = computed(() => dash.stats?.recent_activities || []);
+
+const columns = [
+  { title: '操作人', dataIndex: 'admin_name', key: 'admin_name' },
+  { title: '操作', dataIndex: 'action', key: 'action' },
+  { title: '目标', dataIndex: 'target_type', key: 'target_type' },
+  { title: '详情', dataIndex: 'detail', key: 'detail', ellipsis: true },
+  { title: '时间', key: 'time' },
+];
+
+function formatTime(t: string) {
+  if (!t) return '';
+  return new Date(t).toLocaleString('zh-CN');
+}
+</script>
+
+<style scoped>
+.dashboard-page { padding: 24px; }
+.page-title { color: var(--text-primary); margin-bottom: 24px; font-size: 20px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card :deep(.ant-card-body) { padding: 0; }
+.activity-card { margin-top: 16px; }
+</style>

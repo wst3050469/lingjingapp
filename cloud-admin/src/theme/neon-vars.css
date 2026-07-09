@@ -1,0 +1,59 @@
+:root {
+  --neon-cyan: #00f5ff;
+  --neon-purple: #bf00ff;
+  --neon-blue: #4d7cff;
+  --neon-pink: #ff00e5;
+  --neon-green: #00ff88;
+  --neon-orange: #ff8800;
+
+  --dark-900: #0a0a0f;
+  --dark-800: #0f0f1a;
+  --dark-700: #161625;
+  --dark-600: #1e1e32;
+  --dark-500: #2a2a42;
+  --dark-400: #3a3a55;
+  --dark-300: #5a5a75;
+
+  --text-primary: #e0e0e8;
+  --text-secondary: #8b949e;
+  --text-tertiary: #484f58;
+
+  --neon-shadow-cyan: 0 0 20px rgba(0, 245, 255, 0.3), 0 0 60px rgba(0, 245, 255, 0.1);
+  --neon-shadow-purple: 0 0 20px rgba(191, 0, 255, 0.3), 0 0 60px rgba(191, 0, 255, 0.1);
+  --neon-shadow-blue: 0 0 20px rgba(77, 124, 255, 0.3), 0 0 60px rgba(77, 124, 255, 0.1);
+
+  --border-neon: 1px solid rgba(0, 245, 255, 0.2);
+  --border-subtle: 1px solid var(--dark-500);
+}
+
+@keyframes neon-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: 0 0 15px rgba(0, 245, 255, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(0, 245, 255, 0.4); }
+}
+
+.neon-text { text-shadow: 0 0 10px rgba(0, 245, 255, 0.5), 0 0 30px rgba(0, 245, 255, 0.2); }
+.neon-text-purple { text-shadow: 0 0 10px rgba(191, 0, 255, 0.5), 0 0 30px rgba(191, 0, 255, 0.2); }
+
+.glow-card {
+  border: var(--border-neon);
+  transition: all 0.3s ease;
+}
+.glow-card:hover {
+  box-shadow: 0 0 25px rgba(0, 245, 255, 0.15), 0 0 50px rgba(77, 124, 255, 0.08);
+  border-color: rgba(0, 245, 255, 0.4);
+}
+
+.glow-button {
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+  box-shadow: var(--neon-shadow-cyan);
+  transition: all 0.3s ease;
+}
+.glow-button:hover {
+  box-shadow: 0 0 30px rgba(0, 245, 255, 0.5), 0 0 80px rgba(0, 245, 255, 0.2);
+  transform: translateY(-1px);
+}

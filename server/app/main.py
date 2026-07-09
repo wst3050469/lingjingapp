@@ -4,8 +4,9 @@ import sys
 import logging
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
 
 # 添加app目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -228,6 +229,17 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "x-api-key", "x-request-id"],
 )
 
+# ── 管理后台 SPA fallback ──
+# 当 /admin/* 路径返回 404 时，尝试返回 SPA 的 index.html
+_ADMIN_DIR = ADMIN_DIR  # 供异常处理器使用
+@app.exception_handler(404)
+async def admin_spa_404_handler(request, exc):
+    if request.url.path.startswith("/admin/") or request.url.path == "/admin":
+        index_path = os.path.join(_ADMIN_DIR, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path, media_type="text/html")
+    return JSONResponse({"detail": "Not Found"}, status_code=404)
+
 # 安全的 include_router — 跳过未加载的模块
 def _safe_include_router(mod, name: str):
     if mod is not None and hasattr(mod, 'router'):
@@ -276,7 +288,7 @@ _safe_include_router(wecom, "wecom")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
-# 管理后台静态页面
+# 管理后台静态页面 — 先用 StaticFiles 挂载，再通过异常处理做 SPA fallback
 os.makedirs(ADMIN_DIR, exist_ok=True)
 app.mount("/admin", StaticFiles(directory=ADMIN_DIR, html=True), name="admin")
 

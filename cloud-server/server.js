@@ -1505,12 +1505,15 @@ app.post('/api/webhook-config', auth, (req, res) => {
 // ====== Tenant Manager ======
 const tenantManager = new TenantManager(db);
 
+// Serve admin static assets
+app.use("/admin/assets", express.static(resolve(__dirname, "web-platform", "public", "admin", "assets")));
+
 // Serve SaaS Web Dashboard
-app.get('/admin', (req, res) => {
-  res.sendFile(resolve(__dirname, 'web-platform', 'public', 'index.html'));
+app.get("/admin", (req, res) => {
+  res.sendFile(resolve(__dirname, "web-platform", "public", "admin", "index.html"));
 });
-app.get('/admin/*', (req, res) => {
-  res.sendFile(resolve(__dirname, 'web-platform', 'public', 'index.html'));
+app.get("/admin/*", (req, res) => {
+  res.sendFile(resolve(__dirname, "web-platform", "public", "admin", "index.html"));
 });
 
 // ── Tenant CRUD ──

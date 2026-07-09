@@ -29,7 +29,7 @@ let serverConfig: WebServerConfig = {
   port: 3001,
   token: '',
   frpEnabled: false,
-  frpServerAddr: 'wap.zhejiangjinmo.com',
+  frpServerAddr: 'www.spiritrealmz.com',
   frpServerPort: 32200,
   frpRemotePort: 8080,
   frpToken: '',
@@ -841,7 +841,7 @@ export function isWebServerRunning(): boolean {
 
 export function getAccessUrls(): { local: string; remote?: string } {
   const local = `http://localhost:${serverConfig.port}`;
-  // With Nginx reverse proxy + SSL, users access https://wap.zhejiangjinmo.com (no port needed)
+  // With Nginx reverse proxy + SSL, users access https://www.spiritrealmz.com (no port needed)
   const remote = serverConfig.frpEnabled 
     ? `https://${serverConfig.frpServerAddr}`
     : undefined;

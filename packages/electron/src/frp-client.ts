@@ -19,12 +19,12 @@ interface FrpConfig {
 let frpProcess: ChildProcess | null = null;
 let frpConfig: FrpConfig = {
   enabled: false,
-  serverAddr: 'wap.zhejiangjinmo.com',
+  serverAddr: 'www.spiritrealmz.com',
   serverPort: 32200,
   token: '',
   localPort: 3001,
   remotePort: 8080,
-  customDomain: 'wap.zhejiangjinmo.com',
+  customDomain: 'www.spiritrealmz.com',
 };
 
 // Auto-reconnect state

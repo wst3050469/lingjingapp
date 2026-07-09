@@ -2,7 +2,7 @@
  * Slack Tool — Slack 集成
  * AI Agent 可通过此工具发送 Slack 消息和通知
  */
-const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://ide.zhejiangjinmo.com';
+const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://www.spiritrealmz.com';
 const API_KEY = process.env.LINGJING_API_KEY || 'lingjing-cloud-key';
 async function callCloud(path, method = 'GET', body) {
     const opts = {

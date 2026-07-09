@@ -1,6 +1,6 @@
 // Cloud session sync tool - AI can sync conversations to/from cloud
 // Enables cross-device session continuity
-const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://ide.zhejiangjinmo.com';
+const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://www.spiritrealmz.com';
 const API_KEY = process.env.LINGJING_CLOUD_KEY || 'lingjing-cloud-key';
 let _enabled = true;
 export function initCloudSessionTool(enabled) {

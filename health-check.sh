@@ -9,7 +9,7 @@ for p in /var/www/downloads/versions.json /var/www/html/versions.json /var/www/l
 done
 echo '=== HTTP 200 check ==='
 for f in LingJing-Setup-1.73.155-win-x64.exe LingJing-Portable-1.73.155-win-x64.exe LingJing-1.73.155-linux-x86_64.AppImage LingJing-1.73.155-linux-x86_64.deb lingjing-ide-1.73.155.apk; do
-  code=$(curl -s -o /dev/null -w '%{http_code}' "https://ide.zhejiangjinmo.com/downloads/$f")
+  code=$(curl -s -o /dev/null -w '%{http_code}' "https://www.spiritrealmz.com/downloads/$f")
   echo "$f: $code"
 done
 echo '=== SHA512 verify ==='

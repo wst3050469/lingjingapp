@@ -17,9 +17,9 @@ const OPENAI_COMPATIBLE_PROVIDERS = {
     doubao: { baseUrl: 'https://ark.cn-beijing.volces.com/api/v3', label: '豆包', models: ['doubao-seed-2-0-pro-260215'], note: 'doubao-seed-2-0-pro (旗舰, Responses API)' },
     glm: { baseUrl: 'https://open.bigmodel.cn/api/paas/v4', label: '智谱 GLM', models: ['glm-5.1', 'glm-4'] },
     minimax: { baseUrl: 'https://api.minimax.chat/v1', label: 'MiniMax', models: ['minimax-m2.7', 'minimax-m1'] },
-    jinmo: { baseUrl: 'https://api.zhejiangjinmo.com/v1', label: '浙江金默', models: ['qwen3.6:27b'] },
-    gemma: { baseUrl: 'https://gemma.zhejiangjinmo.com/v1', label: 'Gemma', models: ['gemma4:31b'] },
-    qwen35b: { baseUrl: 'https://qwen3635bq4.zhejiangjinmo.com/v1', label: 'Qwen3.6-35B Q4', models: ['batiai/qwen3.6-35b:q4'] },
+    jinmo: { baseUrl: 'https://www.spiritrealmz.com/v1', label: '浙江金默', models: ['qwen3.6:27b'] },
+    gemma: { baseUrl: 'https://www.spiritrealmz.com/v1', label: 'Gemma', models: ['gemma4:31b'] },
+    qwen35b: { baseUrl: 'https://www.spiritrealmz.com/v1', label: 'Qwen3.6-35B Q4', models: ['batiai/qwen3.6-35b:q4'] },
 };
 /**
  * Parse model string like "openai:gpt-4o" or "deepseek:deepseek-chat"
@@ -106,7 +106,7 @@ export function createProvider(config) {
             const gemmaApiKey = config.apiKeys['gemma']?.trim();
             return new OllamaProvider({
                 model: modelName || 'gemma4:31b',
-                baseUrl: 'https://gemma.zhejiangjinmo.com',
+                baseUrl: 'https://www.spiritrealmz.com',
                 apiKey: gemmaApiKey || undefined,
             });
         }

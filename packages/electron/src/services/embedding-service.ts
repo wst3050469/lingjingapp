@@ -313,8 +313,8 @@ const PROVIDER_BASE_URLS: Record<string, string> = {
   doubao: 'https://ark.cn-beijing.volces.com/api/v3',
   glm: 'https://open.bigmodel.cn/api/paas/v4',
   minimax: 'https://api.minimax.chat/v1',
-  jinmo: 'https://api.zhejiangjinmo.com/v1',
-  qwen35b: 'https://qwen3635bq4.zhejiangjinmo.com/v1',
+  jinmo: 'https://www.spiritrealmz.com/v1',
+  qwen35b: 'https://www.spiritrealmz.com/v1',
 };
 
 /** Provider-specific embedding model names for non-OpenAI providers */

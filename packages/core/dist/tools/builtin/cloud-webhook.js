@@ -1,6 +1,6 @@
 // Cloud webhook tool - AI can trigger external integrations via cloud
 // Enables CI/CD triggers, GitHub/GitLab hooks, Slack/Discord notifications, etc.
-const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://ide.zhejiangjinmo.com';
+const CLOUD_URL = process.env.LINGJING_CLOUD_URL || 'https://www.spiritrealmz.com';
 const API_KEY = process.env.LINGJING_CLOUD_KEY || 'lingjing-cloud-key';
 let _enabled = true;
 export function initCloudWebhookTool(enabled) {

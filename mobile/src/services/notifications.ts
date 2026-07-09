@@ -2,7 +2,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-const CLOUD_SERVER = 'https://lingjing.zhejiangjinmo.com';
+const CLOUD_SERVER = 'https://www.spiritrealmz.com';
 
 // Configure how notifications appear when app is foregrounded
 Notifications.setNotificationHandler({

@@ -49,7 +49,7 @@ class ApiService {
     return h;
   }
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
-    const baseUrl = this.config.baseUrl || 'https://ide.zhejiangjinmo.com';
+    const baseUrl = this.config.baseUrl || 'https://www.spiritrealmz.com';
     const url = baseUrl + '/api' + path;
     const res = await fetch(url, { ...options, headers: { ...this.headers, ...options?.headers } });
     const data = await res.json();

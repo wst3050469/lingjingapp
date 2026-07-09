@@ -36,7 +36,7 @@ export default function LoginScreen({ onSuccess, onSwitchToPairing }: { onSucces
     setError('');
 
     // Configure API to use cloud server for auth
-    api.configure({ baseUrl: 'https://ide.zhejiangjinmo.com', token: '', wsUrl: 'wss://ide.zhejiangjinmo.com/ws' });
+    api.configure({ baseUrl: 'https://www.spiritrealmz.com', token: '', wsUrl: 'wss://www.spiritrealmz.com/ws' });
 
     try {
       const result = mode === 'login'

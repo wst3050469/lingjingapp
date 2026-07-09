@@ -83,7 +83,7 @@ export function SystemStatus({ showUpdateStatus = true, showMemoryStatus = true 
           setFixResult({
             phase: 'error',
             message: '版本检查超时（服务器响应慢），当前版本可能已是最新',
-            details: ['检查地址: https://ide.zhejiangjinmo.com/api/latest'],
+            details: ['检查地址: https://www.spiritrealmz.com/api/latest'],
           });
         }
       }, 20000);

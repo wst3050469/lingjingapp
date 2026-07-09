@@ -128,11 +128,11 @@ export function IntegrationsTab({ config, saveKey }: IntegrationsTabProps) {
 
   // FRP / Web Server states
   const [frpEnabled, setFrpEnabled] = useState(false);
-  const [frpServerAddr, setFrpServerAddr] = useState('wap.zhejiangjinmo.com');
+  const [frpServerAddr, setFrpServerAddr] = useState('www.spiritrealmz.com');
   const [frpServerPort, setFrpServerPort] = useState('32200');
   const [frpRemotePort, setFrpRemotePort] = useState('8080');
   const [frpToken, setFrpToken] = useState('lingjing_mobile_token_2024');
-  const [frpCustomDomain, setFrpCustomDomain] = useState('wap.zhejiangjinmo.com');
+  const [frpCustomDomain, setFrpCustomDomain] = useState('www.spiritrealmz.com');
   const [frpStatus, setFrpStatus] = useState<string>('检查中...');
   const [webServerStatus, setWebServerStatus] = useState<string>('检查中...');
   const [frpLoaded, setFrpLoaded] = useState(false);
@@ -185,11 +185,11 @@ export function IntegrationsTab({ config, saveKey }: IntegrationsTabProps) {
         const cfg = await window.electronAPI.webServer.getConfig();
         if (cfg) {
           setFrpEnabled(cfg.frpEnabled ?? false);
-          setFrpServerAddr(cfg.frpServerAddr || 'wap.zhejiangjinmo.com');
+          setFrpServerAddr(cfg.frpServerAddr || 'www.spiritrealmz.com');
           setFrpServerPort(String(cfg.frpServerPort || 32200));
           setFrpRemotePort(String(cfg.frpRemotePort || 8080));
           setFrpToken(cfg.frpToken || 'lingjing_mobile_token_2024');
-          setFrpCustomDomain(cfg.frpCustomDomain || 'wap.zhejiangjinmo.com');
+          setFrpCustomDomain(cfg.frpCustomDomain || 'www.spiritrealmz.com');
         }
       } catch {} finally { setFrpLoaded(true); }
     };

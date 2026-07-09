@@ -7,14 +7,14 @@ interface CloudMemory { id: string; title: string; content: string; category: st
 interface SyncLog { time: string; action: string; status: 'ok' | 'fail'; detail?: string }
 interface CloudUser { id: string; username: string; email: string; avatar?: string; registeredAt?: string }
 
-const CLOUD_API_BASE = 'https://ide.zhejiangjinmo.com/api';
+const CLOUD_API_BASE = 'https://www.spiritrealmz.com/api';
 const CLOUD_TOKEN_KEY = 'cloudAccountToken';
 const CLOUD_USER_KEY = 'cloudAccountUser';
 const CLOUD_DEVICE_ID_KEY = 'cloudAccountDeviceId';
 
 export function CloudSyncTab() {
   const [status, setStatus] = useState<CloudStatus>({ connected: false, healthy: false });
-  const [url, setUrl] = useState(() => localStorage.getItem('cloudSyncUrl') || 'https://ide.zhejiangjinmo.com');
+  const [url, setUrl] = useState(() => localStorage.getItem('cloudSyncUrl') || 'https://www.spiritrealmz.com');
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('cloudSyncApiKey') || '');
   const [sessions, setSessions] = useState<CloudSession[]>([]);
   const [memories, setMemories] = useState<CloudMemory[]>([]);

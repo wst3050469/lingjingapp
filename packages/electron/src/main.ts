@@ -1544,11 +1544,11 @@ function loadWebServerConfig(): any {
     port: 3001,
     token: '',
     frpEnabled: false,
-    frpServerAddr: 'wap.zhejiangjinmo.com',
+    frpServerAddr: 'www.spiritrealmz.com',
     frpServerPort: 32200,
     frpRemotePort: 8080,
     frpToken: generateToken(),
-    frpCustomDomain: 'wap.zhejiangjinmo.com',
+    frpCustomDomain: 'www.spiritrealmz.com',
   };
 }
 

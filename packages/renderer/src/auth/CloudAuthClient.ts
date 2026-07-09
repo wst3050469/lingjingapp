@@ -40,7 +40,7 @@ export interface RefreshResponse {
   error?: string;
 }
 
-const API_BASE_URL = 'https://ide.zhejiangjinmo.com/api';
+const API_BASE_URL = 'https://www.spiritrealmz.com/api';
 const API_FALLBACK_URL = 'http://120.55.5.220:8000/api';
 
 export class CloudAuthClient {

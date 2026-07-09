@@ -1,7 +1,7 @@
 // Cloud sync client v2 - 灵境云端同步客户端
 // Uses HTTP REST API + WebSocket + JWT auth for real-time cloud integration
 import { OfflineQueue } from './offline-queue.js';
-const DEFAULT_SERVER = 'https://ide.zhejiangjinmo.com';
+const DEFAULT_SERVER = 'https://www.spiritrealmz.com';
 const DEFAULT_API_KEY = '5379dcbe873b356430d84f3f68b0f0c6e96e2afa3b8a9b5441c9e4d7f5a0b1c2';
 function generateDeviceId() {
     const hex = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {

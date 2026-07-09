@@ -1,6 +1,6 @@
 import { ExternalLink } from 'lucide-react';
 
-const CLOUD_ADMIN_URL = 'https://ide.zhejiangjinmo.com/admin';
+const CLOUD_ADMIN_URL = 'https://www.spiritrealmz.com/admin';
 
 const sections = [
   {
@@ -42,7 +42,7 @@ export function CloudDeviceTab() {
           </div>
           <div>
             <h3 className="text-sm text-cp-text font-medium">灵境AI云管理后台</h3>
-            <p className="text-[10px] text-cp-text-dim/40">https://ide.zhejiangjinmo.com/admin</p>
+            <p className="text-[10px] text-cp-text-dim/40">https://www.spiritrealmz.com/admin</p>
           </div>
         </div>
         <p className="text-xs text-cp-text-dim/60 mb-4 leading-relaxed">

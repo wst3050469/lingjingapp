@@ -37,6 +37,7 @@ declare module 'vue' {
     ATag: typeof import('ant-design-vue/es')['Tag']
     ATextarea: typeof import('ant-design-vue/es')['Textarea']
     BarChart: typeof import('./src/components/charts/BarChart.vue')['default']
+    ChangePasswordModal: typeof import('./src/components/common/ChangePasswordModal.vue')['default']
     ConfirmModal: typeof import('./src/components/common/ConfirmModal.vue')['default']
     DataTable: typeof import('./src/components/common/DataTable.vue')['default']
     DetailDrawer: typeof import('./src/components/common/DetailDrawer.vue')['default']

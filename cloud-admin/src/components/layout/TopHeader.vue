@@ -48,6 +48,7 @@
     </div>
     <GlobalSearch />
   </a-layout-header>
+  <ChangePasswordModal ref="changePwdModal" />
 </template>
 
 <script setup lang="ts">
@@ -65,6 +66,7 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons-vue';
 import GlobalSearch from '@/components/search/GlobalSearch.vue';
+import ChangePasswordModal from '@/components/common/ChangePasswordModal.vue';
 
 defineProps<{
   mainCollapsed: boolean;
@@ -81,12 +83,14 @@ const router = useRouter();
 const authStore = useAuthStore();
 const { isMobile } = useSidebar();
 const searchVisible = ref(false);
+const changePwdModal = ref<InstanceType<typeof ChangePasswordModal>>();
 
 const pageTitles: Record<string, string> = {
-  '/': '仪表盘', '/devices': '设备管理', '/sessions': '会话管理', '/skills': '技能市场',
-  '/memories': '记忆管理', '/push': '推送通知', '/defects': '缺陷管理', '/config': '系统配置',
-  '/logs': '审计日志', '/versions': '版本管理', '/tenants': '租户管理', '/users': '用户管理',
-  '/subscriptions': '订阅管理', '/payments': '支付管理',
+  '/': '仪表盘', '/sessions': '会话管理', '/logs': '审计日志',
+  '/versions': '版本管理', '/tenants': '租户管理', '/users': '用户管理',
+  '/dashboard': '仪表盘', '/contracts': '合同管理', '/suppliers': '供应商管理',
+  '/customers': '客户管理', '/invoices': '发票管理', '/finance': '财务管理',
+  '/samples': '样本管理', '/recipes': '配方管理', '/automation': '自动化任务',
 };
 const pageTitle = computed(() => pageTitles[route.path] ?? '管理后台');
 
@@ -96,7 +100,7 @@ function handleLogout() {
 }
 
 function handleChangePassword() {
-  /* TODO: open change password modal */
+  changePwdModal.value?.open();
 }
 </script>
 

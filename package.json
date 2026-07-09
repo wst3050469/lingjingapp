@@ -1,6 +1,6 @@
 {
   "name": "lingjing-mobile",
-  "version": "1.73.188",
+  "version": "1.73.189",
   "description": "灵境AI - 移动端应用",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {

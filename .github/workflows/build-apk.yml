@@ -140,3 +140,46 @@ jobs:
         if: always()
         working-directory: mobile
         run: find . -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No APK files found"
+
+      - name: Deploy APK to server
+        if: success()
+        working-directory: mobile
+        run: |
+          APK_FILE=$(find android -name "*-release.apk" | head -1)
+          if [ -z "$APK_FILE" ]; then
+            echo "No APK to deploy"
+            exit 0
+          fi
+          VERSION=$(node -p "require('./package.json').version")
+          echo "Deploying $APK_FILE as v$VERSION"
+          
+          # Try SSH deploy first
+          if timeout 5 ssh -o StrictHostKeyChecking=no -o ConnectTimeout=3 root@43.103.5.36 "echo ok" 2>/dev/null; then
+            echo "SSH available, deploying directly..."
+            scp -o StrictHostKeyChecking=no "$APK_FILE" root@43.103.5.36:/var/www/html/apk/latest.apk
+            scp -o StrictHostKeyChecking=no "$APK_FILE" "root@43.103.5.36:/var/www/html/apk/LingJing-Mobile-${VERSION#v}.apk"
+            ssh -o StrictHostKeyChecking=no root@43.103.5.36 "cd /root/lingjingapp && git pull origin main && pm2 restart all"
+            echo "✅ Deployed via SSH"
+          else
+            echo "SSH unavailable, updating versions.json to point to GitHub Releases"
+            # Update server's versions.json via API
+            curl -s -X POST "https://ide.zhejiangjinmo.com/api/notifications/version-update" \
+              -H "Content-Type: application/json" \
+              -H "x-api-key: lingjing-cloud-key-dev-only" \
+              -d "{\"version\":\"v$VERSION\",\"size\":$(stat -c%s "$APK_FILE"),\"releaseNotes\":\"灵境AI v$VERSION: CI自动构建\"}"
+            echo "✅ versions.json updated"
+          fi
+
+      - name: Upload to GitHub Release
+        if: success()
+        run: |
+          APK_FILE=$(find mobile/android -name "*-release.apk" | head -1)
+          if [ -z "$APK_FILE" ]; then echo "No APK"; exit 0; fi
+          VERSION=$(node -p "require('./mobile/package.json').version")
+          echo "Creating GitHub Release v$VERSION"
+          gh release create "v$VERSION" "$APK_FILE" \
+            --title "灵境AI v$VERSION - CI自动构建" \
+            --notes "🤖 GitHub Actions 自动构建\n📦 $(ls -lh "$APK_FILE" | awk '{print $5}')\n🔐 已签名" \
+            --repo wst3050469/lingjingapp || echo "Release may already exist"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,8 +1,22 @@
 <template>
   <div class="page">
     <h2 class="page-title">自动化任务</h2>
-    <div class="toolbar"><a-button type="primary" @click="openCreate">新增任务</a-button></div>
-    <a-table :dataSource="store.list" :columns="columns" rowKey="id" :loading="store.loading" size="small"
+    <div class="toolbar">
+      <a-input-search
+        v-model:value="searchKeyword"
+        placeholder="搜索任务名称或描述"
+        style="width:280px"
+        allowClear
+        @search="doSearch"
+        @input="doSearch"
+      />
+      <a-button @click="handleExport" :disabled="filteredList.length === 0" size="small">
+        <template #icon><DownloadOutlined /></template>
+        导出 CSV
+      </a-button>
+      <a-button type="primary" @click="openCreate">新增任务</a-button>
+    </div>
+    <a-table :dataSource="filteredList" :columns="columns" rowKey="id" :loading="store.loading" size="small"
       :pagination="{ pageSize: 20, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'] }">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'is_enabled'">
@@ -59,15 +73,29 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { DownloadOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import { useAutomationStore } from '@/stores/automation';
+import { exportToCsv } from '@/utils/export';
 
 const store = useAutomationStore();
 const showForm = ref(false);
 const saving = ref(false);
 const editing = ref(false);
 const editingId = ref(0);
+
+// 搜索
+const searchKeyword = ref('');
+const filteredList = computed(() => {
+  const kw = searchKeyword.value.trim().toLowerCase();
+  if (!kw) return store.list;
+  return store.list.filter(t =>
+    (t.name || '').toLowerCase().includes(kw) ||
+    (t.description_nl || '').toLowerCase().includes(kw) ||
+    (t.task_type || '').toLowerCase().includes(kw)
+  );
+});
 
 const form = reactive({
   name: '',
@@ -139,9 +167,27 @@ function resetForm() {
   editing.value = false;
   editingId.value = 0;
 }
+
+// 搜索
+function doSearch() {
+  // computed 自动过滤
+}
+
+// 导出
+const exportColumns = [
+  { title: '名称', dataIndex: 'name', key: 'name' },
+  { title: '任务类型', dataIndex: 'task_type', key: 'task_type' },
+  { title: 'Cron', dataIndex: 'cron_expr', key: 'cron_expr' },
+  { title: '说明', dataIndex: 'description_nl', key: 'description_nl' },
+  { title: '启用', dataIndex: 'is_enabled', key: 'is_enabled' },
+  { title: '上次运行', dataIndex: 'last_run_at', key: 'last_run_at' },
+];
+function handleExport() {
+  exportToCsv('自动化任务', exportColumns, filteredList.value);
+}
 </script>
 <style scoped>
 .page { padding: 24px; }
 .page-title { color: var(--text-primary); margin-bottom: 16px; }
-.toolbar { margin-bottom: 16px; }
+.toolbar { margin-bottom: 16px; display: flex; gap: 12px; align-items: center; }
 </style>

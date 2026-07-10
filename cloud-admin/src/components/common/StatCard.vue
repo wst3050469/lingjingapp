@@ -27,6 +27,7 @@ import { formatNumber } from '@/utils/format';
 import {
   TeamOutlined, UserOutlined, BuildOutlined, CheckCircleOutlined,
   FileTextOutlined, ShopOutlined, ContactsOutlined, ClockCircleOutlined,
+  MessageOutlined, CloudUploadOutlined, WifiOutlined,
 } from '@ant-design/icons-vue';
 
 const iconMap: Record<string, Component> = {
@@ -38,6 +39,9 @@ const iconMap: Record<string, Component> = {
   shop: ShopOutlined,
   contacts: ContactsOutlined,
   'clock-circle': ClockCircleOutlined,
+  message: MessageOutlined,
+  'cloud-upload': CloudUploadOutlined,
+  wifi: WifiOutlined,
 };
 
 const props = withDefaults(defineProps<{

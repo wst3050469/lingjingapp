@@ -1,7 +1,7 @@
 export interface AppAdminLoginRequest { username: string; password: string; }
 export interface AppAdminLoginResponse { code: number; token: string; nickname: string; role: string; msg: string; }
 
-export interface AppDashboardStats { total_users: number; active_users: number; total_tenants: number; active_tenants: number; recent_activities: AppAuditLogEntry[]; }
+export interface AppDashboardStats { total_users: number; active_users: number; total_tenants: number; active_tenants: number; total_sessions: number; total_versions: number; recent_activities: AppAuditLogEntry[]; }
 
 export interface AppTenant { tenant_id: string; company_name: string; industry: string; owner_name: string; owner_phone: string; plan: string; status: string; member_count: number; created_at: string; }
 export interface AppTenantMember { user_id: string; name: string; phone: string; role: string; status: string; joined_at: string; last_login: string; ext_data: any; }

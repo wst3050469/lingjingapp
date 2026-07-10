@@ -171,17 +171,11 @@ async def dashboard(admin: dict = Depends(get_admin_user)):
         active_tenants = await conn.fetchval(
             "SELECT count(*) FROM tenants WHERE status='active'"
         )
-        total_contracts = await conn.fetchval(
-            "SELECT count(*) FROM biz_contracts"
+        total_sessions = await conn.fetchval(
+            "SELECT count(*) FROM chat_sessions"
         ) or 0
-        total_suppliers = await conn.fetchval(
-            "SELECT count(*) FROM biz_suppliers"
-        ) or 0
-        total_customers = await conn.fetchval(
-            "SELECT count(*) FROM biz_customers"
-        ) or 0
-        pending_approvals = await conn.fetchval(
-            "SELECT count(*) FROM biz_finance WHERE status='pending'"
+        total_versions = await conn.fetchval(
+            "SELECT count(*) FROM app_versions"
         ) or 0
 
         # 最近操作记录
@@ -196,10 +190,8 @@ async def dashboard(admin: dict = Depends(get_admin_user)):
             "active_users": reg_active,
             "total_tenants": total_tenants,
             "active_tenants": active_tenants,
-            "total_contracts": total_contracts,
-            "total_suppliers": total_suppliers,
-            "total_customers": total_customers,
-            "pending_approvals": pending_approvals,
+            "total_sessions": total_sessions,
+            "total_versions": total_versions,
             "recent_activities": [dict(r) for r in recent],
         },
     }

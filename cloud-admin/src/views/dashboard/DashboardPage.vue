@@ -7,6 +7,9 @@
         <stat-card title="活跃用户" :value="stats?.active_users ?? 0" icon="user" color="#52c41a" />
         <stat-card title="企业租户" :value="stats?.total_tenants ?? 0" icon="building" color="#722ed1" />
         <stat-card title="活跃租户" :value="stats?.active_tenants ?? 0" icon="check-circle" color="#13c2c2" />
+        <stat-card title="会话总数" :value="stats?.total_sessions ?? 0" icon="message" color="#fa8c16" />
+        <stat-card title="版本总数" :value="stats?.total_versions ?? 0" icon="cloud-upload" color="#2f54eb" />
+        <stat-card title="在线设备" :value="dash.wsOnline" icon="wifi" color="#eb2f96" />
       </div>
     </a-spin>
 
@@ -31,7 +34,11 @@ const REFRESH_INTERVAL = 60000; // 60秒自动刷新
 
 onMounted(async () => {
   await dash.loadStats();
-  refreshTimer = setInterval(() => dash.loadStats(), REFRESH_INTERVAL);
+  await dash.loadWsOnline();
+  refreshTimer = setInterval(() => {
+    dash.loadStats();
+    dash.loadWsOnline();
+  }, REFRESH_INTERVAL);
 });
 
 onUnmounted(() => {

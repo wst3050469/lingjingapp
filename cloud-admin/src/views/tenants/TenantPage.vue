@@ -25,6 +25,10 @@
           <a-button size="small" @click="viewDetail(record)">详情</a-button>
           <a-button size="small" @click="editTenant(record)" style="margin-left:4px">编辑</a-button>
           <a-button size="small" @click="viewMembers(record)" style="margin-left:4px">成员</a-button>
+          <a-button size="small" type="primary" ghost @click="handleImpersonate(record)" :loading="impersonating === record.tenant_id" style="margin-left:4px">
+            <template #icon><LoginOutlined /></template>
+            模拟登录
+          </a-button>
           <a-popconfirm title="确定删除此租户？将级联删除所有关联数据！" @confirm="tenantStore.deleteTenant(record.tenant_id)">
             <a-button size="small" danger style="margin-left:4px">删除</a-button>
           </a-popconfirm>
@@ -130,7 +134,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { DownloadOutlined } from '@ant-design/icons-vue';
+import { DownloadOutlined, LoginOutlined } from '@ant-design/icons-vue';
 import { useTenantStore } from '@/stores/tenants';
 import type { AppTenantMember } from '@/types';
 import { message } from 'ant-design-vue';
@@ -155,6 +159,7 @@ const filteredList = computed(() => {
 // 编辑状态
 const showEdit = ref(false);
 const saving = ref(false);
+const impersonating = ref<string | null>(null);
 const editForm = reactive({
   tenant_id: '', company_name: '', status: 'active', plan: 'basic',
 });
@@ -172,7 +177,7 @@ const columns = [
   { title: '套餐', key: 'plan' },
   { title: '状态', key: 'status' },
   { title: '创建时间', dataIndex: 'created_at', key: 'created_at' },
-  { title: '操作', key: 'action', width: 280 },
+  { title: '操作', key: 'action', width: 380 },
 ];
 const memberColumns = [
   { title: '用户名', dataIndex: 'user_id', key: 'user_id' },
@@ -242,6 +247,17 @@ async function expandTenant(expanded: boolean, record: any) {
 
 function doSearch() {
   // 计算属性 filteredList 自动处理搜索
+}
+
+// 模拟登录为租户管理员
+async function handleImpersonate(record: any) {
+  impersonating.value = record.tenant_id;
+  const token = await tenantStore.impersonate(record.tenant_id);
+  impersonating.value = null;
+  if (token) {
+    // 在新标签页中打开租户后台
+    window.open(`/chat.html?impersonate=${token}`, '_blank');
+  }
 }
 
 const exportColumns = [

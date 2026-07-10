@@ -40,6 +40,10 @@ export const tenantApi = {
   dashboard: (tenantId: string) => get<{ code: number; data: any }>(`/tenants/${tenantId}/dashboard`),
   update: (tenantId: string, data: any) => put<{ code: number; msg: string }>(`/tenants/${tenantId}`, data),
   delete: (tenantId: string) => del<{ code: number; msg: string }>(`/tenants/${tenantId}`),
+  // 模拟登录为租户
+  impersonate: (tenantId: string) => post<{ code: number; data: { token: string; nickname: string; username: string; role: string; tenant_name: string; tenant_id: string } }>(`/tenants/${tenantId}/impersonate`),
+  // 撤销模拟登录
+  revokeImpersonation: () => post<{ code: number; msg: string }>('/revoke-impersonation'),
 };
 
 // ── 版本管理 ──

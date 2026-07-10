@@ -19,7 +19,7 @@
         </template>
         <template v-if="column.key === 'action'">
           <a-space>
-            <a-button size="small" type="link" @click="store.trigger(record.id)">触发</a-button>
+            <a-button size="small" type="link" @click="handleTrigger(record.id)">触发</a-button>
             <a-button size="small" type="link" @click="editItem(record)">编辑</a-button>
             <a-popconfirm title="确定删除?" @confirm="store.remove(record.id)">
               <a-button size="small" type="link" danger>删除</a-button>
@@ -101,6 +101,15 @@ function editItem(record: any) {
   form.description_nl = record.description_nl || '';
   editing.value = true;
   showForm.value = true;
+}
+
+async function handleTrigger(id: number) {
+  try {
+    const msg = await store.trigger(id);
+    message.success(msg || '任务已触发');
+  } catch (e: any) {
+    message.error(e?.response?.data?.detail || '触发失败');
+  }
 }
 
 async function save() {

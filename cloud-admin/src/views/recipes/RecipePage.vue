@@ -150,8 +150,10 @@ async function save() {
   saving.value = true;
   try {
     if (!form.name) { message.warning('请输入配方名称'); saving.value = false; return; }
+    if (!form.tenant_id) { message.warning('请选择租户'); saving.value = false; return; }
     // Convert ingredients/steps to arrays for JSONB
     const data = {
+      tenant_id: form.tenant_id,
       name: form.name,
       category: form.category,
       description: form.description,
@@ -164,8 +166,11 @@ async function save() {
     } else {
       await store.create(data);
     }
+    message.success(editing.value ? '配方已更新' : '配方已创建');
     showForm.value = false;
     resetForm();
+  } catch (e: any) {
+    message.error(e?.response?.data?.detail || '保存失败');
   } finally {
     saving.value = false;
   }

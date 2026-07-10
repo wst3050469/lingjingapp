@@ -1,5 +1,5 @@
 // 云账号登录/注册页
-// 支持登录和注册两种模式，使用 cloud-server /api/auth/login + /api/auth/signup
+// 使用 FastAPI /api/v1/auth/login + /api/v1/auth/register
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -36,7 +36,7 @@ export default function LoginScreen({ onSuccess, onSwitchToPairing }: { onSucces
     setError('');
 
     // Configure API to use cloud server for auth
-    api.configure({ baseUrl: 'https://www.spiritrealmz.com', token: '', wsUrl: 'wss://www.spiritrealmz.com/ws' });
+    api.configure({ baseUrl: 'https://www.spiritrealmz.com', token: '', wsUrl: 'wss://www.spiritrealmz.com' });
 
     try {
       const result = mode === 'login'

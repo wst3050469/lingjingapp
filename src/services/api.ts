@@ -51,15 +51,25 @@ class ApiService {
   private async request<T>(path: string, options?: RequestInit): Promise<T> {
     const baseUrl = this.config.baseUrl || 'https://www.spiritrealmz.com';
     const url = baseUrl + '/api' + path;
-    const res = await fetch(url, { ...options, headers: { ...this.headers, ...options?.headers } });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
+    let res: Response;
+    try {
+      res = await fetch(url, { ...options, headers: { ...this.headers, ...options?.headers } });
+    } catch (e: any) {
+      throw new Error('网络连接失败，请检查网络设置');
+    }
+    let data: any;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error('服务器响应异常 (' + res.status + ')');
+    }
+    if (!res.ok) throw new Error(data.detail || data.error || data.msg || 'HTTP ' + res.status);
     return data;
   }
 
   // ── Auth ──
   async registerDevice(deviceName?: string): Promise<any> {
-    const result: any = await this.request('/auth/register', {
+    const result: any = await this.request('/v1/auth/register', {
       method: 'POST',
       body: JSON.stringify({
         deviceId: this._deviceId || undefined,
@@ -74,48 +84,60 @@ class ApiService {
   }
   async verifyToken(): Promise<any> {
     if (!this._jwtToken && !this.config.token) throw new Error('Not authenticated');
-    return this.request('/auth/verify');
+    return this.request('/v1/auth/verify');
   }
   async login(username: string, password: string): Promise<any> {
-    const result = await this.request<any>('/auth/login', {
+    const result = await this.request<any>('/v1/auth/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     });
-    if (result?.token) {
+    // 适配后端返回格式 {code, token, nickname, ...} → {ok, token, user}
+    if (result && result.token) {
       this._jwtToken = result.token;
-      this._cloudUser = result.user || null;
+      this._cloudUser = { id: result.token.slice(0, 8), username, nickname: result.nickname || username };
+      return {
+        ok: true,
+        token: result.token,
+        user: { id: result.token.slice(0, 8), username, nickname: result.nickname || username, email: result.email || '' },
+      };
     }
-    return result;
+    return { ok: false, error: '登录失败' };
   }
   async signup(username: string, password: string, email?: string): Promise<any> {
-    const result = await this.request<any>('/auth/signup', {
+    const result = await this.request<any>('/v1/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username, password, email }),
+      body: JSON.stringify({ username, password, nickname: email || username, account_type: 'personal' }),
     });
-    if (result?.token) {
+    // 适配后端返回格式 {code, token, nickname} → {ok, token, user}
+    if (result && result.token) {
       this._jwtToken = result.token;
-      this._cloudUser = result.user || null;
+      this._cloudUser = { id: result.token.slice(0, 8), username, nickname: result.nickname || username };
+      return {
+        ok: true,
+        token: result.token,
+        user: { id: result.token.slice(0, 8), username, nickname: result.nickname || username, email: email || '' },
+      };
     }
-    return result;
+    return { ok: false, error: '注册失败' };
   }
 
   // ── Sessions ──
-  async getSessions(limit = 50) { return this.request<any>('/sessions?limit=' + limit); }
-  async getSession(id: string) { return this.request<any>('/sessions/' + id); }
+  async getSessions(limit = 50) { return this.request<any>('/v1/chat/sessions?limit=' + limit); }
+  async getSession(id: string) { return this.request<any>('/v1/chat/sessions/' + id + '/messages'); }
   async sendMessage(conversationId: string, message: string) {
-    return this.request<any>('/sessions/' + conversationId + '/send', {
+    return this.request<any>('/v1/chat/send', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ session_id: conversationId, content: message }),
     });
   }
   async upsertSession(session: any) {
-    return this.request<any>('/sessions', {
+    return this.request<any>('/v1/chat/sessions', {
       method: 'POST',
       body: JSON.stringify(session),
     });
   }
   async deleteSession(id: string) {
-    return this.request<any>('/sessions/' + id, { method: 'DELETE' });
+    return this.request<any>('/v1/chat/sessions/' + id, { method: 'DELETE' });
   }
 
   // ── WebSocket ──

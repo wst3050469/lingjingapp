@@ -691,31 +691,6 @@ async def tenant_dashboard(
         )
         usernames = [f"u_{m['user_id']}" for m in member_rows]  # u_username 格式
 
-        # 业务数据统计
-        project_count = await conn.fetchval(
-            "SELECT count(*) FROM biz_projects WHERE tenant_id=$1", tenant_id,
-        )
-        customer_count = await conn.fetchval(
-            "SELECT count(*) FROM biz_customers WHERE tenant_id=$1", tenant_id,
-        )
-        supplier_count = await conn.fetchval(
-            "SELECT count(*) FROM biz_suppliers WHERE tenant_id=$1", tenant_id,
-        )
-        finance_rows = await conn.fetchrow(
-            """SELECT count(*) as total,
-                      coalesce(sum(CASE WHEN type='expense' THEN amount ELSE 0 END), 0) as total_expense,
-                      coalesce(sum(CASE WHEN type='income' THEN amount ELSE 0 END), 0) as total_income,
-                      coalesce(sum(CASE WHEN status='pending' THEN 1 ELSE 0 END), 0) as pending_count
-               FROM biz_finance WHERE tenant_id=$1""",
-            tenant_id,
-        )
-        attendance_count = await conn.fetchval(
-            "SELECT count(*) FROM biz_attendance WHERE tenant_id=$1", tenant_id,
-        )
-        invoice_count = await conn.fetchval(
-            "SELECT count(*) FROM invoices WHERE tenant_id=$1", tenant_id,
-        )
-
         # 对话统计
         session_count = 0
         message_count = 0
@@ -775,19 +750,6 @@ async def tenant_dashboard(
             "members": {
                 "total": member_count,
                 "roles": {r["role"]: r["cnt"] for r in member_roles},
-            },
-            "business": {
-                "projects": project_count,
-                "customers": customer_count,
-                "suppliers": supplier_count,
-                "attendance_records": attendance_count,
-                "invoices": invoice_count,
-                "finance": {
-                    "total": finance_rows["total"],
-                    "total_expense": float(finance_rows["total_expense"]),
-                    "total_income": float(finance_rows["total_income"]),
-                    "pending": finance_rows["pending_count"],
-                },
             },
             "chat": {
                 "sessions": session_count,

@@ -13,8 +13,8 @@ import type {
 export const authApi = {
   login: (data: AppAdminLoginRequest) => post<AppAdminLoginResponse>('/login', data),
   checkSession: () => get<{ code: number; nickname: string; role: string }>('/check-session', undefined, true),
-  changePassword: (data: { old_password: string; new_password: string }) =>
-    post<{ code: number; token: string; msg: string }>('/change-password', data),
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    post<{ ok: boolean; message: string }>('/change-password', data),
 };
 
 // ── 仪表盘 ──

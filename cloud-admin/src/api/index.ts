@@ -8,6 +8,13 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// 自定义配置：静默处理 401（用于 checkSession 等场景）
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    _silent401?: boolean;
+  }
+}
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('app_admin_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -18,7 +25,10 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      message.error('登录已过期，请重新登录');
+      // checkSession 等静默检查不弹错误提示
+      if (!err.config?._silent401) {
+        message.error('登录已过期，请重新登录');
+      }
       localStorage.removeItem('app_admin_token');
       window.location.href = '/login';
     } else if (err.response?.status === 403) {
@@ -32,13 +42,13 @@ api.interceptors.response.use(
   }
 );
 
-export async function get<T>(url: string, params?: Record<string, any>): Promise<T> {
-  const res = await api.get<T>(url, { params });
+export async function get<T>(url: string, params?: Record<string, any>, silent401 = false): Promise<T> {
+  const res = await api.get<T>(url, { params, _silent401: silent401 });
   return res.data;
 }
 
-export async function post<T>(url: string, data?: any, showSuccess = false): Promise<T> {
-  const res = await api.post<T>(url, data);
+export async function post<T>(url: string, data?: any, showSuccess = false, silent401 = false): Promise<T> {
+  const res = await api.post<T>(url, data, { _silent401: silent401 });
   if (showSuccess) {
     const msg = (res.data as any)?.msg || '操作成功';
     message.success(msg);
@@ -46,8 +56,8 @@ export async function post<T>(url: string, data?: any, showSuccess = false): Pro
   return res.data;
 }
 
-export async function put<T>(url: string, data?: any, showSuccess = false): Promise<T> {
-  const res = await api.put<T>(url, data);
+export async function put<T>(url: string, data?: any, showSuccess = false, silent401 = false): Promise<T> {
+  const res = await api.put<T>(url, data, { _silent401: silent401 });
   if (showSuccess) {
     const msg = (res.data as any)?.msg || '更新成功';
     message.success(msg);
@@ -55,8 +65,8 @@ export async function put<T>(url: string, data?: any, showSuccess = false): Prom
   return res.data;
 }
 
-export async function del<T>(url: string, showSuccess = true): Promise<T> {
-  const res = await api.delete<T>(url);
+export async function del<T>(url: string, showSuccess = true, silent401 = false): Promise<T> {
+  const res = await api.delete<T>(url, { _silent401: silent401 });
   if (showSuccess) {
     message.success('删除成功');
   }

@@ -12,7 +12,7 @@ import type {
 // ── 认证 ──
 export const authApi = {
   login: (data: AppAdminLoginRequest) => post<AppAdminLoginResponse>('/login', data),
-  checkSession: () => get<{ code: number; nickname: string; role: string }>('/check-session'),
+  checkSession: () => get<{ code: number; nickname: string; role: string }>('/check-session', undefined, true),
   changePassword: (data: { old_password: string; new_password: string }) =>
     post<{ code: number; token: string; msg: string }>('/change-password', data),
 };

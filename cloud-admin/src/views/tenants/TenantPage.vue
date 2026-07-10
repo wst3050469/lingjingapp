@@ -257,11 +257,12 @@ async function handleImpersonate(record: any) {
   const token = await tenantStore.impersonate(record.tenant_id);
   impersonating.value = null;
   if (token && authStore.token) {
-    // 新标签页打开，传入租户token和超管token（用于撤销模拟）
-    const params = new URLSearchParams();
-    params.set('impersonate', token);
-    params.set('revoke_token', authStore.token);
-    window.open('/chat.html?' + params.toString(), '_blank');
+    // 通过 localStorage 传递 token（安全，不在 URL 中暴露）
+    localStorage.setItem('lj_impersonate_token', token);
+    localStorage.setItem('lj_impersonate_tenant', record.company_name || record.tenant_id);
+    // 清理旧标记
+    localStorage.removeItem('lj_impersonate');
+    window.open('/chat.html', '_blank');
   } else if (token && !authStore.token) {
     message.error('超管认证已过期，请重新登录');
   }

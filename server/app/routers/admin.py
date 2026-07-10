@@ -681,7 +681,7 @@ async def impersonate_tenant(
             tenant_id,
         )
         if not tenant:
-            raise HTTPException(status_code=404, detail="租户不存在")
+            raise HTTPException(status_code=404, detail=f"租户 {tenant_id} 不存在")
         if tenant["status"] != "active":
             raise HTTPException(status_code=400, detail="租户已禁用，无法模拟登录")
         
@@ -696,92 +696,7 @@ async def impersonate_tenant(
             tenant_id,
         )
         if not target_user:
-            raise HTTPException(status_code=404, detail="该租户下无可用成员")
-        if target_user["status"] != "active":
-            raise HTTPException(status_code=400, detail="该租户管理员账号已被禁用")
-        
-        token = target_user["token"]
-        if not token:
-            # 如果用户没有token，生成一个新的
-            import secrets
-            token = secrets.token_urlsafe(48)
-            await conn.execute(
-                "UPDATE users SET token=$1, token_expires_at=NOW() + interval '24 hours' WHERE username=$2",
-                token, target_user["username"],
-            )
-        
-        # 记录审计日志
-        await conn.execute(
-            """INSERT INTO admin_audit_logs (admin_id, admin_name, action, target_type, target_id, detail, ip_address)
-               VALUES ($1, $2, 'impersonate', 'tenant', $3, $4, '0.0.0.0')""",
-            admin["id"], admin["nickname"], tenant_id,
-            f"模拟登录租户 {tenant['company_name']} 的 {target_user['role']} ({target_user['nickname']})",
-        )
-    
-    return {
-        "code": 0,
-        "data": {
-            "token": token,
-            "nickname": target_user["nickname"],
-            "username": target_user["username"],
-            "role": target_user["role"],
-            "tenant_name": tenant["company_name"],
-            "tenant_id": tenant_id,
-        },
-    }
-
-
-@router.post("/revoke-impersonation")
-async def revoke_impersonation(
-    admin: dict = Depends(get_admin_user),
-):
-    """记录撤销模拟登录（审计用）"""
-    async with database.pool.acquire() as conn:
-        await conn.execute(
-            """INSERT INTO admin_audit_logs (admin_id, admin_name, action, target_type, target_id, detail, ip_address)
-               VALUES ($1, $2, 'revoke_impersonation', 'system', '', '撤销模拟登录', '0.0.0.0')""",
-            admin["id"], admin["nickname"],
-        )
-    return {"code": 0, "msg": "模拟登录已撤销"}
-
-
-# ── 超管模拟租户登录 ──────────────────────────────────
-
-class ImpersonateRequest(BaseModel):
-    tenant_id: str
-
-@router.post("/tenants/{tenant_id}/impersonate")
-async def impersonate_tenant(
-    tenant_id: str,
-    admin: dict = Depends(get_admin_user),
-):
-    """超管模拟登录为租户管理员，获取租户的登录token"""
-    if admin.get("role") not in ("super_admin", "admin"):
-        raise HTTPException(status_code=403, detail="仅超管可执行此操作")
-    
-    async with database.pool.acquire() as conn:
-        # 查找目标租户
-        tenant = await conn.fetchrow(
-            "SELECT tenant_id, company_name, status FROM tenants WHERE tenant_id=$1",
-            tenant_id,
-        )
-        if not tenant:
-            raise HTTPException(status_code=404, detail="租户不存在")
-        if tenant["status"] != "active":
-            raise HTTPException(status_code=400, detail="租户已禁用，无法模拟登录")
-        
-        # 查找租户的owner/admin用户
-        target_user = await conn.fetchrow(
-            """SELECT u.username, u.nickname, u.token, u.status, tu.role
-               FROM tenant_users tu
-               JOIN users u ON u.username = tu.user_id
-               WHERE tu.tenant_id=$1
-               ORDER BY CASE tu.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END
-               LIMIT 1""",
-            tenant_id,
-        )
-        if not target_user:
-            raise HTTPException(status_code=404, detail="该租户下无可用成员")
+            raise HTTPException(status_code=404, detail=f"租户 {tenant_id} 下无可用成员（请先在租户中添加管理员或成员）")
         if target_user["status"] != "active":
             raise HTTPException(status_code=400, detail="该租户管理员账号已被禁用")
         
@@ -844,7 +759,7 @@ async def tenant_dashboard(
             "SELECT * FROM tenants WHERE tenant_id=$1", tenant_id,
         )
         if not tenant:
-            raise HTTPException(status_code=404, detail="租户不存在")
+            raise HTTPException(status_code=404, detail=f"租户 {tenant_id} 不存在")
 
         # 成员统计
         member_count = await conn.fetchval(

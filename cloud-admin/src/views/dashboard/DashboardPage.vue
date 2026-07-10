@@ -1,34 +1,20 @@
 <template>
   <div class="dashboard-page">
     <h2 class="page-title">平台概览</h2>
-    <div class="stats-grid">
-      <a-card class="stat-card" :loading="loading">
+    <a-spin :spinning="dash.loading">
+      <div class="stats-grid">
         <stat-card title="注册用户" :value="stats?.total_users ?? 0" icon="team" color="#1890ff" />
-      </a-card>
-      <a-card class="stat-card" :loading="loading">
         <stat-card title="活跃用户" :value="stats?.active_users ?? 0" icon="user" color="#52c41a" />
-      </a-card>
-      <a-card class="stat-card" :loading="loading">
         <stat-card title="企业租户" :value="stats?.total_tenants ?? 0" icon="building" color="#722ed1" />
-      </a-card>
-      <a-card class="stat-card" :loading="loading">
         <stat-card title="活跃租户" :value="stats?.active_tenants ?? 0" icon="check-circle" color="#13c2c2" />
-      </a-card>
-      <a-card class="stat-card" :loading="loading">
         <stat-card title="合同总数" :value="stats?.total_contracts ?? 0" icon="file-text" color="#fa8c16" />
-      </a-card>
-      <a-card class="stat-card" :loading="loading">
         <stat-card title="供应商" :value="stats?.total_suppliers ?? 0" icon="shop" color="#eb2f96" />
-      </a-card>
-      <a-card class="stat-card" :loading="loading">
         <stat-card title="客户" :value="stats?.total_customers ?? 0" icon="contacts" color="#2f54eb" />
-      </a-card>
-      <a-card class="stat-card" :loading="loading">
         <stat-card title="待审批" :value="stats?.pending_approvals ?? 0" icon="clock-circle" color="#fa541c" />
-      </a-card>
-    </div>
+      </div>
+    </a-spin>
 
-    <a-card title="最近操作" class="activity-card" :loading="loading">
+    <a-card title="最近操作" class="activity-card">
       <a-table :dataSource="activities" :columns="columns" :pagination="{ pageSize: 10 }" size="small" rowKey="id">
         <template #bodyCell="{ column, record }">
           <template v-if="column.key === 'time'">{{ formatTime(record.created_at) }}</template>
@@ -39,19 +25,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import StatCard from '@/components/common/StatCard.vue';
 
 const dash = useDashboardStore();
-const loading = ref(true);
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 const REFRESH_INTERVAL = 60000; // 60秒自动刷新
 
 onMounted(async () => {
   await dash.loadStats();
-  loading.value = false;
-  // 启动自动刷新
   refreshTimer = setInterval(() => dash.loadStats(), REFRESH_INTERVAL);
 });
 
@@ -80,6 +63,5 @@ function formatTime(t: string) {
 .dashboard-page { padding: 24px; }
 .page-title { color: var(--text-primary); margin-bottom: 24px; font-size: 20px; }
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.stat-card :deep(.ant-card-body) { padding: 0; }
 .activity-card { margin-top: 16px; }
 </style>

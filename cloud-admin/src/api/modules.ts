@@ -1,6 +1,6 @@
 import { get, post, put, del, upload } from './index';
 import type {
-  AppAdminLoginRequest, AppAdminLoginResponse, AppAdminUser,
+  AppAdminLoginRequest, AppAdminLoginResponse,
   AppDashboardStats,
   AppTenant, AppTenantMember,
   AppUser, AppInviteCode, AppTeamInviteCode,

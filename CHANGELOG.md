@@ -13,8 +13,13 @@
 ### Fixed
 - **租户成员 500**: tenant_users 表 joined_at 列不存在 → created_at AS joined_at
 - **systemd 崩溃循环**: lingjing-cloud.service 端口冲突 → 停用，保留手动进程
+- **自动更新 404**: versions.json desktop.latest 指向不存在的 1.76.40 → 1.76.21
 - **Git 远程**: HTTPS 推送超时 → 改用 SSH (git@github.com)
 - **11 个核心 API 全部 200**, 7 个已删 API 全部 404
+
+### Security
+- **系统安全更新**: curl + libcurl + tzdata 安全补丁已应用
+- **全平台版本统一**: 8 模块 v1.73.190 一致
 
 ## v1.73.188 (2026-07-06)
 

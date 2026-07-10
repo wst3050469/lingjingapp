@@ -2,7 +2,7 @@
   "expo": {
     "name": "灵境AI",
     "slug": "lingjing-mobile",
-    "version": "1.73.190",
+    "version": "1.74.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -22,7 +22,7 @@
         "RECORD_AUDIO",
         "INTERNET"
       ],
-      "versionCode": 188
+      "versionCode": 189
     },
     "plugins": [
       [
@@ -37,6 +37,7 @@
         "projectId": "2c8f346b-10e0-4b26-b893-124eb212602f"
       }
     },
-    "owner": "wst3050469"
+    "owner": "wst3050469",
+    "runtimeVersion": "1.74.0"
   }
 }

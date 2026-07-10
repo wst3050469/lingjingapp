@@ -66,7 +66,12 @@
           </a-col>
         </a-row>
         <a-form-item label="任务说明">
-          <a-textarea v-model:value="form.description_nl" :rows="4" placeholder="描述任务要做什么" />
+          <a-textarea v-model:value="form.description_nl" :rows="3" placeholder="描述任务要做什么，例如：每天早上8点发送考勤报告" />
+          <a-button size="small" type="dashed" @click="parseDescription" :loading="parsing" style="margin-top:6px">
+            <template #icon><BulbOutlined /></template>
+            {{ parsing ? '解析中...' : '智能解析' }}
+          </a-button>
+          <span v-if="parseResult" style="color:var(--neon-cyan);font-size:12px;margin-left:8px">解析完成</span>
         </a-form-item>
       </a-form>
     </a-modal>
@@ -74,9 +79,10 @@
 </template>
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
-import { DownloadOutlined } from '@ant-design/icons-vue';
+import { DownloadOutlined, BulbOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
 import { useAutomationStore } from '@/stores/automation';
+import { automationApi } from '@/api/modules';
 import { exportToCsv } from '@/utils/export';
 
 const store = useAutomationStore();
@@ -84,6 +90,8 @@ const showForm = ref(false);
 const saving = ref(false);
 const editing = ref(false);
 const editingId = ref(0);
+const parsing = ref(false);
+const parseResult = ref(false);
 
 // 搜索
 const searchKeyword = ref('');
@@ -166,6 +174,29 @@ function resetForm() {
   form.description_nl = '';
   editing.value = false;
   editingId.value = 0;
+  parseResult.value = false;
+}
+
+// 智能解析自然语言描述
+async function parseDescription() {
+  if (!form.description_nl.trim()) { message.warning('请先输入任务说明'); return; }
+  parsing.value = true;
+  parseResult.value = false;
+  try {
+    const res = await automationApi.parse(form.description_nl.trim());
+    if (res.code === 0 && res.data) {
+      if (res.data.name) form.name = res.data.name;
+      if (res.data.task_type) form.task_type = res.data.task_type;
+      if (res.data.cron_expression) form.cron_expr = res.data.cron_expression;
+      if (res.data.description) form.description_nl = res.data.description;
+      parseResult.value = true;
+      message.success('已根据描述自动填充任务信息');
+    }
+  } catch (e: any) {
+    message.error(e?.response?.data?.detail || '解析失败');
+  } finally {
+    parsing.value = false;
+  }
 }
 
 // 搜索

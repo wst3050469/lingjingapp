@@ -143,6 +143,8 @@ export const automationApi = {
   update: (id: number, data: any) => put<{ code: number; msg: string }>(`/automation/tasks/${id}`, data),
   trigger: (id: number) => post<{ code: number; msg: string }>(`/automation/tasks/${id}/trigger`),
   delete: (id: number) => del<{ code: number; msg: string }>(`/automation/tasks/${id}`),
+  /** 智能解析自然语言任务描述 */
+  parse: (prompt: string) => post<{ code: number; data: { name: string; task_type: string; cron_expression: string; description: string } }>('/automation/parse', { prompt }),
 };
 
 // ── 邀请码管理 ──

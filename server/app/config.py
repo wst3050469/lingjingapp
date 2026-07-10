@@ -36,7 +36,7 @@ OLLAMA_CHAT_TIMEOUT = int(os.environ.get("OLLAMA_CHAT_TIMEOUT", "300"))  # 本�
 DEFAULT_CHAT_MODEL = os.environ.get("DEFAULT_CHAT_MODEL", "deepseek")  # ollama 或 deepseek
 
 # 文件上传配置（默认基于项目根目录）
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = os.environ.get("UPLOAD_DIR", str(_PROJECT_ROOT / "uploads"))
 TEMP_DIR = os.environ.get("TEMP_DIR", str(_PROJECT_ROOT / "uploads" / "_temp"))  # OSS 下载临时目录
 ADMIN_DIR = os.environ.get("ADMIN_DIR", str(_PROJECT_ROOT / "admin"))

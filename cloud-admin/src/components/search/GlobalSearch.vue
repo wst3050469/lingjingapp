@@ -3,7 +3,7 @@
     <a-input
       ref="inputRef"
       v-model:value="keyword"
-      placeholder="搜索设备、会话、技能、记忆..."
+      placeholder="搜索设备、会话、记忆..."
       allow-clear
       @input="handleSearch"
       size="large"
@@ -45,17 +45,15 @@ async function handleSearch() {
   if (!keyword.value.trim()) { results.value = []; return; }
   const q = keyword.value.trim();
   try {
-    const [devices, sessions, skills, memories] = await Promise.allSettled([
+    const [devices, sessions, memories] = await Promise.allSettled([
       get<any[]>('/devices', { search: q }),
-      get<any[]>('/sessions', { search: q }),
-      get<any[]>('/skills', { search: q }),
+      get<any[]>('/chat/sessions', { search: q }),
       get<any[]>('/memories', { search: q }),
     ]);
     const all: SearchResult[] = [];
-    if (devices.status === 'fulfilled') for (const d of (devices.value as any[])) all.push({ id: d.id, name: d.device_name ?? d.id, type: '设备', route: '/devices' });
-    if (sessions.status === 'fulfilled') for (const s of (sessions.value as any[])) all.push({ id: s.session_id ?? s.id, name: s.task_title ?? s.id, type: '会话', route: '/sessions' });
-    if (skills.status === 'fulfilled') for (const sk of (skills.value as any[])) all.push({ id: sk.id, name: sk.name, type: '技能', route: '/skills' });
-    if (memories.status === 'fulfilled') for (const m of (memories.value as any[])) all.push({ id: m.id, name: m.title ?? m.id, type: '记忆', route: '/memories' });
+    if (devices.status === 'fulfilled') for (const d of (devices.value as any[])) all.push({ id: d.id, name: d.device_name ?? d.name ?? d.id, type: '设备', route: '/devices' });
+    if (sessions.status === 'fulfilled') for (const s of (sessions.value as any[])) all.push({ id: s.session_id ?? s.id, name: s.task_title ?? s.title ?? s.id, type: '会话', route: '/sessions' });
+    if (memories.status === 'fulfilled') for (const m of (memories.value as any[])) all.push({ id: m.id, name: m.title ?? m.content ?? m.id, type: '记忆', route: '/memories' });
     results.value = all.slice(0, 20);
   } catch { results.value = []; }
 }
@@ -78,6 +76,8 @@ function handleKeydown(e: KeyboardEvent) {
 
 onMounted(() => window.addEventListener('keydown', handleKeydown));
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+
+defineExpose({ open: () => { visible.value = true; } });
 </script>
 
 <style scoped>

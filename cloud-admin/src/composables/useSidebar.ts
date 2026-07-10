@@ -29,7 +29,7 @@ export function useSidebar() {
   const mainWidth = computed(() => {
     if (breakpoint.value === 'hidden') return 0;
     if (effectiveCollapsed.value) return 64;
-    return 180;
+    return 210;
   });
 
   function toggleMain(): void {

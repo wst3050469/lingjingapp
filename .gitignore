@@ -19,15 +19,37 @@ web-build/
 # Android native (rely on CNG)
 android/
 
+# Mobile Android native
+mobile/android/
+
 # Android signing
 keystore.properties
 *.keystore
+
+# APK files (built artifacts, not source)
+*.apk
+*.apk.xz
+*.aab
+
+# App build output (APK storage + Android build)
+app/
+app-release.apk
+
+# Android build intermediates (C++ objects, .dex, .so, etc.)
+**/android/app/build/
+**/android/app/.cxx/
+**/android/.gradle/
 
 # electron-builder release output
 packages/electron/release-*/
 
 # Local fix scripts
 packages/electron/_*.cjs
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
 packages/electron/release*/
 
 # pnpm symlinks

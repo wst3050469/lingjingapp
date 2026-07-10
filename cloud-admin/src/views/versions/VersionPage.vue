@@ -2,7 +2,21 @@
   <div class="page">
     <div class="page-header">
       <h2 class="page-title">版本管理</h2>
-      <a-button type="primary" @click="showUploadModal = true">上传新版本</a-button>
+      <div class="header-actions">
+        <a-input-search
+          v-model:value="searchKeyword"
+          placeholder="搜索版本名称或说明"
+          style="width:240px"
+          allowClear
+          @search="doSearch"
+          @input="doSearch"
+        />
+        <a-button @click="handleExport" :disabled="filteredList.length === 0" size="small">
+          <template #icon><DownloadOutlined /></template>
+          导出 CSV
+        </a-button>
+        <a-button type="primary" @click="showUploadModal = true">上传新版本</a-button>
+      </div>
     </div>
 
     <!-- 上传版本弹窗 -->
@@ -30,7 +44,7 @@
       </a-form>
     </a-modal>
 
-    <a-table :dataSource="store.list" :columns="columns" rowKey="id" :loading="store.loading" size="small"
+    <a-table :dataSource="filteredList" :columns="columns" rowKey="id" :loading="store.loading" size="small"
       :pagination="{ pageSize: 20, showSizeChanger: true, pageSizeOptions: ['10', '20', '50', '100'] }">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'is_force_update'">
@@ -58,13 +72,26 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, reactive } from 'vue';
+import { computed, onMounted, ref, reactive } from 'vue';
+import { DownloadOutlined, UploadOutlined } from '@ant-design/icons-vue';
 import { message } from 'ant-design-vue';
-import { UploadOutlined } from '@ant-design/icons-vue';
 import { useVersionStore } from '@/stores/versions';
 import { versionApi } from '@/api/modules';
+import { exportToCsv } from '@/utils/export';
 
 const store = useVersionStore();
+
+// 搜索
+const searchKeyword = ref('');
+const filteredList = computed(() => {
+  const kw = searchKeyword.value.trim().toLowerCase();
+  if (!kw) return store.list;
+  return store.list.filter(t =>
+    (t.version_name || '').toLowerCase().includes(kw) ||
+    (t.release_notes || '').toLowerCase().includes(kw) ||
+    (t.uploaded_by || '').toLowerCase().includes(kw)
+  );
+});
 
 const columns = [
   { title: '版本名称', dataIndex: 'version_name', key: 'version_name' },
@@ -153,19 +180,40 @@ async function reject(record: any) {
     message.error(e?.response?.data?.detail || '操作失败');
   }
 }
+
+// 搜索
+function doSearch() {
+  // computed 自动过滤
+}
+
+// 导出
+const exportColumns = [
+  { title: '版本名称', dataIndex: 'version_name', key: 'version_name' },
+  { title: '版本号', dataIndex: 'version_code', key: 'version_code' },
+  { title: '更新说明', dataIndex: 'release_notes', key: 'release_notes' },
+  { title: '文件大小', dataIndex: 'apk_size', key: 'apk_size' },
+  { title: '强制更新', dataIndex: 'is_force_update', key: 'is_force_update' },
+  { title: '上传者', dataIndex: 'uploaded_by', key: 'uploaded_by' },
+  { title: '状态', dataIndex: 'status', key: 'status' },
+];
+function handleExport() {
+  exportToCsv('版本管理', exportColumns, filteredList.value);
+}
 </script>
 <style scoped>
-.page {
-  padding: 24px;
-}
+.page { padding: 24px; }
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.page-title {
-  color: var(--text-primary);
-  margin-bottom: 0;
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
+.page-title { color: var(--text-primary); margin-bottom: 0; }
 </style>

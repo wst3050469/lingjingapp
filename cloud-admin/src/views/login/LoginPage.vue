@@ -48,7 +48,9 @@ async function handleLogin() {
   error.value = '';
   try {
     await auth.login(form.username, form.password);
-    router.push('/');
+    // 登录成功后跳转到之前访问的页面，没有则去首页
+    const redirect = (router.currentRoute.value.query.redirect as string) || '/';
+    router.push(redirect);
   } catch (e: any) {
     error.value = e?.response?.data?.msg || e?.response?.data?.detail || '登录失败，请检查用户名和密码';
   }

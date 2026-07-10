@@ -599,10 +599,10 @@ async def list_tenant_members(
     async with database.pool.acquire() as conn:
         rows = await conn.fetch(
             """SELECT u.username, u.nickname, u.status, u.last_login_at,
-                      tu.role, tu.joined_at
+                      tu.role, tu.created_at AS joined_at
                FROM tenant_users tu
                JOIN users u ON u.username = tu.user_id
-               WHERE tu.tenant_id=$1 ORDER BY tu.joined_at""",
+               WHERE tu.tenant_id=$1 ORDER BY tu.created_at""",
             tenant_id,
         )
     return {"code": 0, "data": [dict(r) for r in rows]}

@@ -105,3 +105,6 @@ latest.yml
 
 # Logs
 logs/lingjing-app.log
+
+# 云管理后台
+cloud-admin/package-lock.json

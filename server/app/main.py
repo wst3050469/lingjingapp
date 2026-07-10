@@ -12,6 +12,21 @@ from fastapi.responses import FileResponse, JSONResponse
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse, Response
+from starlette.types import Scope
+
+# 带缓存控制头的静态文件服务
+class AdminStaticFiles(StaticFiles):
+    """管理后台静态文件服务 - index.html 不缓存，带 hash 的资源长期缓存"""
+    def file_response(self, path: str, stat_result, scope: Scope) -> Response:
+        resp = super().file_response(path, stat_result, scope)
+        if path in ("index.html", ""):
+            resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            resp.headers["Pragma"] = "no-cache"
+            resp.headers["Expires"] = "0"
+        elif path.endswith((".js", ".css")):
+            resp.headers["Cache-Control"] = "public, immutable, max-age=31536000"
+        return resp
 
 # 容错导入 — 生产环境可能缺少部分模块
 def _safe_import(module_name: str):
@@ -239,7 +254,14 @@ async def admin_spa_404_handler(request, exc):
     if request.url.path.startswith("/admin/") or request.url.path == "/admin":
         index_path = os.path.join(_ADMIN_DIR, "index.html")
         if os.path.exists(index_path):
-            return FileResponse(index_path, media_type="text/html")
+            return FileResponse(
+                index_path, media_type="text/html",
+                headers={
+                    "Cache-Control": "no-cache, no-store, must-revalidate",
+                    "Pragma": "no-cache",
+                    "Expires": "0",
+                },
+            )
     return JSONResponse({"detail": "Not Found"}, status_code=404)
 
 # 安全的 include_router — 跳过未加载的模块
@@ -292,7 +314,7 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # 管理后台静态页面 — 先用 StaticFiles 挂载，再通过异常处理做 SPA fallback
 os.makedirs(ADMIN_DIR, exist_ok=True)
-app.mount("/admin", StaticFiles(directory=ADMIN_DIR, html=True), name="admin")
+app.mount("/admin", AdminStaticFiles(directory=ADMIN_DIR, html=True), name="admin")
 
 # APK 下载直链 - StaticFiles 比 FileResponse 快很多
 os.makedirs(APK_DIR, exist_ok=True)

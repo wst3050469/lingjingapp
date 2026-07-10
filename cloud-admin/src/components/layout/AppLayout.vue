@@ -44,13 +44,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import MainSidebar from './MainSidebar.vue';
 import SubSidebar from './SubSidebar.vue';
 import TopHeader from './TopHeader.vue';
 import MobileNav from './MobileNav.vue';
 import { useSidebar } from '@/composables/useSidebar';
+import { useAuthStore } from '@/stores/auth';
 
 const {
   effectiveCollapsed,
@@ -72,6 +73,11 @@ const pageTitles: Record<string, string> = {
   '/recipes': '配方管理', '/automation': '自动化任务', '/websocket': '在线监控',
 };
 const pageTitle = computed(() => pageTitles[route.path] ?? '管理后台');
+
+const authStore = useAuthStore();
+onMounted(() => {
+  authStore.checkSession();
+});
 </script>
 
 <style scoped>

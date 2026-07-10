@@ -39,16 +39,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import StatCard from '@/components/common/StatCard.vue';
 
 const dash = useDashboardStore();
 const loading = ref(true);
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+const REFRESH_INTERVAL = 60000; // 60秒自动刷新
 
 onMounted(async () => {
   await dash.loadStats();
   loading.value = false;
+  // 启动自动刷新
+  refreshTimer = setInterval(() => dash.loadStats(), REFRESH_INTERVAL);
+});
+
+onUnmounted(() => {
+  if (refreshTimer) clearInterval(refreshTimer);
 });
 
 const stats = computed(() => dash.stats);

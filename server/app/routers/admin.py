@@ -127,6 +127,12 @@ async def admin_login(req: AdminLoginRequest):
     }
 
 
+@router.get("/check-session")
+async def admin_check_session(admin: dict = Depends(get_admin_user)):
+    """校验当前会话是否有效"""
+    return {"code": 0, "nickname": admin["nickname"], "role": admin["role"]}
+
+
 @router.post("/change-password")
 async def change_password(
     req: ChangePasswordRequest,

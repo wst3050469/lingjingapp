@@ -14,7 +14,7 @@ export const useTenantStore = defineStore('tenants', () => {
     try {
       const res = await tenantApi.list();
       if (res.code === 0) list.value = res.data;
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载租户失败:", e); } finally { loading.value = false; }
   }
 
   async function loadMembers(tenantId: string): Promise<void> {
@@ -22,7 +22,7 @@ export const useTenantStore = defineStore('tenants', () => {
     try {
       const res = await tenantApi.members(tenantId);
       if (res.code === 0) members.value = res.data;
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载租户失败:", e); } finally { loading.value = false; }
   }
 
   async function loadDashboard(tenantId: string): Promise<void> {
@@ -30,7 +30,7 @@ export const useTenantStore = defineStore('tenants', () => {
     try {
       const res = await tenantApi.dashboard(tenantId);
       if (res.code === 0) dashboardData.value = res.data;
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载租户失败:", e); } finally { loading.value = false; }
   }
 
   async function updateMember(tenantId: string, username: string, data: any): Promise<void> {

@@ -15,7 +15,7 @@ export const useLogStore = defineStore('logs', () => {
         list.value = res.data;
         total.value = res.total || 0;
       }
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载logs失败:", e); } finally { loading.value = false; }
   }
 
   function setPage(page: number) { currentPage.value = page; }

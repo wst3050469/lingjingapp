@@ -14,7 +14,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       if (res.code === 0) {
         stats.value = res.data;
       }
-    } finally {
+    } catch (e) { console.error("加载dashboard失败:", e); } finally {
       loading.value = false;
     }
   }

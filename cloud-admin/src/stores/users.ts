@@ -14,7 +14,7 @@ export const useUserStore = defineStore('users', () => {
     try {
       const res = await userApi.listRegistered(params);
       if (res.code === 0) registeredUsers.value = res.data;
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载用户失败:", e); } finally { loading.value = false; }
   }
 
   async function loadInviteCodes(): Promise<void> {
@@ -22,7 +22,7 @@ export const useUserStore = defineStore('users', () => {
     try {
       const res = await userApi.listInviteUsers();
       if (res.code === 0) inviteCodes.value = res.data;
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载用户失败:", e); } finally { loading.value = false; }
   }
 
   async function loadTeamInviteCodes(): Promise<void> {
@@ -30,7 +30,7 @@ export const useUserStore = defineStore('users', () => {
     try {
       const res = await inviteCodeApi.listTeamCodes();
       if (res.code === 0) teamInviteCodes.value = res.data;
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载用户失败:", e); } finally { loading.value = false; }
   }
 
   async function toggleUser(userType: string, userId: string): Promise<void> {

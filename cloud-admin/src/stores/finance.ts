@@ -16,7 +16,7 @@ export const useFinanceStore = defineStore('finance', () => {
         list.value = res.data;
         total.value = res.total || 0;
       }
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载finance失败:", e); } finally { loading.value = false; }
   }
 
   async function create(data: any): Promise<void> { await financeApi.create(data); await loadList(); }

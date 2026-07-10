@@ -16,7 +16,7 @@ export const useSessionStore = defineStore('sessions', () => {
         list.value = res.data;
         total.value = res.total || 0;
       }
-    } finally { loading.value = false; }
+    } catch (e) { console.error("加载sessions失败:", e); } finally { loading.value = false; }
   }
 
   async function search(keyword: string): Promise<void> {

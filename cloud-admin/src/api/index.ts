@@ -25,21 +25,33 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// 响应拦截器：统一处理 HTTP 错误和应用层业务错误
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // 检查业务层错误码（code !== 0 表示业务失败）
+    const data = res.data as any;
+    if (data && typeof data.code === 'number' && data.code !== 0) {
+      const errMsg = data.msg || data.detail || '操作失败';
+      // 静默标志也适用于业务错误
+      if (!(res.config as any)?._silent401) {
+        message.error(errMsg);
+      }
+      return Promise.reject(new Error(errMsg));
+    }
+    return res;
+  },
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem('app_admin_token');
-      // checkSession 等静默检查不弹错误提示
-      if (!err.config?._silent401 && !_redirecting) {
+      const isOnLoginPage = router.currentRoute.value.path === '/login';
+      // checkSession 等静默检查和登录页面不弹错误提示
+      if (!err.config?._silent401 && !_redirecting && !isOnLoginPage) {
         message.error('登录已过期，请重新登录');
       }
-      if (!_redirecting) {
+      if (!_redirecting && !isOnLoginPage) {
         _redirecting = true;
         const currentPath = router.currentRoute.value.fullPath;
-        if (currentPath !== '/login') {
-          router.push({ path: '/login', query: { redirect: currentPath } });
-        }
+        router.push({ path: '/login', query: { redirect: currentPath } });
       }
     } else if (err.response?.status === 403) {
       message.error('没有权限执行此操作');

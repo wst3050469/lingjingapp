@@ -2,7 +2,7 @@
   "expo": {
     "name": "灵境AI",
     "slug": "lingjing-mobile",
-    "version": "1.73.188",
+    "version": "1.73.190",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",

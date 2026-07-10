@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { ApiResponse, ApiErrorResponse } from '@/types';
 import { message } from 'ant-design-vue';
+import router from '@/router';
 
 const api = axios.create({
   baseURL: '/api/v1/admin',
@@ -15,6 +16,9 @@ declare module 'axios' {
   }
 }
 
+// 防止重复跳转登录页（多个并发请求都返回 401 时只跳一次）
+let _redirecting = false;
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('app_admin_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -25,12 +29,18 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
+      localStorage.removeItem('app_admin_token');
       // checkSession 等静默检查不弹错误提示
-      if (!err.config?._silent401) {
+      if (!err.config?._silent401 && !_redirecting) {
         message.error('登录已过期，请重新登录');
       }
-      localStorage.removeItem('app_admin_token');
-      window.location.href = '/login';
+      if (!_redirecting) {
+        _redirecting = true;
+        const currentPath = router.currentRoute.value.fullPath;
+        if (currentPath !== '/login') {
+          router.push({ path: '/login', query: { redirect: currentPath } });
+        }
+      }
     } else if (err.response?.status === 403) {
       message.error('没有权限执行此操作');
     } else if (err.response?.status === 500) {

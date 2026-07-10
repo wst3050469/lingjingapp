@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## v1.73.190 (2026-07-10)
+
+### Changed
+- **超管后台精简**: 移除 7 个业务模块，聚焦平台核心运维
+- **删除 14 个前端文件**: 7 页面 + 7 Store（合同/供应商/客户/发票/财务/样本/配方）
+- **后端精简**: admin.py 删除 29 个业务路由 (-722行)，8 个业务 API 全部返回 404
+- **仪表盘增强**: 新增会话总数/版本总数/在线设备 3 张运维卡片，共 7 张
+- **依赖清理**: 移除 echarts/vue-echarts（-51KB）
+- **cloud-admin v1.1.1**: 9 页面 + 8 Store + 10 API 模块
+
+### Fixed
+- **租户成员 500**: tenant_users 表 joined_at 列不存在 → created_at AS joined_at
+- **systemd 崩溃循环**: lingjing-cloud.service 端口冲突 → 停用，保留手动进程
+- **Git 远程**: HTTPS 推送超时 → 改用 SSH (git@github.com)
+- **11 个核心 API 全部 200**, 7 个已删 API 全部 404
+
 ## v1.73.188 (2026-07-06)
 
 ### Fixed

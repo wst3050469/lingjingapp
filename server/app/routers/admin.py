@@ -157,60 +157,44 @@ async def change_password(
 @router.get("/dashboard")
 async def dashboard(admin: dict = Depends(get_admin_user)):
     async with database.pool.acquire() as conn:
-        invite_total = await conn.fetchval("SELECT count(*) FROM invite_codes")
-        invite_active = await conn.fetchval(
-            "SELECT count(*) FROM invite_codes WHERE status='active'"
-        )
         reg_total = await conn.fetchval("SELECT count(*) FROM users")
         reg_active = await conn.fetchval(
             "SELECT count(*) FROM users WHERE status='active'"
         )
-        total_sessions = await conn.fetchval("SELECT count(*) FROM chat_sessions")
-        total_messages = await conn.fetchval("SELECT count(*) FROM chat_messages")
-        today_messages = await conn.fetchval(
-            "SELECT count(*) FROM chat_messages WHERE created_at >= CURRENT_DATE"
+        total_tenants = await conn.fetchval("SELECT count(*) FROM tenants")
+        active_tenants = await conn.fetchval(
+            "SELECT count(*) FROM tenants WHERE status='active'"
         )
-        active_7d = await conn.fetchval(
-            """SELECT count(DISTINCT cs.invite_code) FROM chat_messages cm
-               JOIN chat_sessions cs ON cm.session_id = cs.session_id
-               WHERE cm.created_at >= NOW() - INTERVAL '7 days' AND cm.role='user'"""
+        total_contracts = await conn.fetchval(
+            "SELECT count(*) FROM biz_contracts"
+        ) or 0
+        total_suppliers = await conn.fetchval(
+            "SELECT count(*) FROM biz_suppliers"
+        ) or 0
+        total_customers = await conn.fetchval(
+            "SELECT count(*) FROM biz_customers"
+        ) or 0
+        pending_approvals = await conn.fetchval(
+            "SELECT count(*) FROM biz_finance WHERE status='pending'"
+        ) or 0
+
+        # 最近操作记录
+        recent = await conn.fetch(
+            """SELECT * FROM admin_audit_logs ORDER BY created_at DESC LIMIT 10"""
         )
-        cost_today = await conn.fetchval(
-            "SELECT COALESCE(SUM(cost_yuan), 0) FROM chat_messages WHERE created_at >= CURRENT_DATE"
-        ) or 0
-        cost_month = await conn.fetchval(
-            "SELECT COALESCE(SUM(cost_yuan), 0) FROM chat_messages WHERE created_at >= date_trunc('month', CURRENT_DATE)"
-        ) or 0
-        latest_ver = await conn.fetchrow(
-            "SELECT version_name, download_count FROM app_versions WHERE status='published' ORDER BY version_code DESC LIMIT 1"
-        )
-        total_downloads = await conn.fetchval(
-            "SELECT COALESCE(SUM(download_count), 0) FROM app_versions"
-        ) or 0
 
     return {
         "code": 0,
         "data": {
-            "users": {
-                "invite_total": invite_total,
-                "invite_active": invite_active,
-                "registered_total": reg_total,
-                "registered_active": reg_active,
-            },
-            "chat": {
-                "total_sessions": total_sessions,
-                "total_messages": total_messages,
-                "today_messages": today_messages,
-                "active_users_7d": active_7d,
-            },
-            "cost": {
-                "today": float(cost_today),
-                "this_month": float(cost_month),
-            },
-            "app": {
-                "current_version": latest_ver["version_name"] if latest_ver else "无",
-                "total_downloads": total_downloads,
-            },
+            "total_users": reg_total,
+            "active_users": reg_active,
+            "total_tenants": total_tenants,
+            "active_tenants": active_tenants,
+            "total_contracts": total_contracts,
+            "total_suppliers": total_suppliers,
+            "total_customers": total_customers,
+            "pending_approvals": pending_approvals,
+            "recent_activities": [dict(r) for r in recent],
         },
     }
 
@@ -969,6 +953,7 @@ async def tenant_chat_sessions(
 @router.get("/recipes")
 async def list_recipes(
     tenant_id: str = None,
+    status: str = None,
     admin: dict = Depends(get_admin_user),
 ):
     """查看配方列表"""
@@ -977,10 +962,17 @@ async def list_recipes(
            LEFT JOIN tenants t ON r.tenant_id = t.tenant_id"""
     args = []
     idx = 1
+    conds = []
     if tenant_id:
-        q += f" WHERE r.tenant_id=${idx}"
+        conds.append(f"r.tenant_id=${idx}")
         args.append(tenant_id)
         idx += 1
+    if status:
+        conds.append(f"r.status=${idx}")
+        args.append(status)
+        idx += 1
+    if conds:
+        q += " WHERE " + " AND ".join(conds)
     q += " ORDER BY r.created_at DESC"
 
     async with database.pool.acquire() as conn:
@@ -1122,6 +1114,8 @@ async def get_chat_session(
 @router.get("/samples")
 async def list_samples(
     tenant_id: str = None,
+    status: str = None,
+    phase: str = None,
     admin: dict = Depends(get_admin_user),
 ):
     """查看样板记录列表"""
@@ -1133,10 +1127,21 @@ async def list_samples(
            LEFT JOIN tenants t ON sr.tenant_id = t.tenant_id"""
     args = []
     idx = 1
+    conds = []
     if tenant_id:
-        q += f" WHERE sr.tenant_id=${idx}"
+        conds.append(f"sr.tenant_id=${idx}")
         args.append(tenant_id)
         idx += 1
+    if status:
+        conds.append(f"sr.status=${idx}")
+        args.append(status)
+        idx += 1
+    if phase:
+        conds.append(f"sr.phase=${idx}")
+        args.append(phase)
+        idx += 1
+    if conds:
+        q += " WHERE " + " AND ".join(conds)
     q += " ORDER BY sr.created_at DESC LIMIT 100"
 
     async with database.pool.acquire() as conn:
@@ -1306,6 +1311,7 @@ async def ws_test_push(req: TestPushRequest, admin: dict = Depends(get_admin_use
 async def admin_list_contracts(
     admin: dict = Depends(get_admin_user),
     tenant_id: str = None,
+    status: str = None,
 ):
     """管理后台 - 合同列表"""
     where = []
@@ -1314,6 +1320,10 @@ async def admin_list_contracts(
     if tenant_id:
         where.append(f"tenant_id=${idx}")
         params.append(tenant_id)
+        idx += 1
+    if status:
+        where.append(f"status=${idx}")
+        params.append(status)
         idx += 1
     clause = "WHERE " + " AND ".join(where) if where else ""
     async with database.pool.acquire() as conn:
@@ -1720,6 +1730,8 @@ async def admin_list_finance(
     category: str = None,
     status: str = None,
     project_id: int = None,
+    page: int = 1,
+    page_size: int = 50,
 ):
     """管理后台 - 财务列表（收入/支出/报销/备用金/工资）"""
     where = []
@@ -1746,12 +1758,14 @@ async def admin_list_finance(
         params.append(project_id)
         idx += 1
     clause = "WHERE " + " AND ".join(where) if where else ""
+    offset = (page - 1) * page_size
     async with database.pool.acquire() as conn:
+        total = await conn.fetchval(f"SELECT count(*) FROM biz_finance {clause}", *params) or 0
         rows = await conn.fetch(
-            f"SELECT * FROM biz_finance {clause} ORDER BY created_at DESC LIMIT 500",
-            *params,
+            f"SELECT * FROM biz_finance {clause} ORDER BY created_at DESC LIMIT ${idx} OFFSET ${idx+1}",
+            *params, page_size, offset,
         )
-    return {"code": 0, "data": [dict(r) for r in rows], "total": len(rows)}
+    return {"code": 0, "data": [dict(r) for r in rows], "total": total, "page": page, "page_size": page_size}
 
 
 @router.post("/finance")
@@ -1827,11 +1841,10 @@ async def admin_delete_finance(
 # ── 自动化任务管理（管理后台） ──────────────────────────
 
 class AdminAutomationCreate(BaseModel):
-    prompt: str = ""
     name: str = ""
-    cron_expression: str = ""
-    task_type: str = ""
-    target_user: str = ""
+    task_type: str = "custom"
+    cron_expr: str = ""
+    description_nl: str = ""
 
 
 @router.get("/automation/tasks")
@@ -1854,14 +1867,13 @@ async def admin_create_automation_task(
     """管理后台 - 创建自动化任务"""
     async with database.pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO automated_tasks (name, task_type, cron_expression, target_user, status, prompt, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, 'active', $5, NOW(), NOW())
+            INSERT INTO automated_tasks (tenant_id, name, task_type, cron_expr, description_nl, is_enabled, created_at, updated_at)
+            VALUES ('admin', $1, $2, $3, $4, TRUE, NOW(), NOW())
         """,
             req.name or "未命名任务",
             req.task_type or "custom",
-            req.cron_expression or "",
-            req.target_user or "",
-            req.prompt or "",
+            req.cron_expr or "",
+            req.description_nl or "",
         )
     return {"code": 0, "msg": "自动化任务已创建"}
 
@@ -1873,10 +1885,11 @@ async def admin_update_automation_task(
     admin: dict = Depends(get_admin_user),
 ):
     """管理后台 - 更新自动化任务"""
+    valid_fields = {"name", "task_type", "cron_expr", "description_nl", "is_enabled"}
     fields = []
     params = []
     idx = 1
-    for field in ["status", "name", "task_type", "cron_expression", "target_user"]:
+    for field in valid_fields:
         if field in req:
             fields.append(f"{field}=${idx}")
             params.append(req[field])

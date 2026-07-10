@@ -26,6 +26,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'samples', name: 'Samples', component: () => import('@/views/samples/SamplePage.vue'), meta: { title: '样本管理', icon: 'book' } },
       { path: 'recipes', name: 'Recipes', component: () => import('@/views/recipes/RecipePage.vue'), meta: { title: '配方管理', icon: 'experiment' } },
       { path: 'automation', name: 'Automation', component: () => import('@/views/automation/AutomationPage.vue'), meta: { title: '自动化任务', icon: 'thunderbolt' } },
+      { path: 'websocket', name: 'WebSocket', component: () => import('@/views/websocket/WebSocketPage.vue'), meta: { title: '在线监控', icon: 'api' } },
     ],
   },
 ];

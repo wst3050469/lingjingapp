@@ -163,6 +163,7 @@ const navGroups: NavGroup[] = [
     label: '运维管理',
     items: [
       { path: '/versions', label: '版本管理', icon: CloudUploadOutlined },
+      { path: '/websocket', label: '在线监控', icon: ApiOutlined },
       { path: '/sessions', label: '会话管理', icon: MessageOutlined },
       { path: '/automation', label: '自动化任务', icon: ApiOutlined },
     ],

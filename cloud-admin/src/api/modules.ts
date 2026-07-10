@@ -1,4 +1,4 @@
-import { get, post, put, del } from './index';
+import { get, post, put, del, upload } from './index';
 import type {
   AppAdminLoginRequest, AppAdminLoginResponse, AppAdminUser,
   AppDashboardStats,
@@ -77,7 +77,7 @@ export const invoiceApi = {
 
 // ── 财务管理 ──
 export const financeApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppFinance[] }>('/finance', params),
+  list: (params?: Record<string, any>) => get<{ code: number; data: AppFinance[]; total?: number }>('/finance', params),
   create: (data: any) => post<{ code: number; msg: string; data: AppFinance }>('/finance', data),
   update: (id: number, data: any) => put<{ code: number; msg: string }>(`/finance/${id}`, data),
   delete: (id: number) => del<{ code: number; msg: string }>(`/finance/${id}`),
@@ -86,7 +86,15 @@ export const financeApi = {
 // ── 版本管理 ──
 export const versionApi = {
   list: (params?: Record<string, any>) => get<{ code: number; data: AppVersion[] }>('/app-versions', params),
-  create: (data: any) => post<{ code: number; msg: string; data: AppVersion }>('/app-versions', data),
+  create: (data: { version_name: string; version_code: number; release_notes: string; is_force_update: boolean; file: File }) => {
+    const fd = new FormData();
+    fd.append('version_name', data.version_name);
+    fd.append('version_code', String(data.version_code));
+    fd.append('release_notes', data.release_notes);
+    fd.append('is_force_update', data.is_force_update ? 'true' : 'false');
+    fd.append('file', data.file);
+    return upload<{ code: number; msg: string; size: number }>('/app-versions', fd);
+  },
   publish: (id: number) => post<{ code: number; msg: string }>(`/app-versions/${id}/publish`),
   archive: (id: number) => post<{ code: number; msg: string }>(`/app-versions/${id}/archive`),
   approve: (id: number) => post<{ code: number; msg: string }>(`/app-versions/${id}/approve`),
@@ -95,12 +103,12 @@ export const versionApi = {
 
 // ── 审计日志 ──
 export const auditLogApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppAuditLogEntry[] }>('/audit-logs', params),
+  list: (params?: Record<string, any>) => get<{ code: number; data: AppAuditLogEntry[]; total?: number }>('/audit-logs', params),
 };
 
 // ── 聊天会话 ──
 export const chatApi = {
-  sessions: (params?: Record<string, any>) => get<{ code: number; data: AppChatSession[] }>('/chat/sessions', params),
+  sessions: (params?: Record<string, any>) => get<{ code: number; data: AppChatSession[]; total?: number }>('/chat/sessions', params),
   sessionDetail: (id: string) => get<{ code: number; data: AppChatSession }>(`/chat/sessions/${id}`),
   tenantSessions: (tenantId: string) => get<{ code: number; data: AppChatSession[] }>(`/tenants/${tenantId}/sessions`),
 };
@@ -123,9 +131,9 @@ export const sampleApi = {
 
 // ── WebSocket 在线监控 ──
 export const wsApi = {
-  online: () => get<{ code: number; data: AppWsOnline }>('/ws/online'),
-  onlineDetail: () => get<{ code: number; data: AppWsOnline }>('/ws/online-detail'),
-  testPush: (data: any) => post<{ code: number; msg: string }>('/ws/test-push', data),
+  online: () => get<{ code: number; online_count: number; total_devices: number; online_users: string[]; note: string }>('/ws/online'),
+  onlineDetail: () => get<{ code: number; online_users: string[]; devices: Record<string, number> }>('/ws/online-detail'),
+  testPush: (data: { user_id: string; title?: string; content?: string }) => post<{ code: number; msg: string; user_online: boolean }>('/ws/test-push', data),
 };
 
 // ── 自动化任务 ──

@@ -6,6 +6,7 @@ import type { AppTenant, AppTenantMember } from '@/types';
 export const useTenantStore = defineStore('tenants', () => {
   const list = ref<AppTenant[]>([]);
   const members = ref<AppTenantMember[]>([]);
+  const dashboardData = ref<any>(null);
   const loading = ref(false);
 
   async function loadList(): Promise<void> {
@@ -21,6 +22,14 @@ export const useTenantStore = defineStore('tenants', () => {
     try {
       const res = await tenantApi.members(tenantId);
       if (res.code === 0) members.value = res.data;
+    } finally { loading.value = false; }
+  }
+
+  async function loadDashboard(tenantId: string): Promise<void> {
+    loading.value = true;
+    try {
+      const res = await tenantApi.dashboard(tenantId);
+      if (res.code === 0) dashboardData.value = res.data;
     } finally { loading.value = false; }
   }
 
@@ -44,5 +53,5 @@ export const useTenantStore = defineStore('tenants', () => {
     await loadList();
   }
 
-  return { list, members, loading, loadList, loadMembers, updateMember, removeMember, updateTenant, deleteTenant };
+  return { list, members, dashboardData, loading, loadList, loadMembers, loadDashboard, updateMember, removeMember, updateTenant, deleteTenant };
 });

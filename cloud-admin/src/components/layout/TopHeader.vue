@@ -91,6 +91,7 @@ const pageTitles: Record<string, string> = {
   '/dashboard': '仪表盘', '/contracts': '合同管理', '/suppliers': '供应商管理',
   '/customers': '客户管理', '/invoices': '发票管理', '/finance': '财务管理',
   '/samples': '样本管理', '/recipes': '配方管理', '/automation': '自动化任务',
+  '/websocket': '在线监控',
 };
 const pageTitle = computed(() => pageTitles[route.path] ?? '管理后台');
 

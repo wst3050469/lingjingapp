@@ -6,9 +6,9 @@ import type { AppSupplier } from '@/types';
 export const useSupplierStore = defineStore('suppliers', () => {
   const list = ref<AppSupplier[]>([]);
   const loading = ref(false);
-  async function loadList(): Promise<void> {
+  async function loadList(params?: Record<string, any>): Promise<void> {
     loading.value = true;
-    try { const res = await supplierApi.list(); if (res.code === 0) list.value = res.data; }
+    try { const res = await supplierApi.list(params); if (res.code === 0) list.value = res.data; }
     finally { loading.value = false; }
   }
   async function create(data: any): Promise<void> { await supplierApi.create(data); await loadList(); }

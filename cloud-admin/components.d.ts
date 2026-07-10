@@ -67,7 +67,6 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SearchFilter: typeof import('./src/components/common/SearchFilter.vue')['default']
     StatCard: typeof import('./src/components/common/StatCard.vue')['default']
-    SubSidebar: typeof import('./src/components/layout/SubSidebar.vue')['default']
     TopHeader: typeof import('./src/components/layout/TopHeader.vue')['default']
     TrendChart: typeof import('./src/components/charts/TrendChart.vue')['default']
   }

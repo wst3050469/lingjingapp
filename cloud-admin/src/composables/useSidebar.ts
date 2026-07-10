@@ -4,7 +4,6 @@ export type SidebarBreakpoint = 'full' | 'compact' | 'hidden';
 
 export function useSidebar() {
   const collapsed = ref(false);
-  const subCollapsed = ref(false);
   const width = ref(window.innerWidth);
 
   const breakpoint = computed<SidebarBreakpoint>(() => {
@@ -17,7 +16,7 @@ export function useSidebar() {
   const isTablet = computed(() => width.value >= 768 && width.value < 1200);
   const isDesktop = computed(() => width.value >= 1200);
 
-  // Auto-collapse main sidebar on compact mode
+  // 在紧凑模式下自动收起侧边栏
   const effectiveCollapsed = computed(() => {
     if (breakpoint.value === 'hidden') return true;
     if (breakpoint.value === 'compact') return true;
@@ -30,18 +29,8 @@ export function useSidebar() {
     return 180;
   });
 
-  const subWidth = computed(() => {
-    if (breakpoint.value === 'hidden') return 0;
-    if (subCollapsed.value) return 0;
-    return 200;
-  });
-
   function toggleMain(): void {
     collapsed.value = !collapsed.value;
-  }
-
-  function toggleSub(): void {
-    subCollapsed.value = !subCollapsed.value;
   }
 
   function updateWidth(): void {
@@ -58,15 +47,12 @@ export function useSidebar() {
 
   return {
     collapsed,
-    subCollapsed,
     effectiveCollapsed,
     breakpoint,
     isMobile,
     isTablet,
     isDesktop,
     mainWidth,
-    subWidth,
     toggleMain,
-    toggleSub,
   };
 }

@@ -1,27 +1,16 @@
 <template>
   <a-layout-header class="top-header">
     <div class="header-left">
-      <!-- Main sidebar toggle -->
+      <!-- 主侧栏收起/展开按钮 -->
       <a-button
         v-if="!isMobile"
         type="text"
         @click="$emit('toggleMain')"
         class="toggle-btn"
-        :aria-label="mainCollapsed ? '展开主侧栏' : '折叠主侧栏'"
+        :aria-label="mainCollapsed ? '展开侧栏' : '折叠侧栏'"
       >
         <MenuFoldOutlined v-if="!mainCollapsed" />
         <MenuUnfoldOutlined v-else />
-      </a-button>
-
-      <!-- Sub sidebar toggle -->
-      <a-button
-        v-if="!isMobile"
-        type="text"
-        @click="$emit('toggleSub')"
-        class="toggle-btn sub-toggle-btn"
-        :aria-label="subCollapsed ? '展开子侧栏' : '折叠子侧栏'"
-      >
-        <ColumnWidthOutlined />
       </a-button>
 
       <span class="page-title">{{ pageTitle }}</span>
@@ -59,7 +48,6 @@ import { useSidebar } from '@/composables/useSidebar';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  ColumnWidthOutlined,
   SearchOutlined,
   UserOutlined,
   KeyOutlined,
@@ -70,12 +58,10 @@ import ChangePasswordModal from '@/components/common/ChangePasswordModal.vue';
 
 defineProps<{
   mainCollapsed: boolean;
-  subCollapsed: boolean;
 }>();
 
 defineEmits<{
   (e: 'toggleMain'): void;
-  (e: 'toggleSub'): void;
 }>();
 
 const route = useRoute();
@@ -142,19 +128,7 @@ function handleChangePassword() {
   color: var(--neon-cyan);
 }
 
-.sub-toggle-btn {
-  opacity: 0.6;
-}
-
-.sub-toggle-btn:hover {
-  opacity: 1;
-}
-
 .user-btn {
   color: var(--text-secondary);
-}
-
-.security-banner {
-  margin-right: 16px;
 }
 </style>

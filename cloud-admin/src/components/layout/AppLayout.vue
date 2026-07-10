@@ -1,6 +1,6 @@
 <template>
   <a-layout class="app-layout">
-    <!-- Main Sidebar -->
+    <!-- 主侧边栏 -->
     <MainSidebar
       v-if="!isMobile"
       :effectiveCollapsed="effectiveCollapsed"
@@ -8,37 +8,21 @@
       @toggle="toggleMain"
     />
 
-    <!-- Sub Sidebar (between main sidebar and content) -->
-    <SubSidebar
-      v-if="!isMobile"
-      :subWidth="subWidth"
-      :currentPageTitle="pageTitle"
-      :style="{ left: mainWidth + 'px' }"
-      @toggle="toggleSub"
-    >
-      <!-- Per-page sub-nav content injected via named slots by router-view:
-           each page can define its own sub-nav by providing route.meta.subNav -->
-    </SubSidebar>
-
-    <!-- Main content area -->
+    <!-- 主内容区域 -->
     <a-layout
       class="layout-main"
-      :style="{
-        marginLeft: (mainWidth + subWidth) + 'px',
-      }"
+      :style="{ marginLeft: mainWidth + 'px' }"
     >
       <TopHeader
         :mainCollapsed="effectiveCollapsed"
-        :subCollapsed="subCollapsed"
         @toggle-main="toggleMain"
-        @toggle-sub="toggleSub"
       />
       <a-layout-content class="layout-content">
         <router-view />
       </a-layout-content>
     </a-layout>
 
-    <!-- Mobile bottom nav -->
+    <!-- 移动端底部导航 -->
     <MobileNav v-if="isMobile" />
   </a-layout>
 </template>
@@ -47,7 +31,6 @@
 import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import MainSidebar from './MainSidebar.vue';
-import SubSidebar from './SubSidebar.vue';
 import TopHeader from './TopHeader.vue';
 import MobileNav from './MobileNav.vue';
 import { useSidebar } from '@/composables/useSidebar';
@@ -55,12 +38,9 @@ import { useAuthStore } from '@/stores/auth';
 
 const {
   effectiveCollapsed,
-  subCollapsed,
   isMobile,
   mainWidth,
-  subWidth,
   toggleMain,
-  toggleSub,
 } = useSidebar();
 
 const route = useRoute();
@@ -95,6 +75,6 @@ onMounted(() => {
 .layout-content {
   padding: 24px;
   overflow-y: auto;
-  min-height: calc(100vh - 64px); /* subtract header height */
+  min-height: calc(100vh - 64px);
 }
 </style>

@@ -20,6 +20,17 @@ export default defineConfig({
       '/admin/api': { target: 'http://localhost:8000', changeOrigin: true },
     },
   },
-  build: { outDir: 'dist' },
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'pinia'],
+          'vendor-antd': ['ant-design-vue', '@ant-design/icons-vue'],
+          'vendor-axios': ['axios', 'dayjs'],
+        },
+      },
+    },
+  },
   base: '/admin/',
 });

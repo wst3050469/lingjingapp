@@ -1,315 +1,189 @@
 {
-  "latest": "1.64.1",
-  "versions": [
-    {
-      "version": "1.73.188",
-      "status": "published",
-      "releaseDate": "2026-07-06",
-      "releaseNotes": "v1.73.188 - 全面代码审查修复(81→0 TS errors) + WebSocket退避优化",
-      "features": [
-        "Fix: 全面TypeScript编译错误修复(81→0)",
-        "Fix: WebSocket重连指数退避防断开风暴",
-        "Fix: Electron IPC核心类型补全",
-        "Fix: 移动端JSON解析错误日志",
-        "Fix: oss.py安全修复"
-      ],
-      "platforms": {
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
+  "desktop": {
+    "latest": "1.76.21",
+    "channel": "stable",
+    "minSupported": "1.73.0"
+  },
+  "mobile": {
+    "latest": "1.64.1",
+    "channel": "stable",
+    "minSupported": "1.73.0",
+    "versions": [
+      {
+        "version": "1.64.1",
+        "url": "/apk/lingjing-v1.64.1.apk",
+        "size": 38518529,
+        "releaseNotes": "v1.64.1 - 正确的灵境AI移动端APK"
       }
-    },
-    {
-      "version": "1.64.9",
-      "status": "published",
-      "releaseDate": "2026-05-30",
-      "platforms": {
-        "server": {
-          "version": "1.64.3",
-          "notes": "语音对话延迟优化hotfix"
-        },
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
-      },
-      "releaseNotes": "v1.64.9 - 语音对话延迟优化全链路部署",
-      "features": [
-        "Fix: faster-whisper tiny int8 STT推理加速(5s音频<0.5s, 原3-6s)",
-        "Fix: 每阶段超时保护(STT 10s/AI 15s/TTS 8s)",
-        "Fix: TTS缓存预热6条高频短语(启动即就绪)",
-        "Fix: 流式ASR滑动窗口3s→2s, interim间隔1s→0.5s",
-        "Fix: 移除faster-whisper不兼容参数(logprob_threshold/no_speech_threshold)",
-        "Fix: 生产服务器PostgreSQL+TTS预热(ffmpeg)配置"
-      ]
-    },
-    {
-      "version": "1.64.3",
-      "status": "published",
-      "releaseDate": "2026-05-30",
-      "platforms": {
-        "server": {
-          "version": "1.64.3",
-          "notes": "hotfix: 移除faster-whisper不兼容参数 + 生产环境配置"
-        }
-      },
-      "releaseNotes": "v1.64.3 - 语音对话延迟优化hotfix",
-      "features": [
-        "Fix: 移除faster-whisper不兼容参数 (logprob_threshold/no_speech_threshold)",
-        "Fix: 生产服务器PostgreSQL安装配置 + 服务启动",
-        "Fix: 生产服务器TTS预热(安装ffmpeg)",
-        "Fix: 前端TS类型修复(revertFile)",
-        "New: faster-whisper tiny int8 推理<0.5s/5s音频"
-      ]
-    },
-    {
-      "version": "1.64.2",
-      "status": "published",
-      "releaseDate": "2026-05-30",
-      "platforms": {
-        "win-x64": {
-          "url": "/downloads/LingJing-Setup-1.64.2-win-x64.exe",
-          "size": 142209962
-        },
-        "win-x64-portable": {
-          "url": "/downloads/LingJing-Portable-1.64.2-win-x64.exe",
-          "size": 141868430
-        },
-        "win-x64-blockmap": {
-          "url": "/downloads/LingJing-Setup-1.64.2-win-x64.exe.blockmap",
-          "size": 160729
-        },
-        "linux-x64": {
-          "url": "/downloads/LingJing-1.64.2-linux-x86_64.AppImage",
-          "size": 158000000
-        },
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
-      },
-      "releaseNotes": "v1.64.2 - Fix 4 issues",
-      "features": [
-        "Fix: Downloads page shows all platforms (was only Android)",
-        "Fix: Auto-compaction no longer interrupts running tasks",
-        "Fix: Cannot read properties of undefined (reading 'map') error",
-        "Fix: Todo list always shows empty placeholder"
-      ]
-    },
-    {
+    ]
+  },
+  "apk": {
+    "1.64.1": {
       "version": "1.64.1",
-      "status": "published",
-      "releaseDate": "2026-05-30",
-      "platforms": {
-        "win-x64": {
-          "url": "/downloads/LingJing-Setup-1.64.1-win-x64.exe",
-          "size": 142211624
-        },
-        "win-x64-portable": {
-          "url": "/downloads/LingJing-Portable-1.64.1-win-x64.exe",
-          "size": 141870121
-        },
-        "win-x64-blockmap": {
-          "url": "/downloads/LingJing-Setup-1.64.1-win-x64.exe.blockmap",
-          "size": 148665
-        },
-        "linux-x64": {
-          "url": "/downloads/LingJing-1.64.1-linux-x86_64.AppImage",
-          "size": 155978785
-        },
-        "linux-deb": {
-          "url": "/downloads/LingJing-1.64.1-linux-x86_64.deb",
-          "size": 110990662
-        },
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
-      },
-      "releaseNotes": "v1.64.1 - Fix Cannot read properties of undefined (reading 'ipcRenderer')",
-      "features": [
-        "Fix: Expose window.electron.ipcRenderer compatibility layer"
-      ]
-    },
-    {
-      "version": "1.64.0",
-      "status": "published",
-      "releaseDate": "2026-05-30",
-      "platforms": {
-        "win-x64": {
-          "url": "/downloads/LingJing-Setup-1.64.0-win-x64.exe",
-          "size": 142208922
-        },
-        "win-x64-portable": {
-          "url": "/downloads/LingJing-Portable-1.64.0-win-x64.exe",
-          "size": 141867366
-        },
-        "win-x64-blockmap": {
-          "url": "/downloads/LingJing-Setup-1.64.0-win-x64.exe.blockmap",
-          "size": 149744
-        },
-        "linux-x64": {
-          "url": "/downloads/LingJing-1.64.0-linux-x86_64.AppImage",
-          "size": 183533834
-        },
-        "linux-deb": {
-          "url": "/downloads/LingJing-1.64.0-linux-x86_64.deb",
-          "size": 110968034
-        },
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
-      },
-      "releaseNotes": "v1.64.0 - Fix file auto-processing not working (3 root causes)",
-      "features": [
-        "Fix: QuestConversation race condition auto-accept/reject not working",
-        "Fix: PipelineService using wrong directory to init",
-        "Fix: Switch workspace PipelineService not auto-loading pipelines"
-      ]
-    },
-    {
-      "version": "1.63.0",
-      "status": "published",
-      "releaseDate": "2026-05-30",
-      "platforms": {
-        "win-x64": {
-          "url": "/downloads/LingJing-Setup-1.63.0-win-x64.exe",
-          "size": 142209253
-        },
-        "win-x64-portable": {
-          "url": "/downloads/LingJing-Portable-1.63.0-win-x64.exe",
-          "size": 141867721
-        },
-        "win-x64-blockmap": {
-          "url": "/downloads/LingJing-Setup-1.63.0-win-x64.exe.blockmap",
-          "size": 148752
-        },
-        "linux-x64": {
-          "url": "/downloads/LingJing-1.63.0-linux-x86_64.AppImage",
-          "size": 183533943
-        },
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
-      },
-      "releaseNotes": "v1.63.0",
-      "features": [
-        "Fix: File auto-processing (Pipeline Watch Trigger)",
-        "Fix: registerPipelineIPC not registered",
-        "Fix: TriggerManager not linked to PipelineService",
-        "New: Add watch file auto-processing support",
-        "New: Auto-load .lingjing/pipelines/*.yaml"
-      ]
-    },
-    {
-      "version": "1.62.3",
-      "status": "published",
-      "releaseDate": "2026-05-30",
-      "platforms": {
-        "win-x64": {
-          "url": "/downloads/LingJing-Setup-1.62.3-win-x64.exe",
-          "size": 142204523
-        },
-        "win-x64-portable": {
-          "url": "/downloads/LingJing-Portable-1.62.3-win-x64.exe",
-          "size": 141863003
-        },
-        "win-x64-blockmap": {
-          "url": "/downloads/LingJing-Setup-1.62.3-win-x64.exe.blockmap",
-          "size": 148752
-        }
-      },
-      "releaseNotes": "v1.62.3",
-      "features": [
-        "Fix: TodoTracker missing in streaming responses",
-        "Fix: Todo persistence across task switches",
-        "Fix: Empty todo list now shows placeholder"
-      ]
-    },
-    {
-      "version": "1.62.0",
-      "status": "published",
-      "releaseDate": "2026-05-29",
-      "platforms": {
-        "win-x64": {
-          "url": "/downloads/LingJing-Setup-1.62.0-win-x64.exe",
-          "size": 142204585
-        },
-        "win-x64-portable": {
-          "url": "/downloads/LingJing-Portable-1.62.0-win-x64.exe",
-          "size": 141863065
-        },
-        "win-x64-blockmap": {
-          "url": "/downloads/LingJing-Setup-1.62.0-win-x64.exe.blockmap",
-          "size": 148904
-        },
-        "linux-x64": {
-          "url": "/downloads/LingJing-1.62.0-linux-x86_64.AppImage",
-          "size": 184549376
-        },
-        "linux-deb": {
-          "url": "/downloads/LingJing-1.62.0-linux-x86_64.deb",
-          "size": 212000000
-        },
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
-      },
-      "releaseNotes": "v1.62.0",
-      "features": [
-        "Fix A-G: conversation fixes"
-      ]
-    },
-    {
-      "version": "1.61.1",
-      "status": "published",
-      "releaseDate": "2026-05-29",
-      "platforms": {
-        "win-x64": {
-          "url": "/downloads/LingJing-Setup-1.61.1-win-x64.exe",
-          "size": 142200287
-        },
-        "win-x64-portable": {
-          "url": "/downloads/LingJing-Portable-1.61.1-win-x64.exe",
-          "size": 141858740
-        },
-        "linux-x64": {
-          "url": "/downloads/LingJing-1.61.1-linux-x86_64.AppImage",
-          "size": 183533011
-        },
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
-      },
-      "releaseNotes": "v1.61.1: fix blank page"
-    },
-    {
-      "version": "1.61.0",
-      "status": "published",
-      "releaseDate": "2026-05-29",
-      "platforms": {
-        "linux-x64": {
-          "url": "/downloads/LingJing-1.61.0-linux-x86_64.AppImage",
-          "size": 183533038
-        },
-        "win-x64": {
-          "url": "/downloads/LingJing-Setup-1.61.0-win-x64.exe",
-          "size": 142021614
-        },
-        "win-x64-portable": {
-          "url": "/downloads/LingJing-Portable-1.61.0-win-x64.exe",
-          "size": 141680103
-        },
-        "mobile": {
-          "url": "https://www.spiritrealmz.com/apk/lingjing-v1.64.1.apk",
-          "size": 38518529
-        }
-      }
+      "url": "/apk/lingjing-v1.64.1.apk",
+      "size": 38518529,
+      "releaseNotes": "v1.64.1 - 正确的灵境AI移动端APK"
     }
-  ]
+  },
+  "desktopInstallers": {
+    "1.73.259": {
+      "version": "1.73.259",
+      "winSetup": "/downloads/LingJing-Setup-1.73.259-win-x64.exe",
+      "winPortable": "/downloads/LingJing-Setup-1.73.259-win-x64.exe",
+      "size": 153000000,
+      "releaseNotes": "1.73.259: cloud sync 修复 (forwardToDesktop 同步等 ack) + APP 模型动态加载 (含 providers.list handler)"
+    },
+    "1.73.269": {
+      "version": "1.73.269",
+      "url": "/downloads/LingJing-Setup-1.73.269-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.73.269-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.73.269-win-x64.exe.blockmap",
+      "size": 145795774,
+      "releaseNotes": "1.73.269: chat.send handler honors mobile APP selected provider + model (override config + recreate provider + saveConfig). Pushes config.changed event to desktop ChatPanel for two-way model sync."
+    },
+    "1.76.4": {
+      "version": "1.76.4",
+      "url": "/downloads/LingJing-Setup-1.76.4-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.4-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.4-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.4: 5 个硬件/3D/电路/仿真 skill 装进市场 (kicad-designer / freecad-modeler / ngspice-simulator / webots-simulator / robot-pipeline-coordinator). 用户说'做一个机器人' AI 走通完整流程. 配合 1.76.3 system prompt skills 注入, AI 看到 trigger 自动调对应 skill."
+    },
+    "1.76.5": {
+      "version": "1.76.5",
+      "url": "/downloads/LingJing-Setup-1.76.5-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.5-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.5-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.5: 5 个硬件 skill 文档完善 (kicad-designer / freecad-modeler / ngspice-simulator / webots-simulator / robot-pipeline-coordinator) 加 Capabilities + Limitations 章节 — 明确灵境能做 (text/script/CLI: netlist 文本 / Python headless / 烧录命令脚本) 和不能做 (GUI 软件鼠标操作 / 物理硬件 JTAG 调试 / 真做制造). 1.76.4 ship 时漏改 update-server app.js schema (旧 data.latest 字段 vs 新 data.desktop.latest 字段), 1.76.5 修. 灵境硬件设计能力边界: 协调者 + 文本/脚本生成, 不替代硬件工程师."
+    },
+    "1.76.6": {
+      "version": "1.76.6",
+      "url": "/downloads/LingJing-Setup-1.76.6-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.6-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.6-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.6: AI 输出智能 TTS 播报 (解决眼睛疼). 1) 智能提取 plain text — 剥 ```code blocks``` / <log> 标签 / markdown 表格 / JSON / Windows+Unix 路径 / 错误堆栈 / hex 颜色 / URL, 只念该念的自然语言. 2) ChatHeader 加全局 🔊/🔇 开关 (默认关, 不打扰) — 打开后 AI 输出完自动 TTS 播一次. 3) ChatMessage 加 per-message 🔊 朗读按钮 — 手动播这条, 正在播显示 ⏹ 停止. 4) 用灵境已有 voice:tts:speak IPC (cloud edge-tts 中文女声), 复用 voice-interaction-store 的 voice config. 5) 关闭开关时自动停正在播的 TTS."
+    },
+    "1.76.7": {
+      "version": "1.76.7",
+      "url": "/downloads/LingJing-Setup-1.76.7-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.7-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.7-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.7: 私人 AI 全科医生助理 skill (private-medical-assistant). 12 科室分诊 (内/外/妇/儿/急诊/中医/影像/检验/药剂/心理/营养/体检) — 问诊咨询/病史管理/体检报告解读/用药咨询/健康建议. 紧急情况硬规则 redirect 120 (胸痛/呼吸困难/大出血/昏迷/抽搐/中毒) + 心理危机 redirect 400-161-9995/110. 多轮问诊模式 (AI 主动问关键问题, 不直接给结论). 病史/体检报告本地 sqlite 加密存储, 不上传 cloud. 私人用 (辉哥自用), 不需要 NMPA 医疗 AI 注册, 不开商业 disclaimers. 复用 1.76.3 agent system prompt skills 注入机制 — AI 看到 medical trigger 自动切角色到对应科室."
+    },
+    "1.76.8": {
+      "version": "1.76.8",
+      "url": "/downloads/LingJing-Setup-1.76.8-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.8-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.8-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.8: CRITICAL FIX — 修灵境执行任务时无征兆自己关闭 (1.76.6/1.76.7 装完用户报). 根因: packages/electron/src/main.ts line 1826 uncaughtException handler 调 process.exit(1) — 任何 uncaught 错误直接让灵境关掉. 修法: 改成 log + saveDatabase + dialog.showErrorBox + 不退出. unhandledRejection 同样不退出. 另修 1.76.6 TTS 智能播报点击没反应 (preload.ts 缺 voice: section, 加 18 个 voice API)."
+    },
+    "1.76.9": {
+      "version": "1.76.9",
+      "url": "/downloads/LingJing-Setup-1.76.9-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.9-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.9-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.9: 修 TTS 智能播报真正不工作的根因 (1.76.6 修 preload, 1.76.8 修 uncaughtException 都没解决). 根因: main.ts line 1093-1096 'new VoiceEngineManager()' 空的, 没 register 任何 TTS/ASR adapter. 调 voice:tts:speak 时 getTTSAdapter() 返回 null, handler 返回 {success:false, error:'No TTS engine available'}. renderer 端 optional chain 静默, 辉哥看不到任何错. 修法: register NativeTTSAdapter (Windows SAPI, 主用) + CloudTTSAdapter (fallback, 需要 endpoint+key). register 同样缺的 ASR adapter (WebSpeech+Native+Cloud). 改 DEFAULT_VOICE_ENGINE_CONFIG: ttsEngine='native', ttsFallbackChain=['native','cloud']. web-speech 在 main process 没 speechSynthesis API, 永远不可用, 移出主选. 中文 TTS 走 Windows SAPI (Microsoft Huihui 中文女声), 质量一般但能用."
+    },
+    "1.76.10": {
+      "version": "1.76.10",
+      "url": "/downloads/LingJing-Setup-1.76.10-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.10-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.10-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.10: 修硬件 skill 触发时灵境关掉的问题 (你 2026-06-30 报告). 根因: AI 调 kicad-cli/freecad/ngspice/webots (4 个工具, 你机器没装) spawn 失败 → uncaughtException. 1.76.7 之前 process.exit(1) 让灵境关掉 (你以为'突然关闭'). 1.76.8 改成不退出, 但 spawn 早 return 静默, 你看到'没反应'以为崩了. 1.76.10 修法: spawn 失败**不**早 return, 走 dialog.showMessageBox 弹警告 '外部工具未找到 (kicad-cli/freecad/ngspice/webots), 请装 + 加 PATH'. 灵境继续运行, 不崩. unhandledRejection 同样不静默. 含 1.76.9 TTS 修 (register TTS/ASR adapter)."
+    },
+    "1.76.11": {
+      "version": "1.76.11",
+      "url": "/downloads/LingJing-Setup-1.76.11-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.11-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.11-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.11: 修 TTS 智能播报 v2 — 严格过滤 (辉哥 1.76.10 反馈'不要播报英文, 下载是英文也播报了'). 1) smartTtsExtract.ts 加文件名后缀 strip (snake_case / camelCase / .ext 三种 pattern, 30+ 扩展名 .bat/.md/.tsx/.exe/.py/.js 等) 2) 加英文 trigger 词黑名单 (build/test/download/upload/install/run/start/stop/create/update/file/folder/project/app/module/config/script/package/version/release 等整词匹配) 3) extractTtsText 加'剥整行纯英文' (没中文字的行直接 drop) 4) isWorthSpeaking 严格化: 至少 8 中文字 + 中文占比 >= 50% + 总长 >= 12 字符, AND 关系 (1.76.10 OR 关系, 英文够 12 字就念). 1.76.11 改 AND, 纯英文段落不念. 你的 1.76.10 已经能播中文, 1.76.11 装上后只念中文, 英文/文件名/路径不念."
+    },
+    "1.76.12": {
+      "version": "1.76.12",
+      "url": "/downloads/LingJing-Setup-1.76.12-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.12-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.12-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.12: 修 1.76.11 TTS 完全不念的问题 (辉哥反馈现在不播报了). 1.76.11 isWorthSpeaking 改 AND 关系 (cn >= 8 + cnRatio >= 0.5 + total >= 12), 太严. 实际 AI 输出剥完 trigger/file/path 剩 4-7 中文字, 触不到阈值, 完全不念. 1.76.12 改回 1.76.10 OR 关系 (cn >= 4 || en >= 8), 保留 1.76.11 strict filter. 1.76.10 + 1.76.11 = 1.76.12 平衡: AI 中文回答念 (4+ 中文字 OR 8+ 英文字), 但 trigger 词/文件名/路径/纯英文段落 不念."
+    },
+    "1.76.13": {
+      "version": "1.76.13",
+      "url": "/downloads/LingJing-Setup-1.76.13-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.13-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.13-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.13: 修 1.76.12 TTS 英文还念 + 声音很机械 (辉哥 2026-06-30 反馈). 1) 新增 EdgeTTSAdapter (packages/electron/src/voice/tts/edge-tts-adapter.ts) — 调 edge-tts Python lib (微软 Azure 神经网络, zh-CN-XiaoxiaoNeural 女声, 质量好 10 倍, 听起来不像机器人). 用户装 'pip install edge-tts' (一次性, 几十 MB), 灵境调 edge-tts CLI 生成 mp3 + PowerShell MediaPlayer 播. 跨平台 (Windows/Mac/Linux). 2) DEFAULT_VOICE_ENGINE_CONFIG: ttsEngine='edge-tts', ttsFallbackChain=['edge-tts', 'native', 'cloud'] — edge-tts 优先 (装了声音好), 没装 fallback 到 native (Windows SAPI 机械). 3) isWorthSpeaking 改严格: 必须有 4+ 中文字才念. 1.76.10 OR 关系 (cn >= 4 || en >= 8) 让纯英文也念, 1.76.13 改成 'cn >= 4', 纯英文段落永远不念. 4) main.ts 1090 register EdgeTTSAdapter (1.76.9/10 已经 register Native+Cloud, 1.76.13 加 Edge). 注意: 没装 edge-tts 时, 灵境自动 fallback 到 Windows SAPI Microsoft Huihui (机械), 想不机械必须装 edge-tts."
+    },
+    "1.76.14": {
+      "version": "1.76.14",
+      "url": "/downloads/LingJing-Setup-1.76.14-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.14-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.14-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.14: 修 1.76.13 TTS 啥也不读了 (cn >= 4 太严) + edge-tts 装不上还是机械 (辉哥 2026-06-30 反馈). 1) 新增 Web Speech API (packages/renderer/src/utils/webSpeechTts.ts) — 走 Edge 内核 Chromium 自带 Microsoft 神经声音 zh-CN-XiaoxiaoNeural 等, 跟 edge-tts 同源不依赖 Python. Windows 10/11 自带. 2) ChatPanel useEffect 改: 不再走 IPC, 直接调 speakWithWebSpeech. ChatMessage per-message 🔊 也改 web speech, 本地 state 跟状态. 3) isWorthSpeaking 改宽松: cn >= 2 (短回答也念). 4) DEFAULT_VOICE_ENGINE_CONFIG: ttsEngine=web-speech + ttsFallbackChain=[web-speech, edge-tts, native, cloud] — web-speech 优先, 不依赖 Python. 5) EdgeTTSAdapter 保留作 fallback (装 edge-tts 后走第二优先). 预期效果: 装 1.76.14 后, AI 中文回答念 (任何 2+ 中文字), 短回答也念, 声音不机械 (Microsoft 神经声音), 不需要装任何额外 Python lib."
+    },
+    "1.76.15": {
+      "version": "1.76.15",
+      "url": "/downloads/LingJing-Setup-1.76.15-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.15-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.15-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.15: 修 1.76.14 自动播报不触发 bug (辉哥 2026-06-30 反馈 '还是没有自动播报, 得点击一下才会播报'). 1.76.6 设计的 prevIsStreamingRef 跟踪模式在 zustand 多 set 顺序下失效: AI 输出完成时, addMessage 跟 setStreaming(false) 是两个独立 set, 中间任意 messages 引用变化都会让 useEffect 重跑, prevIsStreamingRef.current 在 isStreaming 变 false 之前就被更新成 true, 导致 if (prev && !isStreaming) 永远不会 true, 自动 TTS 不触发. 修法 (1.76.15): ChatPanel useEffect 改用 lastAssistantContent 监听 (zustand selector 取最后一条 assistant 消息 content). useEffect 依赖 [ttsAutoPlay, isStreaming, lastAssistantContent]: 三条件全满足才触发, 任何变化都重跑 (自然去重). 不再依赖 prevIsStreamingRef, 完全消除 ref 状态丢失问题. 预期效果: 装 1.76.15 后, AI 输出完自动 TTS, 不需要点击 per-message 按钮. Web Speech API 走 Edge 内核 Microsoft 神经声音, 声音好不机械."
+    },
+    "1.76.16": {
+      "version": "1.76.16",
+      "url": "/downloads/LingJing-Setup-1.76.16-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.16-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.16-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.16: 1) 修 1.76.15 TTS 还是不自动播报 (辉哥 2026-06-30 反馈). ChatPanel useEffect 改: 去掉 isStreaming 检查 (1.76.15 [ttsAutoPlay, isStreaming, lastAssistantContent] 三条件, 1.76.16 简化成 [ttsAutoPlay, lastAssistantContent], 不依赖 isStreaming, lastAssistantContent 变就尝试念). 加 console.log 诊断: 辉哥 F12 看 dev console, 会看到 [TTS] effect / extract / speak 3 行输出, 卡在哪立刻知道. 2) isWorthSpeaking 改极宽松: cn >= 1 (1.76.14 cn >= 2, 1.76.15 cn >= 2, 1.76.16 cn >= 1). 任何 1 个中文字也念, extractTtsText 已经把 trigger 词/文件名/路径剥完, 不需要严 threshold. 3) ChatHeader toggle 加 console.log: [TTS] toggle ttsAutoPlay: true/false, 辉哥点 🔇/🔊 立刻看到 store 真变了. 4) 修硬件开发崩溃 (辉哥 2026-06-30 反馈). 1.76.10 dialog 改的是 uncaughtException 路径, 1.76.16 保留. 1.76.17 详修 hardware skill 实际执行路径 (init-script-executor / terminal-ipc / system-control). 预期: 装 1.76.16 后, 自动 TTS 触发, 辉哥看 console 知道卡点; 硬件开发 1.76.17 详修."
+    },
+    "1.76.17": {
+      "version": "1.76.17",
+      "url": "/downloads/LingJing-Setup-1.76.17-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.17-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.17-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.17: 1) 修 1.76.16 TTS 还是不自动播报 (辉哥 2026-06-30 反馈 '还是需要点击才会播报, 打开和关闭播报统一设置, 打开全部自动播, 关闭不播报'). 1.76.6~1.76.16 5 代 useEffect 各种依赖都试了都不工作, 辉哥要统一设计. 1.76.17 改: chat-store setStreaming(false) 同一 zustand set 里 emit CustomEvent 'lingjing:ai-message-done' (传 content + messageId). ChatPanel 听这个 window event → 调 speakWithWebSpeech. 不用 useEffect 推断, 触发 100% 确定. 2) ChatMessage 删 per-message 🔊 按钮 (辉哥要统一, ChatHeader 🔇/🔊 控制全部). 打开 ttsAutoPlay = 全部 assistant 消息自动播, 关闭 = 全部不播. 3) 加 console.log 诊断: [TTS] event received cn=N, [TTS] speak sample. 预期: 装 1.76.17 后, 打开 ChatHeader 🔊, AI 输出完自动听到 Microsoft 神经声音念, 不需要点任何按钮."
+    },
+    "1.76.18": {
+      "version": "1.76.18",
+      "url": "/downloads/LingJing-Setup-1.76.18-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.18-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.18-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.18: 修 1.76.17 WindowManagerImpl.unregister TypeError \"Object has been destroyed\" (辉哥 2026-06-30 弹 dialog). 根因: BrowserWindow closed 事件触发时已 destroyed, 访问 win.webContents.id 抛错. 修法: unregister 改接受 number (webContentsId) 直接 delete, main.ts 改传 id. 预期: 装 1.76.18 后, 不再弹此 dialog."
+    },
+    "1.76.19": {
+      "version": "1.76.19",
+      "url": "/downloads/LingJing-Setup-1.76.19-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.19-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.19-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.19: TTS 播报开关从 ChatHeader 右上角移到 InputToolbar 底部, 跟上传文件/语音输入/润色同一排 (辉哥 2026-06-30 反馈 '放到上传文件的边上'). 1) InputToolbar.tsx 加 🔇/🔊 按钮 (在润色之后), 接收 onTtsToggle + ttsAutoPlay props. 2) ChatInput.tsx 加 onTtsToggle + ttsAutoPlay props, 透传给 InputToolbar. 3) ChatPanel.tsx 传 onTtsToggle (用 useVoiceInteractionStore.getState() 读当前 + setTtsAutoPlay) + ttsAutoPlay (复用 line 96 那个). 4) ChatHeader.tsx 删 🔇/🔊 按钮 (辉哥要底部). 现在 TTS 开关跟上传文件同一排, 鼠标不用移到右上角. 1.76.17 TTS 自动播报 + 1.76.18 destroyed error 修都保留."
+    },
+    "1.76.20": {
+      "version": "1.76.20",
+      "url": "/downloads/LingJing-Setup-1.76.20-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.20-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.20-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.20: 修 1.76.19 TTS 按钮看不到 (辉哥 2026-06-30 反馈 '没有看到🔇'). 1.76.19 InputToolbar 加 TTS 按钮用了 🔇/🔊 emoji 字符, 但 system font 渲染 emoji 失败显示成 .notdef 方块 (红色豆腐), 辉哥没认出是 TTS 按钮. 修法 (1.76.20): InputToolbar TTS 按钮改用 SVG 图标 (speaker-on / speaker-off, 跟上传/语音/润色 3 个按钮一致都用 SVG), 不再依赖 emoji 字体. toolbar title 保留 🔇/🔊 emoji 给 tooltip 显示 (不影响). 1.76.19 InputToolbar 位置 (跟上传文件同一排) 保留. 1.76.17 TTS 自动播报 + 1.76.18 destroyed 修都保留. 预期: 装 1.76.20 后, 底部工具栏看到 speaker-on / speaker-off 图标 (跟上传/语音/润色视觉一致), 点击切换, AI 输出完自动念."
+    },
+    "1.76.21": {
+      "version": "1.76.21",
+      "url": "/downloads/LingJing-Setup-1.76.21-win-x64.exe",
+      "portableUrl": "/downloads/LingJing-Setup-1.76.21-win-x64.exe",
+      "blockmapUrl": "/downloads/LingJing-Setup-1.76.21-win-x64.exe.blockmap",
+      "size": 138900000,
+      "releaseNotes": "1.76.21: 修 1.76.20 开发硬件崩溃 (辉哥 2026-06-30 反馈 '开发硬件还是崩溃'). 根因 (深入检查后): 4 个工具 (kicad-cli / freecad / ngspice / webots) 装好了但**没加 PATH**, 灵境 spawn 找不到命令, 错误信息只是 IPC error, AI 不知道啥原因, 看起来像崩. 修法: 1) main.ts 加 system:tool-availability IPC handler — 启动时跑 where 4 个工具, 返 available/path. 2) preload.ts 暴露 desktopControl.getToolAvailability() API. 3) 4 个 hardware skill (kicad-designer / freecad-modeler / ngspice-simulator / webots-simulator) Pre-flight 加: 灵境启动会探测工具状态, 缺哪个告诉用户装. 辉哥需要手动做 (1.76.21 灵境帮不了): A) 把 3 个工具加 PATH: C:\\Program Files\\KiCad\\10.0\\bin, C:\\Program Files\\FreeCAD 1.1\\bin, C:\\Program Files\\Webots\\msys64\\mingw64\\bin. B) 装 ngspice 独立 CLI (KiCad 自带是 .dll 不是 exe, 独立 ngspice 没装). 装好后跑 where kicad-cli / freecad / ngspice / webots 验证 4 个都返路径. 然后灵境设置 → 高级 → 桌面控制权限 开启. 最后触发 hardware skill 应该成功."
+    }
+  }
 }

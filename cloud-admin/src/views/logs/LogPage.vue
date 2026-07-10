@@ -32,6 +32,15 @@
       </a-row>
     </a-card>
 
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <span class="toolbar-info">共 {{ store.total }} 条记录</span>
+      <a-button @click="handleExport" :disabled="store.list.length === 0" size="small">
+        <template #icon><DownloadOutlined /></template>
+        导出 CSV
+      </a-button>
+    </div>
+
     <a-table
       :dataSource="store.list"
       :columns="columns"
@@ -57,7 +66,9 @@
 </template>
 <script setup lang="ts">
 import { onMounted, reactive } from 'vue';
+import { DownloadOutlined } from '@ant-design/icons-vue';
 import { useLogStore } from '@/stores/logs';
+import { exportToCsv } from '@/utils/export';
 
 const store = useLogStore();
 
@@ -108,8 +119,22 @@ function formatTime(t: string) {
   if (!t) return '';
   return new Date(t).toLocaleString('zh-CN');
 }
+
+function handleExport() {
+  exportToCsv('审计日志', columns, store.list);
+}
 </script>
 <style scoped>
 .page { padding: 24px; }
 .page-title { color: var(--text-primary); margin-bottom: 16px; }
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.toolbar-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
 </style>

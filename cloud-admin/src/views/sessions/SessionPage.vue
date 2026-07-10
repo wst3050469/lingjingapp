@@ -8,12 +8,21 @@
           <a-input-search v-model:value="keyword" placeholder="搜索标题、邀请码或消息内容" enter-button @search="doSearch" allowClear />
         </a-col>
         <a-col :span="12">
-          <span style="line-height:32px;color:#999">
+          <span style="line-height:32px;color:var(--text-secondary)">
             共 <strong>{{ store.total }}</strong> 条对话，第 {{ store.currentPage }}/{{ totalPages }} 页
           </span>
         </a-col>
       </a-row>
     </a-card>
+
+    <!-- 工具栏 -->
+    <div class="toolbar">
+      <span></span>
+      <a-button @click="handleExport" :disabled="store.list.length === 0" size="small">
+        <template #icon><DownloadOutlined /></template>
+        导出 CSV
+      </a-button>
+    </div>
 
     <a-table
       :dataSource="store.list"
@@ -62,16 +71,18 @@
         <p><strong>创建时间：</strong>{{ formatTime(detailSession.created_at) }}</p>
         <a-divider />
         <h4>最后用户消息</h4>
-        <p style="background:#f5f5f5;padding:8px;border-radius:4px;white-space:pre-wrap">{{ detailSession.last_user_msg || '（无）' }}</p>
+        <p style="background:var(--dark-700);padding:8px;border-radius:4px;white-space:pre-wrap">{{ detailSession.last_user_msg || '（无）' }}</p>
         <h4>最后AI回复</h4>
-        <p style="background:#f0f5ff;padding:8px;border-radius:4px;white-space:pre-wrap">{{ detailSession.last_ai_msg || '（无）' }}</p>
+        <p style="background:var(--dark-700);padding:8px;border-radius:4px;white-space:pre-wrap">{{ detailSession.last_ai_msg || '（无）' }}</p>
       </template>
     </a-drawer>
   </div>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { DownloadOutlined } from '@ant-design/icons-vue';
 import { useSessionStore } from '@/stores/sessions';
+import { exportToCsv } from '@/utils/export';
 
 const store = useSessionStore();
 const keyword = ref('');
@@ -105,8 +116,18 @@ function formatTime(t: string) {
   if (!t) return '';
   return new Date(t).toLocaleString('zh-CN');
 }
+
+function handleExport() {
+  exportToCsv('会话管理', columns, store.list);
+}
 </script>
 <style scoped>
 .page { padding: 24px; }
 .page-title { color: var(--text-primary); margin-bottom: 16px; }
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
 </style>

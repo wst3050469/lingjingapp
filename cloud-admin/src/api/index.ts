@@ -1,5 +1,4 @@
 import axios from 'axios';
-import type { ApiResponse, ApiErrorResponse } from '@/types';
 import { message } from 'ant-design-vue';
 import router from '@/router';
 

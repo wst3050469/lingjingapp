@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, type Component, shallowRef } from 'vue';
+import { computed, type Component } from 'vue';
 import NeonCard from '@/components/neon/NeonCard.vue';
 import { formatNumber } from '@/utils/format';
 

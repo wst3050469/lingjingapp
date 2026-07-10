@@ -51,7 +51,6 @@ declare module 'vue' {
     AUpload: typeof import('ant-design-vue/es')['Upload']
     ChangePasswordModal: typeof import('./src/components/common/ChangePasswordModal.vue')['default']
     GlobalSearch: typeof import('./src/components/search/GlobalSearch.vue')['default']
-    GlowButton: typeof import('./src/components/neon/GlowButton.vue')['default']
     MainSidebar: typeof import('./src/components/layout/MainSidebar.vue')['default']
     MobileNav: typeof import('./src/components/layout/MobileNav.vue')['default']
     NeonCard: typeof import('./src/components/neon/NeonCard.vue')['default']

@@ -84,53 +84,6 @@
           </a-col>
         </a-row>
 
-        <a-row :gutter="16">
-          <a-col :span="8">
-            <a-card size="small" title="📋 项目" style="margin-bottom:12px">
-              <div style="text-align:center;padding:4px">
-                <span style="font-size:24px;font-weight:bold;color:var(--neon-green)">{{ dash.business?.projects || 0 }}</span>
-              </div>
-            </a-card>
-          </a-col>
-          <a-col :span="8">
-            <a-card size="small" title="👤 客户" style="margin-bottom:12px">
-              <div style="text-align:center;padding:4px">
-                <span style="font-size:24px;font-weight:bold;color:var(--neon-orange)">{{ dash.business?.customers || 0 }}</span>
-              </div>
-            </a-card>
-          </a-col>
-          <a-col :span="8">
-            <a-card size="small" title="🏭 供应商" style="margin-bottom:12px">
-              <div style="text-align:center;padding:4px">
-                <span style="font-size:24px;font-weight:bold;color:var(--neon-purple)">{{ dash.business?.suppliers || 0 }}</span>
-              </div>
-            </a-card>
-          </a-col>
-        </a-row>
-
-        <a-card size="small" title="💰 财务概览" style="margin-bottom:12px">
-          <a-row :gutter="16">
-            <a-col :span="8">
-              <div style="text-align:center">
-                <div style="color:var(--text-secondary);font-size:12px">总收入</div>
-                <div style="color:#52c41a;font-size:18px;font-weight:bold">¥{{ (dash.business?.finance?.total_income || 0).toLocaleString() }}</div>
-              </div>
-            </a-col>
-            <a-col :span="8">
-              <div style="text-align:center">
-                <div style="color:var(--text-secondary);font-size:12px">总支出</div>
-                <div style="color:#f5222d;font-size:18px;font-weight:bold">¥{{ (dash.business?.finance?.total_expense || 0).toLocaleString() }}</div>
-              </div>
-            </a-col>
-            <a-col :span="8">
-              <div style="text-align:center">
-                <div style="color:var(--text-secondary);font-size:12px">待审批</div>
-                <div style="color:#fa8c16;font-size:18px;font-weight:bold">{{ dash.business?.finance?.pending || 0 }}</div>
-              </div>
-            </a-col>
-          </a-row>
-        </a-card>
-
         <a-card size="small" title="🧠 AI 数据">
           <a-row :gutter="16">
             <a-col :span="12">

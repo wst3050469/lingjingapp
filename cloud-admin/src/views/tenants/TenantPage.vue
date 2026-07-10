@@ -1,8 +1,21 @@
 <template>
   <div class="page">
     <h2 class="page-title">租户管理</h2>
-    <div class="toolbar"></div>
-    <a-table :dataSource="tenantStore.list" :columns="columns" rowKey="tenant_id" :loading="tenantStore.loading" size="small" @expand="expandTenant">
+    <div class="toolbar">
+      <a-input-search
+        v-model:value="searchKeyword"
+        placeholder="搜索公司名称或负责人"
+        style="width:280px"
+        allowClear
+        @search="doSearch"
+        @input="doSearch"
+      />
+      <a-button @click="handleExport" :disabled="tenantStore.list.length === 0" size="small">
+        <template #icon><DownloadOutlined /></template>
+        导出 CSV
+      </a-button>
+    </div>
+    <a-table :dataSource="filteredList" :columns="columns" rowKey="tenant_id" :loading="tenantStore.loading" size="small" @expand="expandTenant">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'status'">
           <a-tag :color="record.status === 'active' ? 'green' : 'red'">{{ record.status === 'active' ? '正常' : '禁用' }}</a-tag>
@@ -163,14 +176,28 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { DownloadOutlined } from '@ant-design/icons-vue';
 import { useTenantStore } from '@/stores/tenants';
 import type { AppTenantMember } from '@/types';
 import { message } from 'ant-design-vue';
+import { exportToCsv } from '@/utils/export';
 
 const tenantStore = useTenantStore();
 const expandedTenant = ref<string | null>(null);
 const tenantMembers = ref<AppTenantMember[]>([]);
+
+// 搜索
+const searchKeyword = ref('');
+const filteredList = computed(() => {
+  const kw = searchKeyword.value.trim().toLowerCase();
+  if (!kw) return tenantStore.list;
+  return tenantStore.list.filter(t =>
+    (t.company_name || '').toLowerCase().includes(kw) ||
+    (t.owner_name || '').toLowerCase().includes(kw) ||
+    (t.tenant_id || '').toLowerCase().includes(kw)
+  );
+});
 
 // 编辑状态
 const showEdit = ref(false);
@@ -258,6 +285,24 @@ async function expandTenant(expanded: boolean, record: any) {
   } else {
     expandedTenant.value = null;
   }
+}
+
+function doSearch() {
+  // 计算属性 filteredList 自动处理搜索
+}
+
+const exportColumns = [
+  { title: '公司名称', dataIndex: 'company_name', key: 'company_name' },
+  { title: '行业', dataIndex: 'industry', key: 'industry' },
+  { title: '负责人', dataIndex: 'owner_name', key: 'owner_name' },
+  { title: '电话', dataIndex: 'owner_phone', key: 'owner_phone' },
+  { title: '套餐', dataIndex: 'plan', key: 'plan' },
+  { title: '状态', dataIndex: 'status', key: 'status' },
+  { title: '成员数', dataIndex: 'member_count', key: 'member_count' },
+  { title: '创建时间', dataIndex: 'created_at', key: 'created_at' },
+];
+function handleExport() {
+  exportToCsv('租户管理', exportColumns, filteredList.value);
 }
 </script>
 <style scoped>

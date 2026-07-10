@@ -16,129 +16,92 @@ release-v*/
 *.orig.*
 web-build/
 
-# Android native (rely on CNG)
+# Android (native + mobile)
 android/
-
-# Mobile Android native
 mobile/android/
-
-# Android signing
 keystore.properties
 *.keystore
 
-# APK files (built artifacts, not source)
+# Build artifacts
 *.apk
 *.apk.xz
 *.aab
-
-# App build output (APK storage + Android build)
 app/
 app-release.apk
-
-# Android build intermediates (C++ objects, .dex, .so, etc.)
+release/
+packages/release/
+packages/electron/release*/
+packages/electron/dist_release/
+packages/electron/build_output/
+packages/electron/build_portable/
+packages/electron/_linux_build/
+packages/electron/lingjing-linux-build.zip
 **/android/app/build/
 **/android/app/.cxx/
 **/android/.gradle/
-
-# electron-builder release output
-packages/electron/release-*/
-
-# Local fix scripts
-packages/electron/_*.cjs
+dist.bak
 
 # Python bytecode
 __pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
 
-# SQLite databases (generated data)
+# Databases
 *.db
 *.sqlite
-packages/electron/release*/
 
-# pnpm symlinks
+# Electron
+packages/electron/_*.cjs
 packages/electron/node_modules/@codepilot/
 packages/electron/node_modules/@codepilot/*
-
-# Renderer build output (copy to electron/renderer during pre-package)
+packages/electron/skills/
+packages/electron/prompts/
+packages/electron/scripts/patch-fusion-race.js
 packages/electron/renderer/assets/
 packages/electron/renderer/index.html
 
-# Temporary push artifacts
+# Server
+server/venv/
+server/tts_cache/
+server/uvicorn.log
+
+# Temporary files
 _git_push.bundle
 _patches.patch
 _push_tmp/
-
-# Temporary helper scripts
-scripts/_*.cjs
-
-# Local dev/deploy utility scripts (underscore-prefixed)
 _*.bat
 _*.py
 _*.sh
+scripts/_*.cjs
+scripts/codeserver-info.txt
+scripts/tunnel-codeserver.bat
 
-# electron-builder dist_release output
-packages/electron/dist_release/
+# Old archives
+archive/
 
-# Stale extraResources (not tracked in git, no runtime usage)
-packages/electron/skills/
-packages/electron/prompts/
-
-# Mobile submodule (stale gitlink - suppressed)
+# Mobile
 lingjing-mobile/
 git-sync.sh
-dist.bak
 
-# Auto-build artifacts
+# Build scripts
 auto-build.sh
 auto-build.log
 .last_build_commit
 post-deploy.sh
-
-# Downloaded packages (not part of the project)
+clean_build.py
+rebuild-deb.*
+update-versions.py
+build-deb.py
 code-server.deb
 
-# Python server artifacts
-server/venv/
-server/app/__pycache__/
-server/app/ai/__pycache__/
-server/app/routers/__pycache__/
-server/app/services/__pycache__/
-**/__pycache__/
-*.pyc
-server/tts_cache/
-
-# Local dev scripts
-scripts/codeserver-info.txt
-scripts/tunnel-codeserver.bat
+# Other downloads
 downloads/*.AppImage
 downloads/*.deb
 downloads/*.exe
 downloads/*.blockmap
-""  
-# build artifacts  
-packages/electron/build_output/  
-packages/electron/build_portable/  
-packages/release/  
-clean_build.py
-# temp build scripts
-rebuild-deb.*
-update-versions.py
-build-deb.py
-.qoder  
-latest.yml  
-  
-# Linux build artifacts  
-packages/electron/_linux_build/  
-packages/electron/lingjing-linux-build.zip  
-packages/electron/scripts/patch-fusion-race.js 
-"release/"  
+latest.yml
+.qoder
 
-# 构建产物
-release/
-server/uvicorn.log
-
+# Logs
 logs/lingjing-app.log
-release/
-archive/
-*.apk

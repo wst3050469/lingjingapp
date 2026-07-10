@@ -136,11 +136,13 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { DownloadOutlined, LoginOutlined } from '@ant-design/icons-vue';
 import { useTenantStore } from '@/stores/tenants';
+import { useAuthStore } from '@/stores/auth';
 import type { AppTenantMember } from '@/types';
 import { message } from 'ant-design-vue';
 import { exportToCsv } from '@/utils/export';
 
 const tenantStore = useTenantStore();
+const authStore = useAuthStore();
 const expandedTenant = ref<string | null>(null);
 const tenantMembers = ref<AppTenantMember[]>([]);
 
@@ -254,9 +256,14 @@ async function handleImpersonate(record: any) {
   impersonating.value = record.tenant_id;
   const token = await tenantStore.impersonate(record.tenant_id);
   impersonating.value = null;
-  if (token) {
-    // 在新标签页中打开租户后台
-    window.open(`/chat.html?impersonate=${token}`, '_blank');
+  if (token && authStore.token) {
+    // 新标签页打开，传入租户token和超管token（用于撤销模拟）
+    const params = new URLSearchParams();
+    params.set('impersonate', token);
+    params.set('revoke_token', authStore.token);
+    window.open('/chat.html?' + params.toString(), '_blank');
+  } else if (token && !authStore.token) {
+    message.error('超管认证已过期，请重新登录');
   }
 }
 

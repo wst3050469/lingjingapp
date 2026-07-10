@@ -1,6 +1,6 @@
 {
   "name": "lingjing-ide",
-  "version": "1.73.139",
+  "version": "1.73.190",
   "description": "灵境AI - AI 驱动的智能开发平台",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {

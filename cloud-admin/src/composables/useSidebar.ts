@@ -1,9 +1,12 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
+const STORAGE_KEY = 'lingjing_sidebar_collapsed';
+
 export type SidebarBreakpoint = 'full' | 'compact' | 'hidden';
 
 export function useSidebar() {
-  const collapsed = ref(false);
+  // 从 localStorage 恢复收起状态
+  const collapsed = ref(localStorage.getItem(STORAGE_KEY) === 'true');
   const width = ref(window.innerWidth);
 
   const breakpoint = computed<SidebarBreakpoint>(() => {
@@ -31,18 +34,28 @@ export function useSidebar() {
 
   function toggleMain(): void {
     collapsed.value = !collapsed.value;
+    localStorage.setItem(STORAGE_KEY, String(collapsed.value));
   }
 
   function updateWidth(): void {
     width.value = window.innerWidth;
   }
 
+  // 其他标签页修改 localStorage 时同步状态
+  function handleStorageChange(e: StorageEvent): void {
+    if (e.key === STORAGE_KEY) {
+      collapsed.value = e.newValue === 'true';
+    }
+  }
+
   onMounted(() => {
     window.addEventListener('resize', updateWidth);
+    window.addEventListener('storage', handleStorageChange);
   });
 
   onUnmounted(() => {
     window.removeEventListener('resize', updateWidth);
+    window.removeEventListener('storage', handleStorageChange);
   });
 
   return {

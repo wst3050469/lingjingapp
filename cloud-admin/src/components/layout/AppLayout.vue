@@ -28,8 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { onMounted } from 'vue';
 import MainSidebar from './MainSidebar.vue';
 import TopHeader from './TopHeader.vue';
 import MobileNav from './MobileNav.vue';
@@ -42,17 +41,6 @@ const {
   mainWidth,
   toggleMain,
 } = useSidebar();
-
-const route = useRoute();
-
-const pageTitles: Record<string, string> = {
-  '/dashboard': '仪表盘', '/users': '用户管理', '/tenants': '租户管理',
-  '/contracts': '合同管理', '/suppliers': '供应商管理', '/customers': '客户管理',
-  '/invoices': '发票管理', '/finance': '财务管理', '/versions': '版本管理',
-  '/audit-logs': '审计日志', '/sessions': '会话管理', '/samples': '样本管理',
-  '/recipes': '配方管理', '/automation': '自动化任务', '/websocket': '在线监控',
-};
-const pageTitle = computed(() => pageTitles[route.path] ?? '管理后台');
 
 const authStore = useAuthStore();
 onMounted(() => {

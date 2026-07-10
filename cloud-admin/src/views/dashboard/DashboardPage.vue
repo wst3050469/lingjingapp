@@ -7,10 +7,6 @@
         <stat-card title="活跃用户" :value="stats?.active_users ?? 0" icon="user" color="#52c41a" />
         <stat-card title="企业租户" :value="stats?.total_tenants ?? 0" icon="building" color="#722ed1" />
         <stat-card title="活跃租户" :value="stats?.active_tenants ?? 0" icon="check-circle" color="#13c2c2" />
-        <stat-card title="合同总数" :value="stats?.total_contracts ?? 0" icon="file-text" color="#fa8c16" />
-        <stat-card title="供应商" :value="stats?.total_suppliers ?? 0" icon="shop" color="#eb2f96" />
-        <stat-card title="客户" :value="stats?.total_customers ?? 0" icon="contacts" color="#2f54eb" />
-        <stat-card title="待审批" :value="stats?.pending_approvals ?? 0" icon="clock-circle" color="#fa541c" />
       </div>
     </a-spin>
 

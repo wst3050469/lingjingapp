@@ -19,7 +19,7 @@ import {
   UserOutlined,
   MessageOutlined,
   SettingOutlined,
-  AppstoreOutlined,
+  CloudUploadOutlined,
 } from '@ant-design/icons-vue';
 
 const route = useRoute();
@@ -33,8 +33,8 @@ function isActive(path: string): boolean {
 const navItems = [
   { key: '/dashboard', label: '概览', icon: DashboardOutlined },
   { key: '/users', label: '用户', icon: UserOutlined },
-  { key: '/contracts', label: '合同', icon: AppstoreOutlined },
   { key: '/sessions', label: '会话', icon: MessageOutlined },
+  { key: '/versions', label: '版本', icon: CloudUploadOutlined },
   { key: '/audit-logs', label: '日志', icon: SettingOutlined },
 ];
 </script>

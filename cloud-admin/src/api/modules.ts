@@ -4,8 +4,7 @@ import type {
   AppDashboardStats,
   AppTenant, AppTenantMember,
   AppUser, AppInviteCode, AppTeamInviteCode,
-  AppContract, AppSupplier, AppCustomer, AppInvoice, AppFinance,
-  AppVersion, AppAuditLogEntry, AppChatSession, AppSample, AppRecipe,
+  AppVersion, AppAuditLogEntry, AppChatSession,
   AppWsOnline, AppAutomationTask,
 } from '@/types';
 
@@ -43,46 +42,6 @@ export const tenantApi = {
   delete: (tenantId: string) => del<{ code: number; msg: string }>(`/tenants/${tenantId}`),
 };
 
-// ── 合同管理 ──
-export const contractApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppContract[] }>('/contracts', params),
-  create: (data: any) => post<{ code: number; msg: string; data: AppContract }>('/contracts', data),
-  update: (id: number, data: any) => put<{ code: number; msg: string }>(`/contracts/${id}`, data),
-  delete: (id: number) => del<{ code: number; msg: string }>(`/contracts/${id}`),
-};
-
-// ── 供应商管理 ──
-export const supplierApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppSupplier[] }>('/suppliers', params),
-  create: (data: any) => post<{ code: number; msg: string; data: AppSupplier }>('/suppliers', data),
-  update: (id: number, data: any) => put<{ code: number; msg: string }>(`/suppliers/${id}`, data),
-  delete: (id: number) => del<{ code: number; msg: string }>(`/suppliers/${id}`),
-};
-
-// ── 客户管理 ──
-export const customerApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppCustomer[] }>('/customers', params),
-  create: (data: any) => post<{ code: number; msg: string; data: AppCustomer }>('/customers', data),
-  update: (id: number, data: any) => put<{ code: number; msg: string }>(`/customers/${id}`, data),
-  delete: (id: number) => del<{ code: number; msg: string }>(`/customers/${id}`),
-};
-
-// ── 发票管理 ──
-export const invoiceApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppInvoice[] }>('/invoices', params),
-  create: (data: any) => post<{ code: number; msg: string; data: AppInvoice }>('/invoices', data),
-  update: (id: number, data: any) => put<{ code: number; msg: string }>(`/invoices/${id}`, data),
-  delete: (id: number) => del<{ code: number; msg: string }>(`/invoices/${id}`),
-};
-
-// ── 财务管理 ──
-export const financeApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppFinance[]; total?: number }>('/finance', params),
-  create: (data: any) => post<{ code: number; msg: string; data: AppFinance }>('/finance', data),
-  update: (id: number, data: any) => put<{ code: number; msg: string }>(`/finance/${id}`, data),
-  delete: (id: number) => del<{ code: number; msg: string }>(`/finance/${id}`),
-};
-
 // ── 版本管理 ──
 export const versionApi = {
   list: (params?: Record<string, any>) => get<{ code: number; data: AppVersion[] }>('/app-versions', params),
@@ -111,22 +70,6 @@ export const chatApi = {
   sessions: (params?: Record<string, any>) => get<{ code: number; data: AppChatSession[]; total?: number }>('/chat/sessions', params),
   sessionDetail: (id: string) => get<{ code: number; data: AppChatSession }>(`/chat/sessions/${id}`),
   tenantSessions: (tenantId: string) => get<{ code: number; data: AppChatSession[] }>(`/tenants/${tenantId}/sessions`),
-};
-
-// ── 配方管理 ──
-export const recipeApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppRecipe[] }>('/recipes', params),
-  create: (data: any) => post<{ code: number; msg: string; data: AppRecipe }>('/recipes', data),
-  update: (id: string, data: any) => put<{ code: number; msg: string }>(`/recipes/${id}`, data),
-  delete: (id: string) => del<{ code: number; msg: string }>(`/recipes/${id}`),
-};
-
-// ── 样本管理 ──
-export const sampleApi = {
-  list: (params?: Record<string, any>) => get<{ code: number; data: AppSample[] }>('/samples', params),
-  create: (data: any) => post<{ code: number; msg: string; data: AppSample }>('/samples', data),
-  update: (id: number, data: any) => put<{ code: number; msg: string }>(`/samples/${id}`, data),
-  delete: (id: number) => del<{ code: number; msg: string }>(`/samples/${id}`),
 };
 
 // ── WebSocket 在线监控 ──

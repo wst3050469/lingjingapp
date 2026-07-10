@@ -72,12 +72,10 @@ const searchRef = ref<InstanceType<typeof GlobalSearch>>();
 const changePwdModal = ref<InstanceType<typeof ChangePasswordModal>>();
 
 const pageTitles: Record<string, string> = {
-  '/': '仪表盘', '/sessions': '会话管理', '/audit-logs': '审计日志',
+  '/': '仪表盘', '/dashboard': '仪表盘',
+  '/sessions': '会话管理', '/audit-logs': '审计日志',
   '/versions': '版本管理', '/tenants': '租户管理', '/users': '用户管理',
-  '/dashboard': '仪表盘', '/contracts': '合同管理', '/suppliers': '供应商管理',
-  '/customers': '客户管理', '/invoices': '发票管理', '/finance': '财务管理',
-  '/samples': '样本管理', '/recipes': '配方管理', '/automation': '自动化任务',
-  '/websocket': '在线监控',
+  '/automation': '自动化任务', '/websocket': '在线监控',
 };
 const pageTitle = computed(() => pageTitles[route.path] ?? '管理后台');
 

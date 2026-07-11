@@ -64,15 +64,15 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0" 2>&1 | tail -5 || true
 
       - name: Install dependencies
-        working-directory: mobile
+        working-directory: .
         run: npm install --legacy-peer-deps
 
       - name: Prebuild (generate android project)
-        working-directory: mobile
+        working-directory: .
         run: npx expo prebuild --platform android --no-install
 
       - name: Setup release keystore
-        working-directory: mobile
+        working-directory: .
         run: |
           KEYSTORE_DIR="android/app"
           KEYSTORE_FILE="$KEYSTORE_DIR/release.keystore"
@@ -97,12 +97,12 @@ jobs:
           echo "keystore.properties created"
 
       - name: Configure release signing
-        working-directory: mobile
+        working-directory: .
         run: |
           echo "Keystore and build config ready"
 
       - name: Build APK
-        working-directory: mobile/android
+        working-directory: ./android
         run: |
           BUILD_TYPE="${{ github.event.inputs.buildType || 'release' }}"
           echo "Building $BUILD_TYPE APK..."
@@ -113,9 +113,9 @@ jobs:
           fi
 
       - name: Verify APK signing
-        working-directory: mobile
+        working-directory: .
         run: |
-          APK_FILE=$(find android -name "*-release.apk" -o -name "*-debug.apk" | head -1)
+          APK_FILE=$(find android/app/build -name 2>/dev/null; find android -name "*-release.apk" -o -name "*-debug.apk" | head -1)
           if [ -n "$APK_FILE" ]; then
             echo "Verifying signing for: $APK_FILE"
             APKSIGNER="$ANDROID_HOME/build-tools/*/apksigner"
@@ -133,24 +133,24 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lingjing-mobile-apk
-          path: mobile/android/app/build/outputs/apk/**/*.apk
+          path: android/app/build/outputs/apk/**/*.apk
           if-no-files-found: error
 
       - name: Show APK info
         if: always()
-        working-directory: mobile
+        working-directory: .
         run: find . -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No APK files found"
 
       - name: Deploy APK to server
         if: success()
-        working-directory: mobile
+        working-directory: .
         run: |
-          APK_FILE=$(find android -name "*-release.apk" | head -1)
+          APK_FILE=$(find android/app/build -name 2>/dev/null; find android -name "*-release.apk" | head -1)
           if [ -z "$APK_FILE" ]; then
             echo "No APK to deploy"
             exit 0
           fi
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(node -p "require('./package.json').version.replace('^','').replace('~','')")
           echo "Deploying $APK_FILE as v$VERSION"
           
           NEW_NAME="lingjing-v${VERSION}.apk"
@@ -186,9 +186,9 @@ jobs:
       - name: Upload to GitHub Release
         if: success()
         run: |
-          APK_FILE=$(find mobile/android -name "*-release.apk" | head -1)
+          APK_FILE=$(find android -name "*-release.apk" | head -1)
           if [ -z "$APK_FILE" ]; then echo "No APK"; exit 0; fi
-          VERSION=$(node -p "require('./mobile/package.json').version")
+          VERSION=$(node -p "require('./package.json').version.replace('^','').replace('~','')")
           NEW_NAME="lingjing-v${VERSION}.apk"
           cp "$APK_FILE" "/tmp/$NEW_NAME"
           echo "Creating GitHub Release v$VERSION with $NEW_NAME"

@@ -62,16 +62,12 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" 2>&1 | tail -5 || true
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0" 2>&1 | tail -5 || true
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-
       - name: Install dependencies
         working-directory: .
         run: |
           npm install -g pnpm
-          echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --ignore-scripts || pnpm install --ignore-scripts
+          # 使用 npm（pnpm hoist 在 CI 中易出问题）
+        run: npm install --legacy-peer-deps
 
       - name: Prebuild (generate android project)
         working-directory: .

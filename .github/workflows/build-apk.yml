@@ -71,7 +71,7 @@ jobs:
         working-directory: .
         run: |
           npm install -g pnpm
-          pnpm install --frozen-lockfile --ignore-scripts || pnpm install --ignore-scripts
+          echo "shamefully-hoist=true" > .npmrc && pnpm install --frozen-lockfile --ignore-scripts || pnpm install --ignore-scripts
 
       - name: Prebuild (generate android project)
         working-directory: .

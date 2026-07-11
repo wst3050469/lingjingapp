@@ -62,6 +62,9 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-34" "build-tools;34.0.0" 2>&1 | tail -5 || true
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0" 2>&1 | tail -5 || true
 
+      - name: Install X11 deps for robotjs
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libx11-dev libxtst-dev libpng-dev || true
+
       - name: Install dependencies
         working-directory: .
         run: |
@@ -69,9 +72,8 @@ jobs:
           # 使用 npm（pnpm hoist 在 CI 中易出问题）
         run: npm install --legacy-peer-deps
 
-      - name: Prebuild (generate android project)
-        working-directory: .
-        run: npx expo prebuild --platform android --no-install
+      - name: Prebuild (skip - android directory committed)
+        run: echo "android directory already committed, skipping prebuild"
 
       - name: Setup release keystore
         working-directory: .

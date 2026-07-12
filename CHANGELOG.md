@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## v1.74.0 (2026-07-12)
+
+### Changed
+- **版本统一**: 后端 1.73.197 → 1.74.0，与 APK 版本对齐
+- **nginx 代理修复**: `/api/admin/` 从旧 Express.js (8000) 切换到 FastAPI (8900)
+- **模拟登录**: 超管可一键模拟登录为租户管理员，chat.html 显示红色退出横幅
+
+### Fixed
+- **APP注册/登录**: `/api/auth/login` → `/api/v1/auth/login`，`/auth/signup` → `/auth/register`
+- **404异常处理器**: 全局handler丢弃原始detail消息 → 保留 `exc.detail`
+- **退出模拟安全**: `localStorage.clear()` → 仅清除模拟相关key
+- **Python缓存**: `.pyc` 残留导致新代码未生效 → 清理+重启
+- **nginx冲突**: 删除已废弃的 `lingjing-www.bak` 配置文件
+
+### APK
+- **v1.74.0**: 34MB，包含修复后的 API 路径
+- **签名更新**: ⚠️ 需卸载旧版后安装
+- **下载**: `https://www.spiritrealmz.com/apk/latest.apk`
+
 ## v1.73.190 (2026-07-10)
 
 ### Changed

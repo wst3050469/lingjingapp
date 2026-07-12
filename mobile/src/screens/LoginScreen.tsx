@@ -36,7 +36,7 @@ export default function LoginScreen({ onSuccess, onSwitchToPairing }: { onSucces
     setError('');
 
     // Configure API to use cloud server for auth (must match App.tsx CLOUD_SERVER_URL)
-    api.configure({ baseUrl: 'https://www.spiritrealmz.com', token: '', wsUrl: 'wss://www.spiritrealmz.com/ws' });
+    api.configure({ baseUrl: 'https://www.spiritrealmz.com', token: '', wsUrl: 'wss://www.spiritrealmz.com/api/v1/ws' });
 
     try {
       const result = mode === 'login'

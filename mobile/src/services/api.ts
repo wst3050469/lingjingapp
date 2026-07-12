@@ -25,7 +25,7 @@ type WsCallback = (data: WsResponse) => void;
 
 
 class ApiService {
- private config: ApiConfig = { baseUrl: 'https://www.spiritrealmz.com', token: '', wsUrl: 'wss://www.spiritrealmz.com/ws', apiKey: 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8' };
+ private config: ApiConfig = { baseUrl: 'https://www.spiritrealmz.com', token: '', wsUrl: 'wss://www.spiritrealmz.com/api/v1/ws', apiKey: 'lingjing-cloud-key-v2-a1b2c3d4e5f6g7h8' };
  private ws: WebSocket|null = null;
  private wsCallbacks: Map<string, Function> = new Map();
  private wsSubscriptions: Set<string> = new Set();
@@ -51,7 +51,9 @@ class ApiService {
  }
  private async request<T>(path: string, options?: RequestInit): Promise<T> {
  const baseUrl = this.config.baseUrl || 'https://www.spiritrealmz.com';
- const url = baseUrl + '/api' + path;
+ // 统一添加/v1前缀兼容后端路由
+ const v1Path = path.startsWith('/v1/') ? path : '/v1' + path;
+ const url = baseUrl + '/api' + v1Path;
  const controller = new AbortController();
  const timeoutId = setTimeout(() => controller.abort(), 15000);
  try {
@@ -68,11 +70,14 @@ class ApiService {
  }
  }
  private setCloudUser(result: any) {
- if (result && result.ok && result.token) {
- this._jwtToken = result.token;
- this._cloudUser = result.user || null;
- }
- }
+	 // 兼容后端响应格式 {code: 0, token, nickname, account_type}
+	 const token = result?.token || result?.data?.token || '';
+	 if (token) {
+	 this._jwtToken = token;
+	 this._cloudUser = result.user || result.data || { nickname: result?.nickname, account_type: result?.account_type };
+	 this.config.token = token;
+	 }
+	 }
  async registerDevice(deviceName?: string): Promise<any> {
  const result: any = await this.request('/auth/register', { method: 'POST', body: JSON.stringify({ deviceId: this._deviceId || undefined, deviceName: deviceName || 'Mobile - ' + Platform.OS, deviceInfo: { platform: Platform.OS, version: Platform.Version }, apiKey: this.config.apiKey || undefined }) });
  this._jwtToken = result.token; this._deviceId = result.deviceId; return result;
@@ -84,12 +89,26 @@ class ApiService {
 
  // --- Auth ---
  async login(username: string, password: string): Promise<{ok: boolean; token?: string; user?: any; error?: string}> {
- try { const result = await this.request<any>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }); this.setCloudUser(result); return result; }
- catch (e: any) { return { ok: false, error: e.message }; }
+ try { const result = await this.request<any>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+   // 后端返回 {code, token, nickname, account_type}，适配为 {ok, token, user}
+   this.setCloudUser(result);
+   const token = result?.token || '';
+   if (token) {
+     return { ok: true, token, user: { nickname: result.nickname, username, account_type: result.account_type } };
+   }
+   return { ok: false, error: result?.detail || '登录失败，请检查用户名和密码' };
+ } catch (e: any) { return { ok: false, error: '网络连接失败，请检查网络后重试' }; }
  }
  async signup(username: string, password: string, email?: string): Promise<{ok: boolean; token?: string; user?: any; error?: string}> {
- try { const result = await this.request<any>('/auth/signup', { method: 'POST', body: JSON.stringify({ username, password, email }) }); this.setCloudUser(result); return result; }
- catch (e: any) { return { ok: false, error: e.message }; }
+ try { const result = await this.request<any>('/auth/register', { method: 'POST', body: JSON.stringify({ username, password, nickname: username, account_type: 'personal' }) });
+   // 后端返回 {code, token, nickname, account_type}，适配为 {ok, token, user}
+   this.setCloudUser(result);
+   const token = result?.token || '';
+   if (token) {
+     return { ok: true, token, user: { nickname: result.nickname, username, account_type: result.account_type } };
+   }
+   return { ok: false, error: result?.detail || '注册失败，请稍后重试' };
+ } catch (e: any) { return { ok: false, error: '网络连接失败，请检查网络后重试' }; }
  }
  async cloudLogout(): Promise<void> {
  this._jwtToken = null; this._cloudUser = null; this.disconnectWs();

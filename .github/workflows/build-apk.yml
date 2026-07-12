@@ -67,9 +67,6 @@ jobs:
 
       - name: Install dependencies
         working-directory: .
-        run: |
-          npm install -g pnpm
-          # 使用 npm（pnpm hoist 在 CI 中易出问题）
         run: npm install --legacy-peer-deps
 
       - name: Prebuild (skip - android directory committed)
@@ -119,7 +116,7 @@ jobs:
       - name: Verify APK signing
         working-directory: .
         run: |
-          APK_FILE=$(find android/app/build -name 2>/dev/null; find android -name "*-release.apk" -o -name "*-debug.apk" | head -1)
+          APK_FILE=$(find android/app/build -name "*.apk" 2>/dev/null | head -1)
           if [ -n "$APK_FILE" ]; then
             echo "Verifying signing for: $APK_FILE"
             APKSIGNER="$ANDROID_HOME/build-tools/*/apksigner"
@@ -143,7 +140,7 @@ jobs:
       - name: Show APK info
         if: always()
         working-directory: .
-        run: find . -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "No APK files found"
+        run: find android -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "未找到APK文件"
 
       - name: Deploy APK to server
         if: success()
@@ -190,7 +187,7 @@ jobs:
       - name: Upload to GitHub Release
         if: success()
         run: |
-          APK_FILE=$(find android -name "*-release.apk" | head -1)
+          APK_FILE=$(find android/app/build -name "*.apk" | head -1)
           if [ -z "$APK_FILE" ]; then echo "No APK"; exit 0; fi
           VERSION=$(node -p "require('./package.json').version.replace('^','').replace('~','')")
           NEW_NAME="lingjing-v${VERSION}.apk"
